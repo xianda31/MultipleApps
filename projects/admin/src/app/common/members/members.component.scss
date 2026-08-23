@@ -50,7 +50,16 @@ table.table.table-sm tbody tr td {
   }
 }
 
-@media (max-width: 576px) and (orientation: portrait) {
+@media (max-width: 576px) and (orientation: portrait),
+  (orientation: landscape) and (max-height: 576px) and (pointer: coarse) {
+  .member-index-column {
+    display: none;
+  }
+
+  .member-settings-column {
+    display: table-cell !important;
+  }
+
   .members-stats-line {
     font-size: 0.8rem;
     line-height: 1.15;
@@ -63,7 +72,15 @@ table.table.table-sm tbody tr td {
   }
 
   .members-legend-line {
+    font-size: 0.8rem;
     line-height: 1.1;
     gap: 0.45rem !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 576px) and (pointer: coarse) {
+  .members-table-scroll {
+    max-height: calc(100dvh - 11rem);
+    min-height: 8rem;
   }
 }

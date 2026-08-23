@@ -106,6 +106,14 @@ export class MembersComponent implements OnInit {
       void this.handleSeasonChange();
     });
 
+    this.memberSettingsService.settingsChange$().pipe(
+      skip(1),
+      takeUntil(this.destroy$),
+    ).subscribe(() => {
+      this.avatar_urls$ = this.collect_avatars(this.members);
+      this.filterOnStatus(this.selected_filter);
+    });
+
     void this.loadMembersWithSynchronization(true);
   }
 

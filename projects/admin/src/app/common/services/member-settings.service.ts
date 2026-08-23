@@ -4,7 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetMemberSettingsComponent } from '../members/personal-info-modal/get-member-settings';
 import { MembersService } from './members.service';
 import { ToastService } from './toast.service';
-import { BehaviorSubject, Observable, of, catchError } from 'rxjs';
+import { BehaviorSubject, Observable, of, catchError, map, shareReplay, switchMap } from 'rxjs';
 import { FileService, S3_ROOT_FOLDERS } from './files.service';
 
 @Injectable({
@@ -12,7 +12,8 @@ import { FileService, S3_ROOT_FOLDERS } from './files.service';
 })
 export class MemberSettingsService {
 
-private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  private avatarPaths$?: Observable<Set<string>>;
 
   constructor(
     private modalService: NgbModal,
@@ -33,16 +34,27 @@ private settings_change$: BehaviorSubject<number> = new BehaviorSubject<number>(
     const avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
     const avatar_file = avatar_path + this.membersService.full_name(member) + '.png';
 
-    return this.fileService.getPresignedUrl$(avatar_file, true, true).pipe(
-      catchError((error) => {
-        // Silencieusement ignorer l'erreur et retourner une chaîne vide
-        // console.warn(`Avatar non trouvé pour ${this.membersService.full_name(member)}`);
-        return of('');
-      })
+    return this.getAvatarPaths$().pipe(
+      switchMap((avatarPaths) => avatarPaths.has(avatar_file)
+        ? this.fileService.getPresignedUrl$(avatar_file, true, false)
+        : of('')),
+      catchError(() => of(''))
     );
   }
 
+  private getAvatarPaths$(): Observable<Set<string>> {
+    if (!this.avatarPaths$) {
+      this.avatarPaths$ = this.fileService.list_files(S3_ROOT_FOLDERS.PORTRAITS + '/').pipe(
+        map((files) => new Set(files.map((file) => file.path))),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+
+    return this.avatarPaths$;
+  }
+
   set_settingsChange() {
+    this.avatarPaths$ = undefined;
     this.settings_change$.next(this.settings_change$.getValue() + 1);
   }
 
