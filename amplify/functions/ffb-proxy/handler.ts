@@ -469,6 +469,28 @@ export const handler: Handler = async (event) => {
         }
         break;
 
+      case route.match(/^entries\/groupSessions\/\d+\/isolatedPlayers$/)?.[0]:
+        {
+          const groupSessionId = route.match(/^entries\/groupSessions\/(\d+)\/isolatedPlayers$/)?.[1];
+          if (!groupSessionId) {
+            return httpResponse(400, { error: "Invalid groupSessionId in path" });
+          }
+
+          ffbEndpoint = `entries/groupSessions/${groupSessionId}/isolatedPlayers`;
+        }
+        break;
+
+      case route.match(/^entries\/isolatedPlayers\/\d+$/)?.[0]:
+        {
+          const isolatedPlayerId = route.match(/^entries\/isolatedPlayers\/(\d+)$/)?.[1];
+          if (!isolatedPlayerId) {
+            return httpResponse(400, { error: "Invalid isolatedPlayerId in path" });
+          }
+
+          ffbEndpoint = `entries/isolatedPlayers/${isolatedPlayerId}`;
+        }
+        break;
+
       // FFB V2 Team Entry deletion endpoint
       case route.match(/^entries\/pro\/team-entries\/\d+$/)?.[0]:
         {

@@ -1,6 +1,6 @@
 <div class="row mt-3 justify-content-center">
     <div class="col-md-8 col-12">
-        <div class="card w-100 shadow-sm" *ngIf="teams">
+        <div class="card w-100 shadow-sm">
             <div class="card-header">
                 <div class="row justify-content-between">
                     <div class="col-auto ">
@@ -15,7 +15,8 @@
                 </div>
             </div>
             <div class="card-body px-2">
-                <div class="border rounded">
+                <span class="fw-bold">équipes inscrites :</span>
+                <div *ngIf="teams.length; else noTeams" class="border rounded">
                     <table class="table table-borderless table-sm table-responsive mb-0">
                         <thead>
                             <tr>
@@ -42,22 +43,28 @@
                                     </div>
                                 </td>
                                 <td class="team-iv-cell text-end pe-2 small">{{team.iv}}</td>
-                                <!-- <ng-container *ngIf="team.players.length === 1">
-                                    <td *ngIf="!already_subscribed && (is_member$ | async)"
-                                        class="text-start align-content-center">
-                                        <button [disabled]="!whoAmI" class="btn btn-sm btn-primary"
-                                            (click)="completeTeam(team.players[0])">Compléter
-                                        </button>
-                                    </td>
-                                </ng-container> -->
                             </tr>
                         </tbody>
                     </table>
                 </div>
+                <ng-template #noTeams>
+                    <div class="small text-muted border rounded px-2 py-1">Aucune équipe inscrite</div>
+                </ng-template>
             </div>
-
+            
             <!-- Zone d'inscription -->
             <div *ngIf="(!already_subscribed && (is_member$ | async))" class="px-3 pb-3 pt-1">
+                <div class="fw-bold mt-2">joueurs isolés : {{isolated_player_count}}</div>
+                <div *ngIf="isolatedPlayers.length" class="small text-muted mb-2">
+                    <div *ngFor="let isolatedPlayer of isolatedPlayers">
+                        <i class="bi bi-trash3-fill text-warning me-2" *ngIf="i_am_isolated_player(isolatedPlayer)"
+                            (click)="deleteIsolatedPlayer(isolatedPlayer)"></i>
+                        {{isolatedPlayer.person.lastName | uppercase}} {{isolatedPlayer.person.firstName}}
+                        <span class="text-muted small">IV {{isolatedPlayer.person.season.ranking.iv}}</span>
+                    </div>
+                </div>
+
+
                 <div class="d-flex gap-2 align-items-end mb-3">
                     <!-- 1er joueur (moi) -->
                     <div class="flex-fill">
@@ -79,6 +86,10 @@
                 </div>
                 <!-- Boutons -->
                 <div class="d-flex gap-2 justify-content-around">
+                    <button *ngIf="canCreateIsolatedPlayer" class="btn btn-sm btn-outline-primary" (click)="createIsolatedPlayer()"
+                        [disabled]="am_i_isolated_player">
+                        <i class="bi bi-person me-1"></i>{{am_i_isolated_player ? 'Déjà inscrit(e) seul(e)' : "M'inscrire seul(e)"}}
+                    </button>
                     <button class="btn btn-sm btn-primary" (click)="subscribeWithPlayer2()" [disabled]="!player2.valid">
                         <i class="bi bi-people me-1"></i>Inscrire l'équipe
                     </button>

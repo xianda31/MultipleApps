@@ -4,6 +4,7 @@ import { TournamentTeams, Tournament } from '../interface/tournament.interface';
 import { FFB_Season } from '../interface/ffb-season.interface';
 import { PersonV2 } from '../interface/person-v2.interface';
 import { ClubMember } from '../interface/club-member.interface';
+import { IsolatedPlayersResponse } from '../interface/isolated-players.interface';
 import { catchError, firstValueFrom, from, Observable, of, take } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionResultStade_V2, CompetitionTeam, Competition_V2, Entity_V2, SessionRankingEntry } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
@@ -46,6 +47,7 @@ const FFB_ENDPOINTS = {
   tournamentTeam: '/api/ffb/v2/club-team',
   teamCreate: '/api/ffb/v2/entries/groupSessions',
   teamEntries: '/api/ffb/v2/entries/pro/team-entries',
+  isolatedPlayers: '/api/ffb/v2/entries/isolatedPlayers',
 } as const;
 
 @Injectable({
@@ -405,6 +407,69 @@ export class FFB_proxyService {
       return true;
     } catch (error) {
       console.error('[FFB Service] postTeam failed: ', error);
+      return false;
+    }
+  }
+
+  async getIsolatedPlayers(groupSessionId: string): Promise<IsolatedPlayersResponse> {
+    if (!/^\d+$/.test(groupSessionId)) {
+      throw new Error(`Invalid groupSessionId: ${groupSessionId}`);
+    }
+
+    try {
+      await this.ensureConfigReady();
+      const restOperation = get({
+        apiName: this.API_NAME,
+        path: this.buildPath(`${FFB_ENDPOINTS.teamCreate}/${groupSessionId}/isolatedPlayers`),
+        options: this.withTraceHeaders()
+      });
+      const { body } = await restOperation.response;
+      return await body.json() as unknown as IsolatedPlayersResponse;
+    } catch (error) {
+      console.error(`[FFB Service] getIsolatedPlayers failed for group session ${groupSessionId}:`, error);
+      throw error;
+    }
+  }
+
+  async postIsolatedPlayer(groupSessionId: string, personId: number): Promise<boolean> {
+    if (!/^\d+$/.test(groupSessionId) || !Number.isInteger(personId) || personId <= 0) {
+      return false;
+    }
+
+    try {
+      await this.ensureConfigReady();
+      const restOperation = post({
+        apiName: this.API_NAME,
+        path: this.buildPath(`${FFB_ENDPOINTS.teamCreate}/${groupSessionId}/isolatedPlayers`),
+        options: this.withTraceHeaders({
+          body: { personId }
+        })
+      });
+      const { body } = await restOperation.response;
+      await body.json();
+      return true;
+    } catch (error) {
+      console.error(`[FFB Service] postIsolatedPlayer failed for group session ${groupSessionId} and person ${personId}:`, error);
+      return false;
+    }
+  }
+
+  async deleteIsolatedPlayer(isolatedPlayerId: number): Promise<boolean> {
+    if (!Number.isInteger(isolatedPlayerId) || isolatedPlayerId <= 0) {
+      return false;
+    }
+
+    try {
+      await this.ensureConfigReady();
+      const restOperation = del({
+        apiName: this.API_NAME,
+        path: this.buildPath(`${FFB_ENDPOINTS.isolatedPlayers}/${isolatedPlayerId}`),
+        options: this.withTraceHeaders()
+      });
+      await restOperation.response;
+      return true;
+    } catch (error) {
+      console.error(`[FFB Service] deleteIsolatedPlayer failed for entry ${isolatedPlayerId}:`, error);
       return false;
     }
   }

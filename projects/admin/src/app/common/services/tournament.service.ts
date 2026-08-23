@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { club_tournament } from '../ffb/interface/club_tournament.interface';
 import { TournamentTeams, Tournament } from '../ffb/interface/tournament.interface';
+import { IsolatedPlayersResponse } from '../ffb/interface/isolated-players.interface';
 import { BehaviorSubject, from, map, Observable, tap, of, catchError } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
@@ -138,6 +139,41 @@ export class TournamentService {
         );
         this._teamFetchCache.set(tteams_id, request);
         return request;
+    }
+
+    getIsolatedPlayers(tteams_id: string): Observable<IsolatedPlayersResponse> {
+        return from(this.ffbService.getIsolatedPlayers(tteams_id)).pipe(
+            tap((response) => this.updateIsolatedPlayerCount(tteams_id, response.pagination.total_items))
+        );
+    }
+
+    createIsolatedPlayer(tteams_id: string, personId: number): Promise<boolean> {
+        return this.ffbService.postIsolatedPlayer(tteams_id, personId);
+    }
+
+    async deleteIsolatedPlayer(tteams_id: string, isolatedPlayerId: number): Promise<boolean> {
+        const deleted = await this.ffbService.deleteIsolatedPlayer(isolatedPlayerId);
+        if (!deleted) {
+            return false;
+        }
+
+        const response = await this.ffbService.getIsolatedPlayers(tteams_id);
+        this.updateIsolatedPlayerCount(tteams_id, response.pagination.total_items);
+        return true;
+    }
+
+    private updateIsolatedPlayerCount(tteams_id: string, count: number): void {
+        const tournamentTeams = this.find_tournamentTeamsById(tteams_id);
+        if (tournamentTeams) {
+            tournamentTeams.tournament.isolatedPlayerCount = count;
+            this._tournamentTeams$.next(this._tournamentTeams);
+            this._teamFetchCache.set(tteams_id, of(tournamentTeams));
+        }
+
+        const tournament = this._tournaments?.find((item) => item.id.toString() === tteams_id);
+        if (tournament) {
+            tournament.isolatedPlayerCount = count;
+        }
     }
 
 

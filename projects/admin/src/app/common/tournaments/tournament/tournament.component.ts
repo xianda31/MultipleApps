@@ -5,12 +5,13 @@ import { AuthentificationService } from '../../authentification/authentification
 import { FFBPlayer, RegisteredTeam } from '../../ffb/interface/tournament.interface';
 import { Member } from '../../interfaces/member.interface';
 import { ClubMember } from '../../ffb/interface/club-member.interface';
+import { PlayerEntry } from '../../ffb/interface/isolated-players.interface';
 import { FormControl, Validators, FormsModule, ReactiveFormsModule, ValidationErrors, AbstractControl, FormBuilder } from '@angular/forms';
 import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { TournamentService } from '../../services/tournament.service';
 import { InputPlayerComponent } from '../../ffb/input-licensee/input-player.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -26,6 +27,8 @@ export class TournamentComponent implements OnInit {
   tteam_tournament_id!: string;
   tournament_name = '';
   tournament_date = '';
+  isolated_player_count = 0;
+  isolatedPlayers: PlayerEntry[] = [];
   teams: RegisteredTeam[] = [];
   whoAmI: Member | null = null;
   already_subscribed = false;
@@ -45,10 +48,17 @@ export class TournamentComponent implements OnInit {
       this.tteam_tournament_id = params.get('tournament_id') || '';
       this.TournamentService.getTournamentTeams(this.tteam_tournament_id)
         .subscribe((tteams) => {
-          this.teams = tteams.items;
+          this.teams = Array.isArray(tteams.items) ? tteams.items : [];
           this.tournament_date = tteams.tournament.date;
           this.tournament_name = tteams.tournament.title;
+          this.isolated_player_count = tteams.tournament.isolatedPlayerCount || 0;
           this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
+        });
+
+      this.TournamentService.getIsolatedPlayers(this.tteam_tournament_id)
+        .subscribe({
+          next: (response) => this.applyIsolatedPlayers(response),
+          error: (error) => console.warn('[TournamentComponent] Impossible de charger les joueurs isolés', error)
         });
     });
 
@@ -103,6 +113,19 @@ export class TournamentComponent implements OnInit {
     return (player1PersonId === person_id) || (player2PersonId === person_id);
   }
 
+  i_am_isolated_player(isolatedPlayer: PlayerEntry): boolean {
+    return this.whoAmI?.person_id === isolatedPlayer.person.id;
+  }
+
+  get am_i_isolated_player(): boolean {
+    return this.isolatedPlayers.some((isolatedPlayer) => this.i_am_isolated_player(isolatedPlayer));
+  }
+
+  get canCreateIsolatedPlayer(): boolean {
+    return this.whoAmI?.firstname?.trim().toLocaleUpperCase('fr-FR') === 'DANIEL'
+      && this.whoAmI?.lastname?.trim().toLocaleUpperCase('fr-FR') === 'FERRY';
+  }
+
   // completeTeam(player: FFBPlayer) {
   //   const me = this.whoAmI?.person_id;
   //   if (me === undefined) return;
@@ -130,6 +153,34 @@ export class TournamentComponent implements OnInit {
       .catch((error) => { console.log('TeamsComponent.createTeam', error); });
   }
 
+  createIsolatedPlayer() {
+    if (!this.canCreateIsolatedPlayer) {
+      return;
+    }
+
+    const personId = this.whoAmI?.person_id;
+    if (personId === undefined || personId === null) {
+      this.toastService.showError('tournoi', 'Identifiant FFB introuvable');
+      return;
+    }
+
+    this.TournamentService.createIsolatedPlayer(this.tteam_tournament_id, personId)
+      .then(async (created) => {
+        if (!created) {
+          this.toastService.showError('tournoi', "L'inscription comme joueur isolé a été refusée");
+          return;
+        }
+
+        const response = await firstValueFrom(this.TournamentService.getIsolatedPlayers(this.tteam_tournament_id));
+        this.applyIsolatedPlayers(response);
+        this.toastService.showSuccess('tournoi', 'vous êtes inscrit(e) comme joueur isolé');
+      })
+      .catch((error) => {
+        console.error('[TournamentComponent] Impossible de rafraîchir les joueurs isolés', error);
+        this.toastService.showWarning('tournoi', "Inscription envoyée, mais la liste n'a pas pu être actualisée");
+      });
+  }
+
   deleteTeam(team: RegisteredTeam) {
     const tournamentRegistrationId = team.tournamentRegistrationId;
     if (!tournamentRegistrationId) {
@@ -149,6 +200,24 @@ export class TournamentComponent implements OnInit {
         }
       })
       .catch((error) => { console.log('TeamsComponent.deleteTeam', error); });
+  }
+
+  deleteIsolatedPlayer(isolatedPlayer: PlayerEntry) {
+    this.TournamentService.deleteIsolatedPlayer(this.tteam_tournament_id, isolatedPlayer.id)
+      .then((deleted) => {
+        if (deleted) {
+          this.isolatedPlayers = this.isolatedPlayers.filter((entry) => entry.id !== isolatedPlayer.id);
+          this.isolated_player_count = this.isolatedPlayers.length;
+          this.toastService.showSuccess('tournoi', 'vous êtes désinscrit(e) !');
+        } else {
+          this.toastService.showError('tournoi', 'la désinscription a été refusée');
+        }
+      });
+  }
+
+  private applyIsolatedPlayers(response: { items: PlayerEntry[]; pagination: { total_items: number } }) {
+    this.isolatedPlayers = response.items;
+    this.isolated_player_count = response.pagination.total_items;
   }
 
   exit() {
