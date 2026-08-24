@@ -292,6 +292,14 @@ export class StripeReconciliationComponent {
     return status;
   }
 
+  isPayoutBankReconciled(bookEntries: BookEntry[]): boolean {
+    return bookEntries.some(entry => !!entry.bank_report);
+  }
+
+  isPayoutUndoLocked(bookEntries: BookEntry[]): boolean {
+    return !this.isDevMode && this.isPayoutBankReconciled(bookEntries);
+  }
+
   async loadLines(): Promise<void> {
     this.loadingLines = true;
     try {
@@ -567,20 +575,47 @@ export class StripeReconciliationComponent {
       this.toastService.showWarning('Mode lecture seule', 'L\'annulation est désactivée lorsque Stripe production est utilisé en lecture seule.');
       return;
     }
+
+    const allBookEntries = this.bookService.get_book_entries();
+    const payoutEntries = allBookEntries.filter(e =>
+      e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
+      e.deposit_ref === pId
+    );
+    if (payoutEntries.length === 0) {
+      this.toastService.showWarning('Annulation', 'Aucune écriture de rapprochement correspondante n\'a été trouvée.');
+      return;
+    }
+    if (this.isPayoutUndoLocked(payoutEntries)) {
+      this.toastService.showWarning(
+        'Annulation impossible',
+        'Ce rapprochement est déjà pointé dans un relevé bancaire. Utilisez une écriture corrective.'
+      );
+      return;
+    }
+
+    const bankReconciledWarning = this.isPayoutBankReconciled(payoutEntries)
+      ? `\n\nATTENTION : cette écriture est pointée. Son annulation est autorisée uniquement dans cet environnement de développement.`
+      : '';
+    const confirmation = window.prompt(
+      `Cette action supprime l'écriture comptable du rapprochement et remet ses paiements en attente.\n\n` +
+      `Pour confirmer l'annulation, saisissez exactement : ${pId}${bankReconciledWarning}`
+    );
+    if (confirmation !== pId) {
+      if (confirmation !== null) {
+        this.toastService.showWarning('Annulation', 'Confirmation incorrecte : aucune donnée n\'a été modifiée.');
+      }
+      return;
+    }
+
     this.undoingPayoutId = pId;
     try {
-      const allBookEntries = this.bookService.get_book_entries();
-
       // 1. Supprimer toutes les écritures virement liées à ce payoutId (peut être > 1 si doublon)
-      const payoutEntries = allBookEntries.filter(e =>
-        e.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque &&
-        e.deposit_ref === pId
-      );
       await Promise.all(payoutEntries.map(e => this.bookService.delete_book_entry(e)));
 
       // 2. Réinitialiser deposit_ref sur les BookEntries paiement marqués avec ce payoutId
       const paymentEntries = allBookEntries.filter(e =>
-        e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte &&
+        (e.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte ||
+          e.transaction_id === TRANSACTION_ID.report_psp) &&
         e.deposit_ref === pId
       );
       await Promise.all(
