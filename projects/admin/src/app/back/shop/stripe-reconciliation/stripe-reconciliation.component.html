@@ -104,8 +104,8 @@
             <tr>
               <th>ID Payout</th>
               <th>Date écriture</th>
-              <th class="text-end">Brut / Frais / Net</th>
-              <th class="text-center">Doublons</th>
+              <th class="text-end">Brut comptabilisé / Net viré</th>
+              <th class="text-center">État</th>
               <th></th>
             </tr>
           </thead>
@@ -116,10 +116,17 @@
                 <td>{{ formatDate(rp.bookEntries[0].date) }}</td>
                 <td class="text-end small">
                   @for (be of rp.bookEntries; track be.id) {
+                    @let grossCents = (be.amounts['stripe_out'] || 0) * 100;
+                    @let netCents = (be.amounts['bank_in'] || 0) * 100;
                     <div>
-                      <span class="text-muted">brut {{ formatAmount((be.amounts['stripe_out'] || 0) * 100) }}</span>
-                      / net <strong>{{ formatAmount((be.amounts['bank_in'] || 0) * 100) }}</strong>
+                      <span class="text-muted">brut après remboursements {{ formatAmount(grossCents) }}</span>
+                      / net viré <strong>{{ formatAmount(netCents) }}</strong>
                     </div>
+                    @if (netCents > grossCents) {
+                      <div class="text-info">
+                        <i class="bi bi-info-circle me-1"></i>Le payout peut encore inclure l'encaissement initial d'un paiement remboursé.
+                      </div>
+                    }
                   }
                 </td>
                 <td class="text-center">
