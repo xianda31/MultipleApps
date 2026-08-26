@@ -119,12 +119,12 @@
                     @let grossCents = (be.amounts['stripe_out'] || 0) * 100;
                     @let netCents = (be.amounts['bank_in'] || 0) * 100;
                     <div>
-                      <span class="text-muted">brut après remboursements {{ formatAmount(grossCents) }}</span>
+                      <span class="text-muted">brut encaissé {{ formatAmount(grossCents) }}</span>
                       / net viré <strong>{{ formatAmount(netCents) }}</strong>
                     </div>
                     @if (netCents > grossCents) {
                       <div class="text-info">
-                        <i class="bi bi-info-circle me-1"></i>Le payout peut encore inclure l'encaissement initial d'un paiement remboursé.
+                        <i class="bi bi-info-circle me-1"></i>net pouvant inclure un paiement remboursé.
                       </div>
                     }
                   }
@@ -318,9 +318,9 @@
                    (change)="toggleAll($any($event.target).checked)">
           </th>
           <th>Date</th>
-          <th>Acheteur</th>
+          <th>Porteur carte</th>
           <th>Panier</th>
-          <th class="text-end">Montant</th>
+          <th class="text-end ps-2">Montant</th>
           <th>Tag Stripe</th>
         </tr>
       </thead>
@@ -345,7 +345,7 @@
                 <span class="badge bg-warning text-dark ms-1"><i class="bi bi-arrow-counterclockwise me-1"></i>remboursé Stripe</span>
               }
             </td>
-            <td class="text-end fw-semibold" [class.text-decoration-line-through]="$any(line).isRefunded">
+            <td class="text-end fw-semibold ps-2" [class.text-decoration-line-through]="$any(line).isRefunded">
               @if (line.bookEntry) {
                 <span class="d-inline-block" style="cursor: help"
                       [ngbTooltip]="paymentOperationsTooltip(line.bookEntry)"
