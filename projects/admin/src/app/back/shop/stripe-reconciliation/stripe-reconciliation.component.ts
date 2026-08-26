@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DBhandler } from '../../../common/services/graphQL.service';
 import { BookService } from '../../services/book.service';
 import { MembersService } from '../../../common/services/members.service';
@@ -80,7 +81,7 @@ interface WebhookHealth {
 @Component({
   selector: 'app-stripe-reconciliation',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgbTooltipModule],
   templateUrl: './stripe-reconciliation.component.html',
 })
 export class StripeReconciliationComponent {
@@ -356,13 +357,15 @@ export class StripeReconciliationComponent {
           ? member.lastname + ' ' + member.firstname
           : be.operations.find(op => op.member)?.member || be.tag || '(inconnu)';
 
-        const details = be.operations
-          .filter(op => op.member)
-          .map(op => op.label)
-          .join(', ') || this.formatAmount(grossCents);
+        const details = [...new Set(
+          be.operations
+            .filter(op => op.member)
+            .map(op => op.label.replace(/^vendu par\s+/i, '').trim())
+            .filter(Boolean)
+        )].join(', ') || this.formatAmount(grossCents);
 
         const paymentChannel = st?.source === 'terminal' ? 'vente par TPE' : 'vente en ligne';
-        const normalizedDetails = st?.source === 'terminal' ? '' : details.replace(/^vendu par\s+/i, '').trim();
+        const normalizedDetails = st?.source === 'terminal' ? '' : details;
         const isRedundantDetails =
           (paymentChannel === 'vente en ligne' && normalizedDetails.toLowerCase() === 'en ligne') ||
           (paymentChannel === 'vente par TPE' && normalizedDetails.toLowerCase() === 'tpe');
@@ -746,6 +749,17 @@ export class StripeReconciliationComponent {
 
   formatAmount(cents: number): string {
     return (cents / 100).toFixed(2) + ' €';
+  }
+
+  paymentOperationsTooltip(bookEntry: BookEntry): string {
+    return bookEntry.operations
+      .map(operation => {
+        const values = Object.entries(operation.values)
+          .map(([account, value]) => `${account} = ${value}`)
+          .join(', ');
+        return `${operation.member || operation.label} : ${values}`;
+      })
+      .join('\n');
   }
 
   totalRefundsReducer = (sum: number, r: StripeRefundItem) => sum + (-r.amountCents);

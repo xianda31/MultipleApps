@@ -346,7 +346,15 @@
               }
             </td>
             <td class="text-end fw-semibold" [class.text-decoration-line-through]="$any(line).isRefunded">
-              {{ formatAmount(line.grossCents) }}
+              @if (line.bookEntry) {
+                <span class="d-inline-block" style="cursor: help"
+                      [ngbTooltip]="paymentOperationsTooltip(line.bookEntry)"
+                      placement="start" container="body">
+                  {{ formatAmount(line.grossCents) }}
+                </span>
+              } @else {
+                {{ formatAmount(line.grossCents) }}
+              }
             </td>
             <td><small class="font-monospace text-muted">{{ line.bookEntry?.stripeTag }}</small></td>
           </tr>
