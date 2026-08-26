@@ -134,6 +134,12 @@ export class StripeReconciliationComponent {
   lookingUp = false;
   processingPayout = false;
   isManualPayout = false;
+  manualEntryMode = false;
+
+  get selectedPayout(): StripePayout | null {
+    if (this.manualEntryMode) return null;
+    return this.availablePayouts.find(payout => payout.id === this.payoutId) || null;
+  }
 
   // Données de cohérence issues du lookup automatique
   expectedGrossCents = 0;    // brut total attendu (depuis Stripe, payout auto uniquement)
@@ -245,6 +251,7 @@ export class StripeReconciliationComponent {
   }
 
   async selectPayout(payout: StripePayout): Promise<void> {
+    this.manualEntryMode = false;
     this.payoutId = payout.id;
     this.payoutDate = payout.arrivalDate;
     this.netBancaire = payout.amountCents / 100;
@@ -261,6 +268,7 @@ export class StripeReconciliationComponent {
     this.availablePayouts = [];
     this.payoutsError = null;
     this.payoutId = '';
+    this.manualEntryMode = false;
     this.netBancaire = null;
     this.expectedGrossCents = 0;
     this.expectedChargeCount = 0;
@@ -268,6 +276,27 @@ export class StripeReconciliationComponent {
     this.stripeRefunds = [];
     this.lines.forEach(l => l.selected = false);
     await Promise.all([this.loadWebhookHealth(), this.loadStripePayouts()]);
+  }
+
+  startManualReconciliation(): void {
+    this.manualEntryMode = true;
+    this.payoutId = '';
+    this.payoutDate = new Date().toISOString().slice(0, 10);
+    this.netBancaire = null;
+    this.expectedGrossCents = 0;
+    this.expectedChargeCount = 0;
+    this.missingBookEntryProposals = [];
+    this.stripeRefunds = [];
+    this.isManualPayout = true;
+    this.lines.forEach(line => line.selected = false);
+  }
+
+  cancelManualReconciliation(): void {
+    this.manualEntryMode = false;
+    this.payoutId = '';
+    this.netBancaire = null;
+    this.isManualPayout = false;
+    this.lines.forEach(line => line.selected = false);
   }
 
   private findMatchingLineForCharge(charge: { bookEntryId?: string | null; stripeTag?: string | null }): PayoutLine | null {
@@ -711,8 +740,8 @@ export class StripeReconciliationComponent {
           .map(l => this.dbHandler.updateStripeTransactionPayout(l.stripeTransaction.id, pId, reconciledAt))
       );
 
-      this.toastService.showSuccess('Payout',
-        `Écriture créée — ${snapshotCount} paiement(s) réconcilié(s) ` +
+      this.toastService.showSuccess('Rapprochement Stripe',
+        `Payout rapproché — ${snapshotCount} paiement(s) comptabilisé(s) ` +
         `(brut net de remboursements: ${this.formatAmount(snapshotGrossAfterRefunds)}, ` +
         `frais: ${this.formatAmount(snapshotFees)}, ` +
         `net: ${this.formatAmount(snapshotNet)})`);
@@ -724,10 +753,11 @@ export class StripeReconciliationComponent {
       this.expectedGrossCents = 0;
       this.expectedChargeCount = 0;
       this.isManualPayout = false;
+      this.manualEntryMode = false;
       await this.loadLines();
     } catch (error: any) {
       console.error('Erreur création payout:', error);
-      this.toastService.showError('Payout', 'Erreur lors de la création de l\'écriture');
+      this.toastService.showError('Rapprochement Stripe', 'Erreur lors de la comptabilisation du payout');
     } finally {
       this.processingPayout = false;
     }

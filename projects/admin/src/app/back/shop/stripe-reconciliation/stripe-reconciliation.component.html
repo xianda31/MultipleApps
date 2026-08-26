@@ -223,6 +223,113 @@
     </div>
   </div>
 
+  @if (!payoutId && !manualEntryMode) {
+    <div class="border border-secondary-subtle py-3 px-3 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <div class="fw-semibold">Sélectionnez un virement Stripe à rapprocher</div>
+        <small class="text-muted">Ses paiements, frais et remboursements seront identifiés automatiquement.</small>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="startManualReconciliation()">
+        Rapprochement manuel exceptionnel
+      </button>
+    </div>
+  }
+
+  @if (selectedPayout; as payout) {
+    <div class="card border-primary mb-3">
+      <div class="card-header bg-primary text-white d-flex flex-wrap align-items-center gap-2">
+        <span class="fw-semibold">Rapprochement du payout</span>
+        <span class="font-monospace small opacity-75">{{ payout.id }}</span>
+        <span class="badge bg-light text-dark ms-auto">{{ payoutStatusLabel(payout.status) }}</span>
+      </div>
+      <div class="card-body">
+        @if (lookingUp) {
+          <div class="d-flex align-items-center gap-2 py-2">
+            <span class="spinner-border spinner-border-sm text-primary"></span>
+            <span class="text-muted">Identification des paiements du payout…</span>
+          </div>
+        } @else {
+          <div class="row g-3 align-items-end">
+            <div class="col-6 col-lg">
+              <small class="d-block text-muted">Date du virement</small>
+              <strong>{{ formatDate(payoutDate) }}</strong>
+            </div>
+            <div class="col-6 col-lg">
+              <small class="d-block text-muted">Paiements Stripe</small>
+              <strong>{{ expectedChargeCount }}</strong>
+            </div>
+            <div class="col-6 col-lg">
+              <small class="d-block text-muted">Brut sélectionné</small>
+              <strong>{{ formatAmount(selectedGrossCents) }}</strong>
+            </div>
+            <div class="col-6 col-lg">
+              <small class="d-block text-muted">Remboursements</small>
+              <strong>{{ formatAmount(totalRefundsAbsCents) }}</strong>
+            </div>
+            <div class="col-6 col-lg">
+              <small class="d-block text-muted">Frais Stripe</small>
+              <strong>{{ formatAmount(impliedFeesCents) }}</strong>
+            </div>
+            <div class="col-6 col-lg">
+              <small class="d-block text-muted">Net bancaire</small>
+              <strong>{{ formatAmount((netBancaire || 0) * 100) }}</strong>
+            </div>
+          </div>
+
+          @if (coherenceWarning) {
+            <div class="alert alert-warning py-2 small mt-3 mb-0">
+              <i class="bi bi-exclamation-triangle me-1"></i>{{ coherenceWarning }}
+            </div>
+          } @else if (missingBookEntryProposals.length > 0) {
+            <div class="alert alert-warning py-2 small mt-3 mb-0">
+              <i class="bi bi-journal-x me-1"></i>
+              {{ missingBookEntryProposals.length }} paiement(s) Stripe sans écriture comptable locale.
+            </div>
+          } @else if (selectionCoherent) {
+            <div class="alert alert-success py-2 small mt-3 mb-0">
+              <i class="bi bi-check-circle-fill me-1"></i>
+              Tout correspond, le rapprochement peut être validé.
+            </div>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  @if (manualEntryMode) {
+    <div class="border border-warning p-3 mb-3">
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+        <div>
+          <div class="fw-semibold">Rapprochement manuel exceptionnel</div>
+          <small class="text-muted">À utiliser uniquement lorsqu’un payout ne peut pas être chargé depuis Stripe.</small>
+        </div>
+        <button type="button" class="btn-close" aria-label="Fermer" (click)="cancelManualReconciliation()"></button>
+      </div>
+      <div class="row g-2">
+        <div class="col-lg">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Payout</span>
+            <input type="text" class="form-control font-monospace" placeholder="po_…" [(ngModel)]="payoutId">
+            <button class="btn btn-outline-primary" (click)="lookupPayout()" [disabled]="lookingUp || !payoutId.trim()">
+              @if (lookingUp) { <span class="spinner-border spinner-border-sm"></span> }
+              @else { <i class="bi bi-search"></i> }
+            </button>
+          </div>
+        </div>
+        <div class="col-sm-auto">
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="payoutDate" aria-label="Date du virement">
+        </div>
+        <div class="col-sm-4 col-lg-3">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Net</span>
+            <input type="number" class="form-control" step="0.01" min="0" [(ngModel)]="netBancaire">
+            <span class="input-group-text">€</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Section 1ter: Paiements orphelins (deposit_ref sans écriture virement) -->
   @if (orphanedPayments.length > 0) {
     <div class="alert alert-warning d-flex align-items-center gap-3 mb-3">
@@ -294,7 +401,7 @@
   }
 
   <!-- Section 2: Paiements en attente de réconciliation -->
-  <h6 class="fw-semibold mt-3">Paiements carte à réconcilier</h6>
+  <h6 class="fw-semibold mt-3">{{ payoutId ? 'Paiements associés au rapprochement' : 'Paiements carte à réconcilier' }}</h6>
   @if (loadingLines) {
     <div class="d-flex align-items-center gap-2 my-3">
       <div class="spinner-border spinner-border-sm" role="status"></div>
@@ -303,9 +410,24 @@
   }
 
   @if (!loadingLines && lines.length === 0) {
-    <div class="alert alert-success">
-      <i class="bi bi-check-circle"></i> Tous les paiements carte sont réconciliés avec un payout.
-    </div>
+    @if (payoutId && missingBookEntryProposals.length > 0) {
+      <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        Aucun paiement comptable local ne correspond entièrement à ce payout. Consultez les anomalies détectées.
+      </div>
+    } @else if (payoutId) {
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-1"></i>Aucun paiement comptable en attente ne correspond à ce payout.
+      </div>
+    } @else if (filteredPayouts.length === 0) {
+      <div class="alert alert-success">
+        <i class="bi bi-check-circle me-1"></i>Tous les virements et paiements Stripe sont rapprochés.
+      </div>
+    } @else {
+      <div class="border border-secondary-subtle p-3 text-muted">
+        Aucun paiement comptable local en attente. Sélectionnez un virement Stripe pour vérifier son contenu.
+      </div>
+    }
   }
 
   @if (!loadingLines && lines.length > 0) {
@@ -315,6 +437,7 @@
           <th style="width:36px">
             <input type="checkbox" class="form-check-input"
                    [checked]="allSelected"
+                   [disabled]="!payoutId"
                    (change)="toggleAll($any($event.target).checked)">
           </th>
           <th>Date</th>
@@ -329,7 +452,7 @@
           <tr [class.table-primary]="line.selected && !$any(line).isRefunded"
               [class.table-warning]="$any(line).isRefunded">
             <td>
-              <input type="checkbox" class="form-check-input" [(ngModel)]="line.selected">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="line.selected" [disabled]="!payoutId">
             </td>
             <td>
               @if (line.bookEntry) {
@@ -372,78 +495,14 @@
     </table>
   }
 
-  <!-- Section 3: Formulaire de validation du payout -->
-  @if (!loadingLines) {
+  <!-- Section 3: Validation comptable du rapprochement -->
+  @if (!loadingLines && payoutId) {
     <div class="card border-primary mt-3" >
-      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <span>{{ isProductionReadOnlyMode ? 'Diagnostic payout Stripe (lecture seule)' : 'Créer l\'écriture de virement Stripe' }}</span>
-        <button class="btn btn-sm btn-outline-light ms-auto" (click)="loadLines()" [disabled]="loadingLines">
-          <i class="bi bi-arrow-clockwise"></i>
-        </button>
-      </div>
       <div class="card-body">
-
-        <!-- Ligne 1 : payout ID + date -->
-        <div class="row g-2 mb-2">
-          <div class="col">
-            <div class="input-group input-group-sm">
-              <input type="text" class="form-control font-monospace"
-                     placeholder="po_…" [(ngModel)]="payoutId">
-              <button class="btn btn-outline-primary" (click)="lookupPayout()"
-                      [disabled]="lookingUp || !payoutId.trim()">
-                @if (lookingUp) {
-                  <span class="spinner-border spinner-border-sm"></span>
-                } @else {
-                  <i class="bi bi-search"></i>
-                }
-              </button>
-            </div>
-          </div>
-          <div class="col-auto">
-            <input type="date" class="form-control form-control-sm" [(ngModel)]="payoutDate">
-          </div>
-        </div>
-
         @if (isManualPayout) {
           <div class="alert alert-warning py-2 small mb-2">
             <i class="bi bi-info-circle me-1"></i>
             Identification Stripe indisponible — vérifiez la sélection et le montant net, puis validez.
-          </div>
-        }
-
-        <!-- Ligne 2 : net bancaire (pré-rempli) + frais implicites -->
-        <div class="input-group input-group-sm mb-2">
-          <span class="input-group-text text-muted">Net Stripe</span>
-          <input type="number" class="form-control" step="0.01" min="0"
-                 placeholder="montant net viré" [(ngModel)]="netBancaire">
-          <span class="input-group-text">€</span>
-          @if (netBancaire !== null && selectedGrossCents > 0) {
-            @let impliedFees = impliedFeesCents;
-            @if (impliedFees > 0) {
-              <span class="input-group-text text-muted small">
-                frais Stripe : <strong class="ms-1">{{ formatAmount(impliedFees) }}</strong>
-              </span>
-            } @else if (impliedFees === 0) {
-              <span class="input-group-text text-success"><i class="bi bi-check-circle-fill"></i></span>
-            } @else {
-              <span class="input-group-text text-warning small"><i class="bi bi-exclamation-triangle me-1"></i>net &gt; brut</span>
-            }
-          }
-        </div>
-
-        <!-- Info cohérence payout automatique -->
-        @if (!isManualPayout && expectedGrossCents > 0) {
-          <div class="d-flex gap-3 text-muted small mb-2 px-1">
-            <span>Stripe : <strong>{{ expectedChargeCount }} paiement(s)</strong></span>
-            <span>brut attendu : <strong>{{ formatAmount(expectedGrossCents) }}</strong></span>
-            <span>sélectionnés : <strong [class.text-success]="selectionCoherent" [class.text-danger]="!selectionCoherent && selectedLines.length > 0">{{ formatAmount(selectedGrossCents) }}</strong></span>
-          </div>
-        }
-
-        <!-- Alerte cohérence -->
-        @if (coherenceWarning) {
-          <div class="alert alert-warning py-2 small mb-2">
-            <i class="bi bi-exclamation-triangle me-1"></i>{{ coherenceWarning }}
           </div>
         }
 
@@ -488,7 +547,18 @@
           </div>
         }
 
-        <!-- Bouton valider -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+          <div>
+            <div class="fw-semibold">{{ selectedLines.length }} paiement(s) · {{ formatAmount((netBancaire || 0) * 100) }} net</div>
+            <small class="text-muted">Une écriture de transfert Stripe vers banque sera générée automatiquement.</small>
+          </div>
+          @if (selectionCoherent) {
+            <span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>Prêt à rapprocher</span>
+          } @else {
+            <span class="text-warning small"><i class="bi bi-exclamation-triangle me-1"></i>Vérification requise</span>
+          }
+        </div>
+
         <button class="btn w-100 mt-1"
                 [class.btn-primary]="selectionCoherent && !isProductionReadOnlyMode"
                 [class.btn-outline-secondary]="!selectionCoherent"
@@ -497,8 +567,8 @@
           @if (processingPayout) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
-          {{ isProductionReadOnlyMode ? 'Écriture désactivée en lecture seule' : 'Valider — ' + selectedLines.length + ' paiement(s)' }}
-          @if (netBancaire) { ({{ formatAmount((netBancaire * 100)) }} net) }
+          {{ isProductionReadOnlyMode ? 'Rapprochement désactivé en lecture seule' : 'Comptabiliser et rapprocher ' + selectedLines.length + ' paiement(s)' }}
+          @if (netBancaire) { · {{ formatAmount((netBancaire * 100)) }} }
         </button>
       </div>
     </div>
