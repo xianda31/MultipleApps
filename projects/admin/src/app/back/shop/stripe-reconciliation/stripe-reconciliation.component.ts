@@ -83,6 +83,7 @@ interface WebhookHealth {
   standalone: true,
   imports: [CommonModule, FormsModule, NgbTooltipModule],
   templateUrl: './stripe-reconciliation.component.html',
+  styleUrl: './stripe-reconciliation.component.scss',
 })
 export class StripeReconciliationComponent {
   stripeSource: 'test' | 'live' = 'test';

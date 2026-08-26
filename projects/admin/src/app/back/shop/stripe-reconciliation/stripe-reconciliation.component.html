@@ -32,29 +32,33 @@
   }
 
   <!-- Section 0: Santé webhook Stripe -->
-  <div class="card border-0 bg-light mb-3">
-    <div class="card-body py-2">
+  <div class="reconciliation-section mb-3">
+    <div class="p-0">
       @if (loadingWebhookHealth) {
-        <div class="d-flex align-items-center gap-2 small">
+        <div class="reconciliation-section-title d-flex align-items-center gap-2">
           <div class="spinner-border spinner-border-sm" role="status"></div>
-          <span class="text-muted">Webhooks : chargement…</span>
+          <span>Santé Stripe · 7 jours</span>
+          <small class="text-muted fw-normal">chargement…</small>
         </div>
       } @else if (webhookHealthError) {
-        <div class="small text-warning">
-          <i class="bi bi-exclamation-triangle me-1"></i>{{ webhookHealthError }}
+        <div class="reconciliation-section-title d-flex align-items-center gap-2">
+          <span>Santé Stripe · 7 jours</span>
+          <small class="text-warning fw-normal">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ webhookHealthError }}
+          </small>
         </div>
       } @else if (webhookHealth) {
         @if (webhookHealth.paymentAttempts; as paymentAttempts) {
           <details>
-            <summary class="small text-muted" style="cursor: pointer; user-select: none;">
-              <span class="fw-semibold text-body me-3">Webhooks · 7 j</span>
+            <summary class="reconciliation-section-title">
+              <span class="me-3">Santé Stripe · 7 jours</span>
               @if (webhookHealth.paymentSummary; as summary) {
-                <span class="me-3">OK <strong class="text-success">{{ summary.succeeded }}</strong></span>
-                <span class="me-3">Incomp. <strong class="text-info">{{ summary.incomplete }}</strong></span>
-                <span class="me-3">Annul. <strong>{{ summary.canceled }}</strong></span>
-                <span class="me-3">Remb. <strong class="text-primary">{{ summary.refunded }}</strong></span>
+                <small class="fw-normal text-muted me-3">OK <strong class="text-success">{{ summary.succeeded }}</strong></small>
+                <small class="fw-normal text-muted me-3">Incomp. <strong class="text-info">{{ summary.incomplete }}</strong></small>
+                <small class="fw-normal text-muted me-3">Annul. <strong>{{ summary.canceled }}</strong></small>
+                <small class="fw-normal text-muted me-3">Remb. <strong class="text-primary">{{ summary.refunded }}</strong></small>
               }
-              <span>Transactions ({{ paymentAttempts.length }})</span>
+              <small class="fw-normal text-muted">Transactions ({{ paymentAttempts.length }})</small>
             </summary>
             <div class="table-responsive mt-2">
               <table class="table table-sm mb-0">
@@ -94,8 +98,8 @@
 
   <!-- Section 1bis: Rapprochements existants (annulation possible) -->
   @if (reconciledPayouts.length > 0) {
-    <details class="border-bottom mb-3 ms-3">
-      <summary class="small text-muted py-2">
+    <details class="reconciliation-section mb-3">
+      <summary class="reconciliation-section-title">
         Historique derniers rapprochements ({{ reconciledPayouts.length }})
       </summary>
       <div class="table-responsive">
@@ -158,8 +162,8 @@
   }
 
   <!-- Section 1: Virements Stripe disponibles -->
-  <div class="card border-0 bg-light mt-2 mb-3">
-    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+  <div class="reconciliation-section mt-2 mb-3">
+    <div class="reconciliation-section-title d-flex justify-content-between align-items-center">
       <span class="fw-semibold">Virements Stripe (30 derniers jours)</span>
       <small class="text-muted ms-2 fw-normal fst-italic">Cliquez sur une ligne pour sélectionner les paiements</small>
       <button class="btn btn-sm btn-outline-secondary" (click)="loadStripePayouts()" [disabled]="loadingPayouts">
@@ -401,7 +405,7 @@
   }
 
   <!-- Section 2: Paiements en attente de réconciliation -->
-  <h6 class="fw-semibold mt-3">{{ payoutId ? 'Paiements associés au rapprochement' : 'Paiements carte à réconcilier' }}</h6>
+  <h6 class="reconciliation-section-title payments-section-title mt-3 mb-0">{{ payoutId ? 'Paiements associés au rapprochement' : 'Paiements carte à réconcilier' }}</h6>
   @if (loadingLines) {
     <div class="d-flex align-items-center gap-2 my-3">
       <div class="spinner-border spinner-border-sm" role="status"></div>
