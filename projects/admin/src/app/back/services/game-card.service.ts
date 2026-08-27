@@ -7,7 +7,21 @@ import { MembersService } from '../../common/services/members.service';
 import { DBhandler } from '../../common/services/graphQL.service';
 import { MailingService } from '../mailing/mailing.service';
 import { environment } from '../../../environments/environment';
+import { determineGameCardNotification, GameCardNotification } from './game-card-notification.util';
 
+export type GameCardNotificationDelivery = 'email' | 'debug' | null;
+
+export interface GameCardDebitResult {
+  debitedCards: GameCard[];
+  exhaustedCards: GameCard[];
+  remainingCards: GameCard[];
+  creditBefore: number;
+  creditAfter: number;
+  effectiveCreditBefore: number;
+  effectiveCreditAfter: number;
+  notification: GameCardNotification;
+  notificationDelivery: GameCardNotificationDelivery;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -129,82 +143,134 @@ export class GameCardService {
 
 
 
-  async stamp_member_card(member: Member, stamp_date: string, double: boolean): Promise<boolean> {
+  async stamp_member_card(member: Member, stamp_date: string, double: boolean): Promise<GameCardDebitResult> {
     const normalizedStampDate = this.normalizeStampDate(stamp_date);
+    const memberCardsBefore = this.memberCards(member.license_number).map(card => ({
+      ...card,
+      stamps: [...card.stamps],
+    }));
+    const creditBefore = this.totalCredits(memberCardsBefore);
+    const effectiveCreditBefore = this.effectiveCredits(memberCardsBefore);
+    const debitedCards = new Map<string, GameCard>();
+    const stampsRequired = double ? 2 : 1;
 
-    let cards = this._gameCards.filter(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
-    if (cards.length === 0) {
-      this.toastService.showError('Gestion des cartes', `Aucune carte de tournoi trouvée pour ${member.firstname} ${member.lastname}`);
-      throw new Error(`No game card credit available for ${member.license_number}`);
-    }
-    cards = cards.sort((a, b) => ((a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length)));
-
-    // Calculate credit before stamping
-    const creditBefore = this._gameCards
-      .filter(c => c.owners.some(owner => owner.license_number === member.license_number))
-      .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
-
-    cards[0].stamps.push(normalizedStampDate);
-    await this.updateCard(cards[0]);
-
-    if (double) { // add a second stamp if double
-      // Re-query _gameCards after the first stamp: the first stamp may have filled cards[0],
-      // causing cards.shift() on the stale array to leave cards[0] undefined and crash the loop.
-      const doubleCards = this._gameCards
-        .filter(c => c.owners.some(owner => owner.license_number === member.license_number) && c.stamps.length < c.initial_qty)
-        .sort((a, b) => (a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length));
-      if (doubleCards.length === 0) {
-        this.toastService.showError('Gestion des cartes', `Aucune carte disponible pour le 2ème tampon de ${member.firstname} ${member.lastname}`);
-        throw new Error(`Second game card credit unavailable for ${member.license_number}`);
-      } else {
-        doubleCards[0].stamps.push(normalizedStampDate);
-        await this.updateCard(doubleCards[0]);
+    for (let stampIndex = 0; stampIndex < stampsRequired; stampIndex++) {
+      const availableCards = this.memberCards(member.license_number)
+        .filter(card => card.stamps.length < card.initial_qty)
+        .sort((left, right) => this.remainingCredits(left) - this.remainingCredits(right));
+      const card = availableCards[0];
+      if (!card) {
+        const label = stampIndex === 0 ? 'Aucune carte de tournoi trouvée' : 'Aucune carte disponible pour le 2ème tampon';
+        this.toastService.showError('Gestion des cartes', `${label} pour ${member.firstname} ${member.lastname}`);
+        throw new Error(`Game card credit ${stampIndex + 1}/${stampsRequired} unavailable for ${member.license_number}`);
       }
+
+      const updatedCard = await this.updateCard({
+        ...card,
+        stamps: [...card.stamps, normalizedStampDate],
+      });
+      debitedCards.set(updatedCard.id, updatedCard);
     }
 
-    // Calculate credit after stamping
-    const creditAfter = this._gameCards
-      .filter(c => c.owners.some(owner => owner.license_number === member.license_number))
-      .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
+    const memberCardsAfter = this.memberCards(member.license_number);
+    const creditAfter = this.totalCredits(memberCardsAfter);
+    const effectiveCreditAfter = this.effectiveCredits(memberCardsAfter);
+    const exhaustedCards = Array.from(debitedCards.values()).filter(card => this.remainingCredits(card) === 0);
+    const remainingCards = memberCardsAfter.filter(card => this.remainingCredits(card) > 0);
+    const notification = determineGameCardNotification(
+      exhaustedCards.length,
+      creditAfter,
+      effectiveCreditBefore,
+      effectiveCreditAfter,
+      this.LOW_CREDIT_THRESHOLD,
+    );
 
-    // Return true if credit crossed below threshold
-    // For shared cards, use a higher threshold since each owner will likely stamp
-    const threshold = cards[0].owners.length > 1
-      ? this.LOW_CREDIT_THRESHOLD * cards[0].owners.length
-      : this.LOW_CREDIT_THRESHOLD;
-
-    const low_credit = creditBefore > threshold && creditAfter <= threshold;
-    if (low_credit) {
-      this.low_credit_message(cards[0]);
-    }
-    return low_credit;
+    const result: GameCardDebitResult = {
+      debitedCards: Array.from(debitedCards.values()),
+      exhaustedCards,
+      remainingCards,
+      creditBefore,
+      creditAfter,
+      effectiveCreditBefore,
+      effectiveCreditAfter,
+      notification,
+      notificationDelivery: null,
+    };
+    result.notificationDelivery = this.notifyCardDebit(member, result);
+    return result;
   }
 
+  private memberCards(memberLicense: string): GameCard[] {
+    return this._gameCards.filter(card =>
+      card.owners.some(owner => owner.license_number === memberLicense),
+    );
+  }
 
-  low_credit_message(card: GameCard): void {
+  private remainingCredits(card: GameCard): number {
+    return card.initial_qty - card.stamps.length;
+  }
 
-    if (!environment.low_game_card_message ) return; // feature toggle
-    
-    const emails = card.owners.map(owner => owner.email).filter(email => email);
-    const cardHtml = this.buildCardHtml(card);
-    
-    this.mailingService.sendEmail({
-      to: emails,
-      subject: 'Votre carte de droits de table est presque vide - Pensez à recharger !',
-      bodyHtml: `
-        <p>Cher ${card.owners.map(owner => owner.firstname).join(', ')},</p>
-        
-        <p>Le nombre de droits de tables restant sur ta carte de droits de table est bas :</p>
-        <p>Merci de penser à la recharger pour continuer à participer aux tournois.</p>
-        
-        <p>A très bientôt,<br>Le comité du club de bridge</p>
-        
-        ${cardHtml}
+  private totalCredits(cards: GameCard[]): number {
+    return cards.reduce((total, card) => total + this.remainingCredits(card), 0);
+  }
 
-      `
-    }).catch(error => {
-      console.error('Error sending low credit email:', error);
+  private effectiveCredits(cards: GameCard[]): number {
+    return cards.reduce(
+      (total, card) => total + this.remainingCredits(card) / Math.max(card.owners.length, 1),
+      0,
+    );
+  }
+
+  private notifyCardDebit(member: Member, result: GameCardDebitResult): GameCardNotificationDelivery {
+    if (result.notification === 'none') return null;
+
+    const cards = [...result.exhaustedCards, ...result.remainingCards]
+      .filter((card, index, all) => all.findIndex(candidate => candidate.id === card.id) === index);
+    const recipients = Array.from(new Set(
+      cards.flatMap(card => card.owners.map(owner => owner.email)).filter((email): email is string => !!email),
+    ));
+    const subject = result.notification === 'all-exhausted'
+      ? 'Votre carte de droits de table est épuisée'
+      : result.notification === 'card-exhausted'
+        ? 'Une de vos cartes de droits de table est épuisée'
+        : 'Votre crédit de droits de table est presque épuisé';
+    const statusMessage = result.notification === 'all-exhausted'
+      ? 'Toutes les cartes disponibles sont épuisées. Une recharge est nécessaire avant un prochain paiement par carte.'
+      : result.notification === 'card-exhausted'
+        ? 'Une carte vient d’être épuisée. Une autre carte reste disponible : aucune recharge immédiate n’est nécessaire.'
+        : 'Le crédit total disponible est maintenant faible. Pensez à recharger prochainement.';
+    const cardsHtml = cards.map(card => this.buildCardHtml(card)).join('');
+    const bodyHtml = `
+      <p>Bonjour ${member.firstname},</p>
+      <p>${statusMessage}</p>
+      <p><strong>Crédit total restant :</strong> ${result.creditAfter}</p>
+      <p><strong>Crédit effectif par titulaire :</strong> ${result.effectiveCreditAfter}</p>
+      ${cardsHtml}
+      <p>A très bientôt,<br>Le comité du club de bridge</p>
+    `;
+
+    if (!environment.low_game_card_message) {
+      console.groupCollapsed(`[GameCard email debug] ${subject}`);
+      console.info({
+        recipients,
+        subject,
+        notification: result.notification,
+        creditBefore: result.creditBefore,
+        creditAfter: result.creditAfter,
+        effectiveCreditBefore: result.effectiveCreditBefore,
+        effectiveCreditAfter: result.effectiveCreditAfter,
+        exhaustedCardIds: result.exhaustedCards.map(card => card.id),
+        remainingCardIds: result.remainingCards.map(card => card.id),
+      });
+      console.debug(bodyHtml);
+      console.groupEnd();
+      return 'debug';
+    }
+
+    this.mailingService.sendEmail({ to: recipients, subject, bodyHtml }).catch(error => {
+      console.error('Error sending game card notification email:', error);
     });
+    return 'email';
   }
 
   private buildCardHtml(card: GameCard): string {

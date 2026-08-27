@@ -7,7 +7,7 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { club_tournament_extended, FEE_RATE, Game, GameCheckIn, GameCheckInMode, GameCheckInSource, GameFeeConfiguration, Game_status, Gamer } from '../fees.interface';
 import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
 import { BookService } from '../../services/book.service';
-import { GameCardService } from '../../services/game-card.service';
+import { GameCardDebitResult, GameCardService } from '../../services/game-card.service';
 import { Fee_rate, SystemConfiguration } from '../../../common/interfaces/system-conf.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { MembersService } from '../../../common/services/members.service';
@@ -783,9 +783,13 @@ export class FeesCollectorService {
     });
   }
 
-  private low_credit_message(member: Member) {
+  private card_notification_message(member: Member, result: GameCardDebitResult) {
+    if (!result.notificationDelivery) return;
     const fullname = this.membersService.full_name(member);
-    this.toastService.showInfo('Crédit faible', `un mail a été envoyé à ${fullname} `);
+    const message = result.notificationDelivery === 'email'
+      ? `un mail a été envoyé à ${fullname}`
+      : `le mail destiné à ${fullname} est visible dans la console du navigateur`;
+    this.toastService.showInfo('Notification carte', message);
   }
 
   euros_collected(): number {
@@ -861,10 +865,8 @@ export class FeesCollectorService {
         if (!gamer.in_euro) {
           let member = this.members.find((member) => member.license_number === gamer.license);
           if (member) {
-            const low_credit = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
-            if (low_credit) {
-              this.low_credit_message(member);
-            }
+            const debitResult = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
+            this.card_notification_message(member, debitResult);
           } else {
             throw new Error(`Member not found for license ${gamer.license}`);
           }
