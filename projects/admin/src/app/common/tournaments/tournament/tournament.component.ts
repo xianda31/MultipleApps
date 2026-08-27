@@ -51,7 +51,6 @@ export class TournamentComponent implements OnInit {
           this.teams = Array.isArray(tteams.items) ? tteams.items : [];
           this.tournament_date = tteams.tournament.date;
           this.tournament_name = tteams.tournament.title;
-          this.isolated_player_count = tteams.tournament.isolatedPlayerCount || 0;
           this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
         });
 
@@ -216,8 +215,11 @@ export class TournamentComponent implements OnInit {
   }
 
   private applyIsolatedPlayers(response: { items: PlayerEntry[]; pagination: { total_items: number } }) {
-    this.isolatedPlayers = response.items;
-    this.isolated_player_count = response.pagination.total_items;
+    this.isolatedPlayers = Array.isArray(response.items) ? response.items : [];
+    this.isolated_player_count = Math.max(
+      this.isolatedPlayers.length,
+      Number(response.pagination?.total_items) || 0,
+    );
   }
 
   exit() {
