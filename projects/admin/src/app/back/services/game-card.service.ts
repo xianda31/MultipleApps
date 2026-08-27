@@ -135,7 +135,7 @@ export class GameCardService {
     let cards = this._gameCards.filter(c => c.owners.some(owner => (owner.license_number === member.license_number) && (c.stamps.length < c.initial_qty)));
     if (cards.length === 0) {
       this.toastService.showError('Gestion des cartes', `Aucune carte de tournoi trouvée pour ${member.firstname} ${member.lastname}`);
-      return false;
+      throw new Error(`No game card credit available for ${member.license_number}`);
     }
     cards = cards.sort((a, b) => ((a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length)));
 
@@ -145,8 +145,7 @@ export class GameCardService {
       .reduce((total, card) => total + (card.initial_qty - card.stamps.length), 0);
 
     cards[0].stamps.push(normalizedStampDate);
-    await this.updateCard(cards[0])
-      .catch(error => { console.error('Error stamping member card:', error); });
+    await this.updateCard(cards[0]);
 
     if (double) { // add a second stamp if double
       // Re-query _gameCards after the first stamp: the first stamp may have filled cards[0],
@@ -156,10 +155,10 @@ export class GameCardService {
         .sort((a, b) => (a.initial_qty - a.stamps.length) - (b.initial_qty - b.stamps.length));
       if (doubleCards.length === 0) {
         this.toastService.showError('Gestion des cartes', `Aucune carte disponible pour le 2ème tampon de ${member.firstname} ${member.lastname}`);
+        throw new Error(`Second game card credit unavailable for ${member.license_number}`);
       } else {
         doubleCards[0].stamps.push(normalizedStampDate);
-        await this.updateCard(doubleCards[0])
-          .catch(error => { console.error('Error stamping member card (double):', error); });
+        await this.updateCard(doubleCards[0]);
       }
     }
 

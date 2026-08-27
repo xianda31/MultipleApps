@@ -148,10 +148,55 @@ const schema = a.schema({
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read', 'create', 'update']),
-      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Member).to(['read']),
 
 
+    ]),
+
+  GameCheckIn: a.model({
+    gameId: a.id().required(),
+    license: a.string().required(),
+    mode: a.string().required(),
+    source: a.string().required(),
+    updatedBy: a.string().required(),
+  })
+    .identifier(['gameId', 'license'])
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+    ]),
+
+  GameFeeConfiguration: a.model({
+    gameId: a.id().required(),
+    feeRate: a.string().required(),
+    memberPrice: a.float().required(),
+    nonMemberPrice: a.float().required(),
+    feesDoubled: a.boolean().required(),
+    updatedBy: a.string().required(),
+  })
+    .identifier(['gameId'])
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
+    ]),
+
+  GameSettlement: a.model({
+    gameId: a.id().required(),
+    status: a.string().required(),
+    lockedBy: a.string().required(),
+    error: a.string(),
+  })
+    .identifier(['gameId'])
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update', 'delete']),
     ]),
 
   // Adhérents et personal data

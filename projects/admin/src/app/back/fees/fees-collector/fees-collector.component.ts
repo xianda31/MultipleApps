@@ -200,9 +200,9 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
 
-  fee_rate_changed(fee_rate: FEE_RATE) {
-    this.feesCollectorService.change_fee_rate(fee_rate);
-    this.log_game_state();
+  async fee_rate_changed(fee_rate: FEE_RATE): Promise<void> {
+    const saved = await this.feesCollectorService.change_fee_rate(fee_rate);
+    if (saved) await this.log_game_state();
   }
 
   one_week_back() {
@@ -234,14 +234,9 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
       modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
       modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
-      modalRef.result.then((answer: boolean) => {
+      modalRef.result.then(async (answer: boolean) => {
         if (answer) {
-          this.validate_fees();
-          this.next_tournaments.map(t => {
-            if (t.id === this.selected_tournament?.id) {
-              t.status = Game_status.COMPLETED;
-            }
-          });
+          await this.validate_fees();
         }
       });
     } else {
@@ -295,16 +290,28 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     return this.disappearingGamers.get(gamer.index) || false;
   }
 
-  toggle_fee() {
-    this.feesCollectorService.toggle_fee();
-    this.log_game_state();
-
+  async setGamerPayment(gamer: Gamer, mode: 'card' | 'euro' | 'none'): Promise<void> {
+    const saved = await this.feesCollectorService.setGamerPayment(gamer, mode, 'manual');
+    if (!saved) return;
+    this.onGamerValidated(gamer);
+    this.check_status();
   }
 
-  async validate_fees() {
+  async toggle_fee(): Promise<void> {
+    const saved = await this.feesCollectorService.toggle_fee();
+    if (saved) await this.log_game_state();
+  }
+
+  async validate_fees(): Promise<boolean> {
+    const saved = await this.feesCollectorService.save_fees();
+    if (!saved) return false;
     this.tables_to_pdf();
-    await this.feesCollectorService.save_fees();
+    this.next_tournaments.forEach(t => {
+      if (t.id === this.selected_tournament?.id) t.status = Game_status.COMPLETED;
+    });
+    if (this.selected_tournament) this.selected_tournament.status = Game_status.COMPLETED;
     this.clear_session();
+    return true;
   }
 
   add_player(player: FFBplayer | null) {

@@ -9,7 +9,7 @@ import { Product, Product_input } from '../../back/products/product.interface';
 import { StripeProduct, StripeProductInput } from '../../back/products/stripe-product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
 import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
-import { Game, Game_input } from '../../back/fees/fees.interface';
+import { Game, GameCheckIn, GameFeeConfiguration, Game_input } from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
 import { MailingList, MailingListInput } from '../../back/mailing/mailing-list.interface';
@@ -966,6 +966,189 @@ export class DBhandler {
     const { errors } = await client.models.Game.delete({ gameId: game_id });
     if (errors) throw errors;
     return true;
+  }
+
+  async upsertGameCheckIn(checkIn: Omit<GameCheckIn, 'updatedAt'>): Promise<GameCheckIn> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const model = client.models.GameCheckIn;
+    const key = { gameId: checkIn.gameId, license: checkIn.license };
+    const { data: existing, errors: readErrors } = await model.get(key);
+    if (readErrors) throw readErrors;
+
+    const write = existing
+      ? model.update(checkIn)
+      : model.create(checkIn);
+    let { data, errors } = await write;
+
+    if (errors && !existing) {
+      const retry = await model.update(checkIn);
+      data = retry.data;
+      errors = retry.errors;
+    }
+    if (errors) throw errors;
+    if (!data) throw new Error('GameCheckIn upsert returned no data');
+    return data as unknown as GameCheckIn;
+  }
+
+  async listGameCheckIns(gameId: string): Promise<GameCheckIn[]> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.GameCheckIn.list({
+      filter: { gameId: { eq: gameId } },
+      limit: 300,
+    });
+    if (errors) throw errors;
+    return (data ?? []) as unknown as GameCheckIn[];
+  }
+
+  async readGameCheckIn(gameId: string, license: string): Promise<GameCheckIn | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.GameCheckIn.get({ gameId, license });
+    if (errors) throw errors;
+    return data as unknown as GameCheckIn | null;
+  }
+
+  observeGameCheckIns(gameId: string): Observable<GameCheckIn[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return client.models.GameCheckIn.observeQuery({
+          filter: { gameId: { eq: gameId } },
+        }).pipe(
+          map(({ items }) => items as unknown as GameCheckIn[]),
+        );
+      }),
+    );
+  }
+
+  async deleteGameCheckIns(gameId: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const checkIns = await this.listGameCheckIns(gameId);
+    await Promise.all(checkIns.map(async ({ license }) => {
+      const { errors } = await client.models.GameCheckIn.delete({ gameId, license });
+      if (errors) throw errors;
+    }));
+  }
+
+  async initializeGameFeeConfiguration(
+    configuration: Omit<GameFeeConfiguration, 'updatedAt'>,
+  ): Promise<GameFeeConfiguration> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const model = client.models.GameFeeConfiguration;
+    const { data: existing, errors: readErrors } = await model.get({ gameId: configuration.gameId });
+    if (readErrors) throw readErrors;
+    if (existing) return existing as unknown as GameFeeConfiguration;
+
+    const { data, errors } = await model.create(configuration);
+    if (data && !errors) return data as unknown as GameFeeConfiguration;
+
+    const { data: winner, errors: retryErrors } = await model.get({ gameId: configuration.gameId });
+    if (retryErrors) throw retryErrors;
+    if (winner) return winner as unknown as GameFeeConfiguration;
+    throw errors ?? new Error('Unable to initialize GameFeeConfiguration');
+  }
+
+  async updateGameFeeConfiguration(
+    configuration: Omit<GameFeeConfiguration, 'updatedAt'>,
+  ): Promise<GameFeeConfiguration> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.GameFeeConfiguration.update(configuration);
+    if (errors) throw errors;
+    if (!data) throw new Error('GameFeeConfiguration update returned no data');
+    return data as unknown as GameFeeConfiguration;
+  }
+
+  async readGameFeeConfiguration(gameId: string): Promise<GameFeeConfiguration | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.GameFeeConfiguration.get({ gameId });
+    if (errors) throw errors;
+    return data as unknown as GameFeeConfiguration | null;
+  }
+
+  observeGameFeeConfiguration(gameId: string): Observable<GameFeeConfiguration[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return client.models.GameFeeConfiguration.observeQuery({
+          filter: { gameId: { eq: gameId } },
+        }).pipe(
+          map(({ items }) => items as unknown as GameFeeConfiguration[]),
+        );
+      }),
+    );
+  }
+
+  async deleteGameFeeConfiguration(gameId: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.GameFeeConfiguration.delete({ gameId });
+    if (errors) throw errors;
+  }
+
+  async readGameSettlementStatus(gameId: string): Promise<string | null> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.GameSettlement.get({ gameId });
+    if (errors) throw errors;
+    return data?.status ?? null;
+  }
+
+  async acquireGameSettlement(
+    gameId: string,
+    lockedBy: string,
+  ): Promise<'acquired' | 'closing' | 'completed' | 'failed'> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data: existing, errors: readErrors } = await client.models.GameSettlement.get({ gameId });
+    if (readErrors) throw readErrors;
+    if (existing) return existing.status as 'closing' | 'completed' | 'failed';
+
+    const { data, errors } = await client.models.GameSettlement.create({
+      gameId,
+      status: 'closing',
+      lockedBy,
+    });
+    if (data && !errors) return 'acquired';
+
+    const { data: winner, errors: retryErrors } = await client.models.GameSettlement.get({ gameId });
+    if (retryErrors) throw retryErrors;
+    if (winner) return winner.status as 'closing' | 'completed' | 'failed';
+    throw errors ?? new Error('Unable to acquire GameSettlement lock');
+  }
+
+  async completeGameSettlement(gameId: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.GameSettlement.update({
+      gameId,
+      status: 'completed',
+      error: null,
+    });
+    if (errors) throw errors;
+  }
+
+  async failGameSettlement(gameId: string, error: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.GameSettlement.update({
+      gameId,
+      status: 'failed',
+      error,
+    });
+    if (errors) throw errors;
+  }
+
+  async deleteGameSettlement(gameId: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.GameSettlement.delete({ gameId });
+    if (errors) throw errors;
   }
 
   // PLAYBOOK SERVICE

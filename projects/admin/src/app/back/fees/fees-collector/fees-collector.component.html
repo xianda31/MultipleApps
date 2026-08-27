@@ -234,7 +234,7 @@
                             <input class="form-check-input fee-radio-lg" type="radio"
                                 [name]="'card_or_euro' + gamer.index" [id]="'none_radio'+ gamer.index" [value]="'none'"
                                 [checked]="gamer.validated && !gamer.enabled" [disabled]="gamer.disabled"
-                                (change)="gamer.enabled=false; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
+                                (change)="setGamerPayment(gamer, 'none')" />
                             <label class="form-check-label" [for]="'none_radio'+ gamer.index">{{ (game.fee_rate ===
                                 'accession'&& gamer.acc_credits) ? 'forfait' : 'offert' }}</label>
                         </div>
@@ -244,7 +244,7 @@
                                 [name]="'card_or_euro' + gamer.index" [id]="'euro_radio'+ gamer.index" [value]="'euro'"
                                 [checked]="gamer.validated && gamer.enabled && gamer.in_euro"
                                 [disabled]="gamer.disabled"
-                                (change)="gamer.enabled=true; gamer.in_euro=true; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
+                                (change)="setGamerPayment(gamer, 'euro')" />
                             <label class="form-check-label" [for]="'euro_radio'+ gamer.index">{{gamer.price}}€</label>
                         </div>
                         <!-- Carte (membres uniquement, en haut si affiché) -->
@@ -253,7 +253,7 @@
                                 [name]="'card_or_euro' + gamer.index" [id]="'pass-radio'+ gamer.index" [value]="'card'"
                                 [checked]="gamer.validated && gamer.enabled && !gamer.in_euro"
                                 [disabled]="gamer.disabled || gamer.game_credits < (doubled ? 2 : 1)"
-                                (change)="gamer.enabled=true; gamer.in_euro=false; gamer.validated=true; onGamerValidated(gamer); log_game_state(); check_status()" />
+                                (change)="setGamerPayment(gamer, 'card')" />
                             <label class="form-check-label" [for]="'pass-radio'+ gamer.index">
                                 <!-- {{doubled ? '2 tampons' : '1 tampon'}} -->
                                 carte

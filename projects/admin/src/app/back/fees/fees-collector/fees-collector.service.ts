@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { TournamentTeams } from '../../../common/ffb/interface/tournament.interface';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
-import { club_tournament_extended, FEE_RATE, Game, Game_status, Gamer } from '../fees.interface';
+import { club_tournament_extended, FEE_RATE, Game, GameCheckIn, GameCheckInMode, GameCheckInSource, GameFeeConfiguration, Game_status, Gamer } from '../fees.interface';
 import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
 import { BookService } from '../../services/book.service';
 import { GameCardService } from '../../services/game-card.service';
@@ -15,6 +15,8 @@ import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
+import { safeGetCurrentUserPromise } from '../../../common/authentification/safe-auth';
+import { canSelectGameCard, checkInState, gamerFeePrice, requiredGameCredits, tournamentUsesDoubledFees } from './fees-check-in.util';
 
 
 
@@ -24,6 +26,8 @@ import { PaymentMode } from '../../shop/cart/cart.interface';
 })
 export class FeesCollectorService {
   private tournament: club_tournament_extended | null = null;
+  private checkInSubscription: Subscription | null = null;
+  private feeConfigurationSubscription: Subscription | null = null;
 
   game: Game = {} as Game;
   _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
@@ -57,6 +61,232 @@ export class FeesCollectorService {
     return this._game$.asObservable();
   }
 
+  private get gameId(): string | null {
+    if (!this.game?.season || !this.game?.tournament) return null;
+    return this.DBhandler.create_custom_key(this.game.season, this.game.tournament.id);
+  }
+
+  private applyCheckIns(checkIns: GameCheckIn[]): void {
+    let changed = false;
+    for (const checkIn of checkIns) {
+      const gamer = this.game.gamers?.find(candidate => candidate.license === checkIn.license);
+      if (!gamer) continue;
+
+      Object.assign(gamer, checkInState(checkIn.mode));
+      gamer.check_in_source = checkIn.source;
+      gamer.check_in_updated_by = checkIn.updatedBy;
+      gamer.check_in_updated_at = checkIn.updatedAt;
+      changed = true;
+    }
+    if (changed) this._game$.next(this.game);
+  }
+
+  private startCheckInSync(): void {
+    this.stopCheckInSync();
+    const gameId = this.gameId;
+    if (!gameId) return;
+
+    this.checkInSubscription = this.DBhandler.observeGameCheckIns(gameId).subscribe({
+      next: checkIns => this.applyCheckIns(checkIns),
+      error: error => {
+        console.error('[FeesCollector] GameCheckIn synchronization failed:', error);
+        this.toastService.showError('Pointage partagé', 'La synchronisation temps réel est interrompue.');
+      },
+    });
+  }
+
+  private stopCheckInSync(): void {
+    this.checkInSubscription?.unsubscribe();
+    this.checkInSubscription = null;
+  }
+
+  private applyFeeConfiguration(configuration: GameFeeConfiguration, notify: boolean = false): void {
+    const changed = this.game.fee_rate !== configuration.feeRate
+      || this.game.member_trn_price !== configuration.memberPrice
+      || this.game.non_member_trn_price !== configuration.nonMemberPrice
+      || this.game.fees_doubled !== configuration.feesDoubled;
+    if (!changed) return;
+
+    this.game.fee_rate = configuration.feeRate;
+    this.game.member_trn_price = configuration.memberPrice;
+    this.game.non_member_trn_price = configuration.nonMemberPrice;
+    this.game.fees_doubled = configuration.feesDoubled;
+    this.game.gamers?.forEach((gamer) => {
+      gamer.price = gamerFeePrice(
+        gamer.is_member,
+        configuration.memberPrice,
+        configuration.nonMemberPrice,
+        configuration.feesDoubled,
+      );
+    });
+    this._game$.next(this.game);
+
+    if (notify) {
+      this.toastService.showInfo(
+        'Configuration du tournoi',
+        `Les droits de table ont été modifiés par ${configuration.updatedBy}.`,
+      );
+    }
+  }
+
+  private async currentFeeConfiguration(): Promise<Omit<GameFeeConfiguration, 'updatedAt'>> {
+    const gameId = this.gameId;
+    if (!gameId) throw new Error('No tournament selected');
+    const user = await safeGetCurrentUserPromise();
+    return {
+      gameId,
+      feeRate: this.game.fee_rate,
+      memberPrice: this.game.member_trn_price,
+      nonMemberPrice: this.game.non_member_trn_price,
+      feesDoubled: this.game.fees_doubled,
+      updatedBy: user?.username ?? user?.userId ?? 'unknown',
+    };
+  }
+
+  private async saveFeeConfiguration(
+    values: Pick<GameFeeConfiguration, 'feeRate' | 'memberPrice' | 'nonMemberPrice' | 'feesDoubled'>,
+  ): Promise<GameFeeConfiguration> {
+    const base = await this.currentFeeConfiguration();
+    const settlementStatus = await this.DBhandler.readGameSettlementStatus(base.gameId);
+    if (settlementStatus) {
+      throw new Error(`Tournament settlement is ${settlementStatus}`);
+    }
+    const configuration = { ...base, ...values };
+    const existing = await this.DBhandler.readGameFeeConfiguration(configuration.gameId);
+    return existing
+      ? this.DBhandler.updateGameFeeConfiguration(configuration)
+      : this.DBhandler.initializeGameFeeConfiguration(configuration);
+  }
+
+  private async startFeeConfigurationSync(): Promise<void> {
+    this.stopFeeConfigurationSync();
+    const gameId = this.gameId;
+    if (!gameId) return;
+
+    try {
+      const initial = await this.DBhandler.initializeGameFeeConfiguration(await this.currentFeeConfiguration());
+      this.applyFeeConfiguration(initial);
+      this.feeConfigurationSubscription = this.DBhandler.observeGameFeeConfiguration(gameId).subscribe({
+        next: configurations => {
+          const configuration = configurations[0];
+          if (configuration) this.applyFeeConfiguration(configuration, true);
+        },
+        error: error => {
+          console.error('[FeesCollector] Fee configuration synchronization failed:', error);
+          this.toastService.showError('Configuration du tournoi', 'La synchronisation temps réel est interrompue.');
+        },
+      });
+    } catch (error) {
+      console.error('[FeesCollector] Unable to initialize fee configuration:', error);
+      this.toastService.showError('Configuration du tournoi', 'La configuration partagée n’a pas pu être chargée.');
+    }
+  }
+
+  private stopFeeConfigurationSync(): void {
+    this.feeConfigurationSubscription?.unsubscribe();
+    this.feeConfigurationSubscription = null;
+  }
+
+  private startSharedSync(): void {
+    this.startCheckInSync();
+    void this.startFeeConfigurationSync();
+  }
+
+  async refreshFeeConfiguration(): Promise<void> {
+    const gameId = this.gameId;
+    if (!gameId) return;
+    const configuration = await this.DBhandler.readGameFeeConfiguration(gameId);
+    if (configuration) this.applyFeeConfiguration(configuration);
+  }
+
+  private currentMode(gamer: Gamer): GameCheckInMode | null {
+    if (!gamer.validated) return null;
+    if (!gamer.enabled) return 'none';
+    return gamer.in_euro ? 'euro' : 'card';
+  }
+
+  async setGamerPayment(
+    gamer: Gamer,
+    mode: GameCheckInMode,
+    source: GameCheckInSource = 'manual',
+  ): Promise<boolean> {
+    const gameId = this.gameId;
+    if (!gameId || this.tournament?.status === Game_status.COMPLETED) return false;
+    const settlementStatus = await this.DBhandler.readGameSettlementStatus(gameId);
+    if (settlementStatus) {
+      this.toastService.showWarning('Pointage partagé', 'Le tournoi est en cours de clôture ou déjà clôturé.');
+      return false;
+    }
+
+    if (source === 'nfc' && mode !== 'card') {
+      throw new Error('NFC check-in only supports game-card payments');
+    }
+    if (source === 'nfc') {
+      const remoteCheckIn = await this.DBhandler.readGameCheckIn(gameId, gamer.license);
+      if (remoteCheckIn) this.applyCheckIns([remoteCheckIn]);
+      if (gamer.check_in_source === 'manual' && this.currentMode(gamer) !== 'card') {
+        this.toastService.showInfo('Pointage NFC', `${gamer.firstname} ${gamer.lastname} a déjà été pointé manuellement.`);
+        return false;
+      }
+    }
+    if (mode === 'card' && !canSelectGameCard(gamer, this.game.fees_doubled)) {
+      const requiredCredits = requiredGameCredits(this.game.fees_doubled);
+      this.toastService.showWarning(
+        'Carte de jeu',
+        `${gamer.firstname} ${gamer.lastname} ne dispose pas des ${requiredCredits} crédit(s) requis.`,
+      );
+      return false;
+    }
+    if (source === 'nfc' && this.currentMode(gamer) === 'card') return true;
+
+    const previous = {
+      validated: gamer.validated,
+      enabled: gamer.enabled,
+      in_euro: gamer.in_euro,
+      check_in_source: gamer.check_in_source,
+      check_in_updated_by: gamer.check_in_updated_by,
+      check_in_updated_at: gamer.check_in_updated_at,
+    };
+    const user = await safeGetCurrentUserPromise();
+    const checkIn: Omit<GameCheckIn, 'updatedAt'> = {
+      gameId,
+      license: gamer.license,
+      mode,
+      source,
+      updatedBy: user?.username ?? user?.userId ?? 'unknown',
+    };
+
+    this.applyCheckIns([{ ...checkIn, updatedAt: new Date().toISOString() }]);
+    try {
+      const saved = await this.DBhandler.upsertGameCheckIn(checkIn);
+      this.applyCheckIns([saved]);
+      await this.log_game_state();
+      return true;
+    } catch (error) {
+      Object.assign(gamer, previous);
+      this._game$.next(this.game);
+      console.error('[FeesCollector] Unable to persist check-in:', error);
+      this.toastService.showError('Pointage partagé', 'Le pointage n’a pas pu être enregistré.');
+      return false;
+    }
+  }
+
+  async checkInByNfc(license: string): Promise<boolean> {
+    const normalizedLicense = license.trim().padStart(8, '0');
+    const gamer = this.game.gamers?.find(candidate => candidate.license.padStart(8, '0') === normalizedLicense);
+    if (!gamer) {
+      this.toastService.showWarning('Pointage NFC', 'Ce badge ne correspond à aucun joueur inscrit.');
+      return false;
+    }
+    return this.setGamerPayment(gamer, 'card', 'nfc');
+  }
+
+  async refreshGameCheckIns(): Promise<void> {
+    const gameId = this.gameId;
+    if (!gameId) return;
+    this.applyCheckIns(await this.DBhandler.listGameCheckIns(gameId));
+  }
+
 
 
   get_fee_rate(type: FEE_RATE): Fee_rate {
@@ -70,9 +300,8 @@ export class FeesCollectorService {
   }
 
 
-  change_fee_rate(new_rate: FEE_RATE) {
+  async change_fee_rate(new_rate: FEE_RATE): Promise<boolean> {
     const prev_rate = this.game.fee_rate;
-    this.game.fee_rate = new_rate;
     let fee_rate = this.get_fee_rate(new_rate);
 
     this.showFeeRateChangeAlert(
@@ -82,13 +311,19 @@ export class FeesCollectorService {
       fee_rate.non_member_price
     );
 
-    this.game.member_trn_price = +fee_rate.member_price;
-    this.game.non_member_trn_price = +fee_rate.non_member_price;
-    let factor = this.game.fees_doubled ? 2 : 1;
-
-    this.game.gamers.forEach((gamer) => {
-      gamer.price = gamer.is_member ? this.game.member_trn_price * factor : this.game.non_member_trn_price * factor;
-    });
+    try {
+      const saved = await this.saveFeeConfiguration({
+        feeRate: new_rate,
+        memberPrice: +fee_rate.member_price,
+        nonMemberPrice: +fee_rate.non_member_price,
+        feesDoubled: this.game.fees_doubled,
+      });
+      this.applyFeeConfiguration(saved);
+    } catch (error) {
+      console.error('[FeesCollector] Unable to update fee rate:', error);
+      this.toastService.showError('Configuration du tournoi', 'Le changement de tarif n’a pas pu être partagé.');
+      return false;
+    }
 
     // If we are leaving ACCESSION, re-enable all gamers and reset validation
     if (prev_rate === FEE_RATE.ACCESSION && new_rate !== FEE_RATE.ACCESSION) {
@@ -109,6 +344,7 @@ export class FeesCollectorService {
     }
 
     this._game$.next(this.game);
+    return true;
   }
 
   private showFeeRateChangeAlert(
@@ -129,23 +365,28 @@ export class FeesCollectorService {
     }
   }
 
-  toggle_fee() {
-    const oldMemberPrice = this.game.member_trn_price;
-    const oldNonMemberPrice = this.game.non_member_trn_price;
-    this.game.fees_doubled = !this.game.fees_doubled;
-    let factor = this.game.fees_doubled ? 2 : 1;
-    const newMemberPrice = this.game.member_trn_price * factor;
-    const newNonMemberPrice = this.game.non_member_trn_price * factor;
-    this.showFeeRateChangeAlert(
-      oldMemberPrice,
-      newMemberPrice,
-      oldNonMemberPrice,
-      newNonMemberPrice
+  async toggle_fee(): Promise<boolean> {
+    const feesDoubled = !this.game.fees_doubled;
+    const direction = feesDoubled ? 'activer' : 'désactiver';
+    window.alert(
+      `Attention, vous allez ${direction} les droits doublés.\n\n`
+      + 'Les pointages déjà effectués et les sommes déjà collectées ne seront pas annulés. '
+      + 'Vous devez vérifier leur cohérence avant la clôture.',
     );
-    this.game.gamers.forEach((gamer) => {
-      gamer.price = gamer.is_member ? newMemberPrice : newNonMemberPrice;
-    });
-    this._game$.next(this.game);
+    try {
+      const saved = await this.saveFeeConfiguration({
+        feeRate: this.game.fee_rate,
+        memberPrice: this.game.member_trn_price,
+        nonMemberPrice: this.game.non_member_trn_price,
+        feesDoubled,
+      });
+      this.applyFeeConfiguration(saved);
+      return true;
+    } catch (error) {
+      console.error('[FeesCollector] Unable to update doubled fees:', error);
+      this.toastService.showError('Configuration du tournoi', 'Le changement des droits doublés n’a pas pu être partagé.');
+      return false;
+    }
   }
 
   toggle_sort() {
@@ -231,6 +472,8 @@ export class FeesCollectorService {
 
 
   clear_tournament() {
+    this.stopCheckInSync();
+    this.stopFeeConfigurationSync();
     this.tournament = null;
   }
 
@@ -244,6 +487,8 @@ export class FeesCollectorService {
   }
 
   async set_tournament(tournament: club_tournament_extended) {
+    this.stopCheckInSync();
+    this.stopFeeConfigurationSync();
     this.tournament = tournament;
 
     // check if tournament already traced
@@ -266,6 +511,7 @@ export class FeesCollectorService {
         this.game = game; // restore previous game state
         this.generate_member_images();
         this._game$.next(this.game);
+        this.startSharedSync();
       } else {
         this.tournament.status = Game_status.RECOVERED;
         this.game = game; // restore previous game state
@@ -273,6 +519,7 @@ export class FeesCollectorService {
         this.update_members_debts();
         this.update_members_credits();
         this.update_members_assets();
+        this.startSharedSync();
         // this.set_game(tournament);
       }
     }
@@ -318,6 +565,12 @@ export class FeesCollectorService {
   async reset_tournament_state(tournament: club_tournament_extended) {
     if (tournament.status !== Game_status.RECOVERED) return;
     const season = this.systemDataService.get_season(new Date());
+    const gameId = this.DBhandler.create_custom_key(season, tournament.id);
+    this.stopCheckInSync();
+    this.stopFeeConfigurationSync();
+    await this.DBhandler.deleteGameCheckIns(gameId);
+    await this.DBhandler.deleteGameFeeConfiguration(gameId);
+    await this.DBhandler.deleteGameSettlement(gameId);
     await this.DBhandler.deleteGame(season, tournament.id);
     this.set_game(tournament);
   }
@@ -349,7 +602,7 @@ export class FeesCollectorService {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
-    this.game.fees_doubled = descriptionLower.includes('roy');
+    this.game.fees_doubled = tournamentUsesDoubledFees(tournament.title);
     this.game.fee_rate = descriptionLower.includes('ete')
       ? FEE_RATE.HOLIDAYS
       : (descriptionLower.includes('eleves') || descriptionLower.includes('accession'))
@@ -418,6 +671,7 @@ export class FeesCollectorService {
       this.update_members_debts();
       this.update_members_credits();
       this.update_members_assets();   // will update gamers game_credits & trigger _game$.next(this.game)
+      this.startSharedSync();
     }
     );
   }
@@ -545,27 +799,59 @@ export class FeesCollectorService {
       .reduce((acc, gamer) => acc + (this.game.fees_doubled ? 2 : 1), 0);
   }
 
-  async save_fees() {
-    let check_ok = true;
+  async save_fees(): Promise<boolean> {
+    await this.refreshFeeConfiguration();
+    await this.refreshGameCheckIns();
 
     // check if all non-members have been validated
     let non_members = this.game.gamers.filter((gamer) => !gamer.is_member && gamer.enabled);
     let non_members_validated = non_members.every((gamer) => gamer.validated);
     if (!non_members_validated) {
-      check_ok = false;
       this.toastService.showWarning('droits de table', 'tous les non-adhérents doivent être validés');
-      return;
+      return false;
     }
 
     // check if all members have been validated
     let members = this.game.gamers.filter((gamer) => gamer.is_member && gamer.enabled);
     let members_validated = members.every((gamer) => gamer.validated);
     if (!members_validated) {
-      check_ok = false;
       this.toastService.showWarning('droits de table', 'tous les adhérents doivent être validés');
+      return false;
     }
 
-    if (check_ok) {
+    const gameId = this.gameId;
+    if (!gameId) return false;
+    const user = await safeGetCurrentUserPromise();
+    const lockedBy = user?.username ?? user?.userId ?? 'unknown';
+    let settlementStatus: 'acquired' | 'closing' | 'completed' | 'failed';
+    try {
+      settlementStatus = await this.DBhandler.acquireGameSettlement(gameId, lockedBy);
+    } catch (error) {
+      console.error('[FeesCollector] Unable to acquire settlement lock:', error);
+      this.toastService.showError('droits de table', 'Impossible de sécuriser la clôture. Réessayez après vérification de la connexion.');
+      return false;
+    }
+    if (settlementStatus !== 'acquired') {
+      const message = settlementStatus === 'completed'
+        ? 'Les droits de ce tournoi ont déjà été enregistrés.'
+        : settlementStatus === 'failed'
+          ? 'Une erreur grave a interrompu une clôture précédente. Une intervention est requise.'
+          : 'La clôture est déjà en cours sur un autre appareil.';
+      this.toastService.showWarning('droits de table', message);
+      return false;
+    }
+
+    try {
+      await this.refreshFeeConfiguration();
+      await this.refreshGameCheckIns();
+      non_members = this.game.gamers.filter((gamer) => !gamer.is_member && gamer.enabled);
+      members = this.game.gamers.filter((gamer) => gamer.is_member && gamer.enabled);
+      if (!non_members.every((gamer) => gamer.validated) || !members.every((gamer) => gamer.validated)) {
+        await this.DBhandler.deleteGameSettlement(gameId);
+        this.toastService.showWarning('droits de table', 'Le pointage a changé sur un autre appareil. Vérifiez-le avant de clôturer.');
+        return false;
+      }
+
       // sum-up non-members and members fees in euros
       let non_members_euros = non_members.reduce((acc, gamer) => acc + gamer.price, 0);
       let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
@@ -575,32 +861,35 @@ export class FeesCollectorService {
         if (!gamer.in_euro) {
           let member = this.members.find((member) => member.license_number === gamer.license);
           if (member) {
-            try {
-              const low_credit = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
-              if (low_credit) {
-                this.low_credit_message(member);
-              }
-            } catch (stampError) {
-              console.error(`  [stamp] ERREUR pour ${member.firstname} ${member.lastname}:`, stampError);
-              this.toastService.showError('Gestion des cartes', `Erreur lors du tampon pour ${member.firstname} ${member.lastname}`);
+            const low_credit = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
+            if (low_credit) {
+              this.low_credit_message(member);
             }
           } else {
-            console.error(`  [stamp] licence ${gamer.license} introuvable dans this.members`);
-            this.toastService.showError('Gestion des cartes', `Adhérent introuvable (licence ${gamer.license}) — tampon ignoré`);
+            throw new Error(`Member not found for license ${gamer.license}`);
           }
         }
       }
 
       // create bookEntry for tournament fees
+      let total = non_members_euros + members_euros;
+      await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, this.game.tournament!.name, total);
+      await this.DBhandler.completeGameSettlement(gameId);
+      this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('[FeesCollector] Tournament settlement failed:', error);
       try {
-        let total = non_members_euros + members_euros;
-        await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, this.game.tournament!.name, total);
-        this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
+        await this.DBhandler.failGameSettlement(gameId, message);
+      } catch (lockError) {
+        console.error('[FeesCollector] Unable to mark settlement as failed:', lockError);
       }
-      catch (error: unknown) {
-        console.error('[BookEntry] ERREUR complète:', error);
-        this.toastService.showError('droits de table', 'Erreur lors de l\'enregistrement des droits de table');
-      }
+      this.toastService.showError(
+        'Clôture interrompue',
+        'Une erreur grave est survenue. Aucun nouvel essai automatique ne sera effectué.',
+      );
+      return false;
     }
   }
 

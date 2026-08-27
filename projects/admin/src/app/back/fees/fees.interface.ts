@@ -54,6 +54,31 @@ export interface Gamer {
     member_id: string | null;
     my_birthday:string | null;
     ffb_person_id?: number; // FFB person_id (ClubMember.id) for deduplication
+    check_in_source?: GameCheckInSource;
+    check_in_updated_by?: string;
+    check_in_updated_at?: string;
+}
+
+export type GameCheckInMode = 'card' | 'euro' | 'none';
+export type GameCheckInSource = 'manual' | 'nfc';
+
+export interface GameCheckIn {
+    gameId: string;
+    license: string;
+    mode: GameCheckInMode;
+    source: GameCheckInSource;
+    updatedBy: string;
+    updatedAt?: string;
+}
+
+export interface GameFeeConfiguration {
+    gameId: string;
+    feeRate: FEE_RATE;
+    memberPrice: number;
+    nonMemberPrice: number;
+    feesDoubled: boolean;
+    updatedBy: string;
+    updatedAt?: string;
 }
 
 export type Game_input = Omit<Schema['Game']['type'], 'id' | 'createdAt' | 'updatedAt'> ;
