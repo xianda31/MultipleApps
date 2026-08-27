@@ -46,6 +46,7 @@ const FFB_ENDPOINTS = {
   clubMembers: '/api/ffb/v2/club-members',
   tournamentTeam: '/api/ffb/v2/club-team',
   teamCreate: '/api/ffb/v2/entries/groupSessions',
+  isolatedPlayerCreate: '/api/ffb/v2/entries/pro/groupSessions',
   teamEntries: '/api/ffb/v2/entries/pro/team-entries',
   isolatedPlayers: '/api/ffb/v2/entries/isolatedPlayers',
 } as const;
@@ -440,7 +441,7 @@ export class FFB_proxyService {
       await this.ensureConfigReady();
       const restOperation = post({
         apiName: this.API_NAME,
-        path: this.buildPath(`${FFB_ENDPOINTS.teamCreate}/${groupSessionId}/isolatedPlayers`),
+        path: this.buildPath(`${FFB_ENDPOINTS.isolatedPlayerCreate}/${groupSessionId}/isolatedPlayers`),
         options: this.withTraceHeaders({
           body: { personId }
         })

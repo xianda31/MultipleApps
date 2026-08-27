@@ -480,6 +480,17 @@ export const handler: Handler = async (event) => {
         }
         break;
 
+      case route.match(/^entries\/pro\/groupSessions\/\d+\/isolatedPlayers$/)?.[0]:
+        {
+          const groupSessionId = route.match(/^entries\/pro\/groupSessions\/(\d+)\/isolatedPlayers$/)?.[1];
+          if (!groupSessionId) {
+            return httpResponse(400, { error: "Invalid groupSessionId in path" });
+          }
+
+          ffbEndpoint = `entries/pro/groupSessions/${groupSessionId}/isolatedPlayers`;
+        }
+        break;
+
       case route.match(/^entries\/isolatedPlayers\/\d+$/)?.[0]:
         {
           const isolatedPlayerId = route.match(/^entries\/isolatedPlayers\/(\d+)$/)?.[1];

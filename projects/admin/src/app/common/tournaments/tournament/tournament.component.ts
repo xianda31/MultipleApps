@@ -122,8 +122,8 @@ export class TournamentComponent implements OnInit {
   }
 
   get canCreateIsolatedPlayer(): boolean {
-    return this.whoAmI?.firstname?.trim().toLocaleUpperCase('fr-FR') === 'DANIEL'
-      && this.whoAmI?.lastname?.trim().toLocaleUpperCase('fr-FR') === 'FERRY';
+    const personId = this.whoAmI?.person_id;
+    return typeof personId === 'number' && Number.isInteger(personId) && personId > 0;
   }
 
   // completeTeam(player: FFBPlayer) {
