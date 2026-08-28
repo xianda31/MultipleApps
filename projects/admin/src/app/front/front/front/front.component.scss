@@ -355,6 +355,7 @@ body::-webkit-scrollbar {
 
 
   .footer-banner {
+  position: relative;
   font-family: var(--footer-font, Caveat, cursive) !important;
   color: var(--footer-text, #fff) !important;
   background: var(--footer-bg, var(--banner-bg, #2e332d)) !important;

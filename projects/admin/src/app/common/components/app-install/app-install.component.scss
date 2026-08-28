@@ -1,0 +1,87 @@
+:host {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+}
+
+.install-icon-button {
+  display: inline-flex;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--footer-text, #fff);
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  opacity: 1;
+}
+
+.install-icon-button:hover,
+.install-icon-button:focus-visible {
+  opacity: 1;
+}
+
+.install-icon-button:disabled {
+  opacity: 0.5;
+}
+
+.install-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.75rem);
+  width: min(21rem, calc(100vw - 2rem));
+  padding: 1rem;
+  color: #212529;
+  background: #fff;
+  border: 1px solid #adb5bd;
+  border-left: 4px solid var(--bs-primary, #0d6efd);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.install-dismiss {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+.install-heading {
+  display: flex;
+  min-height: 2.5rem;
+  padding-right: 2rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.install-heading h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.install-icon {
+  color: var(--bs-primary, #0d6efd);
+  font-size: 1.5rem;
+}
+
+.install-instructions {
+  margin: 0.875rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 575.98px) {
+  :host {
+    left: 0.5rem;
+  }
+
+  .install-panel {
+    width: calc(100vw - 1rem);
+  }
+}

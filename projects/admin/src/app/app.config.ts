@@ -14,6 +14,7 @@ import { SandboxService } from './common/services/sandbox.service';
 import { SystemDataService } from './common/services/system-data.service';
 import { applyUiThemeInitializer } from './common/utils/ui-utils';
 import { provideServiceWorker } from '@angular/service-worker';
+import { AppInstallService } from './common/services/app-install.service';
 import { AppUpdateService } from './common/services/app-update.service';
 
 // Fonction d'initialisation pour précharger les routes dynamiques du front
@@ -94,6 +95,7 @@ export const appConfig: ApplicationConfig = {
     },
     { provide: APP_SANDBOX, useFactory: (sandboxService: SandboxService) => sandboxService.value, deps: [SandboxService] },
     provideAppInitializer(() => {
+      inject(AppInstallService);
       void inject(AppUpdateService).checkAtStartup();
     }),
     provideServiceWorker('ngsw-worker.js', {

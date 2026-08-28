@@ -1,0 +1,23 @@
+@if (state().mode !== 'hidden') {
+  <button type="button" class="btn btn-sm btn-info" [disabled]="installing()"
+    [attr.aria-label]="'Installer bcsto sur ' + platformLabel"
+    [title]="'Installer bcsto sur ' + platformLabel" (click)="runInstall()">
+    @if (installing()) {
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+    } @else {
+      <i [class]="'bi ' + platformIcon" aria-hidden="true"></i>
+    }
+  </button>
+
+  @if (showManualInstructions()) {
+    <aside class="install-panel" aria-label="Instructions d'installation">
+      <button type="button" class="btn-close install-dismiss" aria-label="Fermer les instructions"
+        title="Fermer" (click)="closeInstructions()"></button>
+      <div class="install-heading">
+        <i class="bi bi-box-arrow-down install-icon" aria-hidden="true"></i>
+        <h2>Installer bcsto</h2>
+      </div>
+      <p class="install-instructions">{{ manualInstructions }}</p>
+    </aside>
+  }
+}

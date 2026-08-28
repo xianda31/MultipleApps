@@ -24,6 +24,7 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { CommandRegistryService } from '../../../common/services/command-registry.service';
 import { FrontNavbarComponent } from '../../front-navbar/front-navbar.component';
+import { AppInstallComponent } from '../../../common/components/app-install/app-install.component';
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { environment } from '../../../../environments/environment';
 import type { BuildInfo } from '../../../../environments/build-info.interface';
@@ -37,7 +38,7 @@ type StripeReturnState = {
   selector: 'app-front',
   standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
-  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule, RouterLink, FrontNavbarComponent],
+  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule, RouterLink, FrontNavbarComponent, AppInstallComponent],
   templateUrl: './front.component.html',
   styleUrls: ['./front.component.scss']
 })
