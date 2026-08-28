@@ -12,6 +12,7 @@
     max-height: 90vh;
     display: flex;
     flex-direction: column;
+    padding: 0.5rem;
     overflow: hidden;
   }
 
@@ -21,11 +22,6 @@
     padding: 0.5rem;
   }
 
-  // Contraindre le booklet-wrapper à la hauteur disponible dans le modal
-  app-pdf-viewer .booklet-wrapper {
-    height: calc(84vh - 1rem);
-    width: auto;
-  }
 }
 
 /* Masquer complètement la scrollbar globale (Chrome/Edge) */

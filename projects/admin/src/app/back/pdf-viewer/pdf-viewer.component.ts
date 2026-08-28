@@ -1,7 +1,8 @@
-import { Component, Input, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, ElementRef, AfterViewInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
 import { firstValueFrom } from 'rxjs';
 import * as pdfjsLib from 'pdfjs-dist';
@@ -26,7 +27,9 @@ if (typeof window !== 'undefined') {
     styleUrls: ['./pdf-viewer.component.scss']
 })
 export class PdfViewerComponent implements OnInit, AfterViewInit {
+    readonly activeModal = inject(NgbActiveModal, { optional: true });
     @Input() pdfSrc!: string;
+    @Input() documentTitle = '';
     @Input() hideRange: boolean = false;
     @ViewChild('leftCanvas', { static: false }) leftCanvas?: ElementRef<HTMLCanvasElement>;
     @ViewChild('rightCanvas', { static: false }) rightCanvas?: ElementRef<HTMLCanvasElement>;
@@ -86,6 +89,23 @@ export class PdfViewerComponent implements OnInit, AfterViewInit {
         if (this.pdfDocument) {
             setTimeout(() => this.renderCurrentPages(), 100);
         }
+    }
+
+    closeModal(): void {
+        this.activeModal?.dismiss();
+    }
+
+    get pdfFileName(): string {
+        const fileName = (this.pdfSrc || '').split(/[?#]/)[0].split('/').pop() || 'Document PDF';
+        try {
+            return decodeURIComponent(fileName);
+        } catch {
+            return fileName;
+        }
+    }
+
+    get pdfDisplayTitle(): string {
+        return this.documentTitle.trim() || this.pdfFileName;
     }
 
     async loadPdf(): Promise<void> {

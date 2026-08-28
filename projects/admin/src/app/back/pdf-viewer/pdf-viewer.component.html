@@ -1,3 +1,11 @@
+<div *ngIf="activeModal" class="pdf-modal-toolbar">
+    <span class="pdf-modal-filename" [title]="pdfDisplayTitle">{{ pdfDisplayTitle }}</span>
+    <button type="button" class="btn btn-primary pdf-close-button" aria-label="Fermer"
+        title="Fermer" (click)="closeModal()">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+    </button>
+</div>
+
 <div *ngIf="pdfError" class="pdf-error">
     <div>
         {{ pdfError.split('\n')[0] }}

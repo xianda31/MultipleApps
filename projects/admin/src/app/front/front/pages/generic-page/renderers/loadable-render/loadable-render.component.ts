@@ -81,8 +81,9 @@ export class LoadableRenderComponent {
       windowClass: 'pdf-modal'
     });
     
-    // Passer le filename au composant PdfViewerComponent
+    // Passer le fichier et son titre au composant PdfViewerComponent
     modalRef.componentInstance.pdfSrc = snippet.file;
+    modalRef.componentInstance.documentTitle = snippet.title;
     modalRef.componentInstance.hideRange = true;
   }
 }

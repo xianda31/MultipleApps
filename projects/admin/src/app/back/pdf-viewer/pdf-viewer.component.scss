@@ -1,4 +1,61 @@
-﻿.booklet-wrapper {
+﻿:host {
+  display: block;
+  position: relative;
+}
+
+.pdf-modal-toolbar {
+  display: flex;
+  flex: 0 0 3rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+.pdf-modal-filename {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: #495057;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pdf-close-button {
+  flex: 0 0 2.5rem;
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background-color: #0d6efd !important;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  font-size: 1.2rem;
+  opacity: 1;
+}
+
+:host-context(.pdf-modal) {
+  display: flex;
+  height: 84vh;
+  min-height: 0;
+  flex-direction: column;
+}
+
+:host-context(.pdf-modal) > .row {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+:host-context(.pdf-modal) .booklet-wrapper {
+  height: 100%;
+}
+
+.booklet-wrapper {
   perspective: 2000px;
   perspective-origin: center center;
   display: flex;
