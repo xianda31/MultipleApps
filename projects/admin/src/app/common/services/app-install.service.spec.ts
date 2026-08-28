@@ -33,4 +33,32 @@ describe('AppInstallService', () => {
     expect(service.state().mode).toBe('hidden');
     expect(Number(localStorage.getItem(dismissedUntilKey))).toBeGreaterThan(Date.now());
   });
+
+  it('stays hidden when the related PWA is already installed', async () => {
+    const navigatorWithInstalledApps = navigator as Navigator & {
+      getInstalledRelatedApps?: () => Promise<Array<{ platform: string }>>;
+    };
+    const previousDescriptor = Object.getOwnPropertyDescriptor(navigator, 'getInstalledRelatedApps');
+    const getInstalledRelatedApps = jasmine.createSpy('getInstalledRelatedApps')
+      .and.resolveTo([{ platform: 'webapp' }]);
+
+    Object.defineProperty(navigator, 'getInstalledRelatedApps', {
+      configurable: true,
+      value: getInstalledRelatedApps
+    });
+
+    try {
+      const service = new AppInstallService();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(getInstalledRelatedApps).toHaveBeenCalledOnceWith();
+      expect(service.state().mode).toBe('hidden');
+    } finally {
+      if (previousDescriptor) {
+        Object.defineProperty(navigator, 'getInstalledRelatedApps', previousDescriptor);
+      } else {
+        delete navigatorWithInstalledApps.getInstalledRelatedApps;
+      }
+    }
+  });
 });

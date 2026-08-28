@@ -17,6 +17,10 @@ type CapacitorWindow = Window & {
   Capacitor?: { isNativePlatform?: () => boolean };
 };
 
+type NavigatorWithInstalledApps = Navigator & {
+  getInstalledRelatedApps?: () => Promise<Array<{ id?: string; platform?: string; url?: string }>>;
+};
+
 const DISMISSED_UNTIL_KEY = 'bcsto.install.dismissedUntil';
 const DISMISS_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -35,14 +39,6 @@ export class AppInstallService {
     const platform = this.detectPlatform();
     this.stateSignal.set({ mode: 'hidden', platform });
 
-    if (this.isInstalled() || this.isNativeApp() || this.isDismissed()) {
-      return;
-    }
-
-    if (platform !== 'other') {
-      this.stateSignal.set({ mode: 'manual', platform });
-    }
-
     window.addEventListener('beforeinstallprompt', (event) => {
       event.preventDefault();
       this.deferredPrompt = event as BeforeInstallPromptEvent;
@@ -54,6 +50,8 @@ export class AppInstallService {
       this.stateSignal.set({ mode: 'hidden', platform });
       this.clearDismissal();
     });
+
+    void this.initializeState(platform);
   }
 
   async install(): Promise<boolean> {
@@ -95,6 +93,31 @@ export class AppInstallService {
   private isInstalled(): boolean {
     const standaloneNavigator = navigator as Navigator & { standalone?: boolean };
     return window.matchMedia('(display-mode: standalone)').matches || standaloneNavigator.standalone === true;
+  }
+
+  private async initializeState(platform: InstallPlatform): Promise<void> {
+    if (this.isInstalled() || this.isNativeApp() || this.isDismissed() || await this.hasInstalledRelatedApp()) {
+      this.stateSignal.set({ mode: 'hidden', platform });
+      return;
+    }
+
+    if (!this.deferredPrompt && platform !== 'other') {
+      this.stateSignal.set({ mode: 'manual', platform });
+    }
+  }
+
+  private async hasInstalledRelatedApp(): Promise<boolean> {
+    const getInstalledRelatedApps = (navigator as NavigatorWithInstalledApps).getInstalledRelatedApps;
+    if (!getInstalledRelatedApps) {
+      return false;
+    }
+
+    try {
+      const installedApps = await getInstalledRelatedApps.call(navigator);
+      return installedApps.some((app) => app.platform === 'webapp');
+    } catch {
+      return false;
+    }
   }
 
   private isNativeApp(): boolean {
