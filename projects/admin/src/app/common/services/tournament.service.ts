@@ -187,33 +187,27 @@ export class TournamentService {
 
     // C(RU)DL Team
 
-    async createTeam(tteams_id: string, player_pair: number[]): Promise<void> {
+    async createTeam(tteams_id: string, player_pair: number[]): Promise<boolean> {
         try {
             if (player_pair.length !== 2 || player_pair.some(id => !Number.isFinite(id))) {
                 console.warn(`[TournamentService] createTeam: Exactly 2 valid player IDs are required`);
                 this.toastService.showError('Création d\'équipe', 'Une équipe doit contenir exactement 2 joueurs valides');
-                return;
+                return false;
             }
 
             if (player_pair[0] === player_pair[1]) {
                 this.toastService.showError('Création d\'équipe', 'Les deux joueurs doivent être différents');
-                return;
+                return false;
             }
 
             const success = await this.ffbService.postTeam(tteams_id, player_pair);
-            if (success) {
-                // Reload teams from FFB API to get fresh data
-                const freshTeams = await this.ffbService.getTournamentTeams(tteams_id);
-                const tteams = this.find_tournamentTeamsById(tteams_id);
-                if (tteams && freshTeams) {
-                    tteams.items = freshTeams.items;
-                    this._tournamentTeams$.next(this._tournamentTeams);
-                    // Update cached observable for this tteams_id so future callers get fresh data
-                    this._teamFetchCache.set(tteams_id, of(tteams));
-                }
+            if (!success) {
+                return false;
             }
+            return true;
         } catch (error) {
             console.error('Error creating team:', error);
+            return false;
         }
     }
 
@@ -227,12 +221,13 @@ export class TournamentService {
                 if (!deleted) {
                     return false;
                 }
-                tteams.items = tteams.items.filter(
+                const remainingTeams = tteams.items.filter(
                     team => team.tournamentRegistrationId.toString() !== tournamentRegistrationId
                 );
+                tteams.items.splice(0, tteams.items.length, ...remainingTeams);
                 this._tournamentTeams$.next(this._tournamentTeams);
-                    // Update cached observable for this tteams_id so future callers get fresh data
-                    this._teamFetchCache.set(tteams_id, of(tteams));
+                // Update cached observable for this tteams_id so future callers get fresh data
+                this._teamFetchCache.set(tteams_id, of(tteams));
                 return true;
             } catch (error) {
                 console.error('Error deleting team:', error);

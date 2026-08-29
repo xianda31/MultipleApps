@@ -184,11 +184,12 @@ export class FFB_proxyService {
   async searchPlayersSuchAs(hint: string): Promise<ClubMember[]> {   // VALIDATED
     try {
       await this.ensureConfigReady();
+      const perPage = 80;
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.personSearch),
         options: this.withTraceHeaders({
-          queryParams: this.buildPlayerSearchQueryParams(hint)
+          queryParams: this.buildPlayerSearchQueryParams(hint, 1, perPage)
         })
       });
       const { body } = await restOperation.response;
@@ -202,7 +203,6 @@ export class FFB_proxyService {
       }
 
       const totalPages = pagination.total_pages || 1;
-      const perPage = pagination.per_page || 80;
       if (totalPages <= 1) {
         return firstPageItems;
       }
@@ -403,8 +403,7 @@ export class FFB_proxyService {
           }
         })
       });
-      const { body } = await restOperation.response;
-      await body.json(); // Consume response but don't use it
+      await restOperation.response;
       return true;
     } catch (error) {
       console.error('[FFB Service] postTeam failed: ', error);

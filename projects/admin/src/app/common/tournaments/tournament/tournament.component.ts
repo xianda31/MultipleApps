@@ -146,10 +146,30 @@ export class TournamentComponent implements OnInit {
   createTeam(player_pair: number[]) {
 
     this.TournamentService.createTeam(this.tteam_tournament_id.toString(), player_pair)
-      .then((data) => {
+      .then((created) => {
+        if (!created) {
+          this.toastService.showError('tournoi', "L'inscription de l'équipe a été refusée");
+          return;
+        }
+
+        this.player2.reset();
         this.toastService.showSuccess("tournoi du " + this.tournament_date, "vous êtes inscrit(e) en équipe");
+
+        this.TournamentService.getTournamentTeams(this.tteam_tournament_id, { refresh: true }).subscribe({
+          next: (tteams) => {
+            this.teams = Array.isArray(tteams.items) ? tteams.items : [];
+            this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
+          },
+          error: (error) => {
+            console.warn('[TournamentComponent] Équipe créée, mais actualisation impossible', error);
+            this.toastService.showWarning('tournoi', "Inscription enregistrée, mais la liste n'a pas pu être actualisée");
+          }
+        });
       })
-      .catch((error) => { console.log('TeamsComponent.createTeam', error); });
+      .catch((error) => {
+        console.error('[TournamentComponent] Inscription équipe impossible', error);
+        this.toastService.showError('tournoi', "L'inscription de l'équipe a échoué");
+      });
   }
 
   createIsolatedPlayer() {
@@ -193,12 +213,19 @@ export class TournamentComponent implements OnInit {
     )
       .then((deleted) => {
         if (deleted) {
+          this.teams = this.teams.filter(
+            (registeredTeam) => registeredTeam.tournamentRegistrationId !== tournamentRegistrationId
+          );
+          this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
           this.toastService.showSuccess("tournoi", "vous êtes désinscrit(s) !");
         } else {
           this.toastService.showError("tournoi", "la désinscription a été refusée");
         }
       })
-      .catch((error) => { console.log('TeamsComponent.deleteTeam', error); });
+      .catch((error) => {
+        console.error('[TournamentComponent] Désinscription équipe impossible', error);
+        this.toastService.showError('tournoi', 'la désinscription a échoué');
+      });
   }
 
   deleteIsolatedPlayer(isolatedPlayer: PlayerEntry) {
