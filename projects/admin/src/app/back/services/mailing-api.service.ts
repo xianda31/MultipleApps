@@ -1,7 +1,7 @@
 // Angular service example to call the backend SES relay endpoint
 
 import { Injectable } from '@angular/core';
-import { post } from 'aws-amplify/api';
+import { Amplify } from 'aws-amplify';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 @Injectable({ providedIn: 'root' })
@@ -19,21 +19,7 @@ export class MailingApiService {
     replyTo?: string;
   }): Promise<any> {
     try {
-      // Récupérer la session pour s'assurer que l'utilisateur est authentifié
-      const session = await fetchAuthSession();
-      
-      const restOperation = post({
-        apiName: 'ffbProxyApi',
-        path: '/api/send-email',
-        options: { 
-          body: payload,
-          headers: {
-            Authorization: `Bearer ${session.tokens?.idToken?.toString()}`
-          }
-        }
-      });
-      const { body } = await restOperation.response;
-      return await body.json();
+      return await this.sendEmailRequest(payload);
     } catch (error) {
       console.error('Erreur lors de l\'envoi du mail:', error);
       throw error;
@@ -52,20 +38,39 @@ export class MailingApiService {
     attachments?: Array<{filename: string, content: string, contentType: string}>;
   }): Promise<any> {
     try {
-      const session = await fetchAuthSession();
-      const restOperation = post({
-        apiName: 'ffbProxyApi',
-        path: '/api/send-email',
-        options: {
-          body: payload as any,
-          headers: { Authorization: `Bearer ${session.tokens?.idToken?.toString()}` },
-        },
-      });
-      const { body } = await restOperation.response;
-      return await body.json();
+      return await this.sendEmailRequest(payload);
     } catch (error) {
       console.error('Erreur lors de l\'envoi du sondage:', error);
       throw error;
     }
+  }
+
+  private async sendEmailRequest(payload: object): Promise<any> {
+    const endpoint = Amplify.getConfig().API?.REST?.['ffbProxyApi']?.endpoint;
+    if (!endpoint) {
+      throw new Error('Endpoint du service de mailing non configuré');
+    }
+
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+    if (!idToken) {
+      throw new Error('Session utilisateur expirée');
+    }
+
+    const response = await fetch(`${endpoint.replace(/\/$/, '')}/api/send-email`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    const responseBody = await response.json().catch(() => null) as { error?: string } | null;
+
+    if (!response.ok) {
+      throw new Error(responseBody?.error || `Erreur du service de mailing (${response.status})`);
+    }
+
+    return responseBody;
   }
 }

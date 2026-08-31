@@ -278,7 +278,8 @@ export const handler = async (event: any) => {
   
   console.log('📧 Email request:', { 
     from, 
-    to, 
+    recipientCount: Array.isArray(to) ? to.length : (to ? 1 : 0),
+    ccCount: Array.isArray(cc) ? cc.length : (cc ? 1 : 0),
     replyTo,
     subject, 
     bodyHtmlLength: bodyHtml?.length || 0,
@@ -382,7 +383,8 @@ export const handler = async (event: any) => {
     const failures: Array<{ email: string; error: string }> = [];
     let sentCount = 0;
 
-    for (const batch of batches) {
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
       const settled = await Promise.allSettled(batch.map((recipientEmail) => sendOneEmail(recipientEmail)));
       settled.forEach((result, index) => {
         const email = batch[index];
@@ -396,6 +398,12 @@ export const handler = async (event: any) => {
           email,
           error: reason?.message || String(reason) || 'Unknown SES error',
         });
+      });
+      console.log('[SES_MAILING] batch:complete', {
+        batch: batchIndex + 1,
+        batchCount: batches.length,
+        sentCount,
+        failureCount: failures.length,
       });
     }
 
@@ -479,6 +487,12 @@ export const handler = async (event: any) => {
       }) 
     };
   } catch (err: any) {
+    console.error('[SES_MAILING] request:error', {
+      errorName: err?.name || 'UnknownError',
+      errorMessage: err?.message || String(err),
+      httpStatusCode: err?.$metadata?.httpStatusCode,
+      requestId: err?.$metadata?.requestId,
+    });
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
   }
 };
