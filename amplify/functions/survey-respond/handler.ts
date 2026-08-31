@@ -97,14 +97,57 @@ function computeAggregatedResults(
       try { answers = JSON.parse(answers); } catch { continue; }
     }
     if (!answers || typeof answers !== 'object') continue;
-    for (const [qId, optIdx] of Object.entries(answers)) {
-      const idx = Number(optIdx);
+    for (const [qId, answer] of Object.entries(answers)) {
+      const question = questions.find(q => q.id === qId);
+      const optionValue = typeof answer === 'object' && answer !== null ? (answer as any).optionValue : undefined;
+      const idx = (question?.options ?? []).findIndex((option: any) => option.value === optionValue);
       if (result[qId] && Number.isInteger(idx) && idx >= 0 && idx < result[qId].length) {
         result[qId][idx] += 1;
       }
     }
   }
   return result;
+}
+
+function resolveSubmission(questions: any[], answers: Record<string, unknown>) {
+  const sanitized: Record<string, { optionValue: string; detailValue?: string }> = {};
+  let payable = false;
+  let complete = false;
+
+  for (const question of questions) {
+    const answer = answers[question.id];
+    if (!answer || typeof answer !== 'object') return { valid: false, reason: 'Réponse manquante' };
+    const optionValue = (answer as any).optionValue;
+    const detailValue = (answer as any).detailValue;
+    if (typeof optionValue !== 'string') return { valid: false, reason: 'Réponse invalide' };
+    const option = (question.options ?? []).find((candidate: any) => candidate.value === optionValue);
+    if (!option) return { valid: false, reason: 'Choix invalide' };
+    const detailOptions = option.detailOptions ?? [];
+    if (detailOptions.length > 0) {
+      if (typeof detailValue !== 'string' || !detailOptions.some((detail: any) => detail.value === detailValue)) {
+        return { valid: false, reason: 'Valeur de liste invalide' };
+      }
+    } else if (detailValue !== undefined) {
+      return { valid: false, reason: 'Détail inattendu' };
+    }
+
+    sanitized[question.id] = {
+      optionValue,
+      ...(detailOptions.length > 0 ? { detailValue } : {}),
+    };
+    payable ||= option.payTag === true;
+    if (option.nextAction === 'END') {
+      complete = true;
+      break;
+    }
+  }
+
+  if (Object.keys(sanitized).length === questions.length) complete = true;
+  if (!complete) return { valid: false, reason: 'Parcours incomplet' };
+  if (Object.keys(answers).some(questionId => !(questionId in sanitized))) {
+    return { valid: false, reason: 'Le formulaire contient des réponses hors parcours' };
+  }
+  return { valid: true, sanitized, payable };
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────
@@ -126,6 +169,7 @@ export const handler = async (event: any) => {
     ]);
 
     if (!survey) return err(404, 'Sondage introuvable');
+    const confirmedResponses = allResponses.filter(response => response.requiresReconfirmation !== true);
 
     // Mettre à jour lastActivityAt
     await db.send(new UpdateCommand({
@@ -138,16 +182,21 @@ export const handler = async (event: any) => {
     return ok({
       token,
       survey: { id: survey.id, title: survey.title, description: survey.description,
-                surveyType: survey.surveyType ?? 'poll', status: survey.status ?? 'active', closingDate: survey.closingDate,
+                status: survey.status ?? 'active', closingDate: survey.closingDate,
                 footerNote: survey.footerNote },
-      questions: questions.map((q: any) => ({ id: q.id, text: q.text, options: q.options, order: q.order, optionKeywords: q.optionKeywords ?? [] })),
+      questions: questions.map((q: any) => ({
+        id: q.id, text: q.text, resultLabel: q.resultLabel,
+        detailResultLabel: q.detailResultLabel, options: q.options, order: q.order,
+      })),
       existingResponse: existing
-        ? { id: existing.id, answers: existing.answers, status: existing.status, submittedAt: existing.submittedAt }
+        ? { id: existing.id, answers: existing.answers, status: existing.status,
+            submittedAt: existing.submittedAt,
+            requiresReconfirmation: existing.requiresReconfirmation === true }
         : null,
       memberId: tokenItem!.memberId,
       memberName: tokenItem!.memberName,
-      aggregatedResults: computeAggregatedResults(questions, allResponses),
-      totalRespondents: allResponses.length,
+      aggregatedResults: computeAggregatedResults(questions, confirmedResponses),
+      totalRespondents: confirmedResponses.length,
     });
   }
 
@@ -160,6 +209,19 @@ export const handler = async (event: any) => {
     if (!valid) return err(410, reason ?? 'Token invalide');
     if (!answers || typeof answers !== 'object') return err(400, 'Réponses manquantes');
 
+    const [survey, questions] = await Promise.all([
+      getSurvey(tokenItem!.surveyId),
+      getQuestions(tokenItem!.surveyId),
+    ]);
+    if (!survey) return err(404, 'Sondage introuvable');
+    const payTagCount = questions.flatMap(question => question.options ?? []).filter(option => option.payTag).length;
+    if (payTagCount > 1) return err(500, 'Configuration de paiement invalide');
+    const submission = resolveSubmission(questions, answers);
+    if (!submission.valid) return err(400, submission.reason ?? 'Réponses invalides');
+    const paymentStatus = submission.payable ? 'payable' : 'notApplicable';
+    const paymentProductId = submission.payable ? survey.productTag : undefined;
+    if (submission.payable && !paymentProductId) return err(500, 'Produit de paiement non configuré');
+
     const now = new Date().toISOString();
     const existing = await getExistingResponse(tokenItem!.surveyId, tokenItem!.memberId);
 
@@ -167,11 +229,14 @@ export const handler = async (event: any) => {
       await db.send(new UpdateCommand({
         TableName: RESPONSE_TABLE,
         Key: { id: existing.id },
-        UpdateExpression: 'SET answers = :a, #s = :s, submittedAt = :t, updatedAt = :t',
+        UpdateExpression: 'SET answers = :a, #s = :s, paymentStatus = :ps, paymentProductId = :pp, requiresReconfirmation = :rr, submittedAt = :t, updatedAt = :t',
         ExpressionAttributeNames: { '#s': 'status' },
         ExpressionAttributeValues: {
-          ':a': JSON.stringify(answers),
+          ':a': JSON.stringify(submission.sanitized),
           ':s': 'submitted',
+          ':ps': paymentStatus,
+          ':pp': paymentProductId ?? null,
+          ':rr': false,
           ':t': now,
         },
       }));
@@ -185,7 +250,10 @@ export const handler = async (event: any) => {
           memberId: tokenItem!.memberId,
           memberEmail: tokenItem!.memberEmail,
           memberName: tokenItem!.memberName ?? '',
-          answers: JSON.stringify(answers),
+          answers: JSON.stringify(submission.sanitized),
+          paymentStatus,
+          requiresReconfirmation: false,
+          ...(paymentProductId ? { paymentProductId } : {}),
           status: 'submitted',
           submittedAt: now,
           createdAt: now,
@@ -204,7 +272,7 @@ export const handler = async (event: any) => {
     return ok({ success: true });
   }
 
-  // ── PATCH : changer le statut (RSVP) ─────────────────────────────────────
+  // ── PATCH : changer le statut de la réponse ──────────────────────────────
   if (method === 'PATCH') {
     const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
     const { token, status } = body ?? {};

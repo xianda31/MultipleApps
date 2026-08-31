@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { get, post, patch } from 'aws-amplify/api';
+import { SurveyAnswers, SurveyQuestionDefinition } from '../../common/survey/survey-flow';
 
 const API_NAME = 'ffbProxyApi';
 const SURVEY_RESPOND_PATH = '/api/survey/respond';
+export type { SurveyAnswer } from '../../common/survey/survey-flow';
 
 export interface SurveyRespondData {
   token: string;
@@ -12,17 +14,17 @@ export interface SurveyRespondData {
     id: string;
     title: string;
     description?: string;
-    surveyType: 'poll' | 'rsvp' | 'invitation';
     status?: 'draft' | 'active' | 'closed';
     closingDate?: string;
     footerNote?: string;
   };
-  questions: Array<{ id: string; text: string; options: string[]; optionKeywords: string[]; order: number }>;
+  questions: SurveyQuestionDefinition[];
   existingResponse: {
     id: string;
-    answers: Record<string, number>;
+    answers: SurveyAnswers;
     status: string;
     submittedAt: string;
+    requiresReconfirmation?: boolean;
   } | null;
   aggregatedResults?: Record<string, number[]>;
   totalRespondents?: number;
@@ -45,7 +47,7 @@ export class SurveyRespondService {
     return json as SurveyRespondData;
   }
 
-  async submit(token: string, answers: Record<string, number>): Promise<void> {
+  async submit(token: string, answers: SurveyAnswers): Promise<void> {
     const restOperation = post({
       apiName: API_NAME,
       path: SURVEY_RESPOND_PATH,

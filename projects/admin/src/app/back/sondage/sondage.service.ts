@@ -1,20 +1,20 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../../../../../amplify/data/resource';
+import { SurveyAnswer, SurveyOptionDefinition } from '../../common/survey/survey-flow';
 
 export type SurveyItem = Schema['Survey']['type'];
 export type SurveyQuestionItem = Schema['SurveyQuestion']['type'];
 export type SurveyResponseItem = Schema['SurveyResponse']['type'];
 
 export type SurveyStatus = 'active' | 'closed';
-export type SurveyType = 'poll' | 'rsvp' | 'invitation';
 export type ResponseStatus = 'submitted' | 'confirmed' | 'declined' | 'cancelled';
+export type { SurveyAnswer } from '../../common/survey/survey-flow';
 
 export interface SurveyInput {
   title: string;
   description?: string;
   footerNote?: string;
-  surveyType?: SurveyType;
   closingDate: string;
   productTag?: string;
   status?: SurveyStatus;
@@ -23,8 +23,9 @@ export interface SurveyInput {
 export interface QuestionInput {
   surveyId: string;
   text: string;
-  options: string[];
-  optionKeywords?: string[];
+  resultLabel?: string;
+  detailResultLabel?: string;
+  options: SurveyOptionDefinition[];
   order: number;
 }
 
@@ -83,6 +84,10 @@ export class SondageService {
     await this.m.SurveyQuestion.update({ id, ...input });
   }
 
+  async deleteQuestion(id: string): Promise<void> {
+    await this.m.SurveyQuestion.delete({ id });
+  }
+
   // ── Email body builder (partagé mailing + éditeur) ────────────────────────
 
   buildSurveyEmailBody(survey: SurveyItem, questions: SurveyQuestionItem[]): string {
@@ -90,23 +95,20 @@ export class SondageService {
       ? new Date(survey.closingDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
       : 'date de clôture';
 
-    const surveyType = (survey as any).surveyType ?? 'poll';
-    const isRsvp = surveyType === 'rsvp';
     const questionCount = questions.filter(q => (q.text as string)?.trim()).length;
     const footerNote = (survey as any).footerNote?.trim();
 
-    const ctaLabel = isRsvp ? 'Répondre à l\'invitation' : 'Accéder au sondage';
-    const questionHint = !isRsvp && questionCount > 0
+    const questionHint = questionCount > 0
       ? `<p style="color:#777;font-size:14px;margin:0 0 28px 0">Ce sondage comporte <strong>${questionCount} question${questionCount > 1 ? 's' : ''}</strong>.</p>`
       : '';
 
     return `
-      <h2 style="color:#333;margin-top:0">${survey.title || 'Invitation'}</h2>
+      <h2 style="color:#333;margin-top:0">${survey.title || 'Questionnaire'}</h2>
       ${survey.description ? `<p style="color:#555;line-height:1.6;margin-bottom:20px">${survey.description}</p>` : ''}
       ${questionHint}
       <div style="text-align:center;margin:32px 0">
         <a href="[SURVEY_LINK]" style="background-color:#667eea;color:white;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:16px;font-weight:bold;display:inline-block">
-          ${ctaLabel}
+          Accéder au questionnaire
         </a>
       </div>
       <p style="color:#aaa;font-size:12px;margin-top:24px;text-align:center">
@@ -131,7 +133,9 @@ export class SondageService {
     memberId: string;
     memberEmail: string;
     memberName: string;
-    answers: Record<string, number>;
+    answers: Record<string, SurveyAnswer>;
+    paymentStatus: 'notApplicable' | 'payable';
+    paymentProductId?: string;
     status?: string;
   }): Promise<SurveyResponseItem> {
     const { data } = await this.m.SurveyResponse.create({
@@ -143,10 +147,18 @@ export class SondageService {
     return data;
   }
 
-  async updateResponseAnswers(id: string, answers: Record<string, number>, status?: string): Promise<void> {
+  async updateResponseAnswers(
+    id: string,
+    answers: Record<string, SurveyAnswer>,
+    paymentStatus: 'notApplicable' | 'payable',
+    paymentProductId?: string,
+    status?: string,
+  ): Promise<void> {
     await this.m.SurveyResponse.update({
       id,
       answers: JSON.stringify(answers),
+      paymentStatus,
+      paymentProductId: paymentProductId ?? null,
       submittedAt: new Date().toISOString(),
       ...(status ? { status } : {}),
     });
@@ -154,5 +166,9 @@ export class SondageService {
 
   async deleteResponse(id: string): Promise<void> {
     await this.m.SurveyResponse.delete({ id });
+  }
+
+  async requireResponseReconfirmation(id: string): Promise<void> {
+    await this.m.SurveyResponse.update({ id, requiresReconfirmation: true });
   }
 }

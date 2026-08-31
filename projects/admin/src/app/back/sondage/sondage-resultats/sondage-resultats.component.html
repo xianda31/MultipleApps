@@ -7,14 +7,16 @@
             <span class="fw-semibold fs-5">{{ surveyTitle }}</span>
             <span class="text-muted ms-2 small">
                 — {{ responses.length }} réponse(s)
-                @if (isRsvpMode) { dont {{ presentCount }} présent(s) }
+                @if (hasPaymentOption) {
+                dont {{ payableCount }} payable(s)
+                }
             </span>
         </div>
     </div>
     <!-- synthèse par question -->
     @if (!loading && responses.length > 0 && questionProgress.length > 0) {
     <div class="text-muted small mb-2">
-        Base: {{ presentCount }} réponse(s)
+        Base variable selon le parcours suivi
     </div>
     <div class="row g-3 mb-4">
         @for (item of questionProgress; track item.question.id) {
@@ -65,13 +67,16 @@
                     <th class="text-center" style="width:60px">#</th>
                     <th class="text-start">Participant</th>
                     <th class="text-center">Adhérent</th>
+                    @if (hasPaymentOption) {
+                    <th class="text-center">Paiement</th>
+                    }
                     <!-- <th class="text-nowrap">Créé le</th> -->
                     <th class="text-nowrap">Mis à jour le</th>
                     @for (q of questions; track q.id) {
-                    <th [class.text-warning-emphasis]="q.order === -1">
-                        @if (q.order === -1) { <i class="bi bi-person-check me-1"></i> }
-                        {{ q.text }}
-                    </th>
+                    <th [title]="q.text">{{ getResultColumnTitle(q) }}</th>
+                    @if (hasDetailList(q)) {
+                    <th>{{ getDetailResultColumnTitle(q) }}</th>
+                    }
                     }
                     <th class="text-center" style="width:60px"></th>
                 </tr>
@@ -82,6 +87,9 @@
                     <td class="text-center text-muted">{{ i + 1 }}</td>
                     <td>
                         <div class="fw-semibold">{{ getResponseFullName(r) }}</div>
+                        @if (r.requiresReconfirmation) {
+                        <span class="badge text-bg-warning">À reconfirmer</span>
+                        }
                         <!-- <div class="text-muted small">{{ r.memberEmail }}</div> -->
                     </td>
                     <td class="text-center">
@@ -91,18 +99,24 @@
                         <span class="badge bg-secondary">ext</span>
                         }
                     </td>
-                    <!-- <td class="text-nowrap">{{ r.createdAt | date:'dd/MM/yyyy' }}</td> -->
-                    <td class="text-nowrap">{{ r.updatedAt | date:'dd/MM/yyyy' }}</td>
-                    @for (q of questions; track q.id) {
-                    <td class="text-center" [class.text-muted]="q.order !== -1 && isAbsent(r)">
-                        @if (q.order === -1 && isAbsent(r)) {
-                        <span class="badge bg-secondary">Non</span>
-                        } @else if (q.order !== -1 && isAbsent(r)) {
-                        
+                    @if (hasPaymentOption) {
+                    <td class="text-center">
+                        @if (r.requiresReconfirmation) {
+                        <span class="text-muted">En attente</span>
+                        } @else if (r.paymentStatus === 'payable') {
+                        <span class="badge text-bg-success">Payable</span>
                         } @else {
-                        {{ getAnswer(r, q.id) }}
+                        <span class="text-muted">—</span>
                         }
                     </td>
+                    }
+                    <!-- <td class="text-nowrap">{{ r.createdAt | date:'dd/MM/yyyy' }}</td> -->
+                    <td class="text-nowrap">{{ r.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                    @for (q of questions; track q.id) {
+                    <td class="text-center">{{ getAnswer(r, q.id) }}</td>
+                    @if (hasDetailList(q)) {
+                    <td class="text-center">{{ getAnswerDetail(r, q.id) }}</td>
+                    }
                     }
                     <td class="text-center text-nowrap">
                         <button class="btn btn-sm btn-link p-0 me-2" title="Modifier" (click)="openEditVote(r)">
@@ -190,17 +204,27 @@
         }
 
         <!-- Questions -->
-        @for (q of questions; track q.id) {
+        @for (q of manualReachableQuestions; track q.id) {
         <div class="mb-3">
             <p class="fw-semibold mb-2">{{ q.text }}</p>
-            @for (opt of q.options; track $index) {
-            <div class="form-check">
-                <input class="form-check-input" type="radio" [name]="'q_' + q.id" [id]="'q_' + q.id + '_' + $index"
-                    [checked]="manualAnswers[q.id] === $index" (change)="manualAnswers[q.id] = $index">
-                <label class="form-check-label" [for]="'q_' + q.id + '_' + $index">
-                    {{ (q.optionKeywords[$index] || '').trim() || opt }}
-                </label>
-            </div>
+            @for (opt of q.options; track opt.value) {
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" [name]="'q_' + q.id" [id]="'q_' + q.id + '_' + opt.value"
+                        [checked]="manualAnswers[q.id]?.optionValue === opt.value" (change)="selectManualAnswer(q.id, opt.value)">
+                    <label class="form-check-label" [for]="'q_' + q.id + '_' + opt.value">
+                        {{ opt.keyword?.trim() || opt.label }}
+                    </label>
+                    @if (manualAnswers[q.id]?.optionValue === opt.value && opt.detailOptions?.length) {
+                        <select class="form-select form-select-sm mt-2" [name]="'detail_' + q.id"
+                            [ngModel]="manualAnswers[q.id]?.detailValue ?? ''"
+                            (ngModelChange)="selectManualDetail(q.id, $event)">
+                            <option value="">— {{ opt.detailPrompt || 'Sélectionnez une valeur' }} —</option>
+                            @for (detail of opt.detailOptions; track detail.value) {
+                                <option [value]="detail.value">{{ detail.label }}</option>
+                            }
+                        </select>
+                    }
+                </div>
             }
         </div>
         }

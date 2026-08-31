@@ -2,15 +2,10 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Member } from '../../common/interfaces/member.interface';
 import { MembersService } from '../../common/services/members.service';
-import { SondageService, SurveyItem } from './sondage.service';
+import { SondageService, SurveyAnswer, SurveyItem } from './sondage.service';
+import { SurveyOptionDefinition, SurveyQuestionDefinition } from '../../common/survey/survey-flow';
 
-export interface QuestionResult {
-  id: string;
-  order: number;
-  text: string;
-  options: string[];
-  optionKeywords: string[];
-}
+export type QuestionResult = SurveyQuestionDefinition;
 
 export interface ResponseRow {
   id: string;
@@ -22,12 +17,17 @@ export interface ResponseRow {
   isMember: boolean;
   createdAt: string;
   updatedAt: string;
-  answers: Record<string, number>;
+  answers: Record<string, SurveyAnswer>;
+  paymentStatus: 'notApplicable' | 'payable';
+  paymentProductId?: string;
+  requiresReconfirmation: boolean;
 }
 
 export interface SurveyReservation {
+  memberId: string;
   memberName: string;
   isMember: boolean;
+  expectedProductId?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -72,28 +72,36 @@ export class SurveyResultsService {
         createdAt: r.createdAt,
         updatedAt: r.updatedAt ?? r.submittedAt,
         answers: answers ?? {},
+        paymentStatus: r.paymentStatus ?? 'notApplicable',
+        paymentProductId: r.paymentProductId ?? undefined,
+        requiresReconfirmation: r.requiresReconfirmation === true,
         isMember: r.memberId !== r.memberEmail,
       };
     });
   }
 
-  // ── Logique présence/absence ──────────────────────────────────────────────
-
-  invitationQuestion(questions: QuestionResult[]): QuestionResult | null {
-    return questions.find(q => q.order === -1) ?? null;
+  getAnswerIndex(question: QuestionResult, answer: SurveyAnswer | undefined): number {
+    if (!answer) return -1;
+    return question.options.findIndex(option => option.value === answer.optionValue);
   }
 
-  isAbsent(row: ResponseRow, questions: QuestionResult[]): boolean {
-    const invQ = this.invitationQuestion(questions);
-    if (!invQ) return false;
-    const idx = row.answers[invQ.id];
-    // Convention fixe : index 0 = présent (OUI), index 1 = absent (NON).
-    return idx === 1;
+  getAnswerLabel(question: QuestionResult, answer: SurveyAnswer | undefined): string {
+    const label = this.getAnswerChoiceLabel(question, answer);
+    const detailLabel = this.getAnswerDetailLabel(question, answer);
+    return detailLabel === '—' ? label : `${label} : ${detailLabel}`;
   }
 
-  getDefaultPresentOptionIndex(_questions: QuestionResult[]): number {
-    // Convention fixe : index 0 = présent (OUI).
-    return 0;
+  getAnswerChoiceLabel(question: QuestionResult, answer: SurveyAnswer | undefined): string {
+    const index = this.getAnswerIndex(question, answer);
+    if (index < 0) return '—';
+    const option: SurveyOptionDefinition | undefined = question.options[index];
+    return option?.keyword?.trim() || option?.label || '—';
+  }
+
+  getAnswerDetailLabel(question: QuestionResult, answer: SurveyAnswer | undefined): string {
+    if (!answer?.detailValue) return '—';
+    const option = question.options.find(candidate => candidate.value === answer.optionValue);
+    return option?.detailOptions?.find(detail => detail.value === answer.detailValue)?.label ?? '—';
   }
 
   // ── Affichage nom ─────────────────────────────────────────────────────────
@@ -108,33 +116,20 @@ export class SurveyResultsService {
 
   // ── Point d'entrée pour ticketing ─────────────────────────────────────────
 
-  /**
-   * Charge le sondage et retourne la liste des réservations (présents uniquement).
-   * Pour un sondage RSVP, seuls les répondants non absents sont inclus.
-   * Pour un sondage sans question d'invitation, tous les répondants sont inclus.
-   */
   async getReservationsFromSurvey(surveyId: string): Promise<SurveyReservation[]> {
-    const [qs, rs, members] = await Promise.all([
-      this.sondageService.listQuestionsForSurvey(surveyId),
+    const [rs, members] = await Promise.all([
       this.sondageService.listResponsesForSurvey(surveyId),
       firstValueFrom(this.membersService.listMembers()),
     ]);
-
-    const questions: QuestionResult[] = (qs as any[]).map((q: any) => ({
-      id: q.id,
-      order: q.order,
-      text: q.text,
-      options: q.options ?? [],
-      optionKeywords: q.optionKeywords ?? [],
-    }));
-
     const rows = this.mapRawResponses(rs as any[]);
 
     return rows
-      .filter(row => !this.isAbsent(row, questions))
+      .filter(row => row.paymentStatus === 'payable' && !row.requiresReconfirmation)
       .map(row => ({
+        memberId: row.memberId,
         memberName: this.getResponseFullName(row, members),
         isMember: row.isMember,
+        expectedProductId: row.paymentProductId,
       }));
   }
 

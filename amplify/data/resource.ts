@@ -273,8 +273,10 @@ const schema = a.schema({
     date: a.date().required(),
     eventTitle: a.string().required(),
     reservationKey: a.string().required(),
+    memberId: a.string(),
     memberName: a.string().required(),
     isMember: a.boolean().required(),
+    expectedProductId: a.string(),
     reservationStatus: a.ref('TicketingReservationStatus').required(),
     paidAmount: a.float(),
     paidAccount: a.string(),
@@ -481,7 +483,6 @@ const schema = a.schema({
     title: a.string().required(),
     description: a.string(),
     footerNote: a.string(),
-    surveyType: a.enum(['poll', 'rsvp', 'invitation']),  // 'poll' = QCM simple, 'rsvp' = RSVP, 'invitation' = sondage avec Question 0
     status: a.enum(['draft', 'active', 'closed']),
     closingDate: a.string().required(),
     productTag: a.string(),
@@ -494,12 +495,29 @@ const schema = a.schema({
       allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
     ]),
 
+  SurveyDetailOption: a.customType({
+    value: a.string().required(),
+    label: a.string().required(),
+  }),
+
+  SurveyQuestionOption: a.customType({
+    value: a.string().required(),
+    label: a.string().required(),
+    keyword: a.string(),
+    nextAction: a.enum(['NEXT', 'END']),
+    payTag: a.boolean(),
+    detailPrompt: a.string(),
+    detailOptions: a.ref('SurveyDetailOption').array(),
+    detailOptionsOrigin: a.enum(['manual', 'memberImport']),
+  }),
+
   SurveyQuestion: a.model({
     surveyId: a.string().required(),
-    order: a.integer().required(),         // -1 = question d'invitation, 0+ = questions normales
+    order: a.integer().required(),
     text: a.string().required(),
-    options: a.string().array().required(),        // texte complet des choix
-    optionKeywords: a.string().array(),            // mot-clef court affiché dans le tableau résultats
+    resultLabel: a.string(),
+    detailResultLabel: a.string(),
+    options: a.ref('SurveyQuestionOption').array().required(),
   })
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
@@ -515,7 +533,10 @@ const schema = a.schema({
     memberId: a.string().required(),     // license_number ou cognitoId
     memberEmail: a.string().required(),
     memberName: a.string(),              // prénom + nom pour le tableau admin
-    answers: a.json().required(),        // { [questionId]: optionIndex }
+    answers: a.json().required(),        // { [questionId]: { optionValue, detailValue? } }
+    paymentStatus: a.enum(['notApplicable', 'payable']),
+    paymentProductId: a.string(),
+    requiresReconfirmation: a.boolean(),
     // poll: 'submitted' | rsvp: 'confirmed' | 'declined' | 'cancelled'
     status: a.string(),
     submittedAt: a.string(),             // ISO date de la dernière modification

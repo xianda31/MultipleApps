@@ -10,8 +10,10 @@ export type TicketingPaymentStatus = 'active' | 'cancelled';
 export type TicketingReservationStatus = 'reserved' | 'sold' | 'cancelled';
 
 export interface ReservationImportRow {
+  memberId?: string;
   memberName: string;
   isMember: boolean;
+  expectedProductId?: string;
 }
 
 @Injectable({
@@ -63,7 +65,7 @@ export class TicketingService {
     let updated = 0;
 
     for (const row of rows) {
-      const reservationKey = this.buildReservationKey(row.memberName);
+      const reservationKey = this.buildReservationKey(row.memberName, row.memberId);
       const previous = byKey.get(reservationKey);
       if (!previous) {
         await this.models.TicketingReservation.create({
@@ -71,8 +73,10 @@ export class TicketingService {
           date: ctx.date,
           eventTitle: ctx.eventTitle.trim(),
           reservationKey,
+          memberId: row.memberId,
           memberName: row.memberName.trim(),
           isMember: row.isMember,
+          expectedProductId: row.expectedProductId,
           reservationStatus: 'reserved',
           source: ctx.source ?? 'csv',
         });
@@ -86,8 +90,10 @@ export class TicketingService {
 
       await this.models.TicketingReservation.update({
         id: previous.id,
+        memberId: row.memberId,
         memberName: row.memberName.trim(),
         isMember: row.isMember,
+        expectedProductId: row.expectedProductId,
         source: ctx.source ?? previous.source ?? 'csv',
       });
       updated += 1;
@@ -170,8 +176,8 @@ export class TicketingService {
     ]);
   }
 
-  buildReservationKey(memberName: string): string {
-    return this.normalizeMemberName(memberName);
+  buildReservationKey(memberName: string, memberId?: string): string {
+    return memberId ? `member:${memberId}` : this.normalizeMemberName(memberName);
   }
 
   private normalizeMemberName(name: string): string {

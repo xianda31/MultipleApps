@@ -3,8 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SurveyRespondService, SurveyRespondData } from './survey-respond.service';
-import { MembersService } from '../../common/services/members.service';
-import { Member } from '../../common/interfaces/member.interface';
+import {
+  getReachableQuestions,
+  isSurveyPathComplete,
+  sanitizeSurveyAnswers,
+  SurveyAnswers,
+  SurveyQuestionDefinition,
+} from '../../common/survey/survey-flow';
 
 type PageState = 'loading' | 'error' | 'form' | 'done';
 
@@ -17,15 +22,13 @@ type PageState = 'loading' | 'error' | 'form' | 'done';
 export class SurveyRespondComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private surveyService = inject(SurveyRespondService);
-  private membersService = inject(MembersService);
 
   state: PageState = 'loading';
   errorMsg = '';
   token = '';
 
   data: SurveyRespondData | null = null;
-  answers: Record<string, number> = {};  // questionId → optionIndex
-  members: Member[] = [];
+  answers: SurveyAnswers = {};
 
   saving = false;
   saveError = '';
@@ -33,15 +36,8 @@ export class SurveyRespondComponent implements OnInit {
   get survey() { return this.data?.survey ?? null; }
   get questions() { return this.data?.questions ?? []; }
   get existingResponse() { return this.data?.existingResponse ?? null; }
-  get invitationQuestion() {
-    return this.questions.find((q: any) => q.order === -1) ?? null;
-  }
-  get isInvitationDeclined(): boolean {
-    const q = this.invitationQuestion;
-    if (!q) return false;
-    const idx = this.answers[q.id];
-    // Convention stricte : index 0 = présent (OUI), index 1 = absent (NON / ne vient pas).
-    return idx === 1;
+  get reachableQuestions(): SurveyQuestionDefinition[] {
+    return getReachableQuestions(this.questions, this.answers);
   }
 
   private readonly PROGRESS_COLORS = [
@@ -49,21 +45,20 @@ export class SurveyRespondComponent implements OnInit {
   ];
 
   get questionProgress(): Array<{
-    question: { id: string; text: string; options: string[] };
+    question: SurveyQuestionDefinition;
     total: number;
     options: Array<{ label: string; count: number; percent: number; percentLabel: string; color: string }>;
   }> {
     if (!this.data?.aggregatedResults) return [];
     return this.questions
-      .filter(q => q.order !== -1)
       .map(q => {
         const counts = this.data!.aggregatedResults![q.id] ?? [];
         const total = counts.reduce((a, b) => a + b, 0);
         return {
           question: q,
           total,
-          options: q.options.map((opt, idx) => {
-            const label = q.optionKeywords?.[idx]?.trim() || opt;
+          options: q.options.map((option, idx) => {
+            const label = option.keyword?.trim() || option.label;
             const count = counts[idx] ?? 0;
             const percent = total > 0 ? Math.round((count / total) * 100) : 0;
             return { label, count, percent, percentLabel: `${percent} %`, color: this.PROGRESS_COLORS[idx % this.PROGRESS_COLORS.length] };
@@ -81,15 +76,35 @@ export class SurveyRespondComponent implements OnInit {
     return closingDate.getTime() < Date.now();
   }
   get firstName() {
-    if (!this.data?.memberId) return this.data?.memberName?.split(' ')?.[0] ?? '';
-    const member = this.members.find(m => m.id === this.data!.memberId);
-    return member?.firstname ?? '';
+    return this.data?.memberName?.split(' ')?.[0] ?? '';
   }
 
-  /** True si toutes les questions ont une réponse */
+  getAnswerLabel(question: SurveyRespondData['questions'][number]): string {
+    const answer = this.answers[question.id];
+    if (!answer) return '—';
+    const option = question.options.find(candidate => candidate.value === answer.optionValue);
+    if (!option) return '—';
+    const detail = option.detailOptions?.find(candidate => candidate.value === answer.detailValue)?.label;
+    return detail ? `${option.label} : ${detail}` : option.label;
+  }
+
   get allAnswered(): boolean {
-    if (this.isInvitationDeclined) return true;
-    return this.questions.every(q => this.answers[q.id] !== undefined);
+    return isSurveyPathComplete(this.questions, this.answers);
+  }
+
+  selectAnswer(questionId: string, value: string) {
+    const current = this.answers[questionId];
+    const answer = current?.optionValue === value ? current : { optionValue: value };
+    this.answers = sanitizeSurveyAnswers(this.questions, { ...this.answers, [questionId]: answer });
+  }
+
+  selectDetail(questionId: string, detailValue: string) {
+    const current = this.answers[questionId];
+    if (!current) return;
+    this.answers = sanitizeSurveyAnswers(this.questions, {
+      ...this.answers,
+      [questionId]: { ...current, detailValue },
+    });
   }
 
   async ngOnInit() {
@@ -99,10 +114,6 @@ export class SurveyRespondComponent implements OnInit {
       this.state = 'error';
       return;
     }
-    // Charger les membres pour pouvoir récupérer le firstName
-    this.membersService.listMembers().subscribe(members => {
-      this.members = members;
-    });
     await this.reload();
   }
 
@@ -113,11 +124,12 @@ export class SurveyRespondComponent implements OnInit {
       // Pré-remplir les réponses existantes
       if (this.existingResponse?.answers) {
         const raw = this.existingResponse.answers;
-        this.answers = typeof raw === 'string' ? JSON.parse(raw) : { ...raw };
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : { ...raw };
+        this.answers = sanitizeSurveyAnswers(this.questions, parsed);
       } else {
         this.answers = {};
       }
-      this.state = this.existingResponse ? 'done' : 'form';
+      this.state = this.existingResponse?.requiresReconfirmation ? 'form' : this.existingResponse ? 'done' : 'form';
     } catch (e: any) {
       this.errorMsg = e?.message ?? 'Erreur lors du chargement';
       this.state = 'error';
@@ -128,12 +140,12 @@ export class SurveyRespondComponent implements OnInit {
 
   async submitPoll() {
     if (!this.allAnswered) {
-      this.saveError = 'Veuillez répondre à toutes les questions (sauf si vous avez indiqué ne pas venir à la question 0).';
+      this.saveError = 'Veuillez répondre à la question affichée.';
       return;
     }
     this.saving = true; this.saveError = '';
     try {
-      await this.surveyService.submit(this.token, this.answers);
+      await this.surveyService.submit(this.token, sanitizeSurveyAnswers(this.questions, this.answers));
       await this.reload();
     } catch (e: any) {
       this.saveError = e?.message ?? 'Erreur';

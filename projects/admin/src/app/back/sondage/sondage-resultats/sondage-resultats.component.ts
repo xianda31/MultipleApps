@@ -2,12 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SondageService } from '../sondage.service';
+import { SondageService, SurveyAnswer } from '../sondage.service';
 import { SurveyResultsService, QuestionResult, ResponseRow } from '../survey-results.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Member } from '../../../common/interfaces/member.interface';
 import { firstValueFrom } from 'rxjs';
 import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
+import {
+  getReachableQuestions,
+  hasPaymentTag,
+  isSurveyPathComplete,
+  sanitizeSurveyAnswers,
+} from '../../../common/survey/survey-flow';
 
 @Component({
   selector: 'app-sondage-resultats',
@@ -16,6 +22,8 @@ import { BACK_ROUTE_ABS_PATHS } from '../../routes/back-route-paths';
   templateUrl: './sondage-resultats.component.html',
 })
 export class SondageResultatsComponent implements OnInit {
+  static readonly RESULT_COLUMN_TITLE_MAX_LENGTH = 15;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -27,6 +35,7 @@ export class SondageResultatsComponent implements OnInit {
 
   surveyId = '';
   surveyTitle = '';
+  surveyProductId = '';
   questions: QuestionResult[] = [];
   responses: ResponseRow[] = [];
   members: Member[] = [];
@@ -40,7 +49,7 @@ export class SondageResultatsComponent implements OnInit {
   manualExternalEmail = '';
   manualExternalFirstName = '';
   manualExternalLastName = '';
-  manualAnswers: Record<string, number> = {};
+  manualAnswers: Record<string, SurveyAnswer> = {};
   savingManual = false;
   manualError: string | null = null;
 
@@ -62,6 +71,25 @@ export class SondageResultatsComponent implements OnInit {
     return this.surveyResults.getResponseFullName(r, this.members);
   }
 
+  get manualReachableQuestions(): QuestionResult[] {
+    return getReachableQuestions(this.questions, this.manualAnswers);
+  }
+
+  selectManualAnswer(questionId: string, value: string) {
+    const current = this.manualAnswers[questionId];
+    const answer = current?.optionValue === value ? current : { optionValue: value };
+    this.manualAnswers = sanitizeSurveyAnswers(this.questions, { ...this.manualAnswers, [questionId]: answer });
+  }
+
+  selectManualDetail(questionId: string, detailValue: string) {
+    const current = this.manualAnswers[questionId];
+    if (!current) return;
+    this.manualAnswers = sanitizeSurveyAnswers(this.questions, {
+      ...this.manualAnswers,
+      [questionId]: { ...current, detailValue },
+    });
+  }
+
   async ngOnInit() {
     this.surveyId = this.route.snapshot.paramMap.get('id') ?? '';
 
@@ -72,10 +100,15 @@ export class SondageResultatsComponent implements OnInit {
     ]);
 
     this.surveyTitle = survey?.title ?? '';
+    this.surveyProductId = survey?.productTag ?? '';
 
     this.questions = (qs as any[]).map((q: any) => ({
-      id: q.id, order: q.order, text: q.text, options: q.options ?? [],
-      optionKeywords: q.optionKeywords ?? [],
+      id: q.id,
+      order: q.order,
+      text: q.text,
+      resultLabel: q.resultLabel,
+      detailResultLabel: q.detailResultLabel,
+      options: q.options ?? [],
     }));
 
     // Charger les membres avant de trier les réponses
@@ -89,13 +122,7 @@ export class SondageResultatsComponent implements OnInit {
     const mappedResponses = this.surveyResults.mapRawResponses(raw);
 
     this.responses = mappedResponses.sort((a, b) => {
-      const aAbsent = this.isAbsent(a);
-      const bAbsent = this.isAbsent(b);
-
-      // Présents en premier, absents ensuite.
-      if (aAbsent !== bAbsent) return aAbsent ? 1 : -1;
-
-      // Trier en utilisant le nom affiché (member.lastname firstname) pour la cohérence
+      if (a.paymentStatus !== b.paymentStatus) return a.paymentStatus === 'payable' ? -1 : 1;
       const aLabel = this.getResponseFullName(a);
       const bLabel = this.getResponseFullName(b);
       return aLabel.localeCompare(bLabel, 'fr', { sensitivity: 'base' });
@@ -104,33 +131,52 @@ export class SondageResultatsComponent implements OnInit {
     this.alreadyVotedIds = new Set(this.responses.map(r => r.memberId));
   }
 
-  get invitationQuestion(): QuestionResult | null {
-    return this.questions.find(q => q.order === -1) ?? null;
+  get payableCount(): number {
+    return this.responses.filter(response =>
+      response.paymentStatus === 'payable' && !response.requiresReconfirmation
+    ).length;
   }
 
-  get isRsvpMode(): boolean {
-    return !!this.invitationQuestion;
-  }
-
-  get presentCount(): number {
-    return this.responses.filter(r => !this.isAbsent(r)).length;
-  }
-
-  isAbsent(row: ResponseRow): boolean {
-    return this.surveyResults.isAbsent(row, this.questions);
-  }
-
-  private getDefaultPresentOptionIndex(): number {
-    return this.surveyResults.getDefaultPresentOptionIndex(this.questions);
+  get hasPaymentOption(): boolean {
+    return this.questions.some(question => question.options.some(option => option.payTag === true));
   }
 
   getAnswer(row: ResponseRow, questionId: string): string {
     const q = this.questions.find(q => q.id === questionId);
     if (!q) return '—';
-    const idx = row.answers[questionId];
-    if (idx === undefined) return '—';
-    const kw = q.optionKeywords[idx]?.trim();
-    return kw || q.options[idx] || '—';
+    return this.surveyResults.getAnswerChoiceLabel(q, row.answers[questionId]);
+  }
+
+  getAnswerDetail(row: ResponseRow, questionId: string): string {
+    const question = this.questions.find(candidate => candidate.id === questionId);
+    if (!question) return '—';
+    return this.surveyResults.getAnswerDetailLabel(question, row.answers[questionId]);
+  }
+
+  hasDetailList(question: QuestionResult): boolean {
+    return question.options.some(option => !!option.detailOptions?.length);
+  }
+
+  truncateColumnTitle(title: string): string {
+    const maxLength = SondageResultatsComponent.RESULT_COLUMN_TITLE_MAX_LENGTH;
+    if (title.length <= maxLength) return title;
+    const previousBoundary = title.lastIndexOf(' ', maxLength);
+    const nextBoundary = title.indexOf(' ', maxLength + 1);
+    const nearestBoundary = previousBoundary <= 0
+      ? maxLength
+      : nextBoundary < 0 || maxLength - previousBoundary <= nextBoundary - maxLength
+        ? previousBoundary
+        : nextBoundary;
+    const truncated = title.slice(0, nearestBoundary);
+    return `${truncated.trimEnd()}...`;
+  }
+
+  getResultColumnTitle(question: QuestionResult): string {
+    return question.resultLabel?.trim() || this.truncateColumnTitle(question.text);
+  }
+
+  getDetailResultColumnTitle(question: QuestionResult): string {
+    return question.detailResultLabel?.trim() || 'Valeur choisie';
   }
 
   // ── Vote manuel : ouvrir ───────────────────────────────────────────────────
@@ -143,11 +189,6 @@ export class SondageResultatsComponent implements OnInit {
     this.manualExternalFirstName = '';
     this.manualExternalLastName = '';
     this.manualAnswers = {};
-    // Pré-sélectionner l'option "présent" pour la question d'invitation (RSVP)
-    const invQ = this.invitationQuestion;
-    if (invQ) {
-      this.manualAnswers[invQ.id] = this.getDefaultPresentOptionIndex();
-    }
     this.manualError = null;
     this.manualOpen = true;
   }
@@ -200,18 +241,13 @@ export class SondageResultatsComponent implements OnInit {
   }
 
   async saveManualVote() {
-    const requiredQs = this.questions.filter(q => q.order !== -1); // invitation optionnelle
-    if (requiredQs.some(q => this.manualAnswers[q.id] === undefined)) {
-      this.manualError = 'Veuillez répondre à toutes les questions.';
+    if (!isSurveyPathComplete(this.questions, this.manualAnswers)) {
+      this.manualError = 'Veuillez répondre à la question affichée.';
       return;
     }
-    
-    // Vérifier que la question d'invitation est répondue si elle existe
-    const invQ = this.invitationQuestion;
-    if (invQ && this.manualAnswers[invQ.id] === undefined) {
-      this.manualError = 'Veuillez indiquer la présence/absence.';
-      return;
-    }
+    this.manualAnswers = sanitizeSurveyAnswers(this.questions, this.manualAnswers);
+    const paymentStatus = hasPaymentTag(this.questions, this.manualAnswers) ? 'payable' : 'notApplicable';
+    const paymentProductId = paymentStatus === 'payable' ? this.surveyProductId : undefined;
 
     let externalEmail = '';
     let externalName = '';
@@ -241,7 +277,9 @@ export class SondageResultatsComponent implements OnInit {
     this.manualError = null;
     try {
       if (this.editingResponseId) {
-        await this.sondageService.updateResponseAnswers(this.editingResponseId, this.manualAnswers);
+        await this.sondageService.updateResponseAnswers(
+          this.editingResponseId, this.manualAnswers, paymentStatus, paymentProductId
+        );
       } else {
         if (this.manualIsExternal) {
           await this.sondageService.createManualResponse({
@@ -250,6 +288,8 @@ export class SondageResultatsComponent implements OnInit {
             memberEmail: externalEmail,
             memberName: externalName,
             answers: this.manualAnswers,
+            paymentStatus,
+            paymentProductId,
           });
         } else {
           const member = this.members.find(m => m.id === this.manualMemberId);
@@ -260,6 +300,8 @@ export class SondageResultatsComponent implements OnInit {
             memberEmail: member.email,
             memberName: `${member.firstname} ${member.lastname}`.trim(),
             answers: this.manualAnswers,
+            paymentStatus,
+            paymentProductId,
           });
         }
       }
@@ -282,16 +324,19 @@ export class SondageResultatsComponent implements OnInit {
   }
 
   exportCsv() {
-    const headers = ['Nom', 'Adhérent', 'Date', ...this.questions.map(q => q.text)];
+    const headers = [
+      'Nom',
+      'Adhérent',
+      'Date',
+      ...this.questions.flatMap(question => this.hasDetailList(question)
+        ? [this.getResultColumnTitle(question), this.getDetailResultColumnTitle(question)]
+        : [this.getResultColumnTitle(question)]),
+    ];
     const rows = this.responses.map(r => {
       const isMember = r.memberId !== r.memberEmail ? 'Oui' : 'ext';
-      const answers = this.questions.map(q => {
-        // Si RSVP et présence=non → vider les réponses des questions non-invitation
-        if (this.isAbsent(r) && q.order !== -1) {
-          return '';
-        }
-        return this.getAnswer(r, q.id);
-      });
+      const answers = this.questions.flatMap(question => this.hasDetailList(question)
+        ? [this.getAnswer(r, question.id), this.getAnswerDetail(r, question.id)]
+        : [this.getAnswer(r, question.id)]);
       return [
         this.getResponseFullName(r),
         isMember,
@@ -330,16 +375,17 @@ export class SondageResultatsComponent implements OnInit {
       color: string;
     }>;
   }> {
-    const total = this.presentCount;
-
+    const confirmedResponses = this.responses.filter(response => !response.requiresReconfirmation);
     return this.questions
-      .filter(q => q.order !== -1)
       .map((q) => ({
         question: q,
-        total,
-        options: q.options.map((opt, idx) => {
-          const label = q.optionKeywords[idx]?.trim() || opt;
-          const count = this.responses.filter((r) => !this.isAbsent(r) && r.answers[q.id] === idx).length;
+        total: confirmedResponses.filter(response => response.answers[q.id] !== undefined).length,
+        options: q.options.map((option, idx) => {
+          const label = option.keyword?.trim() || option.label;
+          const count = confirmedResponses.filter((response) =>
+            this.surveyResults.getAnswerIndex(q, response.answers[q.id]) === idx
+          ).length;
+          const total = confirmedResponses.filter(response => response.answers[q.id] !== undefined).length;
           const percent = total > 0 ? Math.round((count / total) * 100) : 0;
           return {
             label,

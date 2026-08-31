@@ -493,7 +493,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     try {
       const rows = await this.surveyResults.getReservationsFromSurvey(this.selectedSurveyId);
       if (rows.length === 0) {
-        this.toastService.showWarning('Billetterie', 'Aucune réservation valide dans ce sondage (aucun présent).');
+        this.toastService.showWarning('Billetterie', 'Aucune réponse payable dans ce questionnaire.');
         return;
       }
 
@@ -622,7 +622,8 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   }
 
   private _priceForReservation(reservation: TicketingReservation): { price: number; product: Product | null } {
-    const product = reservation.isMember ? this.memberProduct : this.nonMemberProduct;
+    const product = this.batchProducts.find(candidate => candidate.id === reservation.expectedProductId)
+      ?? (reservation.isMember ? this.memberProduct : this.nonMemberProduct);
     return { price: product?.price ?? 0, product };
   }
 

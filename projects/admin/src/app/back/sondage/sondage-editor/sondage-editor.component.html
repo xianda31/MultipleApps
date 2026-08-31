@@ -11,17 +11,13 @@
       <div class="mb-3">
         <label class="form-label fw-semibold">Description</label>
         <div class="mb-1">
-          <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0"
-            (click)="applyBold()" title="Gras (sélectionner du texte puis cliquer)">
+          <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" (click)="applyBold()"
+            title="Gras (sélectionner du texte puis cliquer)">
             <strong>B</strong>
           </button>
         </div>
-        <div #descriptionEditor
-          contenteditable="true"
-          class="form-control"
-          style="min-height:80px;cursor:text"
-          placeholder="Contexte ou consigne affichée aux membres"
-          (input)="onDescriptionInput($event)">
+        <div #descriptionEditor contenteditable="true" class="form-control" style="min-height:80px;cursor:text"
+          placeholder="Contexte ou consigne affichée aux membres" (input)="onDescriptionInput($event)">
         </div>
       </div>
       <div class="mb-3">
@@ -30,109 +26,165 @@
       </div>
       <div class="mb-3">
         <label class="form-label fw-semibold">Code Produit <span class="text-muted fw-normal">(optionnel)</span></label>
-        <select class="form-select" [(ngModel)]="tag">
+        <select class="form-select" [ngModel]="tag" (ngModelChange)="onProductChange($event)">
           <option value="">— Aucun —</option>
           @for (p of pafProducts; track p.id) {
-            <option [value]="p.id">{{ p.name }}</option>
+          <option [value]="p.id">{{ p.name }}</option>
           }
         </select>
       </div>
       <div class="mb-1">
-        <label class="form-label fw-semibold">Note de bas d'email <span class="text-muted fw-normal">(optionnel)</span></label>
+        <label class="form-label fw-semibold">Note de bas d'email <span
+            class="text-muted fw-normal">(optionnel)</span></label>
         <input class="form-control" [(ngModel)]="footerNote"
           placeholder="Ex : Pour toute question, contactez le bureau." />
       </div>
     </div>
   </div>
 
-  <!-- Question d'invitation (order = -1) -->
-  <div class="d-flex align-items-center justify-content-between mb-2">
-    <h6 class="mb-0">Question d'invitation</h6>
-    @if (!invitationQuestion) {
-      <button class="btn btn-sm btn-outline-warning" (click)="addInvitationQuestion()">
-        <i class="bi bi-person-check me-1"></i>Ajouter une question d'invitation
-      </button>
-    }
-  </div>
-
-  @if (invitationQuestion) {
-    <div class="card mb-4 border-warning">
-      <div class="card-header d-flex justify-content-between align-items-center py-2 bg-warning bg-opacity-10">
-        <span class="fw-semibold text-warning-emphasis">
-          <i class="bi bi-person-check me-1"></i>Question 0 — Invitation
-        </span>
-        <button class="btn btn-sm btn-outline-danger" (click)="removeInvitationQuestion()" title="Supprimer">
-          <i class="bi bi-trash"></i>
-        </button>
-      </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <input class="form-control" [(ngModel)]="invitationQuestion.text"
-            placeholder="Ex : Serez-vous présent(e) ?" />
-        </div>
-        <label class="form-label text-muted small">Exactement 2 choix — option 1 = présent (OUI), option 2 = absent (NON)</label>
-        @for (opt of invitationQuestion.options; track trackByIndex($index)) {
-          <div class="input-group input-group-sm mb-1">
-            <span class="input-group-text">{{ $index + 1 }}</span>
-            <input class="form-control" [(ngModel)]="opt.text" placeholder="Texte de l'option" />
-          </div>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- Questions normales -->
   <h6 class="mb-3">Questions</h6>
 
-  @for (q of regularQuestions; track trackByIndex($index)) {
-    <div class="card mb-3 border-secondary">
-      <div class="card-header d-flex justify-content-between align-items-center py-2">
-        <span class="fw-semibold text-secondary">Question {{ $index + 1 }}</span>
-        <button class="btn btn-sm btn-outline-danger"
-          (click)="removeQuestion(questions.indexOf(q))"
-          [disabled]="regularQuestions.length === 1" title="Supprimer cette question">
-          <i class="bi bi-trash"></i>
-        </button>
+  @if (hasResponses) {
+  <div class="alert alert-warning py-2 small">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    Les modifications incompatibles marqueront automatiquement les votes concernés comme étant à reconfirmer.
+  </div>
+  }
+
+  @for (q of questions; track trackByIndex($index)) {
+  <div class="card mb-3 border-secondary">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+      <span class="fw-semibold text-secondary">Question {{ $index + 1 }}</span>
+      <button class="btn btn-sm btn-outline-danger" (click)="removeQuestion(questions.indexOf(q))"
+        [disabled]="questions.length === 1" title="Supprimer cette question">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <input class="form-control" [(ngModel)]="q.text" placeholder="Texte de la question" />
       </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <input class="form-control" [(ngModel)]="q.text"
-            placeholder="Texte de la question" />
+      <div class="row g-2 mb-3">
+        <div class="col-md-6">
+          <label class="form-label small text-muted">Titre court dans les résultats</label>
+          <input class="form-control form-control-sm" [(ngModel)]="q.resultLabel" placeholder="Ex : Participation AG" />
         </div>
-        <div class="mb-2">
-          <label class="form-label text-muted small">Choix (2 à 4) — Texte + Mot-clé</label>
-          @for (opt of q.options; track trackByIndex($index)) {
-            <div class="input-group input-group-sm mb-1">
-              <span class="input-group-text">{{ $index + 1 }}</span>
-              <input class="form-control" [(ngModel)]="opt.text"
-                placeholder="Option {{ $index + 1 }}" />
-              <input class="form-control" [(ngModel)]="opt.keyword"
-                placeholder="Mot-clé" style="max-width:120px" />
+        <div class="col-md-6">
+          <label class="form-label small text-muted">Titre de la valeur choisie</label>
+          <input class="form-control form-control-sm" [(ngModel)]="q.detailResultLabel" placeholder="Ex : Mandataire" />
+        </div>
+      </div>
+      <div class="mb-2">
+        <label class="form-label text-muted small">Réponses — une seule sélection possible</label>
+        @for (opt of q.options; track trackByIndex($index)) {
+        <div class="border rounded p-2 mb-2">
+          <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">{{ $index + 1 }}</span>
+            <input class="form-control" [(ngModel)]="opt.label" placeholder="Option {{ $index + 1 }}" />
+            <input class="form-control" [(ngModel)]="opt.keyword" placeholder="Mot-clé" style="max-width:120px" />
+            <button type="button"
+              class="btn btn-outline-primary "
+              (click)="toggleNextAction(opt)"
+              [title]="opt.nextAction === 'END' ? 'Termine le questionnaire' : 'Continue avec la question suivante'"
+              [attr.aria-label]="opt.nextAction === 'END' ? 'Termine le questionnaire' : 'Continue avec la question suivante'"
+              [attr.aria-pressed]="opt.nextAction === 'END'">
+              <i class="bi fs-5 lh-1" [class.bi-arrow-right-circle-fill]="opt.nextAction === 'NEXT'"
+                [class.bi-sign-stop-fill]="opt.nextAction === 'END'"></i>
+              <!-- <span class="">{{ opt.nextAction === 'END' ? 'final' : 'continu' }}</span> -->
+            </button>
+          </div>
+          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+            <div class="btn-group btn-group-sm">
+              @if (!opt.detailOptions?.length) {
+              <button type="button" class="btn btn-outline-primary" (click)="addDetailList(opt)"
+                title="Ajouter une liste déroulante à cette réponse">
+                <i class="bi bi-menu-button-wide"></i>
+              </button>
+              <button type="button" class="btn btn-outline-primary" (click)="openMemberImport(opt)"
+                title="Ajouter une liste de membres à cette réponse">
+                <i class="bi bi-people"></i>
+              </button>
+              }
+              @if (tag) {
+              <button type="button" class="btn" [class.btn-success]="opt.payTag"
+                [class.btn-outline-secondary]="!opt.payTag" (click)="setPayTag(opt, !opt.payTag)"
+                [title]="opt.payTag ? 'Retirer le paiement de cette réponse' : 'Cette réponse déclenche le paiement'">
+                <i class="bi" [class.bi-x-lg]="opt.payTag" [class.bi-currency-euro]="!opt.payTag"></i>
+              </button>
+              }
               <button class="btn btn-outline-secondary" (click)="removeOption(q, $index)"
                 [disabled]="q.options.length <= 2" title="Supprimer">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+          @if (opt.detailOptions?.length) {
+          <div class="border-top mt-2 pt-2">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+              <input class="form-control form-control-sm" [(ngModel)]="opt.detailPrompt"
+                placeholder="Consigne de la liste">
+              <div class="btn-group btn-group-sm flex-shrink-0">
+                @if (opt.detailOptionsOrigin === 'memberImport') {
+                <button type="button" class="btn btn-outline-primary" (click)="openMemberImport(opt)"
+                  title="Modifier les membres">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                }
+                <button type="button" class="btn btn-outline-danger" (click)="clearDetailList(opt)"
+                  title="Supprimer la liste">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+            @if (opt.detailOptionsOrigin === 'memberImport') {
+            <div class="small text-success">
+              <i class="bi bi-check-circle me-1"></i>{{ detailOptionCount(opt) }} membre(s) dans la liste
+            </div>
+            } @else {
+            @for (detail of opt.detailOptions; track detail.value) {
+            <div class="input-group input-group-sm mb-1">
+              <input class="form-control" [(ngModel)]="detail.label" placeholder="Valeur de la liste">
+              <button type="button" class="btn btn-outline-secondary" (click)="removeDetailOption(opt, $index)"
+                [disabled]="detailOptionCount(opt) <= 1" title="Supprimer">
                 <i class="bi bi-x"></i>
               </button>
             </div>
-          }
-          @if (q.options.length < 4) {
-            <button class="btn btn-sm btn-outline-secondary mt-1" (click)="addOption(q)">
-              <i class="bi bi-plus me-1"></i>Ajouter un choix
+            }
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-1" (click)="addDetailOption(opt)">
+              <i class="bi bi-plus me-1"></i>Ajouter une valeur
             </button>
+            <button type="button" class="btn btn-sm btn-outline-primary mt-1 ms-1" (click)="openMemberImport(opt)">
+              <i class="bi bi-people me-1"></i>Remplacer par les membres
+            </button>
+            }
+          </div>
           }
         </div>
+        }
+        <button class="btn btn-sm btn-outline-secondary mt-1" (click)="addOption(q)">
+          <i class="bi bi-plus me-1"></i>Ajouter une réponse
+        </button>
       </div>
     </div>
+  </div>
   }
 
   <button class="btn btn-outline-primary btn-sm mb-4" (click)="addQuestion()">
     <i class="bi bi-plus-circle me-1"></i>Ajouter une question
   </button>
 
+  @if (paymentOption) {
+  <div class="alert alert-success py-2 small mb-3">
+    <i class="bi bi-currency-euro me-1"></i>
+    La réponse « {{ paymentOption.label }} » déclenche le paiement avec le produit sélectionné.
+  </div>
+  }
+
   <!-- Actions -->
   @if (saveError) {
-    <div class="alert alert-danger py-2 small mb-3">
-      <i class="bi bi-exclamation-triangle me-1"></i>{{ saveError }}
-    </div>
+  <div class="alert alert-danger py-2 small mb-3">
+    <i class="bi bi-exclamation-triangle me-1"></i>{{ saveError }}
+  </div>
   }
   <div class="d-flex gap-2 mb-4">
     <button class="btn btn-primary" (click)="save()" [disabled]="saving || !title.trim() || !closingDate">
@@ -140,20 +192,91 @@
       Enregistrer
     </button>
     <button class="btn btn-outline-secondary" (click)="cancel()">Annuler</button>
+    @if (!isNew) {
+    <button class="btn btn-outline-secondary" (click)="duplicateSurvey()" [disabled]="saving"
+      title="Créer une copie indépendante sans reprendre les votes">
+      <i class="bi bi-copy me-1"></i>Dupliquer
+    </button>
+    }
     <button class="btn btn-outline-info ms-auto" (click)="togglePreview()">
       <i class="bi bi-eye me-1"></i>Prévisualiser la page
     </button>
   </div>
 </div>
 
+@if (memberImportOpen) {
+<div class="modal-backdrop fade show"></div>
+<div class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title">Importer les membres</h5>
+          <div class="text-muted small">La sélection remplacera les valeurs actuelles de cette liste.</div>
+        </div>
+        <button type="button" class="btn-close" (click)="closeMemberImport()" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 mb-3">
+          <div class="col-md">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input class="form-control" [(ngModel)]="memberImportSearch" placeholder="Rechercher un membre">
+            </div>
+          </div>
+          <div class="col-md-auto d-flex align-items-center">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="includeNonMembers" [(ngModel)]="includeNonMembers">
+              <label class="form-check-label" for="includeNonMembers">Inclure les non-adhérents</label>
+            </div>
+          </div>
+        </div>
+        @if (memberImportLoading) {
+        <div class="text-center text-muted py-5">
+          <span class="spinner-border spinner-border-sm me-2"></span>Chargement des membres
+        </div>
+        } @else {
+        <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="selectAllMembers" [checked]="allVisibleMembersSelected"
+              (change)="toggleAllVisibleMembers()">
+            <label class="form-check-label fw-semibold" for="selectAllMembers">Tout sélectionner dans cette vue</label>
+          </div>
+          <span class="badge text-bg-primary">{{ selectedImportMemberIds.size }} sélectionné(s)</span>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 g-1">
+          @for (member of filteredImportMembers; track member.id) {
+          <div class="col">
+            <label class="d-flex align-items-center gap-2 border rounded px-2 py-2 h-100">
+              <input class="form-check-input mt-0" type="checkbox" [checked]="selectedImportMemberIds.has(member.id)"
+                (change)="toggleImportMember(member.id)">
+              <span>{{ member.lastname | uppercase }} {{ member.firstname }}</span>
+            </label>
+          </div>
+          } @empty {
+          <div class="col-12 text-center text-muted py-4">Aucun membre trouvé.</div>
+          }
+        </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeMemberImport()">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="applyMemberImport()"
+          [disabled]="memberImportLoading || selectedImportMemberIds.size < 2">
+          Importer {{ selectedImportMemberIds.size }} membre(s)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
 <!-- Offcanvas backdrop -->
-<div class="offcanvas-backdrop fade" [class.show]="showPreview"
-  [style.display]="showPreview ? 'block' : 'none'"
+<div class="offcanvas-backdrop fade" [class.show]="showPreview" [style.display]="showPreview ? 'block' : 'none'"
   (click)="togglePreview()"></div>
 
 <!-- Offcanvas preview gauche -->
-<div class="offcanvas offcanvas-start" [class.show]="showPreview" tabindex="-1"
-  style="width:660px;visibility:visible">
+<div class="offcanvas offcanvas-start" [class.show]="showPreview" tabindex="-1" style="width:660px;visibility:visible">
   <div class="offcanvas-header border-bottom py-2">
     <h6 class="offcanvas-title mb-0">
       <i class="bi bi-phone me-2"></i>Aperçu page de réponse
