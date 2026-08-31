@@ -99,7 +99,10 @@ export class MemberSyncService {
         const existingMember = members.find((m) => m.license_number === clubMember.license_number);
 
         if (existingMember) {
-            const updatedMember = this.buildUpdatedMember(existingMember, clubMember);
+            const personV2 = existingMember.email?.trim()
+                ? null
+                : await this.ffbService.getFFBPerson(clubMember.id).catch(() => null);
+            const updatedMember = this.buildUpdatedMember(existingMember, clubMember, personV2);
             if (updatedMember) {
                 await this.membersService.updateMember(updatedMember);
             }
@@ -111,7 +114,7 @@ export class MemberSyncService {
         await this.membersService.createMember(newMember);
     }
 
-    private buildUpdatedMember(member: Member, clubMember: ClubMember): Member | null {
+    private buildUpdatedMember(member: Member, clubMember: ClubMember, personV2: PersonV2 | null): Member | null {
         const nextMember: Member = {
             id: member.id,
             license_number: clubMember.license_number,
@@ -120,7 +123,7 @@ export class MemberSyncService {
             lastname: clubMember.lastName.toUpperCase(),
             birthdate: clubMember.birthdate,
             city: member.city,
-            email: member.email,
+            email: personV2?.email?.trim() || member.email,
             phone_one: member.phone_one,
             license_taken_at: clubMember.club?.label ?? 'BCSTO',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
