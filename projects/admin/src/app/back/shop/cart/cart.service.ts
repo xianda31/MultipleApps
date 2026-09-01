@@ -151,10 +151,10 @@ export class CartService {
       const itemsSnapshot = this._cart.items.slice();
       this.bookService.create_book_entry(sale)
         .then(async (sale) => {
-          resolve(sale);
           // process game card creation using the snapshot (avoids race with clearCart)
           await this.handle_game_card(session, itemsSnapshot, sale.id);
           this.clearCart();
+          resolve(sale);
         })
         .catch((error) => {
           reject(error);
