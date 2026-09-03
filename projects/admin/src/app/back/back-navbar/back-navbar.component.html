@@ -42,12 +42,20 @@
       <span *ngIf="!production_mode" class="badge bg-dark ms-1" style="font-size: 0.6rem; vertical-align: middle;">dev</span>
       <ng-container *ngIf="accreditation_level >= accreditation_levels.Administrateur">
         <span *ngIf="(stripeWarningCount$ | async) as stripeWarningCount"
-          class="badge bg-danger ms-1"
+          class="badge bg-danger text-white ms-1"
           role="button"
-          title="{{stripeWarningCount}} checkout(s) Stripe abandonné(s) depuis plus de 24 h"
+          title="{{stripeWarningCount}} transaction(s) Stripe abandonnée(s) depuis plus de 24 h"
           (click)="go_to_stripe_reconciliation()"
           style="font-size: 0.6rem; vertical-align: middle;">
-          <i class="bi bi-exclamation-triangle-fill me-1"></i>Stripe {{stripeWarningCount}}
+          <i class="bi bi-credit-card me-1"></i> {{stripeWarningCount}}
+        </span>
+        <span *ngIf="(gameCardOrphanCount$ | async) as gameCardOrphanCount"
+          class="badge bg-warning text-white ms-1"
+          role="button"
+          title="{{gameCardOrphanCount}} carte(s) d'admission sans vente associée"
+          (click)="go_to_game_cards_editor()"
+          style="font-size: 0.6rem; vertical-align: middle;">
+          <i class="bi bi-table me-1"></i> {{gameCardOrphanCount}}
         </span>
       </ng-container>
       <span *ngIf="new_assistances_nbr" class="badge bg-warning ms-1" (click)="go_to_assistance()" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);"> new : {{new_assistances_nbr}}</span>

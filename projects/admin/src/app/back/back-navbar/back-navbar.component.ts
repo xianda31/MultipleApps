@@ -9,7 +9,7 @@ import { GroupService } from '../../common/authentification/group.service';
 import { environment } from '../../../environments/environment';
 import { NgbCollapseModule, NgbDropdown, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Accreditation } from '../../common/authentification/group.interface';
-import { Observable, of, switchMap } from 'rxjs';
+import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { Member } from '../../common/interfaces/member.interface';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
@@ -22,6 +22,7 @@ import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
 import { BookService } from '../services/book.service';
 import { StripeReconciliationHealthService } from '../shop/services/stripe-reconciliation-health.service';
 import { FfbAvailabilityService } from '../../common/services/ffb-availability.service';
+import { GameCardService } from '../services/game-card.service';
 
 
 
@@ -52,6 +53,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   in_progress_assistances_nbr : number = 0;
   authorizationFlag$: Observable<boolean>;
   stripeWarningCount$: Observable<number>;
+  gameCardOrphanCount$: Observable<number>;
   readonly ffbAvailability$: FfbAvailabilityService['snapshot$'];
 //  BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
   
@@ -94,9 +96,18 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     private bookService: BookService,
     private stripeReconciliationHealth: StripeReconciliationHealthService,
     private ffbAvailability: FfbAvailabilityService,
+    private gameCardService: GameCardService,
   ) { 
     this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
     this.stripeWarningCount$ = this.stripeReconciliationHealth.staleAbandonedCheckoutCount$;
+    this.gameCardOrphanCount$ = this.gameCardService.gameCards.pipe(
+      switchMap(cards => from(this.gameCardService.findOrphanCards(cards))),
+      map(orphanIds => orphanIds.size),
+      catchError(error => {
+        console.error('Erreur chargement indicateur cartes orphelines:', error);
+        return of(0);
+      })
+    );
     this.ffbAvailability$ = this.ffbAvailability.snapshot$;
   }
 
@@ -214,6 +225,10 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
 
   go_to_stripe_reconciliation() {
     this.router.navigate([BACK_ROUTE_ABS_PATHS['StripeReconciliation']]);
+  }
+
+  go_to_game_cards_editor() {
+    this.router.navigate([BACK_ROUTE_ABS_PATHS['GameCardsEditor']]);
   }
 
   private refreshStripeWarningIfAuthorized(): void {
