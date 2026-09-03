@@ -505,6 +505,7 @@ export class GameCardService {
         this.members = members;
         return this.dbHandler.queryPlayBooks().pipe(
           map((cards) => {
+            const missingOwnerLicenses = new Set<string>();
             this._gameCards = cards.map(card => {
               const owners = card.licenses
                 .filter((license): license is string => license !== null)
@@ -515,7 +516,9 @@ export class GameCardService {
                 .filter((owner): owner is Member => owner !== undefined);
 
               if (owners.length === 0) {
-                this.toastService.showWarning('Gestion des cartes', `Carte sans adhérent répertorié ${card.licenses}.`);
+                card.licenses.forEach(license => {
+                  if (license) missingOwnerLicenses.add(license);
+                });
                 let unknownMember = {} as Member;
                 unknownMember.lastname = '@_ORPHELINE';
                 unknownMember.firstname = card.licenses.join(',');
@@ -534,6 +537,13 @@ export class GameCardService {
                 updatedAt: card.updatedAt
               };
             });
+
+            if (missingOwnerLicenses.size > 0) {
+              console.warn(
+                `[GameCardService] ${missingOwnerLicenses.size} licence(s) de cartes sans adhérent répertorié`,
+                Array.from(missingOwnerLicenses)
+              );
+            }
 
             this._gameCards.sort((a, b) => a.owners[0].lastname.localeCompare(b.owners[0].lastname));
 
