@@ -346,7 +346,7 @@ export class FFB_proxyService {
       return allItems;
     } catch (error) {
       console.error('[FFB Service] getAdherents failed:', error);
-      return [];
+      throw error;
     }
   }
 

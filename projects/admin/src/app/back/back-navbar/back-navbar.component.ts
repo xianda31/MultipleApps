@@ -21,6 +21,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
 import { BookService } from '../services/book.service';
 import { StripeReconciliationHealthService } from '../shop/services/stripe-reconciliation-health.service';
+import { FfbAvailabilityService } from '../../common/services/ffb-availability.service';
 
 
 
@@ -51,6 +52,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   in_progress_assistances_nbr : number = 0;
   authorizationFlag$: Observable<boolean>;
   stripeWarningCount$: Observable<number>;
+  readonly ffbAvailability$: FfbAvailabilityService['snapshot$'];
 //  BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
   
   // Mobile menu collapse states
@@ -91,9 +93,15 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     private systemDataService: SystemDataService,
     private bookService: BookService,
     private stripeReconciliationHealth: StripeReconciliationHealthService,
+    private ffbAvailability: FfbAvailabilityService,
   ) { 
     this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
     this.stripeWarningCount$ = this.stripeReconciliationHealth.staleAbandonedCheckoutCount$;
+    this.ffbAvailability$ = this.ffbAvailability.snapshot$;
+  }
+
+  retryFfbConnection(): void {
+    void this.ffbAvailability.refresh();
   }
 
   ngOnDestroy(): void {

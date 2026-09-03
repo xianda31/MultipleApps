@@ -1,3 +1,22 @@
+@if (ffbAvailability$ | async; as ffb) {
+  @if (ffb.status === 'maintenance' || ffb.status === 'unavailable') {
+    <div class="ffb-status-banner" [class.ffb-status-banner--maintenance]="ffb.status === 'maintenance'" role="alert">
+      <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+      <div class="ffb-status-banner__message">
+        <strong>{{ ffb.status === 'maintenance' ? 'FFB en maintenance' : 'Service FFB indisponible' }}</strong>
+        <span>
+          {{ ffb.status === 'maintenance'
+            ? 'Les données FFB ne peuvent pas être actualisées. Les données locales restent disponibles.'
+            : 'La connexion à la FFB est impossible. Les données locales sont conservées sans modification.' }}
+        </span>
+      </div>
+      <button type="button" class="btn btn-sm btn-light" (click)="retryFfbConnection()">
+        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+        Réessayer
+      </button>
+    </div>
+  }
+}
 <div class="bg-light p-0 m-0" style="width: 100%;">
   <div id="navbar-header" class="d-flex align-items-center w-100 px-2 pt-1 pb-1 position-relative">
     <!-- Mobile sidebar toggle button -->

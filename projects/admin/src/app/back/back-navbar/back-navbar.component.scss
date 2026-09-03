@@ -7,6 +7,63 @@
     box-shadow: none !important;
 }
 
+.ffb-status-banner {
+    position: relative;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem clamp(0.75rem, 3vw, 2rem);
+    color: #fff;
+    background: #a02720;
+    border-bottom: 1px solid #781d18;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 18%);
+}
+
+.ffb-status-banner--maintenance {
+    color: #2b2200;
+    background: #f4c95d;
+    border-bottom-color: #c99c2d;
+}
+
+.ffb-status-banner > .bi {
+    flex: 0 0 auto;
+    font-size: 1.15rem;
+}
+
+.ffb-status-banner__message {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.65rem;
+    min-width: 0;
+}
+
+.ffb-status-banner__message span {
+    overflow-wrap: anywhere;
+}
+
+.ffb-status-banner .btn {
+    flex: 0 0 auto;
+    border-radius: 4px;
+}
+
+@media (max-width: 575.98px) {
+    .ffb-status-banner {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .ffb-status-banner__message {
+        display: grid;
+        flex-basis: calc(100% - 2rem);
+    }
+
+    .ffb-status-banner .btn {
+        margin-left: 1.9rem;
+    }
+}
+
 .bg-light.p-0.m-0 {
     background-color: var(--bs-light, #f8f9fa) !important;
     border: 0 !important;

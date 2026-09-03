@@ -1,15 +1,15 @@
-import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { APP_SANDBOX } from './app.config';
 import { filter } from 'rxjs/operators';
 import { PageViewService } from './common/services/page-view.service';
 import { AuthentificationService } from './common/authentification/authentification.service';
+import { FfbAvailabilityService } from './common/services/ffb-availability.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule, CommonModule],
+  imports: [RouterModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -22,11 +22,13 @@ export class AppComponent implements OnInit {
     private router: Router,
     private pageViewService: PageViewService,
     private authService: AuthentificationService,
+    private ffbAvailability: FfbAvailabilityService,
   ) {
     this.sandbox = sandboxFlag;
   }
 
   ngOnInit(): void {
+    this.ffbAvailability.startMonitoring();
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {

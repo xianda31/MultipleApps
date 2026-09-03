@@ -28,6 +28,7 @@ import { AppInstallComponent } from '../../../common/components/app-install/app-
 import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { environment } from '../../../../environments/environment';
 import type { BuildInfo } from '../../../../environments/build-info.interface';
+import { FfbAvailabilityService } from '../../../common/services/ffb-availability.service';
 
 type StripeReturnState = {
   checkout: 'success' | 'cancel';
@@ -57,6 +58,7 @@ export class FrontComponent implements AfterViewInit {
   isPortrait = true;
   isMobileLandscape = false;
   buildInfo: BuildInfo = environment.buildInfo;
+  readonly ffbAvailability$: FfbAvailabilityService['snapshot$'];
 
   @HostListener('window:resize')
   onResize() {
@@ -104,8 +106,11 @@ export class FrontComponent implements AfterViewInit {
     private groupService: GroupService,
     private memberSettingsService: MemberSettingsService,
     private commandRegistry: CommandRegistryService,
-    private router: Router
-  ) { }
+    private router: Router,
+    private ffbAvailability: FfbAvailabilityService,
+  ) {
+    this.ffbAvailability$ = this.ffbAvailability.snapshot$;
+  }
 
   ngOnInit(): void {
     this.captureStripeReturnContext();

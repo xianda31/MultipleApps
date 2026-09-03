@@ -303,6 +303,78 @@ body::-webkit-scrollbar {
   font-family: var(--site-font, inherit) !important;
 }
 
+.ffb-affiliation {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  width: 5.8rem;
+  height: 1.55rem;
+  line-height: 1;
+}
+
+.ffb-affiliation img {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  transition: filter 160ms ease, opacity 160ms ease;
+}
+
+.ffb-affiliation__symbol {
+  flex: 0 0 auto;
+  width: 1.35rem;
+}
+
+.ffb-affiliation__wordmark {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: calc(100% - 1.53rem);
+}
+
+.ffb-affiliation--checking img {
+  opacity: 0.55;
+}
+
+.ffb-affiliation--offline img {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.ffb-affiliation > .bi {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.35rem;
+  color: #c43a31;
+  background: #fff;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.ffb-affiliation--mobile {
+  width: 3.8rem;
+  height: 1rem;
+  margin-right: 0.75rem;
+}
+
+.ffb-affiliation--desktop {
+  margin-left: 0.4rem;
+}
+
+@media (max-width: 767.98px) and (orientation: portrait) {
+  .ffb-affiliation--mobile {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-right: 0.55rem;
+  }
+
+  .ffb-affiliation--mobile .ffb-affiliation__wordmark {
+    display: none;
+  }
+}
+
 /* Fix banner height in laptop mode independent of logo image size */
 @media (min-width: 768px) {
   .laptop-banner-row .site-banner span.d-flex.align-items-center.w-100 {

@@ -80,4 +80,13 @@ describe('MemberSyncService', () => {
       email: 'local@example.fr',
     }));
   });
+
+  it('does not reset licenses when the FFB member list is empty', async () => {
+    const { service, membersService } = createService();
+    const licensedMember = { ...member, license_status: LicenseStatus.DULY_REGISTERED };
+
+    await expectAsync((service as any).resetObsoleteLicenses([licensedMember], []))
+      .toBeRejectedWithError(/liste FFB est vide/i);
+    expect(membersService.updateMember).not.toHaveBeenCalled();
+  });
 });

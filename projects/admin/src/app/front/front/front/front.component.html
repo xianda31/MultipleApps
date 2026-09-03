@@ -129,6 +129,29 @@
     <a routerLink="contacts" style="display: flex; align-items: center;">
       <img class="img-fluid nice_shadow m-1 ms-4" style="max-height: 40px; width: auto;" [src]="logoUrl" alt="logo" />
     </a>
+    <ng-template [ngTemplateOutlet]="tplFfbStatus" [ngTemplateOutletContext]="{ compact: false }"></ng-template>
+  </ng-template>
+
+  <ng-template #tplFfbStatus let-compact="compact">
+    @if (ffbAvailability$ | async; as ffb) {
+      <span class="ffb-affiliation"
+        [class.ffb-affiliation--desktop]="!compact"
+        [class.ffb-affiliation--mobile]="compact"
+        [class.ffb-affiliation--checking]="ffb.status === 'checking'"
+        [class.ffb-affiliation--offline]="ffb.status === 'maintenance' || ffb.status === 'unavailable'"
+        [ngbTooltip]="ffb.status === 'maintenance'
+          ? 'FFBridge en maintenance - les données locales restent disponibles'
+          : ffb.status === 'unavailable'
+            ? 'Service FFBridge temporairement indisponible'
+            : 'Club affilié à la Fédération Française de Bridge'"
+        placement="bottom">
+        <img class="ffb-affiliation__symbol" src="/ffbridge-symbol.svg" alt="FFBridge" />
+        <img class="ffb-affiliation__wordmark" src="/ffbridge.svg" alt="" aria-hidden="true" />
+        @if (ffb.status === 'maintenance' || ffb.status === 'unavailable') {
+          <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+        }
+      </span>
+    }
   </ng-template>
 
 
@@ -141,10 +164,12 @@
         <span class="small text-nowrap ms-auto me-2">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
       </span>
       <!-- Mode mobile (landscape et portrait) : nom club centré + date en dessous -->
-      <span *ngSwitchDefault class="w-100 d-flex flex-column ms-5 justify-content-center">
+      <span *ngSwitchDefault class="flex-grow-1 min-width-0 d-flex flex-column ms-2 justify-content-center">
         <span class="fw-bold text-nowrap">{{ club_name }}</span>
         <span class="small text-nowrap">{{today | date:'EEEE d MMMM yyyy':'':'fr-FR' }}</span>
       </span>
+      <ng-template *ngSwitchDefault [ngTemplateOutlet]="tplFfbStatus"
+        [ngTemplateOutletContext]="{ compact: true }"></ng-template>
     </ng-container>
     <span *ngIf="sandbox" class="badge sandbox-badge text-dark" aria-label="Mode sandbox">Mode
       Sandbox</span>

@@ -59,6 +59,10 @@ export class MemberSyncService {
             firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1))),
         ]);
 
+        if (licensees.length === 0) {
+            throw new Error('La FFB n’a retourné aucun adhérent ; synchronisation annulée');
+        }
+
         let members = await this.getMembersSnapshot();
 
         for (const licensee of licensees) {
@@ -175,6 +179,10 @@ export class MemberSyncService {
     }
 
     private async resetObsoleteLicenses(members: Member[], licensees: ClubMember[]): Promise<void> {
+        if (licensees.length === 0) {
+            throw new Error('La liste FFB est vide ; remise à zéro des licences annulée');
+        }
+
         const updates: Promise<any>[] = [];
 
         for (const member of members) {

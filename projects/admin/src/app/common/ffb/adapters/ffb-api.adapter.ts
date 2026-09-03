@@ -377,6 +377,8 @@ export function toClubMemberList(payload: unknown): ClubMember[] {
     const season = isRecord(member['season']) ? member['season'] : {};
     const ranking = isRecord(season['ranking']) ? season['ranking'] : undefined;
     const mainRegistration = isRecord(member['mainRegistration']) ? member['mainRegistration'] : {};
+    const licence = [member['licence'], member['licensee'], member['clubLicensee']]
+      .find((value) => typeof value === 'boolean') as boolean | undefined;
 
     return {
       id: asNumber(member['id'], 0),
@@ -385,7 +387,7 @@ export function toClubMemberList(payload: unknown): ClubMember[] {
       lastName: asString(member['lastName'], '').trim().toUpperCase(),
       gender: normalizeGender(asString(member['gender'], '').trim()),
       birthdate: asString(member['birthdate'], ''),
-      licence: !!member['licence'],
+      licence: licence ?? false,
       club: {
         id: asNumber(club['id'], 0),
         ffbCode: asString(club['ffbCode'], ''),
