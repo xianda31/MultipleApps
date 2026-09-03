@@ -8,7 +8,7 @@ import { TitleService } from '../../../front/title/title.service';
 import { BreakpointsSettings } from '../../interfaces/ui-conf.interface';
 import { formatRowColsClasses } from '../../utils/ui-utils';
 import { SystemDataService } from '../../services/system-data.service';
-import { catchError, combineLatest, filter, forkJoin, map, of, switchMap, take } from 'rxjs';
+import { catchError, combineLatest, filter, forkJoin, map, merge, of, scan, startWith, switchMap, take } from 'rxjs';
 import { Member } from '../../interfaces/member.interface';
 import { isFemaleGender } from '../../utils/gender.util';
 
@@ -97,20 +97,35 @@ export class TournamentsComponent {
         const nextTournaments = [...tournaments]
           .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime())
           .slice(0, MAX_TOURNAMENTS_LISTED);
-        if (!member || nextTournaments.length === 0) {
-          return of(nextTournaments.map(tournament => this.deserializeTournament(tournament)));
+        const initialTeams = nextTournaments.map(tournament => this.deserializeTournament(tournament));
+        if (!member || initialTeams.length === 0) {
+          return of({ teams: initialTeams, completed: initialTeams.length, total: initialTeams.length });
         }
-        return forkJoin(
-          nextTournaments.map((tournament) =>
-            this.tournamentService.getTournamentTeams(tournament.id.toString())
+
+        return merge(...nextTournaments.map((tournament, index) =>
+          this.tournamentService.getTournamentTeams(tournament.id.toString()).pipe(
+            map(team => ({ index, team })),
+            catchError(error => {
+              console.warn(`[TournamentsComponent] Teams unavailable for tournament ${tournament.id}`, error);
+              return of({ index, team: initialTeams[index] });
+            })
           )
+        )).pipe(
+          scan((state, update) => {
+            const teams = [...state.teams];
+            teams[update.index] = update.team;
+            return { teams, completed: state.completed + 1, total: initialTeams.length };
+          }, { teams: initialTeams, completed: 0, total: initialTeams.length }),
+          startWith({ teams: initialTeams, completed: 0, total: initialTeams.length })
         );
       })
     ).subscribe({
-      next: (nextTournamentTeams) => {
-        this.next_tournament_teams = this.enrichWithImages(nextTournamentTeams);
-        this.loadIsolatedRegistrations(this.next_tournament_teams);
+      next: ({ teams, completed, total }) => {
+        this.next_tournament_teams = this.enrichWithImages(teams);
         this.loading = false;
+        if (completed === total) {
+          this.loadIsolatedRegistrations(this.next_tournament_teams);
+        }
       },
       error: (err) => {
         this.loading = false;
