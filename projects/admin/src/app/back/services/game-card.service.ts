@@ -8,6 +8,7 @@ import { DBhandler } from '../../common/services/graphQL.service';
 import { MailingService } from '../mailing/mailing.service';
 import { environment } from '../../../environments/environment';
 import { determineGameCardNotification, GameCardNotification } from './game-card-notification.util';
+import { BookService } from './book.service';
 
 export type GameCardNotificationDelivery = 'email' | 'debug' | null;
 
@@ -81,7 +82,8 @@ export class GameCardService {
     private membersService: MembersService,
     private toastService: ToastService,
     private mailingService: MailingService,
-    private dbHandler: DBhandler
+    private dbHandler: DBhandler,
+    private bookService: BookService,
   ) { }
 
   // interfaces haut niveau
@@ -544,18 +546,19 @@ export class GameCardService {
   }
 
   async findOrphanCards(cards: GameCard[]): Promise<Set<string>> {
-    const orphans = new Set<string>();
+    await this.bookService.whenBookEntriesLoaded();
+    if (!this.bookService.is_book_entries_loaded()) {
+      return new Set<string>();
+    }
+
+    const bookEntryIds = new Set(this.bookService.get_book_entries().map(entry => entry.id));
     const candidates = cards.filter(
       c => !c.manual_creation && !!c.bookEntry_id && !!c.createdAt && c.createdAt >= GameCardService.ORPHAN_CHECK_FROM
     );
-    await Promise.all(candidates.map(async (card) => {
-      try {
-        const entry = await this.dbHandler.readBookEntry(card.bookEntry_id!);
-        if (!entry) { orphans.add(card.id); }
-      } catch {
-        orphans.add(card.id);
-      }
-    }));
-    return orphans;
+    return new Set(
+      candidates
+        .filter(card => !bookEntryIds.has(card.bookEntry_id!))
+        .map(card => card.id)
+    );
   }
 }
