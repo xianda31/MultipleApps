@@ -1,207 +1,189 @@
-<form [formGroup]="cashForm" class="container-lg">
-    <h3 class="mt-3 mb-3 text-center"> gestion de la caisse </h3>
+<form [formGroup]="cashForm" class="cashbox-page">
+    <header class="cashbox-page__header">
+        <h1>Gestion de la caisse</h1>
+    </header>
 
-    <div class="row justify-content-center  mt-3 g-1">
-        <div class="col-12">
-            <div class="card h-100">
-                <div class="card-header fw-bolder">
-                    Actuellement en caisse
-                </div>
-                <div class="card-body text-start">
-                    <h6 class="mb-0 fw-bolder cash-balance-row__expected">
-                        Liquidités
-                    </h6>
-                    <div class="cash-balance-row mt-2 mb-2">
-                        <div class="input-group w-50">
-                            <span class="input-group-text">
-                                <span class="fw-normal">théoriquement : {{((current_cash_amount -
-                                    cash_for_deposit_amount) | number:truncature:'fr')}}€</span>
-                            </span>
-                            <span class="input-group-text">
-                                <span class="fw-bold">montant effectivement constaté :</span>
-                            </span>
-                            <input type="number" class="form-control text-end" formControlName="cash_real_amount">
-                            <button class="btn btn-sm btn-primary" [disabled]="cash_real_amount.invalid">
-                                <i (click)="cash_align()" class="bi-check2"></i>
+    <div class="cashbox-layout">
+        <section class="cash-panel" aria-labelledby="current-cash-title">
+            <header class="cash-panel__header">
+                <h2 id="current-cash-title">Actuellement en caisse</h2>
+            </header>
+            <div class="cash-panel__body">
+                <section class="cash-section" aria-labelledby="current-cash-subtitle">
+                    <h3 id="current-cash-subtitle">Liquidités</h3>
+                    <div class="cash-summary">
+                        <span>Montant théorique</span>
+                        <strong>{{((current_cash_amount - cash_for_deposit_amount) | number:truncature:'fr')}} €</strong>
+                    </div>
+                    <div class="cash-control">
+                        <label for="cash-real-amount">Montant effectivement constaté</label>
+                        <div class="cash-control__action">
+                            <input id="cash-real-amount" type="number" inputmode="decimal" class="form-control text-end"
+                                formControlName="cash_real_amount">
+                            <button type="button" class="btn btn-primary cash-icon-button" (click)="cash_align()"
+                                [disabled]="cash_real_amount.invalid" title="Valider le montant constaté"
+                                aria-label="Valider le montant constaté">
+                                <i class="bi bi-check2" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
+                </section>
 
+                <p *ngIf="cheques_undrawn_number === 0" class="cash-empty-state mb-0">
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                    Aucun chèque en caisse
+                </p>
 
-                    <h6 *ngIf="cheques_undrawn_number === 0" class="mt-3 fw-bolder">
-                        Chèques : aucun
-                    </h6>
-
-                    <ng-container *ngIf="cheques_undrawn_amount >0">
-                        <h6 class="mt-3 fw-bolder">
-                            {{cheques_undrawn_number}} chèque(s) en caisse pour un montant global de
-                            {{cheques_undrawn_amount | number:truncature:'fr'}} €
-                        </h6>
-                        <!-- liste des chèques disponibles en caisse -->
-                        <div class="col-auto mt-3" formArrayName="cheques_to_process">
-                            <table class="table table-sm  table-responsive table-bordered ">
-                                <tbody class="fs-6">
-                                    <!-- bouton select all -->
-                                    <tr class="cheque-select-all-row">
-                                        <td class="text-center">
-                                            <input type="checkbox" (change)="toggle_draw_all()">
+                <section *ngIf="cheques_undrawn_amount > 0" class="cash-section" aria-labelledby="available-cheques-title">
+                    <div class="cash-section__heading">
+                        <h3 id="available-cheques-title">Chèques disponibles</h3>
+                        <span class="cash-count">{{cheques_undrawn_number}} chèque(s) · {{cheques_undrawn_amount | number:truncature:'fr'}} €</span>
+                    </div>
+                    <div class="cash-table-shell" formArrayName="cheques_to_process">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="cash-table__check">
+                                        <input type="checkbox" (change)="toggle_draw_all()" aria-label="Sélectionner tous les chèques">
+                                    </th>
+                                    <th scope="col">N°</th>
+                                    <th scope="col">Banque</th>
+                                    <th scope="col" class="text-end">Montant</th>
+                                    <th scope="col">Adhérent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ng-container *ngFor="let chequeCtrl of chequesToProcess.controls; let i = index" [formGroupName]="i">
+                                    <tr *ngIf="!chequeCtrl.get('drawn')?.value">
+                                        <td class="cash-table__check">
+                                            <input type="checkbox" formControlName="drawn" (change)="draw(chequeCtrl,true)"
+                                                [attr.aria-label]="'Sélectionner le chèque ' + develop_bank_ref(cheques_in_cashbox[i].cheque_ref).num">
                                         </td>
-                                        <td colspan="4" class="text-start small"></td>
+                                        <td>{{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).num}}</td>
+                                        <td>{{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).bank}}</td>
+                                        <td class="text-end text-nowrap">{{cheques_in_cashbox[i].amounts[CHEQUE_IN_ACCOUNT]}} €</td>
+                                        <td>{{cheques_in_cashbox[i].operations.length !== 0 ? cheques_in_cashbox[i].operations[0].member : ''}}</td>
                                     </tr>
-                                    <tr *ngFor="let chequeCtrl of chequesToProcess.controls; let i = index"
-                                        [formGroupName]="i">
-                                        <ng-container *ngIf="!chequeCtrl.get('drawn')?.value">
-                                            <td class="text-center">
-                                                <input type="checkbox" formControlName="drawn"
-                                                    (change)="draw(chequeCtrl,true)">
-                                            </td>
-                                            <td class="text-center">
-                                                {{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).num}}</td>
-                                            <td class="text-start">
-                                                {{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).bank}}</td>
-                                            <td class="text-center"> {{
-                                                cheques_in_cashbox[i].amounts[CHEQUE_IN_ACCOUNT] }}€
-                                            </td>
-                                            <td class="text-start">{{(cheques_in_cashbox[i].operations.length !== 0)
-                                                ?
-                                                cheques_in_cashbox[i].operations[0].member : ''}}
-                                            </td>
-                                        </ng-container>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </ng-container>
-                </div>
+                                </ng-container>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
-        </div>
+        </section>
 
-
-        <div class="col-12">
-            <div class="card h-100">
-                <div class="card-header fw-bolder">
-                    Prélèvements pour dépôt en banque
-                </div>
-                <div class="card-body text-start">
-                    <div>
-                        <h6 class="me-3 mb-0 fw-bolder">
-                            Liquidités
-                        </h6>
-
-                        <!-- retrait espèces -->
-                        <div class="w-50 input-group mt-3">
-                            <span class="input-group-text w-50">retrait caisse</span>
-                            <input type="number"
-                                [placeholder]="((current_cash_amount - cash_for_deposit_amount) | number:truncature:'fr') + ' max'"
+        <section class="cash-panel" aria-labelledby="bank-deposit-title">
+            <header class="cash-panel__header">
+                <h2 id="bank-deposit-title">Prélèvements pour dépôt en banque</h2>
+            </header>
+            <div class="cash-panel__body">
+                <section class="cash-section" aria-labelledby="cash-withdrawal-title">
+                    <h3 id="cash-withdrawal-title">Liquidités</h3>
+                    <div class="cash-control">
+                        <label for="cash-out-amount">Retrait de caisse</label>
+                        <div class="cash-control__action">
+                            <input id="cash-out-amount" type="number" inputmode="decimal"
+                                [placeholder]="((current_cash_amount - cash_for_deposit_amount) | number:truncature:'fr') + ' € max'"
                                 class="form-control text-end" formControlName="cash_out_amount">
-                            <button class="btn btn-sm btn-primary"
-                                [disabled]="cash_out_amount.invalid ||  cash_out_amount.value  === null || cash_out_amount.value <=0 ">
-                                <i (click)="cash_out()" class="bi-check2"></i>
+                            <button type="button" class="btn btn-primary cash-icon-button" (click)="cash_out()"
+                                [disabled]="cash_out_amount.invalid || cash_out_amount.value === null || cash_out_amount.value <= 0"
+                                title="Valider le retrait" aria-label="Valider le retrait">
+                                <i class="bi bi-check2" aria-hidden="true"></i>
                             </button>
                         </div>
-                        <div *ngIf="cash_out_amount.errors" class="text-danger ms-3 mb-0">valeur incorrecte ! </div>
+                        <div *ngIf="cash_out_amount.errors" class="cash-error">Valeur incorrecte</div>
                     </div>
+                </section>
 
-                    <div class="w-75">
-                        <!-- liste des chèques retirés caisse -->
-                        <ng-container *ngIf="cheques_drawn_number >0">
-                            <h6 class="mt-3 fw-bolder">
-                                Chèque(s)
-                            </h6>
-
-                            <div class="col-auto mt-3" formArrayName="cheques_to_process">
-                                <table class="table table-sm  table-responsive table-bordered ">
-                                    <tbody class="fs-6">
-                                        <tr *ngFor="let chequeCtrl of chequesToProcess.controls; let i = index"
-                                            [formGroupName]="i">
-                                            <ng-container *ngIf="chequeCtrl.get('drawn')?.value">
-                                                <td class="text-center">
-                                                    <input type="checkbox" formControlName="drawn"
-                                                        (change)="draw(chequeCtrl,false)">
-                                                </td>
-                                                <td class="text-center">
-                                                    {{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).num}}</td>
-                                                <td class="text-start">
-                                                    {{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).bank}}</td>
-                                                <td class="text-center"> {{
-                                                    cheques_in_cashbox[i].amounts[CHEQUE_IN_ACCOUNT]
-                                                    }}€
-                                                </td>
-                                                <td class="text-start">{{(cheques_in_cashbox[i].operations.length
-                                                    !== 0)
-                                                    ?
-                                                    cheques_in_cashbox[i].operations[0].member : ''}}
-                                                </td>
-                                            </ng-container>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                                <div class=" input-group mt-3">
-                                    <span class="input-group-text w-50">
-                                        Retrait des chèques
-                                    </span>
-                                    <span class="form-control text-end">
-                                        {{cheques_drawn_number}} chèque(s) /
-                                        {{cheques_drawn_amount | number:truncature:'fr'}} €
-                                    </span>
-                                    <button class="btn btn-sm btn-primary">
-                                        <i (click)="cheques_check_out()" class=" bi-check2"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </ng-container>
-                        <!-- liste de dépôts en attente de référence de bordereau -->
-                        <h6 *ngIf="temp_refs_number > 0" class="mt-3 fw-bolder">
-                            Chèques en attente de référence de bordereau
-                        </h6>
-
-                        <div formArrayName="deposits_to_confirm">
-                            <table class="table table-sm align-middle  ">
-                                <tbody>
-                                    <tr *ngFor="let ref of depositsToConfirm.controls , let i = index"
-                                        [formGroupName]="i">
-                                        <td class="col-3 small">{{ref.value.cheque_qty}} chèque(s)</td>
-                                        <td class="col-2 small">{{ref.value.amount}}€</td>
-                                        <td class="col-2 small">
-                                            {{get_date_from_temporary_deposit_ref(ref.value.temp_ref)}}</td>
-                                        <td class="col-5 input-group">
-                                            <input type="text" class="form-control" formControlName="new_ref"
-                                                placeholder="référence de bordereau">
-                                            <button [disabled]="ref.value.new_ref === ''"
-                                                class="btn btn-sm btn-primary">
-                                                <i (click)="validate_deposit(ref)" class=" bi-check2"></i>
-                                            </button>
+                <section *ngIf="cheques_drawn_number > 0" class="cash-section" aria-labelledby="selected-cheques-title">
+                    <div class="cash-section__heading">
+                        <h3 id="selected-cheques-title">Chèques sélectionnés</h3>
+                        <span class="cash-count">{{cheques_drawn_number}} chèque(s) · {{cheques_drawn_amount | number:truncature:'fr'}} €</span>
+                    </div>
+                    <div class="cash-table-shell" formArrayName="cheques_to_process">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="cash-table__check"><span class="visually-hidden">Sélection</span></th>
+                                    <th scope="col">N°</th>
+                                    <th scope="col">Banque</th>
+                                    <th scope="col" class="text-end">Montant</th>
+                                    <th scope="col">Adhérent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <ng-container *ngFor="let chequeCtrl of chequesToProcess.controls; let i = index" [formGroupName]="i">
+                                    <tr *ngIf="chequeCtrl.get('drawn')?.value">
+                                        <td class="cash-table__check">
+                                            <input type="checkbox" formControlName="drawn" (change)="draw(chequeCtrl,false)"
+                                                [attr.aria-label]="'Retirer le chèque ' + develop_bank_ref(cheques_in_cashbox[i].cheque_ref).num + ' de la sélection'">
                                         </td>
+                                        <td>{{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).num}}</td>
+                                        <td>{{develop_bank_ref(cheques_in_cashbox[i].cheque_ref).bank}}</td>
+                                        <td class="text-end text-nowrap">{{cheques_in_cashbox[i].amounts[CHEQUE_IN_ACCOUNT]}} €</td>
+                                        <td>{{cheques_in_cashbox[i].operations.length !== 0 ? cheques_in_cashbox[i].operations[0].member : ''}}</td>
                                     </tr>
-                                </tbody>
-                            </table>
+                                </ng-container>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="cash-submit-row">
+                        <span>Créer le dépôt de chèques</span>
+                        <strong>{{cheques_drawn_amount | number:truncature:'fr'}} €</strong>
+                        <button type="button" class="btn btn-primary cash-icon-button" (click)="cheques_check_out()"
+                            title="Valider le retrait des chèques" aria-label="Valider le retrait des chèques">
+                            <i class="bi bi-check2" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </section>
+
+                <section *ngIf="temp_refs_number > 0" class="cash-section" aria-labelledby="pending-deposits-title">
+                    <h3 id="pending-deposits-title">Bordereaux à référencer</h3>
+                    <div class="pending-deposits" formArrayName="deposits_to_confirm">
+                        <div *ngFor="let ref of depositsToConfirm.controls; let i = index" [formGroupName]="i"
+                            class="pending-deposit">
+                            <div class="pending-deposit__meta">
+                                <strong>{{ref.value.amount | number:truncature:'fr'}} €</strong>
+                                <span>{{ref.value.cheque_qty}} chèque(s) · {{get_date_from_temporary_deposit_ref(ref.value.temp_ref)}}</span>
+                            </div>
+                            <div class="cash-control__action">
+                                <input type="text" class="form-control" formControlName="new_ref"
+                                    [attr.aria-label]="'Référence du bordereau du ' + get_date_from_temporary_deposit_ref(ref.value.temp_ref)"
+                                    placeholder="Référence du bordereau">
+                                <button type="button" [disabled]="ref.value.new_ref === ''"
+                                    class="btn btn-primary cash-icon-button" (click)="validate_deposit(ref)"
+                                    title="Valider la référence" aria-label="Valider la référence du bordereau">
+                                    <i class="bi bi-check2" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
             </div>
-        </div>
+        </section>
 
-        <div class="col-12">
-            <div class="card h-100">
-                <div class="card-header fw-bolder d-flex align-items-center justify-content-between">
-                    <span>Consolidation bancaire à faire</span>
-                    <a [routerLink]="reconciliation_path()" class="ms-auto me-1 text-decoration-none"
-                        title="Aller à la consolidation bancaire">
-                        <i class="bi-box-arrow-right text-primary small"></i>
-                    </a>
+        <section class="cash-panel cash-panel--wide" aria-labelledby="reconciliation-title">
+            <header class="cash-panel__header cash-panel__header--action">
+                <h2 id="reconciliation-title">Consolidation bancaire à faire</h2>
+                <a [routerLink]="reconciliation_path()" class="cash-header-action"
+                    title="Aller à la consolidation bancaire" aria-label="Aller à la consolidation bancaire">
+                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                </a>
+            </header>
+            <div class="cash-panel__body cash-reconciliation">
+                <div *ngFor="let book_entry of cash_for_deposit" class="cash-reconciliation__item">
+                    <span>{{book_entry.deposit_ref}}</span>
+                    <strong>{{book_entry.amounts['cashbox_out'] | number:truncature:'fr'}} €</strong>
                 </div>
-                <div class="card-body text-start">
-                    <div *ngFor="let book_entry of cash_for_deposit">
-                        {{book_entry.deposit_ref}} : {{book_entry.amounts['cashbox_out'] }} €
-                    </div>
-                    <div *ngFor="let book_entry of unchecked_deposit_refs">
-                        dépôt chèques ref : {{book_entry.deposit_ref}} de {{book_entry.amounts['bank_in'] }} €
-                    </div>
+                <div *ngFor="let book_entry of unchecked_deposit_refs" class="cash-reconciliation__item">
+                    <span>Dépôt de chèques · {{book_entry.deposit_ref}}</span>
+                    <strong>{{book_entry.amounts['bank_in'] | number:truncature:'fr'}} €</strong>
                 </div>
+                <p *ngIf="cash_for_deposit.length === 0 && unchecked_deposit_refs.length === 0" class="cash-empty-state mb-0">
+                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                    Aucune opération en attente
+                </p>
             </div>
-        </div>
+        </section>
     </div>
-
-
 </form>

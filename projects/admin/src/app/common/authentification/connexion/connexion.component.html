@@ -3,8 +3,7 @@
         <div class="card mb-5 position-relative auth-card">
             <img src="bcsto.jpg" alt="Logo du club" class="auth-card__logo nice_shadow">
             <div class="card-body p-2">
-                <div class="row">
-                    <div class="text-muted px-0 py-2 auth-card__content">
+                <div class="text-muted py-2 auth-card__content">
                             <ng-container *ngTemplateOutlet="mode_cases"></ng-container>
                             <ng-container [ngTemplateOutlet]="show_form"> </ng-container>
 
@@ -30,8 +29,7 @@
 
                         </div>
                     </div>
-                </div>
-            </div>
+        </div>
 
             <ng-template #sign_in>
                 <div class="row mt-1 justify-content-center">
