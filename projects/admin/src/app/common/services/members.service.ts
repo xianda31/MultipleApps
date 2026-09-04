@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap, switchMap, of, map } from 'rxjs';
+import { BehaviorSubject, finalize, Observable, tap, switchMap, of, map, shareReplay } from 'rxjs';
 import { Member } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
@@ -45,6 +45,7 @@ export class MembersService {
   private readonly LICENSED_STATUSES = ['duly_registered', 'promoted_only'];
   private _members!: Member[];
   private _members$: BehaviorSubject<Member[]> = new BehaviorSubject(this._members);
+  private membersLoad$?: Observable<Member[]>;
 
   constructor(
     private toastService: ToastService,
@@ -54,15 +55,26 @@ export class MembersService {
 
 
   listMembers(): Observable<Member[]> {
-    let remote_load$ = this.dbHandler.listMembers().pipe(
-      tap((members) => {
-        this._members = members;
-        this._members = this._members.sort((a, b) => a.lastname.localeCompare(b.lastname))
-        this._members$.next(this._members);
-      }),
+    if (this._members) {
+      return this._members$.asObservable();
+    }
+
+    if (!this.membersLoad$) {
+      this.membersLoad$ = this.dbHandler.listMembers().pipe(
+        tap((members) => {
+          this._members = [...members].sort((a, b) => a.lastname.localeCompare(b.lastname));
+          this._members$.next(this._members);
+        }),
+        finalize(() => {
+          this.membersLoad$ = undefined;
+        }),
+        shareReplay({ bufferSize: 1, refCount: false })
+      );
+    }
+
+    return this.membersLoad$.pipe(
       switchMap(() => this._members$.asObservable())
-    )
-    return this._members ? this._members$.asObservable() : remote_load$;
+    );
   }
 
 

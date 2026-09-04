@@ -262,19 +262,26 @@ export class DBhandler {
     return this._authMode().pipe(
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode: authMode });
-        return from(
-          client.models.Member.list({
-            limit: 300,
-            selectionSet: this.memberSelectionSet,
-          })
-            .then(({ data, errors }) => {
-              if (errors) {
-                console.error('Member.list error', errors);
-                return [];
-              }
-              return data as unknown as Member[];
-            })
-        );
+        return from((async () => {
+          const members: Member[] = [];
+          let nextToken: string | null | undefined;
+
+          do {
+            const page = await client.models.Member.list({
+              limit: 300,
+              nextToken: nextToken || undefined,
+              selectionSet: this.memberSelectionSet,
+            });
+            if (page.errors) {
+              console.error('Member.list error', page.errors);
+              throw page.errors;
+            }
+            members.push(...(page.data as unknown as Member[]));
+            nextToken = page.nextToken;
+          } while (nextToken);
+
+          return members;
+        })());
       })
     )
   }
