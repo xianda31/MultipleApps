@@ -47,10 +47,10 @@ export class CloneDBComponent {
 
 
   async ngOnInit() {
-    this.refreshTables();
+    this.refreshTables(true);
   }
 
-  refreshTables() {
+  refreshTables(refreshLiveCounts = false) {
     this.started = true;
     this.batchService.listTables().pipe(
       switchMap((tables) => {
@@ -94,17 +94,28 @@ export class CloneDBComponent {
           this.selected.clear();
           this.rowCloning.clear();
           this.tableRows.forEach((row) => {
-            this.selected.set(row.name, true);
+            this.selected.set(row.name, !this.reverseDirection);
             this.rowCloning.set(row.name, false);
           });
           
-          this.started = false;
+          if (refreshLiveCounts) {
+            this.refreshCountsLive(false);
+          } else {
+            this.started = false;
+          }
         },
         error: (_e) => {
           this.started = false;
           this.toastService.showError('Clone BDD', 'Erreur lors du chargement des tables');
         }
       });
+  }
+
+  setReverseDirection(enabled: boolean): void {
+    this.reverseDirection = enabled;
+    if (enabled) {
+      this.selected.forEach((_selected, tableName) => this.selected.set(tableName, false));
+    }
   }
 
   private apid(table_name: string) {
@@ -212,11 +223,20 @@ export class CloneDBComponent {
         // Update UI counts
         const row = this.tableRows.find(r => r.name === tableName);
         if (row) {
-          if (row.production?.Table) {
-            row.production.Table.ItemCount = srcCount;
-          }
-          if (row.sandbox?.Table) {
-            row.sandbox.Table.ItemCount = destCount;
+          if (this.reverseDirection) {
+            if (row.sandbox?.Table) {
+              row.sandbox.Table.ItemCount = srcCount;
+            }
+            if (row.production?.Table) {
+              row.production.Table.ItemCount = destCount;
+            }
+          } else {
+            if (row.production?.Table) {
+              row.production.Table.ItemCount = srcCount;
+            }
+            if (row.sandbox?.Table) {
+              row.sandbox.Table.ItemCount = destCount;
+            }
           }
         }
         
@@ -268,7 +288,7 @@ export class CloneDBComponent {
   }
 
   // Live refresh of item counts using strong-consistency scans
-  refreshCountsLive() {
+  refreshCountsLive(showConfirmation = true) {
     this.started = true;
     
     // Build observable array for all tables
@@ -311,7 +331,9 @@ export class CloneDBComponent {
             }
           }
         });
-        this.toastService.showInfo('Clone BDD', 'Comptes mis à jour (live)');
+        if (showConfirmation) {
+          this.toastService.showInfo('Clone BDD', 'Comptes mis à jour (live)');
+        }
         this.started = false;
       },
       error: (_e) => {
