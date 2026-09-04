@@ -32,6 +32,7 @@ export class SystemDataService {
     const normalize = (conf: SystemConfiguration): SystemConfiguration => conf ? {
       ...conf,
       season: this._active_season,
+      include_system_visits: conf.include_system_visits ?? false,
       assistance_request_retention_days: conf.assistance_request_retention_days ?? 90,
       online_payment_active: conf.online_payment_active ?? false,
       tpe_payment_active: conf.tpe_payment_active ?? false,
@@ -48,6 +49,7 @@ export class SystemDataService {
         this._system_configuration = conf;
         this._system_configuration$.next(this._system_configuration);
         const missing: string[] = [];
+        if (conf.include_system_visits == null) missing.push('include_system_visits');
         if (conf.assistance_request_retention_days == null) missing.push('assistance_request_retention_days');
         if (conf.online_payment_active == null) missing.push('online_payment_active');
         if (conf.tpe_payment_active == null) missing.push('tpe_payment_active');

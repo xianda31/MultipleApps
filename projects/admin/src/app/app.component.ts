@@ -45,9 +45,9 @@ export class AppComponent implements OnInit {
       distinctUntilChanged((previous, current) =>
         previous.url === current.url && previous.authenticated === current.authenticated
       )
-    ).subscribe(async ({ url, authenticated }) => {
+    ).subscribe(({ url, authenticated }) => {
       const groupName = authenticated
-        ? (await this.groupService.getCurrentUserGroups())[0]
+        ? this.groupService.getCurrentUserGroups().then(groups => groups[0])
         : undefined;
       void this.pageViewService.trackVisit(url, authenticated, groupName);
     });

@@ -57,6 +57,7 @@ export class DashboardComponent {
   pageViewStats: PageViewStats | null = null;
   pageViewLoading = true;
   pageViewError = false;
+  includeSystemVisits = false;
   pageViewChartData: any = {};
   pageViewChartOptions!: ChartOptions<any>;
 
@@ -84,9 +85,10 @@ export class DashboardComponent {
       this.startYear = parseInt(this.season.slice(0, 4));
       this.allMonths = this.generateSeasonMonths(this.startYear);
       this.visitMonths = this.generateRollingYearMonths();
+      this.includeSystemVisits = conf.include_system_visits ?? false;
 
       // Visites
-      this.pageViewService.getStats(this.visitMonths).subscribe({
+      this.pageViewService.getStats(this.visitMonths, this.includeSystemVisits).subscribe({
         next: stats => {
           this.pageViewStats = stats;
           this.pageViewLoading = false;

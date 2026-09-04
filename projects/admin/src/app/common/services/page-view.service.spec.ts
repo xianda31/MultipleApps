@@ -71,7 +71,7 @@ describe('PageViewService', () => {
     expect(db.updateVisitDailyStat).not.toHaveBeenCalled();
   });
 
-  it('computes mutually exclusive visit counts from sessions', async () => {
+  it('excludes Systeme visits by default and includes them on request', async () => {
     const db = jasmine.createSpyObj('DBhandler', ['listVisitSessions']);
     db.listVisitSessions.and.returnValue(of([
       { sessionId: 'member', date: '2026-09-04', yearMonth: '2026-09', authenticated: true, groupName: Group_names.Member, section: 'front' },
@@ -83,9 +83,19 @@ describe('PageViewService', () => {
     ]));
     const service = new PageViewService(db);
 
-    const stats = await firstValueFrom(service.getStats(['2026-09']));
+    const statsWithoutSystem = await firstValueFrom(service.getStats(['2026-09']));
 
-    expect(stats.byMonth[0]).toEqual({
+    expect(statsWithoutSystem.byMonth[0]).toEqual({
+      yearMonth: '2026-09',
+      total: 5,
+      authenticated: 4,
+      members: 1,
+      staff: 3,
+      anonymous: 1,
+    });
+
+    const statsWithSystem = await firstValueFrom(service.getStats(['2026-09'], true));
+    expect(statsWithSystem.byMonth[0]).toEqual({
       yearMonth: '2026-09',
       total: 6,
       authenticated: 5,

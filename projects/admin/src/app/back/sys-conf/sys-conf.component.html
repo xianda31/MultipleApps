@@ -16,8 +16,7 @@
           </button>
           <input #fileInput type="file" style="display:none" class="form-control form-control-sm"
             (change)="onInput($event)">
-          <button
-            type="button"
+          <button type="button"
             [class]="systemFormGroup.touched ? 'btn btn-success btn-sm w-auto' : 'btn btn-outline-success btn-sm w-auto'"
             (click)="save_configuration()">
             <i class="bi-cloud-arrow-up-fill"></i>
@@ -70,17 +69,23 @@
                   <label class="form-check-label ms-2">{{traceModeEnabled ? 'activé' : 'désactivé'}}</label>
                 </div>
               </div>
-              <div class="row mt-3 align-items-center">
-                <div class="col-12 col-md-6 fw-bold">Rétention des tickets d'assistance résolus</div>
-                <div class="col-12 col-md-4">
-                  <div class="input-group input-group-sm">
-                    <input type="number" class="form-control" formControlName="assistance_request_retention_days" min="1" step="1">
-                    <span class="input-group-text">jours</span>
-                  </div>
+              <div class="d-flex flex-wrap align-items-center  gap-2 mt-3">
+                <span class="fw-bold">Statistiques visites : </span>
+                <span>groupe Systeme </span>
+                <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+                  <input type="checkbox" class="form-check-input mt-0" role="switch"
+                    formControlName="include_system_visits">
+                  <label class="form-check-label">{{includeSystemVisits ? 'inclus' : 'exclu'}}</label>
                 </div>
-                <div class="col-12 col-md-2 text-muted small">
-                  purge auto via TTL
-                </div>
+              </div>
+              <div class="d-flex flex-wrap align-items-center  gap-2 mt-3">
+                <span class="fw-bold">Tickets d'assistance :</span>
+                <span class="input-group flex-nowrap w-auto">
+                  <span class=" text-nowrap me-2 align-self-center">conservés</span>
+                  <input type="number" class="form-control flex-grow-0" style="width: 5rem;"
+                    formControlName="assistance_request_retention_days" min="1" step="1">
+                  <span class="align-self-center ms-2">jours</span>
+                </span>
               </div>
             </div>
           </div>
@@ -148,7 +153,8 @@
                 <div class="col-12 col-md-3 d-flex align-items-center gap-2">
                   <div class="input-group">
                     <span class="input-group-text">montant minimum CB</span>
-                    <input type="number" class="form-control" formControlName="minimum_cb_amount" min="0" step="0.5" style="max-width:90px">
+                    <input type="number" class="form-control" formControlName="minimum_cb_amount" min="0" step="0.5"
+                      style="max-width:90px">
                     <span class="input-group-text">€</span>
                   </div>
                 </div>
@@ -238,23 +244,13 @@
               <div class="row g-2 align-items-end mb-3">
                 <div class="col-12 col-md-3">
                   <label class="form-label mb-1">Code</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    placeholder="ex: AGR"
-                    [(ngModel)]="newBankKey"
-                    [ngModelOptions]="{ standalone: true }"
-                    (keyup.enter)="addBankFromDraft()">
+                  <input type="text" class="form-control" placeholder="ex: AGR" [(ngModel)]="newBankKey"
+                    [ngModelOptions]="{ standalone: true }" (keyup.enter)="addBankFromDraft()">
                 </div>
                 <div class="col-12 col-md-5">
                   <label class="form-label mb-1">Libellé</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    placeholder="ex: Crédit Agricole"
-                    [(ngModel)]="newBankName"
-                    [ngModelOptions]="{ standalone: true }"
-                    (keyup.enter)="addBankFromDraft()">
+                  <input type="text" class="form-control" placeholder="ex: Crédit Agricole" [(ngModel)]="newBankName"
+                    [ngModelOptions]="{ standalone: true }" (keyup.enter)="addBankFromDraft()">
                 </div>
                 <div class="col-12 col-md-4">
                   <button type="button" class="btn btn-outline-success w-100" (click)="addBankFromDraft()">

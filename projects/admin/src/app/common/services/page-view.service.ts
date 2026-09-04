@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DBhandler } from './graphQL.service';
-import { Observable, map } from 'rxjs';
+import { Observable, from, map, switchMap } from 'rxjs';
 import { Group_names } from '../authentification/group.interface';
 
 export interface PageViewStats {
@@ -32,8 +32,10 @@ export class PageViewService {
 
   constructor(private db: DBhandler) {}
 
-  trackVisit(url: string, authenticated = false, groupName?: Group_names): Promise<void> {
-    const tracking = this.trackingQueue.then(() => this.trackVisitInternal(url, authenticated, groupName));
+  trackVisit(url: string, authenticated = false, groupName?: Group_names | Promise<Group_names | undefined>): Promise<void> {
+    const tracking = this.trackingQueue.then(async () =>
+      this.trackVisitInternal(url, authenticated, await Promise.resolve(groupName))
+    );
     this.trackingQueue = tracking.catch(() => undefined);
     return tracking;
   }
@@ -131,11 +133,15 @@ export class PageViewService {
     }
   }
 
-  getStats(monthWindow: string[]): Observable<PageViewStats> {
+  getStats(monthWindow: string[], includeSystemVisits = false): Observable<PageViewStats> {
     const today = new Date().toISOString().slice(0, 10);
-    return this.db.listVisitSessions().pipe(
+    return from(this.trackingQueue).pipe(
+      switchMap(() => this.db.listVisitSessions()),
       map(sessions => {
-        const scopedSessions = sessions.filter(session => monthWindow.includes(session.yearMonth));
+        const scopedSessions = sessions.filter(session =>
+          monthWindow.includes(session.yearMonth)
+          && (includeSystemVisits || session.groupName !== Group_names.System)
+        );
         const todaySessions = scopedSessions.filter(session => session.date === today);
 
         const byMonth = monthWindow.map(ym => {

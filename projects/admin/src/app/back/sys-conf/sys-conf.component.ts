@@ -38,6 +38,7 @@ export class SysConfComponent {
     this.systemFormGroup = this.fb.group({
       club_identifier: [''],
       trace_mode: [false],
+      include_system_visits: [false],
       club_bank_key: [''],
       assistance_request_retention_days: [90],
       online_payment_active: [false],
@@ -151,6 +152,10 @@ export class SysConfComponent {
 
   get banks() {
     return this.systemFormGroup.get('banks') as FormArray;
+  }
+
+  get includeSystemVisits(): boolean {
+    return !!this.systemFormGroup.get('include_system_visits')?.value;
   }
 
   private computeBankOptions(): { key: string; name: string }[] {
