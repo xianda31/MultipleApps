@@ -55,6 +55,8 @@ export class DashboardComponent {
   expense_definitions: Revenue_and_expense_definition[] = [];
 
   pageViewStats: PageViewStats | null = null;
+  pageViewLoading = true;
+  pageViewError = false;
   pageViewChartData: any = {};
   pageViewChartOptions!: ChartOptions<any>;
 
@@ -84,18 +86,25 @@ export class DashboardComponent {
       this.visitMonths = this.generateRollingYearMonths();
 
       // Visites
-      this.pageViewService.getStats(this.visitMonths).subscribe(stats => {
-        this.pageViewStats = stats;
-        this.pageViewChartData = {
+      this.pageViewService.getStats(this.visitMonths).subscribe({
+        next: stats => {
+          this.pageViewStats = stats;
+          this.pageViewLoading = false;
+          this.pageViewChartData = {
           labels: this.visitMonths.map(ym => {
             const [y, m] = ym.split('-');
             return new Date(+y, +m - 1).toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
           }),
           datasets: [
             {
-              label: 'Connectés',
-              data: stats.byMonth.map(b => b.authenticated),
+              label: 'Membres',
+              data: stats.byMonth.map(b => b.members),
               backgroundColor: 'rgba(13, 110, 253, 0.6)',
+            },
+            {
+              label: 'Équipe',
+              data: stats.byMonth.map(b => b.staff),
+              backgroundColor: 'rgba(25, 135, 84, 0.6)',
             },
             {
               label: 'Anonymes',
@@ -104,7 +113,7 @@ export class DashboardComponent {
             },
           ],
         };
-        this.pageViewChartOptions = {
+          this.pageViewChartOptions = {
           responsive: true,
           scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
           plugins: {
@@ -116,7 +125,13 @@ export class DashboardComponent {
               },
             },
           },
-        };
+          };
+        },
+        error: error => {
+          this.pageViewLoading = false;
+          this.pageViewError = true;
+          console.warn('[Dashboard] Visit statistics loading failed:', error);
+        },
       });
 
 

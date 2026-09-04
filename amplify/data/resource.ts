@@ -442,8 +442,9 @@ const schema = a.schema({
     lastSeenAt: a.string().required(),
     pageViewCount: a.integer().required(),
     authenticated: a.boolean().required(),
-    memberId: a.string(),
+    groupName: a.string(),
     section: a.string().required(),
+    ttl: a.integer().required(),
   })
     .identifier(['sessionId'])
     .authorization((allow) => [

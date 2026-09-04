@@ -481,8 +481,9 @@ export class DBhandler {
     lastSeenAt: string;
     pageViewCount: number;
     authenticated: boolean;
-    memberId?: string;
+    groupName?: string;
     section: string;
+    ttl: number;
   }): Promise<void> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
@@ -498,8 +499,9 @@ export class DBhandler {
     lastSeenAt: string;
     pageViewCount: number;
     authenticated: boolean;
-    memberId?: string | null;
+    groupName?: string | null;
     section: string;
+    ttl?: number | null;
   } | null> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
@@ -513,8 +515,9 @@ export class DBhandler {
       lastSeenAt: string;
       pageViewCount: number;
       authenticated: boolean;
-      memberId?: string | null;
+      groupName?: string | null;
       section: string;
+      ttl?: number | null;
     }) || null;
   }
 
@@ -523,13 +526,52 @@ export class DBhandler {
     lastSeenAt: string;
     pageViewCount: number;
     authenticated: boolean;
-    memberId?: string;
+    groupName?: string;
     section?: string;
+    ttl: number;
   }): Promise<void> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { errors } = await client.models.VisitSession.update(input);
     if (errors) throw errors;
+  }
+
+  listVisitSessions(): Observable<{
+    sessionId: string;
+    date: string;
+    yearMonth: string;
+    authenticated: boolean;
+    groupName?: string | null;
+    section: string;
+  }[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return from((async () => {
+          const sessions: {
+            sessionId: string;
+            date: string;
+            yearMonth: string;
+            authenticated: boolean;
+            groupName?: string | null;
+            section: string;
+          }[] = [];
+          let nextToken: string | null | undefined;
+
+          do {
+            const page = await client.models.VisitSession.list({
+              limit: 1000,
+              nextToken: nextToken || undefined,
+            });
+            if (page.errors) throw page.errors;
+            sessions.push(...(page.data as unknown as typeof sessions));
+            nextToken = page.nextToken;
+          } while (nextToken);
+
+          return sessions;
+        })());
+      })
+    );
   }
 
   async createVisitDailyStat(input: {

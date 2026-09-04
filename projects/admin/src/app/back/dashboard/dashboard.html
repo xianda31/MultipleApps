@@ -1,25 +1,37 @@
 <div class="container-fluid p-md-4">
 
     <!-- Visites Section -->
-    <div class="row g-4 mb-5" *ngIf="pageViewStats">
+    <div class="row g-4 mb-5">
         <div class="col-12 col-md-4">
             <div class="card">
                 <h5 class="card-header bg-light fw-bold">Visites site — 12 derniers mois</h5>
                 <div class="card-body p-4">
-                    <div class="chart-container chart-container-visits" style="position: relative;">
+                    <div *ngIf="pageViewLoading" class="chart-container chart-container-visits d-flex align-items-center justify-content-center text-muted">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Chargement des visites...
+                    </div>
+                    <div *ngIf="pageViewError" class="chart-container chart-container-visits d-flex align-items-center justify-content-center text-danger">
+                        Statistiques de visites indisponibles
+                    </div>
+                    <div *ngIf="pageViewStats" class="chart-container chart-container-visits" style="position: relative;">
                         <canvas baseChart [data]="pageViewChartData" [options]="pageViewChartOptions" [type]="'bar'"></canvas>
                     </div>
-                    <div class="text-start text-muted small mt-3">
+                    <div *ngIf="pageViewStats" class="text-start text-muted small mt-3">
                         Aujourd'hui :
-                        <span class="fw-bold text-success">{{pageViewStats.todayAuthenticated}}</span> connectées |
+                        <span class="fw-bold text-primary">{{pageViewStats.todayMembers}}</span> membres |
+                        <span class="fw-bold text-success">{{pageViewStats.todayStaff}}</span> équipe |
                         <span class="fw-bold text-secondary">{{pageViewStats.todayAnonymous}}</span> anonymes
                     </div>
                 </div>
-                <div class="card-footer bg-light">
+                <div *ngIf="pageViewStats" class="card-footer bg-light">
                     <div class="d-flex flex-wrap gap-3 justify-content-center mb-2">
                         <span class="legend-item">
                             <span class="legend-symbol" style="background-color: rgba(13, 110, 253, 0.6);"></span>
-                            <span>Connectés</span>
+                            <span>Membres</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol" style="background-color: rgba(25, 135, 84, 0.6);"></span>
+                            <span>Équipe</span>
                         </span>
                         <span class="legend-item">
                             <span class="legend-symbol" style="background-color: rgba(108, 117, 125, 0.4);"></span>

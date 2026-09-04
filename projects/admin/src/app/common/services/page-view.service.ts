@@ -1,11 +1,21 @@
 import { Injectable } from '@angular/core';
 import { DBhandler } from './graphQL.service';
 import { Observable, map } from 'rxjs';
+import { Group_names } from '../authentification/group.interface';
 
 export interface PageViewStats {
   todayAuthenticated: number;
+  todayMembers: number;
+  todayStaff: number;
   todayAnonymous: number;
-  byMonth: { yearMonth: string; total: number; authenticated: number; anonymous: number }[];
+  byMonth: {
+    yearMonth: string;
+    total: number;
+    authenticated: number;
+    members: number;
+    staff: number;
+    anonymous: number;
+  }[];
 }
 
 interface LocalVisitSession {
@@ -18,10 +28,17 @@ export class PageViewService {
 
   private readonly SESSION_KEY = 'bcso.visit.session';
   private readonly SESSION_TIMEOUT_MINUTES = 30;
+  private trackingQueue: Promise<void> = Promise.resolve();
 
   constructor(private db: DBhandler) {}
 
-  async trackVisit(url: string, userId?: string): Promise<void> {
+  trackVisit(url: string, authenticated = false, groupName?: Group_names): Promise<void> {
+    const tracking = this.trackingQueue.then(() => this.trackVisitInternal(url, authenticated, groupName));
+    this.trackingQueue = tracking.catch(() => undefined);
+    return tracking;
+  }
+
+  private async trackVisitInternal(url: string, authenticated: boolean, groupName?: Group_names): Promise<void> {
     const cleanUrl = this.normalizeUrl(url);
 
     if (!this.shouldTrackUrl(cleanUrl)) {
@@ -32,15 +49,19 @@ export class PageViewService {
     const nowIso = now.toISOString();
     const date = nowIso.slice(0, 10);
     const yearMonth = nowIso.slice(0, 7);
+    const ttl = this.getSessionTtl(now);
     const section = cleanUrl.startsWith('/back') ? 'back' : 'front';
-    const isAuthenticated = !!userId;
+    const isAuthenticated = authenticated;
 
     const local = this.getLocalSession();
     const isExpired = local ? this.isExpired(local.lastSeenAt, nowIso) : true;
-    const isNewSession = !local || isExpired;
+    let isNewSession = !local || isExpired;
 
     let sessionId = local?.sessionId;
     let transitionedToAuthenticated = false;
+    let statDate = date;
+    let statYearMonth = yearMonth;
+    let statSection = section;
 
     try {
       if (isNewSession) {
@@ -53,12 +74,14 @@ export class PageViewService {
           lastSeenAt: nowIso,
           pageViewCount: 1,
           authenticated: isAuthenticated,
-          memberId: userId,
+          groupName,
           section,
+          ttl,
         });
       } else {
         const currentSession = await this.db.readVisitSession(sessionId!);
         if (!currentSession) {
+          isNewSession = true;
           sessionId = this.generateSessionId();
           await this.db.createVisitSession({
             sessionId,
@@ -68,31 +91,38 @@ export class PageViewService {
             lastSeenAt: nowIso,
             pageViewCount: 1,
             authenticated: isAuthenticated,
-            memberId: userId,
+            groupName,
             section,
+            ttl,
           });
         } else {
           transitionedToAuthenticated = !currentSession.authenticated && isAuthenticated;
+          statDate = currentSession.date;
+          statYearMonth = currentSession.yearMonth;
+          statSection = currentSession.section;
           await this.db.updateVisitSession({
             sessionId: currentSession.sessionId,
             lastSeenAt: nowIso,
             // Keep session alive without tracking page-by-page navigation.
             pageViewCount: currentSession.pageViewCount || 1,
             authenticated: currentSession.authenticated || isAuthenticated,
-            memberId: currentSession.memberId || userId,
-            section,
+            groupName: currentSession.groupName || groupName,
+            section: currentSession.section,
+            ttl: this.getSessionTtl(new Date(currentSession.firstSeenAt)),
           });
         }
       }
 
-      await this.upsertDailyStat({
-        date,
-        yearMonth,
-        section,
-        isNewSession,
-        isAuthenticated,
-        transitionedToAuthenticated,
-      });
+      if (isNewSession || transitionedToAuthenticated) {
+        await this.upsertDailyStat({
+          date: statDate,
+          yearMonth: statYearMonth,
+          section: statSection,
+          isNewSession,
+          isAuthenticated,
+          transitionedToAuthenticated,
+        });
+      }
 
       this.saveLocalSession({ sessionId: sessionId!, lastSeenAt: nowIso });
     } catch (err) {
@@ -103,28 +133,45 @@ export class PageViewService {
 
   getStats(monthWindow: string[]): Observable<PageViewStats> {
     const today = new Date().toISOString().slice(0, 10);
-    return this.db.listVisitDailyStats().pipe(
-      map(stats => {
-        const scopedStats = stats.filter(v => monthWindow.includes(v.yearMonth));
-        const todayStats = scopedStats.filter(v => v.date === today);
+    return this.db.listVisitSessions().pipe(
+      map(sessions => {
+        const scopedSessions = sessions.filter(session => monthWindow.includes(session.yearMonth));
+        const todaySessions = scopedSessions.filter(session => session.date === today);
 
         const byMonth = monthWindow.map(ym => {
-          const monthStats = scopedStats.filter(v => v.yearMonth === ym);
+          const monthSessions = scopedSessions.filter(session => session.yearMonth === ym);
+          const authenticatedSessions = monthSessions.filter(session => session.authenticated);
           return {
             yearMonth: ym,
-            total: monthStats.reduce((acc, row) => acc + (row.totalSessions || 0), 0),
-            authenticated: monthStats.reduce((acc, row) => acc + (row.authenticatedSessions || 0), 0),
-            anonymous: monthStats.reduce((acc, row) => acc + (row.anonymousSessions || 0), 0),
+            total: monthSessions.length,
+            authenticated: authenticatedSessions.length,
+            members: authenticatedSessions.filter(session => this.isMemberSession(session.groupName)).length,
+            staff: authenticatedSessions.filter(session => !this.isMemberSession(session.groupName)).length,
+            anonymous: monthSessions.filter(session => !session.authenticated).length,
           };
         });
 
+        const todayAuthenticatedSessions = todaySessions.filter(session => session.authenticated);
+
         return {
-          todayAuthenticated: todayStats.reduce((acc, row) => acc + (row.authenticatedSessions || 0), 0),
-          todayAnonymous: todayStats.reduce((acc, row) => acc + (row.anonymousSessions || 0), 0),
+          todayAuthenticated: todayAuthenticatedSessions.length,
+          todayMembers: todayAuthenticatedSessions.filter(session => this.isMemberSession(session.groupName)).length,
+          todayStaff: todayAuthenticatedSessions.filter(session => !this.isMemberSession(session.groupName)).length,
+          todayAnonymous: todaySessions.filter(session => !session.authenticated).length,
           byMonth,
         };
       })
     );
+  }
+
+  private isMemberSession(groupName?: string | null): boolean {
+    return !groupName || groupName === Group_names.Member;
+  }
+
+  private getSessionTtl(firstSeenAt: Date): number {
+    const expiresAt = new Date(firstSeenAt);
+    expiresAt.setUTCMonth(expiresAt.getUTCMonth() + 13);
+    return Math.floor(expiresAt.getTime() / 1000);
   }
 
   private async upsertDailyStat(params: {

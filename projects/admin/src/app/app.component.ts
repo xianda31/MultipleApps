@@ -5,6 +5,8 @@ import { filter } from 'rxjs/operators';
 import { PageViewService } from './common/services/page-view.service';
 import { AuthentificationService } from './common/authentification/authentification.service';
 import { FfbAvailabilityService } from './common/services/ffb-availability.service';
+import { combineLatest, distinctUntilChanged, map } from 'rxjs';
+import { GroupService } from './common/authentification/group.service';
 
 @Component({
   selector: 'app-root',
@@ -23,22 +25,31 @@ export class AppComponent implements OnInit {
     private pageViewService: PageViewService,
     private authService: AuthentificationService,
     private ffbAvailability: FfbAvailabilityService,
+    private groupService: GroupService,
   ) {
     this.sandbox = sandboxFlag;
   }
 
   ngOnInit(): void {
     this.ffbAvailability.startMonitoring();
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: NavigationEnd) => {
-      this.trackPageNavigation(event.url);
+    combineLatest([
+      this.router.events.pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd)),
+      this.authService.isRestoringSession$,
+      this.authService.logged_member$,
+    ]).pipe(
+      filter(([, isRestoring]) => !isRestoring),
+      map(([event, , member]) => ({
+        url: event.urlAfterRedirects,
+        authenticated: !!member,
+      })),
+      distinctUntilChanged((previous, current) =>
+        previous.url === current.url && previous.authenticated === current.authenticated
+      )
+    ).subscribe(async ({ url, authenticated }) => {
+      const groupName = authenticated
+        ? (await this.groupService.getCurrentUserGroups())[0]
+        : undefined;
+      void this.pageViewService.trackVisit(url, authenticated, groupName);
     });
-  }
-
-  private trackPageNavigation(url: string): void {
-    const member = this.authService.currentMember;
-    const userId = member?.license_number ?? undefined;
-    this.pageViewService.trackVisit(url, userId);
   }
 }

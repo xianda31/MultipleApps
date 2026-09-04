@@ -299,6 +299,14 @@ if (cfnAssistanceRequestTable) {
   cfnAssistanceRequestTable.timeToLiveSpecification = { enabled: true, attributeName: 'ttl' };
 }
 
+// Conserver les sessions de visite pendant 13 mois
+const visitSessionTable = backend.data.resources.tables['VisitSession'];
+const cfnVisitSessionTable = visitSessionTable.node.tryFindChild('Resource') as CfnTable
+  ?? visitSessionTable.node.children.find((c: Construct): c is CfnTable => c instanceof CfnTable);
+if (cfnVisitSessionTable) {
+  cfnVisitSessionTable.timeToLiveSpecification = { enabled: true, attributeName: 'ttl' };
+}
+
 // Grant both email Lambdas access to Member table
 const memberTable = backend.data.resources.tables['Member'];
 memberTable.grantReadWriteData(backend.emailUnsubscribe.resources.lambda);
