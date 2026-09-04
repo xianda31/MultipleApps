@@ -132,33 +132,7 @@ export class MenusEditorComponent implements AfterViewInit {
           // avant d'afficher les prompts bloquants
           await new Promise(resolve => setTimeout(resolve, 0));
 
-          // Gestion de l'initialisation automatique de la sandbox
-          if (sandboxItems.length === 0 && productionItems.length > 0) {
-            // Sandbox vide : proposer de copier depuis production
-            const shouldInit = confirm(
-              '📋 La sandbox est vide.\n\n' +
-              'Voulez-vous initialiser la sandbox avec la configuration de production actuelle ?\n\n' +
-              '(Recommandé pour commencer à éditer les menus)'
-            );
-            if (shouldInit) {
-              try {
-                this.isProcessing = true;
-                const count = await this.navitemService.cloneProductionToSandbox();
-                this.toastService.showSuccess('Menus', `${count} élément(s) copié(s) vers sandbox`);
-                // Recharger les données après la copie
-                const reloadedSandbox = await firstValueFrom(this.navitemService.loadNavItemsSandbox());
-                sandboxItems = reloadedSandbox;
-                this.hasSandboxNavitems = sandboxItems.length > 0;
-                this.sandboxCount = sandboxItems.length;
-                this.sandbox_mode = true;
-                this.sandboxService.setSandbox(true);
-              } catch (err: any) {
-                this.toastService.showError('Menus', err?.message || 'Échec de l\'initialisation');
-              } finally {
-                this.isProcessing = false;
-              }
-            }
-          } else if (sandboxItems.length > 0) {
+          if (sandboxItems.length > 0) {
             // Sandbox non vide : proposer de la garder ou de l'écraser
             const choice = confirm(
               '⚠️ Travail en cours détecté dans la sandbox.\n\n' +

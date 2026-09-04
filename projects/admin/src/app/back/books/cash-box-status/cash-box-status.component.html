@@ -1,21 +1,25 @@
-<form [formGroup]="cashForm">
+<form [formGroup]="cashForm" class="container-lg">
     <h3 class="mt-3 mb-3 text-center"> gestion de la caisse </h3>
 
     <div class="row justify-content-center  mt-3 g-1">
-        <div class="col-12 col-md-3">
+        <div class="col-12">
             <div class="card h-100">
                 <div class="card-header fw-bolder">
                     Actuellement en caisse
                 </div>
                 <div class="card-body text-start">
-                    <h6 class="me-3 mb-0 fw-bolder">
+                    <h6 class="mb-0 fw-bolder cash-balance-row__expected">
                         Liquidités
-                        <span class="fw-normal">&nbsp;(attendu : {{((current_cash_amount -
-                            cash_for_deposit_amount) | number:truncature:'fr')}}€)</span>
                     </h6>
-                    <div class="d-flex align-items-center gap-3 mt-3 mb-2 flex-wrap">
-                        <div class="input-group w-auto ms-auto">
-                            <span class="input-group-text">constaté</span>
+                    <div class="cash-balance-row mt-2 mb-2">
+                        <div class="input-group w-50">
+                            <span class="input-group-text">
+                                <span class="fw-normal">théoriquement : {{((current_cash_amount -
+                                    cash_for_deposit_amount) | number:truncature:'fr')}}€</span>
+                            </span>
+                            <span class="input-group-text">
+                                <span class="fw-bold">montant effectivement constaté :</span>
+                            </span>
                             <input type="number" class="form-control text-end" formControlName="cash_real_amount">
                             <button class="btn btn-sm btn-primary" [disabled]="cash_real_amount.invalid">
                                 <i (click)="cash_align()" class="bi-check2"></i>
@@ -39,10 +43,10 @@
                                 <tbody class="fs-6">
                                     <!-- bouton select all -->
                                     <tr class="cheque-select-all-row">
-                                    <td class="text-center">
-                                        <input type="checkbox" (change)="toggle_draw_all()">
-                                    </td>
-                                    <td colspan="4" class="text-start small"></td>
+                                        <td class="text-center">
+                                            <input type="checkbox" (change)="toggle_draw_all()">
+                                        </td>
+                                        <td colspan="4" class="text-start small"></td>
                                     </tr>
                                     <tr *ngFor="let chequeCtrl of chequesToProcess.controls; let i = index"
                                         [formGroupName]="i">
@@ -73,7 +77,7 @@
         </div>
 
 
-        <div class="col-12 col-md-3">
+        <div class="col-12">
             <div class="card h-100">
                 <div class="card-header fw-bolder">
                     Prélèvements pour dépôt en banque
@@ -85,7 +89,7 @@
                         </h6>
 
                         <!-- retrait espèces -->
-                        <div class="input-group mt-3">
+                        <div class="w-50 input-group mt-3">
                             <span class="input-group-text w-50">retrait caisse</span>
                             <input type="number"
                                 [placeholder]="((current_cash_amount - cash_for_deposit_amount) | number:truncature:'fr') + ' max'"
@@ -98,7 +102,7 @@
                         <div *ngIf="cash_out_amount.errors" class="text-danger ms-3 mb-0">valeur incorrecte ! </div>
                     </div>
 
-                    <div>
+                    <div class="w-75">
                         <!-- liste des chèques retirés caisse -->
                         <ng-container *ngIf="cheques_drawn_number >0">
                             <h6 class="mt-3 fw-bolder">
@@ -149,7 +153,7 @@
                         </ng-container>
                         <!-- liste de dépôts en attente de référence de bordereau -->
                         <h6 *ngIf="temp_refs_number > 0" class="mt-3 fw-bolder">
-                            en attente de référence de bordereau
+                            Chèques en attente de référence de bordereau
                         </h6>
 
                         <div formArrayName="deposits_to_confirm">
@@ -178,8 +182,8 @@
             </div>
         </div>
 
-        <div class="col-12 col-md-3">
-            <div class="card  h-100">
+        <div class="col-12">
+            <div class="card h-100">
                 <div class="card-header fw-bolder d-flex align-items-center justify-content-between">
                     <span>Consolidation bancaire à faire</span>
                     <a [routerLink]="reconciliation_path()" class="ms-auto me-1 text-decoration-none"

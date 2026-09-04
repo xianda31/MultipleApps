@@ -17,3 +17,51 @@
 	border: none !important;
 }
 
+.cash-balance-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.cash-balance-row__expected {
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+
+.cash-balance-row__actual {
+	flex: 0 1 auto;
+	width: auto;
+	min-width: 0;
+	flex-wrap: nowrap;
+}
+
+.cash-balance-row__actual .input-group-text {
+	white-space: nowrap;
+}
+
+.cash-balance-row__actual .form-control {
+	flex: 0 1 7rem;
+	width: 7rem;
+	min-width: 0;
+}
+
+@media (max-width: 575px) {
+	.cash-balance-row {
+		gap: 0.5rem;
+	}
+
+	.cash-balance-row__expected {
+		font-size: 0.875rem;
+	}
+
+	.cash-balance-row__actual .input-group-text {
+		padding-inline: 0.5rem;
+		font-size: 0.8rem;
+	}
+
+	.cash-balance-row__actual .form-control {
+		flex-basis: 4.5rem;
+		width: 4.5rem;
+	}
+}
+

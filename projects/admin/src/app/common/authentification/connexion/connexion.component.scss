@@ -252,6 +252,10 @@
 }
 
 @media (max-width: 575px) {
+    .auth-card-wrapper {
+        padding-inline: 0.75rem;
+    }
+
     .auth-card__logo {
         max-width: 72px;
     }
