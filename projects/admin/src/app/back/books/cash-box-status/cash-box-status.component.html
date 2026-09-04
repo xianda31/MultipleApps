@@ -162,7 +162,8 @@
             </div>
         </section>
 
-        <section class="cash-panel cash-panel--wide" aria-labelledby="reconciliation-title">
+        <section *ngIf="cash_for_deposit.length > 0 || unchecked_deposit_refs.length > 0"
+            class="cash-panel cash-panel--wide" aria-labelledby="reconciliation-title">
             <header class="cash-panel__header cash-panel__header--action">
                 <h2 id="reconciliation-title">Consolidation bancaire à faire</h2>
                 <a [routerLink]="reconciliation_path()" class="cash-header-action"
@@ -179,10 +180,6 @@
                     <span>Dépôt de chèques · {{book_entry.deposit_ref}}</span>
                     <strong>{{book_entry.amounts['bank_in'] | number:truncature:'fr'}} €</strong>
                 </div>
-                <p *ngIf="cash_for_deposit.length === 0 && unchecked_deposit_refs.length === 0" class="cash-empty-state mb-0">
-                    <i class="bi bi-check-circle" aria-hidden="true"></i>
-                    Aucune opération en attente
-                </p>
             </div>
         </section>
     </div>
