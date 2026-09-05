@@ -88,59 +88,7 @@ export class DashboardComponent {
       this.includeSystemVisits = conf.include_system_visits ?? false;
 
       // Visites
-      this.pageViewService.getStats(this.visitMonths, this.includeSystemVisits).subscribe({
-        next: stats => {
-          this.pageViewStats = stats;
-          this.pageViewLoading = false;
-          this.pageViewChartData = {
-          labels: this.visitMonths.map(ym => {
-            const [y, m] = ym.split('-');
-            return new Date(+y, +m - 1).toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
-          }),
-          datasets: [
-            {
-              label: 'Membres',
-              data: stats.byMonth.map(b => b.members),
-              backgroundColor: 'rgba(13, 110, 253, 0.6)',
-            },
-            {
-              label: 'Équipe',
-              data: stats.byMonth.map(b => b.staff),
-              backgroundColor: 'rgba(25, 135, 84, 0.6)',
-            },
-            {
-              label: 'Authentifiés',
-              data: stats.byMonth.map(b => b.unclassifiedAuthenticated ?? 0),
-              backgroundColor: 'rgba(255, 193, 7, 0.65)',
-            },
-            {
-              label: 'Anonymes',
-              data: stats.byMonth.map(b => b.anonymous),
-              backgroundColor: 'rgba(108, 117, 125, 0.4)',
-            },
-          ],
-        };
-          this.pageViewChartOptions = {
-          responsive: true,
-          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
-          plugins: {
-            legend: { display: false },
-            datalabels: {
-              display: (context: any) => {
-                const value = context.dataset?.data?.[context.dataIndex];
-                return value !== null && value !== undefined && Number(value) !== 0;
-              },
-            },
-          },
-          };
-        },
-        error: error => {
-          this.pageViewLoading = false;
-          this.pageViewError = true;
-          console.warn('[Dashboard] Visit statistics loading failed:', error);
-        },
-      });
-
+      this.loadPageViewStats();
 
       this.initialize_financial_data(this.allMonths).subscribe(({ chartRevenue, chartExpense, chartResult }) => {
 
@@ -202,6 +150,69 @@ export class DashboardComponent {
         ));
       });
 
+    });
+  }
+
+  onSystemVisitsChange(event: Event): void {
+    this.includeSystemVisits = (event.target as HTMLInputElement).checked;
+    this.loadPageViewStats();
+  }
+
+  private loadPageViewStats(): void {
+    this.pageViewLoading = true;
+    this.pageViewError = false;
+
+    this.pageViewService.getStats(this.visitMonths, this.includeSystemVisits).subscribe({
+      next: stats => {
+        this.pageViewStats = stats;
+        this.pageViewLoading = false;
+        this.pageViewChartData = {
+          labels: this.visitMonths.map(ym => {
+            const [y, m] = ym.split('-');
+            return new Date(+y, +m - 1).toLocaleString('fr-FR', { month: 'short', year: '2-digit' });
+          }),
+          datasets: [
+            {
+              label: 'Membres',
+              data: stats.byMonth.map(b => b.members),
+              backgroundColor: 'rgba(13, 110, 253, 0.6)',
+            },
+            {
+              label: 'Équipe',
+              data: stats.byMonth.map(b => b.staff),
+              backgroundColor: 'rgba(25, 135, 84, 0.6)',
+            },
+            {
+              label: 'Authentifiés',
+              data: stats.byMonth.map(b => b.unclassifiedAuthenticated ?? 0),
+              backgroundColor: 'rgba(255, 193, 7, 0.65)',
+            },
+            {
+              label: 'Anonymes',
+              data: stats.byMonth.map(b => b.anonymous),
+              backgroundColor: 'rgba(108, 117, 125, 0.4)',
+            },
+          ],
+        };
+        this.pageViewChartOptions = {
+          responsive: true,
+          scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              display: (context: any) => {
+                const value = context.dataset?.data?.[context.dataIndex];
+                return value !== null && value !== undefined && Number(value) !== 0;
+              },
+            },
+          },
+        };
+      },
+      error: error => {
+        this.pageViewLoading = false;
+        this.pageViewError = true;
+        console.warn('[Dashboard] Visit statistics loading failed:', error);
+      },
     });
   }
 

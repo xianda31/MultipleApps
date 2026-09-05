@@ -4,7 +4,17 @@
     <div class="row g-4 mb-5">
         <div class="col-12 col-md-4">
             <div class="card">
-                <h5 class="card-header bg-light fw-bold">Visites site — 12 derniers mois</h5>
+                <div class="card-header bg-light visit-card-header">
+                    <h5 class="mb-0 fw-bold">Visites site — 12 derniers mois</h5>
+                    <div class="form-check form-switch visit-system-toggle">
+                        <input id="include-system-visits" class="form-check-input" type="checkbox" role="switch"
+                            [checked]="includeSystemVisits" [disabled]="pageViewLoading"
+                            (change)="onSystemVisitsChange($event)">
+                        <label class="form-check-label" for="include-system-visits">
+                            Système {{includeSystemVisits ? 'inclus' : 'exclu'}}
+                        </label>
+                    </div>
+                </div>
                 <div class="card-body p-4">
                     <div *ngIf="pageViewLoading" class="chart-container chart-container-visits d-flex align-items-center justify-content-center text-muted">
                         <span class="spinner-border spinner-border-sm me-2" role="status"></span>
