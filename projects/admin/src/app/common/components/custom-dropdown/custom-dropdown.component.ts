@@ -14,6 +14,7 @@ export class CustomDropdownComponent {
   @Input() placeholder = 'Rechercher...';
   @Input() searchValue = '';
   @Input() displayFn: (item: any) => string = (item) => item.toString();
+  @Input() itemDisplayFn?: (item: any) => string;
   @Input() invalid = false;
   @Input() invalidMessage = '';
 
@@ -57,7 +58,7 @@ export class CustomDropdownComponent {
     }
     const searchLower = this.searchValue.toLowerCase();
     return this.items.filter(item => 
-      this.displayFn(item).toLowerCase().includes(searchLower)
+      (this.itemDisplayFn?.(item) ?? this.displayFn(item)).toLowerCase().includes(searchLower)
     );
   }
 }

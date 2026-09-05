@@ -31,6 +31,10 @@ export class InputPlayerComponent implements ControlValueAccessor {
   disabled = false;
 
   displayPlayerFn = (player: ClubMember) => `${player.lastName} ${player.firstName} (${player.license_number})`;
+  displayPlayerOptionFn = (player: ClubMember) => {
+    const club = player.club?.label || player.club?.name || player.club?.ffbCode;
+    return `${player.lastName} ${player.firstName} (${player.license_number}${club ? ` — ${club}` : ''})`;
+  };
 
   constructor(
     private ffbService: FFB_proxyService

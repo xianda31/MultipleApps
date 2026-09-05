@@ -80,9 +80,9 @@
             
             <!-- Zone d'inscription -->
             <div *ngIf="(!already_subscribed && (is_member$ | async))" class="px-3 pb-3 pt-1">
-                <div class="d-flex gap-2 align-items-end mb-3">
+                <div class="row g-2 align-items-end mb-3">
                     <!-- 1er joueur (moi) -->
-                    <div class="flex-fill">
+                    <div class="col-12 col-sm-6">
                         <label class="form-label fw-semibold small">1er joueur</label>
                         <div class="form-control form-control-sm bg-light">
                             <i class="bi bi-person-check-fill text-success me-1"></i>
@@ -90,7 +90,7 @@
                         </div>
                     </div>
                     <!-- 2e joueur (partenaire requis) -->
-                    <div class="flex-fill">
+                    <div class="col-12 col-sm-6">
                         <label class="form-label fw-semibold small">2eme joueur</label>
                         <app-input-player [formControl]="player2" placeholder="mon partenaire"
                             class="form-control form-control-sm">

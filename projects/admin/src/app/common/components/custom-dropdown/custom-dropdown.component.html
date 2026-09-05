@@ -17,7 +17,7 @@
     <li *ngFor="let item of getFilteredItems()"
       (mousedown)="onItemMouseDown($event, item)"
       class="p-2 cursor-pointer hover-highlight">
-      {{ displayFn(item) }}
+      {{ itemDisplayFn ? itemDisplayFn(item) : displayFn(item) }}
     </li>
   </ul>
 </div>
