@@ -1,5 +1,5 @@
 import { PageViewService } from './page-view.service';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 import { Group_names } from '../authentification/group.interface';
 
 describe('PageViewService', () => {
@@ -102,6 +102,34 @@ describe('PageViewService', () => {
       members: 1,
       staff: 4,
       anonymous: 1,
+    });
+  });
+
+  it('uses daily aggregates when VisitSession listing fails', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const yearMonth = today.slice(0, 7);
+    const db = jasmine.createSpyObj('DBhandler', ['listVisitSessions', 'listVisitDailyStats']);
+    db.listVisitSessions.and.returnValue(throwError(() => [{ message: 'Unauthorized' }]));
+    db.listVisitDailyStats.and.returnValue(of([
+      { date: today, section: 'back', yearMonth, totalSessions: 2, authenticatedSessions: 1, anonymousSessions: 1, pageViews: 0 },
+      { date: today, section: 'front', yearMonth, totalSessions: 4, authenticatedSessions: 1, anonymousSessions: 3, pageViews: 0 },
+    ]));
+    const service = new PageViewService(db);
+
+    const stats = await firstValueFrom(service.getStats([yearMonth]));
+
+    expect(stats.usesDailyFallback).toBeTrue();
+    expect(stats.todayAuthenticated).toBe(2);
+    expect(stats.todayUnclassifiedAuthenticated).toBe(2);
+    expect(stats.todayAnonymous).toBe(4);
+    expect(stats.byMonth[0]).toEqual({
+      yearMonth,
+      total: 6,
+      authenticated: 2,
+      members: 0,
+      staff: 0,
+      anonymous: 4,
+      unclassifiedAuthenticated: 2,
     });
   });
 });

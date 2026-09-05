@@ -18,21 +18,30 @@
                     </div>
                     <div *ngIf="pageViewStats" class="text-start text-muted small mt-3">
                         Aujourd'hui :
+                        <ng-container *ngIf="pageViewStats.usesDailyFallback; else detailedTodayVisits">
+                            <span class="fw-bold text-warning">{{pageViewStats.todayUnclassifiedAuthenticated}}</span> authentifiés |
+                        </ng-container>
+                        <ng-template #detailedTodayVisits>
                         <span class="fw-bold text-primary">{{pageViewStats.todayMembers}}</span> membres |
                         <span class="fw-bold text-success">{{pageViewStats.todayStaff}}</span> admin
                         ({{includeSystemVisits ? 'incl. Système' : 'excl. Système'}}) |
+                        </ng-template>
                         <span class="fw-bold text-secondary">{{pageViewStats.todayAnonymous}}</span> anonymes
                     </div>
                 </div>
                 <div *ngIf="pageViewStats" class="card-footer bg-light">
                     <div class="d-flex flex-wrap gap-3 justify-content-center mb-2">
-                        <span class="legend-item">
+                        <span *ngIf="!pageViewStats.usesDailyFallback" class="legend-item">
                             <span class="legend-symbol" style="background-color: rgba(13, 110, 253, 0.6);"></span>
                             <span>Membres</span>
                         </span>
-                        <span class="legend-item">
+                        <span *ngIf="!pageViewStats.usesDailyFallback" class="legend-item">
                             <span class="legend-symbol" style="background-color: rgba(25, 135, 84, 0.6);"></span>
                             <span>Admin ({{includeSystemVisits ? 'incl. Système' : 'excl. Système'}})</span>
+                        </span>
+                        <span *ngIf="pageViewStats.usesDailyFallback" class="legend-item">
+                            <span class="legend-symbol" style="background-color: rgba(255, 193, 7, 0.65);"></span>
+                            <span>Authentifiés (agrégats journaliers)</span>
                         </span>
                         <span class="legend-item">
                             <span class="legend-symbol" style="background-color: rgba(108, 117, 125, 0.4);"></span>

@@ -109,6 +109,11 @@ export class DashboardComponent {
               backgroundColor: 'rgba(25, 135, 84, 0.6)',
             },
             {
+              label: 'Authentifiés',
+              data: stats.byMonth.map(b => b.unclassifiedAuthenticated ?? 0),
+              backgroundColor: 'rgba(255, 193, 7, 0.65)',
+            },
+            {
               label: 'Anonymes',
               data: stats.byMonth.map(b => b.anonymous),
               backgroundColor: 'rgba(108, 117, 125, 0.4)',

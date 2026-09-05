@@ -546,8 +546,8 @@ export class DBhandler {
   }[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
-        const client = generateClient<Schema>({ authMode });
-        return from((async () => {
+        const listWithAuthMode = async (listAuthMode: 'userPool' | 'identityPool') => {
+          const client = generateClient<Schema>({ authMode: listAuthMode });
           const sessions: {
             sessionId: string;
             date: string;
@@ -562,14 +562,48 @@ export class DBhandler {
             const page = await client.models.VisitSession.list({
               limit: 1000,
               nextToken: nextToken || undefined,
+              selectionSet: ['sessionId', 'date', 'authenticated', 'groupName'],
             });
-            if (page.errors) throw page.errors;
-            sessions.push(...(page.data as unknown as typeof sessions));
+            if (page.errors?.length) {
+              if (this.isUnauthorizedGraphQLError(page.errors)) throw page.errors;
+              console.warn('[VisitSession] partial data errors:', page.errors.map(error => ({
+                message: error.message,
+                path: error.path,
+              })));
+            }
+            const validSessions = ((page.data as unknown as {
+              sessionId?: string | null;
+              date?: string | null;
+              authenticated?: boolean | null;
+              groupName?: string | null;
+            }[] | null) ?? [])
+              .filter((session): session is {
+                sessionId: string;
+                date: string;
+                authenticated: boolean;
+                groupName?: string | null;
+              } => Boolean(session?.sessionId && session?.date && typeof session.authenticated === 'boolean'))
+              .map(session => ({
+                ...session,
+                yearMonth: session.date.slice(0, 7),
+                section: '',
+              }));
+            sessions.push(...validSessions);
             nextToken = page.nextToken;
           } while (nextToken);
 
           return sessions;
-        })());
+        };
+
+        return from(
+          listWithAuthMode(authMode).catch(error => {
+            if (authMode === 'userPool' && this.isUnauthorizedGraphQLError(error)) {
+              console.info('[VisitSession] userPool read unauthorized; retrying with identityPool.');
+              return listWithAuthMode('identityPool');
+            }
+            throw error;
+          })
+        );
       })
     );
   }
@@ -638,15 +672,9 @@ export class DBhandler {
   }[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
-        const client = generateClient<Schema>({ authMode });
-        return from(
-          client.models.VisitDailyStat.list({ limit: 5000 })
-            .then(({ data, errors }) => {
-              if (errors) {
-                console.error('VisitDailyStat.list error', errors);
-                return [];
-              }
-              return data as unknown as {
+        const listWithAuthMode = async (listAuthMode: 'userPool' | 'identityPool') => {
+          const client = generateClient<Schema>({ authMode: listAuthMode });
+          const stats: {
                 date: string;
                 section: string;
                 yearMonth: string;
@@ -654,8 +682,60 @@ export class DBhandler {
                 authenticatedSessions: number;
                 anonymousSessions: number;
                 pageViews: number;
-              }[];
-            })
+          }[] = [];
+          let nextToken: string | null | undefined;
+
+          do {
+            const page = await client.models.VisitDailyStat.list({
+              limit: 1000,
+              nextToken: nextToken || undefined,
+              selectionSet: ['date', 'totalSessions', 'authenticatedSessions', 'anonymousSessions'],
+            });
+            if (page.errors?.length) {
+              if (this.isUnauthorizedGraphQLError(page.errors)) throw page.errors;
+              console.warn('[VisitDailyStat] partial data errors:', page.errors.map(error => ({
+                message: error.message,
+                path: error.path,
+              })));
+            }
+            const validStats = ((page.data as unknown as {
+              date?: string | null;
+              totalSessions?: number | null;
+              authenticatedSessions?: number | null;
+              anonymousSessions?: number | null;
+            }[] | null) ?? [])
+              .filter((stat): stat is {
+                date: string;
+                totalSessions: number;
+                authenticatedSessions: number;
+                anonymousSessions: number;
+              } => Boolean(
+                stat?.date
+                && typeof stat.totalSessions === 'number'
+                && typeof stat.authenticatedSessions === 'number'
+                && typeof stat.anonymousSessions === 'number'
+              ))
+              .map(stat => ({
+                ...stat,
+                section: '',
+                yearMonth: stat.date.slice(0, 7),
+                pageViews: 0,
+              }));
+            stats.push(...validStats);
+            nextToken = page.nextToken;
+          } while (nextToken);
+
+          return stats;
+        };
+
+        return from(
+          listWithAuthMode(authMode).catch(error => {
+            if (authMode === 'userPool' && this.isUnauthorizedGraphQLError(error)) {
+              console.info('[VisitDailyStat] userPool read unauthorized; retrying with identityPool.');
+              return listWithAuthMode('identityPool');
+            }
+            throw error;
+          })
         );
       })
     );

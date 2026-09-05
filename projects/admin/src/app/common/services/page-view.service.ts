@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DBhandler } from './graphQL.service';
-import { Observable, from, map, switchMap } from 'rxjs';
+import { Observable, catchError, from, map, of, switchMap } from 'rxjs';
 import { Group_names } from '../authentification/group.interface';
 
 export interface PageViewStats {
@@ -8,6 +8,8 @@ export interface PageViewStats {
   todayMembers: number;
   todayStaff: number;
   todayAnonymous: number;
+  todayUnclassifiedAuthenticated?: number;
+  usesDailyFallback?: boolean;
   byMonth: {
     yearMonth: string;
     total: number;
@@ -15,6 +17,7 @@ export interface PageViewStats {
     members: number;
     staff: number;
     anonymous: number;
+    unclassifiedAuthenticated?: number;
   }[];
 }
 
@@ -137,7 +140,11 @@ export class PageViewService {
     const today = new Date().toISOString().slice(0, 10);
     return from(this.trackingQueue).pipe(
       switchMap(() => this.db.listVisitSessions()),
-      map(sessions => {
+      switchMap(sessions => {
+        if (sessions.length === 0) {
+          return this.getStatsFromDailyAggregates(monthWindow, today);
+        }
+
         const scopedSessions = sessions.filter(session =>
           monthWindow.includes(session.yearMonth)
           && (includeSystemVisits || session.groupName !== Group_names.System)
@@ -159,12 +166,49 @@ export class PageViewService {
 
         const todayAuthenticatedSessions = todaySessions.filter(session => session.authenticated);
 
-        return {
+        return of({
           todayAuthenticated: todayAuthenticatedSessions.length,
           todayMembers: todayAuthenticatedSessions.filter(session => this.isMemberSession(session.groupName)).length,
           todayStaff: todayAuthenticatedSessions.filter(session => !this.isMemberSession(session.groupName)).length,
           todayAnonymous: todaySessions.filter(session => !session.authenticated).length,
           byMonth,
+        });
+      }),
+      catchError(error => {
+        console.warn('[PageViewService] VisitSession.list failed; using VisitDailyStat:', error);
+        return this.getStatsFromDailyAggregates(monthWindow, today);
+      })
+    );
+  }
+
+  private getStatsFromDailyAggregates(monthWindow: string[], today: string): Observable<PageViewStats> {
+    return this.db.listVisitDailyStats().pipe(
+      map(dailyStats => {
+        const scopedStats = dailyStats.filter(stat => monthWindow.includes(stat.yearMonth));
+        const todayStats = scopedStats.filter(stat => stat.date === today);
+        const sum = (items: typeof scopedStats, field: 'totalSessions' | 'authenticatedSessions' | 'anonymousSessions') =>
+          items.reduce((total, item) => total + (Number(item[field]) || 0), 0);
+
+        return {
+          todayAuthenticated: sum(todayStats, 'authenticatedSessions'),
+          todayMembers: 0,
+          todayStaff: 0,
+          todayAnonymous: sum(todayStats, 'anonymousSessions'),
+          todayUnclassifiedAuthenticated: sum(todayStats, 'authenticatedSessions'),
+          usesDailyFallback: true,
+          byMonth: monthWindow.map(yearMonth => {
+            const monthStats = scopedStats.filter(stat => stat.yearMonth === yearMonth);
+            const authenticated = sum(monthStats, 'authenticatedSessions');
+            return {
+              yearMonth,
+              total: sum(monthStats, 'totalSessions'),
+              authenticated,
+              members: 0,
+              staff: 0,
+              anonymous: sum(monthStats, 'anonymousSessions'),
+              unclassifiedAuthenticated: authenticated,
+            };
+          }),
         };
       })
     );
