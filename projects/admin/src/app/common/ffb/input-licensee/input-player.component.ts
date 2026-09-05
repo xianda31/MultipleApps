@@ -23,8 +23,10 @@ export class InputPlayerComponent implements ControlValueAccessor {
 
   str_player: string = '';
   players: ClubMember[] = [];
+  loading = false;
   private selectedPlayer: ClubMember | null = null;
   private hasBlurred = false;
+  private searchRequestId = 0;
 
   onChange: (value: ClubMember | null) => void = () => { };
   onTouch: () => void = () => { };
@@ -70,6 +72,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
   }
 
   onSearchChange(value: string) {
+    const requestId = ++this.searchRequestId;
     this.onTouch();
     this.str_player = value;
 
@@ -80,16 +83,33 @@ export class InputPlayerComponent implements ControlValueAccessor {
     }
 
     if (value.length > 3) {
+      this.loading = true;
       this.ffbService.searchPlayersSuchAs(value)
         .then((players) => {
-          this.players = players;
+          if (requestId === this.searchRequestId) {
+            this.players = players;
+          }
+        })
+        .catch((error) => {
+          if (requestId === this.searchRequestId) {
+            this.players = [];
+          }
+          console.warn('[InputPlayerComponent] Recherche FFB impossible', error);
+        })
+        .finally(() => {
+          if (requestId === this.searchRequestId) {
+            this.loading = false;
+          }
         });
     } else {
-      // console.log(value,' : Input too short for search');
+      this.loading = false;
+      this.players = [];
     }
   }
 
   onPlayerSelected(player: ClubMember) {
+    this.searchRequestId++;
+    this.loading = false;
     this.selectedPlayer = player;
     this.hasBlurred = false;
     this.str_player = `${player.lastName} ${player.firstName} (${player.license_number})`;

@@ -15,6 +15,7 @@ export class CustomDropdownComponent {
   @Input() searchValue = '';
   @Input() displayFn: (item: any) => string = (item) => item.toString();
   @Input() itemDisplayFn?: (item: any) => string;
+  @Input() loading = false;
   @Input() invalid = false;
   @Input() invalidMessage = '';
 

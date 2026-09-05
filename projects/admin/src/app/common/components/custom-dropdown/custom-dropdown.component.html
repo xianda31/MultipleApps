@@ -6,14 +6,19 @@
     (focus)="onFocus()"
     (blur)="hideSuggestionsDelay()"
     [class.is-invalid-input]="invalid"
+    [class.has-loading-indicator]="loading"
     [placeholder]="placeholder"
     autocomplete="off">
+
+  <span *ngIf="loading" class="dropdown-loading-indicator spinner-border spinner-border-sm text-secondary"
+    role="status">
+    <span class="visually-hidden">Recherche en cours...</span>
+  </span>
 
   <div *ngIf="invalid && invalidMessage" class="invalid-feedback-msg">{{ invalidMessage }}</div>
 
   <ul *ngIf="showSuggestions && getFilteredItems().length > 0"
-    class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm"
-    style="z-index: 1000; max-height: 300px; overflow-y: auto; background: white;">
+    class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm">
     <li *ngFor="let item of getFilteredItems()"
       (mousedown)="onItemMouseDown($event, item)"
       class="p-2 cursor-pointer hover-highlight">

@@ -8,9 +8,22 @@
   border: none;
   width: 100%;
 
+  &.has-loading-indicator {
+    padding-right: 1.75rem;
+  }
+
   &.is-invalid-input {
     box-shadow: inset 0 -2px 0 #dc3545;
   }
+}
+
+.dropdown-loading-indicator {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
 }
 
 .invalid-feedback-msg {
@@ -26,7 +39,28 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   max-height: 300px;
-  overflow-y: auto;
+  overflow-y: scroll;
+  scrollbar-color: #6c757d #f1f3f5;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f3f5;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border: 3px solid #f1f3f5;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #495057;
+  }
 
   li {
     padding: 8px;
