@@ -113,9 +113,9 @@
                     <!-- <td class="text-nowrap">{{ r.createdAt | date:'dd/MM/yyyy' }}</td> -->
                     <td class="text-nowrap">{{ r.updatedAt | date:'dd/MM/yyyy HH:mm' }}</td>
                     @for (q of questions; track q.id) {
-                    <td class="text-center">{{ getAnswer(r, q.id) }}</td>
+                    <td class="text-start">{{ getAnswer(r, q.id) }}</td>
                     @if (hasDetailList(q)) {
-                    <td class="text-center">{{ getAnswerDetail(r, q.id) }}</td>
+                    <td class="text-start">{{ getAnswerDetail(r, q.id) }}</td>
                     }
                     }
                     <td class="text-center text-nowrap">
