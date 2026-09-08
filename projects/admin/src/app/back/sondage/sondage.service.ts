@@ -122,8 +122,19 @@ export class SondageService {
   // ── Responses ──────────────────────────────────────────────────────────────
 
   async listResponsesForSurvey(surveyId: string): Promise<SurveyResponseItem[]> {
-    const { data } = await this.m.SurveyResponse.list({});
-    return ((data ?? []) as any[])
+    const responses: any[] = [];
+    let nextToken: string | null | undefined;
+
+    do {
+      const page = await this.m.SurveyResponse.list({
+        filter: { surveyId: { eq: surveyId } },
+        nextToken,
+      });
+      responses.push(...(page.data ?? []));
+      nextToken = page.nextToken;
+    } while (nextToken);
+
+    return responses
       .filter((r: any) => r != null && r.surveyId === surveyId)
       .sort((a: any, b: any) => (a.memberName ?? '').localeCompare(b.memberName ?? ''));
   }
