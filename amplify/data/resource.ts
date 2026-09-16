@@ -117,7 +117,8 @@ const schema = a.schema({
       allow.group(Group_names.Admin).to(['read','create', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read','create', 'update']),
       allow.group(Group_names.Support).to(['read','create', 'update']),
-      allow.group(Group_names.Member).to(['read']),
+      // Temporary workaround: online checkout creates the PlayBook from the member frontend.
+      allow.group(Group_names.Member).to(['read', 'create']),
 
     ]),
 
