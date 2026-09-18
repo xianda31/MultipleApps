@@ -104,6 +104,13 @@ export class BookService {
 
   book_entries_bulk_create$(book_entries: BookEntry[]): Observable<number> {
 
+    try {
+      book_entries.forEach(book_entry => this.assert_book_entry_balanced(book_entry));
+    } catch (error) {
+      console.error('[BookService.book_entries_bulk_create$] Unbalanced BookEntry rejected', error);
+      return of(0);
+    }
+
     const promises = book_entries.map(book_entry => this.dbHandler.createBookEntry(book_entry));
 
     return from(Promise.all(promises)).pipe(
@@ -124,6 +131,8 @@ export class BookService {
   // create
 
   async create_book_entry(book_entry: BookEntry): Promise<BookEntry> {
+
+    this.assert_book_entry_balanced(book_entry);
 
     try {
       let created_entry = await this.dbHandler.createBookEntry(book_entry);
@@ -184,6 +193,8 @@ export class BookService {
   // update
 
   async update_book_entry(book_entry: BookEntry) {
+    this.assert_book_entry_balanced(book_entry);
+
     try {
       let updated_entry = await this.dbHandler.updateBookEntry(book_entry);
       this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
@@ -344,7 +355,44 @@ export class BookService {
 
   }
 
+  private is_opening_entry(bookEntry: BookEntry): boolean {
+    return Object.keys(bookEntry.amounts).some(key => Object.values(BALANCE_ACCOUNT).includes(key as BALANCE_ACCOUNT));
+  }
+
+  private assert_book_entry_balanced(bookEntry: BookEntry): void {
+    const values = [
+      ...Object.values(bookEntry.amounts),
+      ...bookEntry.operations.flatMap(operation => Object.values(operation.values)),
+    ];
+    if (values.some(value => !Number.isFinite(value))) {
+      throw new Error('Écriture comptable contenant un montant invalide');
+    }
+
+    const error = this._book_entry_balance_error(bookEntry);
+    if (Math.abs(error) >= 0.01) {
+      throw new Error(`Écriture comptable déséquilibrée de ${error.toFixed(2)} €`);
+    }
+  }
+
   private _book_entry_balance_error(bookEntry: BookEntry): number {
+    if (this.is_opening_entry(bookEntry)) {
+      let balanceTotal = 0;
+      let counterpartTotal = 0;
+      const accumulate = (values: { [key: string]: number }) => {
+        Object.entries(values).forEach(([key, amount]) => {
+          if (Object.values(BALANCE_ACCOUNT).includes(key as BALANCE_ACCOUNT)) {
+            balanceTotal += Math.abs(amount);
+          } else {
+            counterpartTotal += Math.abs(amount);
+          }
+        });
+      };
+
+      accumulate(bookEntry.amounts);
+      bookEntry.operations.forEach(operation => accumulate(operation.values));
+      return this.Round(balanceTotal - counterpartTotal);
+    }
+
     let total_expense_or_revenue = 0;
     let total_financial = 0;
     let transaction = this.transactionService.get_transaction(bookEntry.transaction_id);
@@ -374,7 +422,6 @@ export class BookService {
   get_unbalanced_book_entries(): { entry: BookEntry, error: number }[] {
     if (!this._book_entries) return [];
     return this._book_entries
-      .filter(entry => !Object.keys(entry.amounts).some(key => Object.values(BALANCE_ACCOUNT).includes(key as BALANCE_ACCOUNT)))
       .map(entry => ({ entry, error: this._book_entry_balance_error(entry) }))
       .filter(({ error }) => Math.abs(error) >= 0.01);
   }
@@ -788,24 +835,17 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
   //   return Object.values(values).reduce((acc, value) => acc + value, 0);
   // }
 
-  update_deposit_refs(deposit_ref: string, new_deposit_ref: string) {
-    let new_entries: BookEntry[] = [];
-    this._book_entries.forEach((entry) => {
-      if (entry.deposit_ref === deposit_ref) {
-        entry.deposit_ref = new_deposit_ref;
-        new_entries.push(entry);
-      }
-    });
-    if (new_entries.length > 0) {
-      let n = new_entries.length;
-      new_entries.forEach((entry) => {
-        this.dbHandler.updateBookEntry(entry);
-      });
-      this.toastService.showSuccess('base comptabilité', `${n} références de dépôt mises à jour`);
-      this._book_entries$.next(this._book_entries);
-    } else {
+  async update_deposit_refs(deposit_ref: string, new_deposit_ref: string): Promise<void> {
+    const entries = this._book_entries
+      .filter(entry => entry.deposit_ref === deposit_ref)
+      .map(entry => ({ ...entry, deposit_ref: new_deposit_ref }));
+
+    if (entries.length === 0) {
       throw Error('enable to find any entry with deposit_ref : ' + deposit_ref);
     }
+
+    await Promise.all(entries.map(entry => this.update_book_entry(entry)));
+    this.toastService.showSuccess('base comptabilité', `${entries.length} références de dépôt mises à jour`);
   }
 
   create_tournament_fees_entry(date: string,tag:string, fees_amount: number) {
@@ -1040,7 +1080,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       operations: [operation],
       transaction_id: TRANSACTION_ID.annulation_dette_adhérent,
     };
-    return this.dbHandler.createBookEntry(entry);
+    return this.create_book_entry(entry);
   }
 
   // génération des écritures de report cloture

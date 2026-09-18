@@ -617,17 +617,19 @@ export class BooksEditorComponent {
         });
     } else {
       booking.id = this.book_entry_id;
-      this.bookService.update_book_entry(booking).then(() => {
+      this.bookService.update_book_entry(booking).then(async () => {
         // changement de toutes les références de dépôt associées au mouvement de chèque
         this.toastService.showSuccess('correction', 'écriture modifiée');
 
         if (booking.deposit_ref !== null
           && booking.deposit_ref !== this.selected_book_entry.deposit_ref
           && booking.transaction_id === TRANSACTION_ID.dépôt_caisse_chèques) {
-          this.bookService.update_deposit_refs(this.selected_book_entry.deposit_ref!, booking.deposit_ref!);
+          await this.bookService.update_deposit_refs(this.selected_book_entry.deposit_ref!, booking.deposit_ref!);
         }
 
         this.location.back();
+      }).catch(() => {
+        this.toastService.showError('erreur', 'écriture non modifiée');
       });
     }
   }
