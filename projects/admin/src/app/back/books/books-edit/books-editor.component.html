@@ -175,8 +175,12 @@
     </div>
 
     <div class="row mt-5 mx-0">
+      <div *ngIf="form_balance_error !== null && form_balance_error !== 0" class="col-12 text-danger mb-2">
+        <i class="bi bi-exclamation-triangle"></i>
+        Écriture déséquilibrée de {{form_balance_error | number:'1.2-2':'fr'}} €.
+      </div>
       <div class="col-auto">
-        <button [disabled]="form.invalid || !financial_accounts_locked " type="submit" class="btn btn-primary">
+        <button [disabled]="form.invalid || !financial_accounts_locked || form_balance_error !== 0" type="submit" class="btn btn-primary">
           {{!creation?'Modifier':'Créer'}}</button>
       </div>
       <div *ngIf="!creation" class="col-auto">

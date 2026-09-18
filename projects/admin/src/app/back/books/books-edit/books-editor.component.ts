@@ -53,6 +53,7 @@ export class BooksEditorComponent {
   members!: Member[];
   expenses_accounts !: Account[];
   products_accounts !: Account[];
+  private CB_fees_account = '';
   // expense_or_revenue_accounts !: Account[];
 
   financial_accounts !: Account_def[];
@@ -123,6 +124,7 @@ export class BooksEditorComponent {
         this.club_bank = this.banks.find(bank => bank.key === conf.club_bank_key)!;
         this.expenses_accounts = conf.revenue_and_expense_tree.expenses;
         this.products_accounts = conf.revenue_and_expense_tree.revenues;
+        this.CB_fees_account = conf.CB_fees_account || '';
         this.init_form();
         this.book_entry_id = params['id'];
         this.creation = (this.book_entry_id === undefined);
@@ -226,6 +228,9 @@ export class BooksEditorComponent {
     book_entry.operations.forEach((operation) => {
       this.add_operation(this.selected_transaction!, operation);
     });
+    if (book_entry.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque && this.operations.length === 0) {
+      this.add_operation(this.selected_transaction, { label: 'frais PSP', values: {} });
+    }
     this.operations_valueChanges_subscribe();
 
 
@@ -457,23 +462,28 @@ export class BooksEditorComponent {
   }
 
   onSubmit() {
-    let operations: Operation[] = [];
-    let amounts: { [key: string]: number } = {};
     let transaction = this.transactionService.get_transaction(this.transaction_id);
-    let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
-    // constructions des montants
+    const amounts = this.buildAmounts();
+    const operations = this.buildOperations(transaction);
+
+    this.save_book_entry(amounts, operations);
+  }
+
+  private buildAmounts(): { [key: string]: number } {
+    const amounts: { [key: string]: number } = {};
 
     this.financial_accounts.forEach((account: Account_def, index: number) => {
-
       let value = ((this.form.controls['amounts'] as FormArray).controls[index].value);
       if (value && value !== '') {
         amounts[account.key] = this.parse_to_float(value);
       }
     });
+    return amounts;
+  }
 
-    // construction des opérations
-
-    operations = this.operations.controls.map((operation) => {
+  private buildOperations(transaction: Transaction): Operation[] {
+    const expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
+    return this.operations.controls.map((operation) => {
       let op_values: operation_values = {};
 
       expense_or_revenue_accounts.forEach((account: Account, index: number) => {
@@ -503,8 +513,6 @@ export class BooksEditorComponent {
         values: op_values
       };
     });
-
-    this.save_book_entry(amounts, operations);
   }
 
   negative_number_acceptable(bookEntry: BookEntry): boolean {
@@ -525,7 +533,7 @@ export class BooksEditorComponent {
     return !negative;
   }
 
-  book_entry_balanced(bookEntry: BookEntry): boolean {
+  book_entry_balance_error(bookEntry: BookEntry): number {
     let total_expense_or_revenue = 0;
     let total_financial = 0;
     let transaction = this.transactionService.get_transaction(bookEntry.transaction_id);
@@ -549,7 +557,21 @@ export class BooksEditorComponent {
       total_expense_or_revenue = -total_expense_or_revenue;
     }
 
-    return Math.round(total_financial * 100) === Math.round(total_expense_or_revenue * 100);
+    return (Math.round(total_financial * 100) - Math.round(total_expense_or_revenue * 100)) / 100;
+  }
+
+  book_entry_balanced(bookEntry: BookEntry): boolean {
+    return this.book_entry_balance_error(bookEntry) === 0;
+  }
+
+  get form_balance_error(): number | null {
+    if (!this.form || !this.selected_transaction || !this.transaction_id) return null;
+    const draft = {
+      transaction_id: this.transaction_id,
+      amounts: this.buildAmounts(),
+      operations: this.buildOperations(this.selected_transaction),
+    } as BookEntry;
+    return this.book_entry_balance_error(draft);
   }
 
 
@@ -573,8 +595,9 @@ export class BooksEditorComponent {
       operations: operations
     };
 
-    if (!this.book_entry_balanced(booking)) {
-      this.toastService.showWarning('erreur', 'total des dépenses différent du total financier');
+    const balanceError = this.book_entry_balance_error(booking);
+    if (balanceError !== 0) {
+      this.toastService.showWarning('erreur', `écriture déséquilibrée de ${balanceError.toFixed(2)} €`);
       return;
     }
     if (!this.negative_number_acceptable(booking)) {
@@ -712,6 +735,13 @@ export class BooksEditorComponent {
   expense_or_revenue_accounts(transaction: Transaction): Account[] {
     if (transaction === undefined) { throw new Error('transaction is undefined'); };
     if (transaction.pure_financial) return [];
+    if (this.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque) {
+      const accountKeys = new Set<string>([
+        this.CB_fees_account,
+        ...(this.selected_book_entry?.operations || []).flatMap(operation => Object.keys(operation.values)),
+      ].filter(Boolean));
+      return this.expenses_accounts.filter(account => accountKeys.has(account.key));
+    }
     return transaction.revenue_account_to_show ? this.products_accounts : this.expenses_accounts;
   }
 
