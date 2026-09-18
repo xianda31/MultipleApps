@@ -344,7 +344,7 @@ export class BookService {
 
   }
 
-  private _book_entry_balanced(bookEntry: BookEntry): boolean {
+  private _book_entry_balance_error(bookEntry: BookEntry): number {
     let total_expense_or_revenue = 0;
     let total_financial = 0;
     let transaction = this.transactionService.get_transaction(bookEntry.transaction_id);
@@ -368,14 +368,22 @@ export class BookService {
       total_expense_or_revenue = -total_expense_or_revenue;
     }
 
-    return total_financial === total_expense_or_revenue;
+    return this.Round(total_financial - total_expense_or_revenue);
+  }
+
+  get_unbalanced_book_entries(): { entry: BookEntry, error: number }[] {
+    if (!this._book_entries) return [];
+    return this._book_entries
+      .filter(entry => !Object.keys(entry.amounts).some(key => Object.values(BALANCE_ACCOUNT).includes(key as BALANCE_ACCOUNT)))
+      .map(entry => ({ entry, error: this._book_entry_balance_error(entry) }))
+      .filter(({ error }) => Math.abs(error) >= 0.01);
   }
 
   check_book_entries_loaded(): boolean {
     let error = false;
     console.log('checking book entries loaded');
     this._book_entries.forEach((entry) => {
-      if (!this._book_entry_balanced(entry)) {
+      if (Math.abs(this._book_entry_balance_error(entry)) >= 0.01) {
         error = true;
         this.toastService.showError('base comptabilité', `L'écriture comptable du ${entry.date} n'est pas équilibrée`);
       }
@@ -859,13 +867,31 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
     const today = new Date();
     const refundAmountEuro = refundAmountCents / 100;
+    const sourceAmount = sourceEntry.amounts[FINANCIAL_ACCOUNT.STRIPE_debit];
+    if (!sourceAmount || refundAmountCents <= 0 || refundAmountEuro > sourceAmount) {
+      throw new Error('Refund amount must be positive and cannot exceed the source Stripe amount');
+    }
 
-    // Copier et inverser les opérations de la source
+    const ratio = refundAmountEuro / sourceAmount;
     const refundOperations: Operation[] = sourceEntry.operations.map(op => ({
       label: op.label,
       member: op.member,
-      values: Object.fromEntries(Object.entries(op.values).map(([key, val]) => [key, -val]))
+      values: Object.fromEntries(Object.entries(op.values).map(([key, value]) => [
+        key,
+        -Math.round(value * ratio * 100) / 100
+      ]))
     }));
+
+    const profitAndLossValues = refundOperations.flatMap(operation =>
+      Object.entries(operation.values).filter(([key]) => !Object.values(CUSTOMER_ACCOUNT).includes(key as CUSTOMER_ACCOUNT))
+    );
+    const allocatedCents = Math.round(profitAndLossValues.reduce((total, [, value]) => total - value, 0) * 100);
+    const remainderCents = refundAmountCents - allocatedCents;
+    if (remainderCents !== 0 && profitAndLossValues.length > 0) {
+      const [adjustmentKey] = profitAndLossValues[0];
+      const adjustmentOperation = refundOperations.find(operation => adjustmentKey in operation.values)!;
+      adjustmentOperation.values[adjustmentKey] -= remainderCents / 100;
+    }
 
     // Créer les amounts inversés
     const refundAmounts: AMOUNTS = {};

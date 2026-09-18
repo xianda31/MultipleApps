@@ -33,7 +33,7 @@ interface StripePayout {
   automatic: boolean;
 }
 
-interface StripeRefundItem {
+export interface StripeRefundItem {
   refundId: string | null;
   chargeId: string | null;
   stripeTag: string | null;
@@ -42,6 +42,21 @@ interface StripeRefundItem {
   feesCents: number;
   netCents: number;
   reason: string | null;
+}
+
+interface StripeChargeItem {
+  chargeId: string | null;
+  stripeTag: string | null;
+  bookEntryId: string | null;
+  grossCents: number;
+}
+
+export function refundsForCharge(charge: StripeChargeItem, refunds: StripeRefundItem[]): StripeRefundItem[] {
+  return refunds.filter(refund => {
+    if (charge.chargeId && refund.chargeId) return charge.chargeId === refund.chargeId;
+    if (charge.bookEntryId && refund.bookEntryId) return charge.bookEntryId === refund.bookEntryId;
+    return !!charge.stripeTag && charge.stripeTag === refund.stripeTag;
+  });
 }
 
 interface MissingBookEntryProposal {
@@ -167,6 +182,7 @@ export class StripeReconciliationComponent {
   }
   get selectionCoherent(): boolean {
     if (this.selectedLines.length === 0 || !this.netBancaire) return false;
+    if (this.impliedFeesCents < 0) return false;
     if (!this.isManualPayout && this.expectedGrossCents > 0) {
       // Auto: le brut sélectionné doit correspondre exactement
       return this.selectedGrossCents === this.expectedGrossCents;
@@ -504,7 +520,9 @@ export class StripeReconciliationComponent {
       );
 
       // grossCents à soustraire de expectedGrossCents pour les charges remboursées sans ligne
-      const refundedNoLineTags = new Set<string>();
+      const refundedNoLineCharges = new Set<any>();
+      const pairedRefunds = new Set<StripeRefundItem>();
+      const payoutRefunds: StripeRefundItem[] = result.refunds || [];
 
       result.charges.forEach((charge: any) => {
         const line = this.findMatchingLineForCharge(charge);
@@ -513,12 +531,19 @@ export class StripeReconciliationComponent {
           line.feesCents = charge.feesCents;
           (line as any).isRefunded = refundedTags.has(charge.stripeTag);
           matched++;
-        } else if (charge.stripeTag) {
+        } else {
+          const chargeRefunds = refundsForCharge(charge, payoutRefunds);
+          const refundedCents = chargeRefunds.reduce((sum, refund) => sum + Math.max(0, -refund.amountCents), 0);
+
           // charge exclue des lignes car entièrement remboursée localement → pas une anomalie
-          if (localRefundedTags.has(charge.stripeTag) || refundedTags.has(charge.stripeTag)) {
-            refundedNoLineTags.add(charge.stripeTag);
+          if (refundedCents >= charge.grossCents ||
+              (!!charge.stripeTag && (localRefundedTags.has(charge.stripeTag) || refundedTags.has(charge.stripeTag)))) {
+            refundedNoLineCharges.add(charge);
+            chargeRefunds.forEach(refund => pairedRefunds.add(refund));
             return;
           }
+
+          if (!charge.stripeTag) return;
 
           const matchingStripeTransaction = this.diagnosticStripeTransactions.find((t: any) =>
             t.bookEntryId === charge.bookEntryId || t.stripeTag === charge.stripeTag
@@ -547,14 +572,14 @@ export class StripeReconciliationComponent {
 
       // Retirer du brut attendu et des remboursements affichés les paires +/- déjà équilibrées localement
       const refundedNoLineGross = result.charges
-        .filter((c: any) => refundedNoLineTags.has(c.stripeTag))
+        .filter((charge: any) => refundedNoLineCharges.has(charge))
         .reduce((s: number, c: any) => s + c.grossCents, 0);
 
       // Pré-remplir le net bancaire (inclut la déduction des remboursements)
       this.netBancaire = result.totalNetCents / 100;
       this.expectedGrossCents = result.totalGrossCents - refundedNoLineGross;
       this.missingBookEntryProposals = missingBookEntryProposals;
-      this.stripeRefunds = (result.refunds || []).filter((r: any) => !refundedNoLineTags.has(r.stripeTag));
+      this.stripeRefunds = payoutRefunds.filter(refund => !pairedRefunds.has(refund));
 
       this.toastService.showSuccess('Lookup payout',
         `${matched} paiement(s) identifié(s) sur ${result.charges.length} charge(s) Stripe`);
@@ -705,6 +730,15 @@ export class StripeReconciliationComponent {
     const netCents = Math.round(this.netBancaire * 100);
     const snapshotFees = snapshotGrossAfterRefunds - netCents;
     const snapshotNet = netCents;
+
+    if (snapshotFees < 0) {
+      this.processingPayout = false;
+      this.toastService.showError(
+        'Rapprochement incohérent',
+        `Le virement bancaire dépasse le solde Stripe de ${this.formatAmount(-snapshotFees)}.`
+      );
+      return;
+    }
 
     try {
       // 1. Écriture virement_stripe_vers_banque

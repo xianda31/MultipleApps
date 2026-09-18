@@ -280,7 +280,16 @@
           <i class="fs-6 bi-exclamation-triangle"></i>
           <span class="text-danger"> incohérence bilan & compte de résultats de ({{balance_error |
             number:truncature:'fr'}} €)</span>
-          <div class="mt-1 small text-warning">
+          <div *ngIf="unbalanced_entries.length" class="mt-1 small">
+            <div>Écriture(s) déséquilibrée(s) détectée(s) :</div>
+            <button *ngFor="let diagnostic of unbalanced_entries" type="button"
+              class="btn btn-link btn-sm text-danger p-0 me-3 align-baseline"
+              (click)="show_book_entry(diagnostic.entry.id)">
+              {{diagnostic.entry.date}} · {{diagnostic.entry.operations[0]?.label || diagnostic.entry.transaction_id}}
+              ({{diagnostic.error | number:truncature:'fr'}} €)
+            </button>
+          </div>
+          <div *ngIf="!unbalanced_entries.length" class="mt-1 small text-warning">
             <i class="bi-lightbulb"></i>
             Vérifiez la complétude du
             <a class="text-warning" role="button" (click)="show_details('commited_payments')">rapprochement bancaire</a>

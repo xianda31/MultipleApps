@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { BackNavigationService } from '../services/back-navigation.service';
 import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
 import { FinancialReportService } from '../services/financial_report.service';
+import { BookEntry } from '../../common/interfaces/accounting.interface';
 
 @Component({
   selector: 'app-balance',
@@ -31,6 +32,7 @@ export class BalanceComponent {
   loaded = false;
   balance_board!: Balance_board;
   balance_error: number = 0;
+  unbalanced_entries: { entry: BookEntry, error: number }[] = [];
 
   show_details_flag = false;
   due: 'dettes' | 'avoirs' = 'dettes';
@@ -82,6 +84,7 @@ export class BalanceComponent {
 
   check_balance_vs_profit_and_loss() {
     this.trading_result = this.bookService.get_trading_result();
+    this.unbalanced_entries = this.bookService.get_unbalanced_book_entries();
     const balanceDeltaCents = this.toCents(this.balance_board.delta.actif_total);
     const tradingResultCents = this.toCents(this.trading_result);
     const diffCents = balanceDeltaCents - tradingResultCents;
@@ -147,6 +150,10 @@ export class BalanceComponent {
         console.error('Unknown account type:', account);
         break;
     }
+  }
+
+  show_book_entry(book_entry_id: string) {
+    this.backNavigationService.goToBooksEditorFull(book_entry_id);
   }
 
   get trace_on() {
