@@ -116,6 +116,12 @@ export interface Session {
   // vendor: string;
   date: string;
 }
+
+export interface PurchasedItem {
+  productId: string;
+  beneficiaryMemberIds: string[];
+  quantity: number;
+}
 export interface Revenue extends Operation {
   book_entry_id: string;
   season: string;
@@ -141,6 +147,8 @@ export interface BookEntry {
   date: string;
   tag?: string;
   stripeTag?: string;  // Tag Stripe court (stripe:XXXXX) pour traçabilité
+  status?: 'pending' | 'confirmed' | 'cancelled';
+  purchasedItems?: PurchasedItem[];
   transaction_id: TRANSACTION_ID;   // type d'opération bancaire
   amounts: AMOUNTS
   cheque_ref?: string;        // code banque + numéro de chèque

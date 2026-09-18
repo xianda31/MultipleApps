@@ -3,18 +3,19 @@
  * ⚠️ SÉCURITÉ CRITIQUE ⚠️
  * 
  * Reçoit et valide les événements Stripe
- * Enregistre les transactions de paiement dans StripeTransaction (DynamoDB)
- * ⚠️ Pas de logique métier ici — le BookEntry est créé côté frontend Angular
+ * Enregistre les transactions de paiement et confirme les BookEntry payés.
  */
 
 import Stripe from 'stripe';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { buildPurchaseConfirmationMailTemplate } from '../shared/mail-template';
+import { handler as processBookEntryActionsHandler } from '../process-book-entry-actions/handler';
 
 const ddbClient = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(ddbClient);
+export const documentClient = DynamoDBDocumentClient.from(ddbClient);
+const docClient = documentClient;
 const ses = new SESClient({ region: process.env.AWS_REGION });
 
 const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
@@ -23,6 +24,7 @@ const stripe = new Stripe(process.env['STRIPE_SECRET_KEY'] || '', {
 
 const WEBHOOK_SECRET = process.env['STRIPE_WEBHOOK_SECRET'] || '';
 const STRIPE_TRANSACTION_TABLE = process.env['STRIPE_TRANSACTION_TABLE_NAME'] || '';
+const BOOK_ENTRY_TABLE = process.env['BOOK_ENTRY_TABLE_NAME'] || '';
 const DEFAULT_FROM = '"Bridge Club Saint-Orens" <noreply@bridgeclubsaintorens.fr>';
 const DEFAULT_REPLY_TO = '"Bridge Club Saint-Orens" <bridge.saintorens@free.fr>';
 
@@ -334,7 +336,7 @@ async function sendTerminalConfirmationEmail(pi: Stripe.PaymentIntent): Promise<
  * Enregistre le paiement Stripe dans StripeTransaction DynamoDB
  * Rôle unique : persistance des données brutes. Zéro logique métier.
  */
-async function recordStripeTransaction(session: Stripe.Checkout.Session): Promise<void> {
+async function recordStripeTransaction(session: Stripe.Checkout.Session, resolvedBookEntryId?: string): Promise<void> {
   if (!STRIPE_TRANSACTION_TABLE) {
     console.error('STRIPE_TRANSACTION_TABLE_NAME not configured — transaction not recorded');
     return;
@@ -346,7 +348,18 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session): Promis
     Key: { id: session.id },
   }));
   if (existing.Item) {
-    console.log(`Transaction ${session.id} already recorded — skipping`);
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: session.id },
+      UpdateExpression: 'SET #status = :status, bookEntryId = :bookEntryId, updatedAt = :now',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':status': 'completed',
+        ':bookEntryId': resolvedBookEntryId || existing.Item['bookEntryId'] || null,
+        ':now': new Date().toISOString(),
+      },
+    }));
+    console.log(`Transaction ${session.id} already recorded — updated`);
     return;
   }
 
@@ -359,7 +372,7 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session): Promis
       id: session.id,
       stripeSessionId: session.id,
       stripeTag: meta['stripeTag'] || `stripe:${session.id.slice(-12)}`,  // lien de réconciliation → BookEntry.stripeTag
-      bookEntryId: meta['bookEntryId'] || null,                            // lien direct BookEntry (BookEntry-first)
+      bookEntryId: resolvedBookEntryId || meta['bookEntryId'] || null,
       buyerMemberId: meta['buyerMemberId'] || null,
       status: 'completed',
       amountCents: session.amount_total || 0,
@@ -386,10 +399,79 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session): Promis
   console.log(`Transaction ${session.id} recorded in DynamoDB`);
 }
 
+async function confirmAndProcessBookEntry(session: Stripe.Checkout.Session): Promise<string> {
+  if (!BOOK_ENTRY_TABLE) throw new Error('BOOK_ENTRY_TABLE_NAME not configured');
+
+  const matches: Record<string, any>[] = [];
+  let exclusiveStartKey: Record<string, any> | undefined;
+  do {
+    const page = await docClient.send(new ScanCommand({
+      TableName: BOOK_ENTRY_TABLE,
+      FilterExpression: 'stripeSessionId = :sessionId',
+      ExpressionAttributeValues: { ':sessionId': session.id },
+      ExclusiveStartKey: exclusiveStartKey,
+    }));
+    matches.push(...(page.Items || []));
+    exclusiveStartKey = page.LastEvaluatedKey;
+  } while (exclusiveStartKey && matches.length < 2);
+
+  if (matches.length !== 1) {
+    throw new Error(`Expected one BookEntry for Stripe session ${session.id}, found ${matches.length}`);
+  }
+
+  const bookEntryId = String(matches[0]['id']);
+  return confirmAndProcessBookEntryById(bookEntryId, session.id, `stripe:${session.id.slice(-12)}`);
+}
+
+async function confirmAndProcessBookEntryById(
+  bookEntryId: string,
+  paymentReferenceId: string,
+  stripeTag: string,
+): Promise<string> {
+  if (!BOOK_ENTRY_TABLE) throw new Error('BOOK_ENTRY_TABLE_NAME not configured');
+
+  const current = await docClient.send(new GetCommand({
+    TableName: BOOK_ENTRY_TABLE,
+    Key: { id: bookEntryId },
+  }));
+  if (!current.Item) {
+    throw new Error(`BookEntry ${bookEntryId} not found`);
+  }
+  const linkedPaymentReference = String(current.Item['stripeSessionId'] || '');
+  if (linkedPaymentReference && linkedPaymentReference !== paymentReferenceId) {
+    throw new Error(`BookEntry ${bookEntryId} is linked to another Stripe payment`);
+  }
+
+  await docClient.send(new UpdateCommand({
+    TableName: BOOK_ENTRY_TABLE,
+    Key: { id: bookEntryId },
+    UpdateExpression: 'SET #status = :confirmed, stripeSessionId = :paymentReferenceId, stripeTag = :stripeTag, updatedAt = :now',
+    ConditionExpression: '#status = :pending OR #status = :confirmed',
+    ExpressionAttributeNames: { '#status': 'status' },
+    ExpressionAttributeValues: {
+      ':pending': 'pending',
+      ':confirmed': 'confirmed',
+      ':paymentReferenceId': paymentReferenceId,
+      ':stripeTag': stripeTag,
+      ':now': new Date().toISOString(),
+    },
+  }));
+
+  const fulfillment = await processBookEntryActionsHandler(
+    { arguments: { bookEntryId } } as any,
+    {} as any,
+    (() => undefined) as any,
+  ) as any;
+  if (Number(fulfillment?.failed || 0) > 0) {
+    throw new Error(`Fulfillment failed for BookEntry ${bookEntryId}`);
+  }
+  return bookEntryId;
+}
+
 /**
  * Enregistre une transaction Terminal (PaymentIntent card_present) dans StripeTransaction
  */
-async function recordTerminalTransaction(pi: Stripe.PaymentIntent): Promise<void> {
+async function recordTerminalTransaction(pi: Stripe.PaymentIntent, resolvedBookEntryId?: string): Promise<void> {
   if (!STRIPE_TRANSACTION_TABLE) {
     console.error('STRIPE_TRANSACTION_TABLE_NAME not configured — terminal transaction not recorded');
     return;
@@ -400,7 +482,18 @@ async function recordTerminalTransaction(pi: Stripe.PaymentIntent): Promise<void
     Key: { id: pi.id },
   }));
   if (existing.Item) {
-    console.log(`Terminal transaction ${pi.id} already recorded — skipping`);
+    await docClient.send(new UpdateCommand({
+      TableName: STRIPE_TRANSACTION_TABLE,
+      Key: { id: pi.id },
+      UpdateExpression: 'SET #status = :status, bookEntryId = :bookEntryId, updatedAt = :now',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':status': 'completed',
+        ':bookEntryId': resolvedBookEntryId || existing.Item['bookEntryId'] || null,
+        ':now': new Date().toISOString(),
+      },
+    }));
+    console.log(`Terminal transaction ${pi.id} already recorded — updated`);
     return;
   }
 
@@ -413,7 +506,7 @@ async function recordTerminalTransaction(pi: Stripe.PaymentIntent): Promise<void
       id: pi.id,
       stripeSessionId: pi.id,
       stripeTag: meta['stripeTag'] || `stripe:${pi.id.slice(-12)}`,
-      bookEntryId: meta['bookEntryId'] || null,
+      bookEntryId: resolvedBookEntryId || meta['bookEntryId'] || null,
       buyerMemberId: meta['buyerMemberId'] || null,
       status: 'completed',
       amountCents: pi.amount || 0,
@@ -462,10 +555,12 @@ export async function handler(event: any): Promise<any> {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
         console.log(`Session Stripe complétée: ${session.id}, payment_status: ${session.payment_status}, payment_intent: ${session.payment_intent}`);
-        // Créer la transaction dès que Stripe confirme la session, même si status n'est pas encore 'paid'
-        // (le status peut être 'unpaid' en attendant un webhook payment_intent.succeeded)
-        await recordStripeTransaction(session);
+        let bookEntryId: string | undefined;
         if (session.payment_status === 'paid' || session.payment_status === 'no_payment_required') {
+          bookEntryId = await confirmAndProcessBookEntry(session);
+        }
+        await recordStripeTransaction(session, bookEntryId);
+        if (bookEntryId) {
           await sendPurchaseConfirmationEmail(session);
         }
         break;
@@ -476,7 +571,15 @@ export async function handler(event: any): Promise<any> {
         const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
         console.log(`PaymentIntent réussi: ${paymentIntent.id}, source: ${paymentIntent.metadata?.['source']}`);
         if (paymentIntent.metadata?.['source'] === 'terminal') {
-          await recordTerminalTransaction(paymentIntent);
+          const metadataBookEntryId = String(paymentIntent.metadata?.['bookEntryId'] || '');
+          const bookEntryId = metadataBookEntryId
+            ? await confirmAndProcessBookEntryById(
+                metadataBookEntryId,
+                paymentIntent.id,
+                paymentIntent.metadata?.['stripeTag'] || `stripe:${paymentIntent.id.slice(-12)}`,
+              )
+            : undefined;
+          await recordTerminalTransaction(paymentIntent, bookEntryId);
           await sendTerminalConfirmationEmail(paymentIntent);
         }
         break;
@@ -485,7 +588,8 @@ export async function handler(event: any): Promise<any> {
       case 'checkout.session.async_payment_succeeded': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
         console.log(`Paiement asynchrone réussi: ${session.id}`);
-        await recordStripeTransaction(session);
+        const bookEntryId = await confirmAndProcessBookEntry(session);
+        await recordStripeTransaction(session, bookEntryId);
         await sendPurchaseConfirmationEmail(session);
         break;
       }
@@ -573,7 +677,7 @@ export async function handler(event: any): Promise<any> {
   } catch (error: any) {
     console.error('Erreur Webhooks Stripe:', error?.message || error);
 
-    const statusCode = error.message?.includes('signature') ? 401 : 400;
+    const statusCode = error.message?.includes('signature') ? 401 : 500;
 
     return {
       statusCode,

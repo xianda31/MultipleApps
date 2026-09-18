@@ -36,6 +36,7 @@ export class StripeService {
   private readonly API_NAME = 'ffbProxyApi';
   private readonly CHECKOUT_PATH = '/api/stripe/checkout';
   private readonly CANCEL_PATH = '/api/stripe/cancel';
+  private readonly ASSOCIATE_BOOK_ENTRY_PATH = '/api/stripe/associate-book-entry';
   private readonly MARK_PROCESSED_PATH = '/api/stripe/mark-processed';
 
   constructor() {}
@@ -157,6 +158,23 @@ export class StripeService {
     if (response?.error) {
       throw new Error(response.error);
     }
+  }
+
+  async associateBookEntry(sessionId: string, bookEntryId: string): Promise<void> {
+    const headers = await this.buildAuthenticatedHeaders({
+      'Content-Type': 'application/json',
+    });
+    const restOperation = post({
+      apiName: this.API_NAME,
+      path: this.ASSOCIATE_BOOK_ENTRY_PATH,
+      options: {
+        body: { sessionId, bookEntryId } as any,
+        headers,
+      },
+    });
+    const { body } = await restOperation.response;
+    const response = JSON.parse(await body.text());
+    if (response?.error) throw new Error(response.error);
   }
 
   /**

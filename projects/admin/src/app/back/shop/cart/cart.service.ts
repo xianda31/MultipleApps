@@ -130,11 +130,30 @@ export class CartService {
     return this._cart.items;
   }
 
-  save_sale(session: Session, buyer?: Member): Promise<BookEntry> {
+  save_sale(
+    session: Session,
+    buyer?: Member,
+    fulfillmentMode: 'backend' | 'frontend' | 'deferred' = 'backend',
+    clearCartOnSuccess = true,
+  ): Promise<BookEntry> {
     let promise = new Promise<BookEntry>((resolve, reject) => {
+      const itemsSnapshot = this._cart.items.slice();
+      try {
+        this.assertFulfillmentBeneficiariesHaveLicenses(itemsSnapshot);
+      } catch (error) {
+        reject(error);
+        return;
+      }
+
       const sale: BookEntry = {
         ...session,
         id: '',
+        status: fulfillmentMode === 'backend' ? 'confirmed' : 'pending',
+        purchasedItems: itemsSnapshot.map((item) => ({
+          productId: item.product_id,
+          beneficiaryMemberIds: [item.payee.id, item.paired_with?.id].filter((id): id is string => !!id),
+          quantity: 1,
+        })),
         transaction_id: this.payment_mode2bank_op_type(this._payment.mode),
         tag: this._cart.tag,
         stripeTag: this._cart.stripeTag,
@@ -147,13 +166,18 @@ export class CartService {
         sale.transaction_id = bank_op_type;
       }
 
-      // capture items snapshot to avoid concurrent modifications
-      const itemsSnapshot = this._cart.items.slice();
       this.bookService.create_book_entry(sale)
         .then(async (sale) => {
-          // process game card creation using the snapshot (avoids race with clearCart)
-          await this.handle_game_card(session, itemsSnapshot, sale.id);
-          this.clearCart();
+          if (fulfillmentMode === 'backend') {
+            await this.bookService.process_book_entry_actions(sale.id);
+            await this.gameCardService.refreshCards();
+          } else if (fulfillmentMode === 'frontend') {
+            // Temporary online-checkout path until the Stripe webhook invokes the backend processor.
+            await this.handle_game_card(session, itemsSnapshot, sale.id);
+          }
+          if (clearCartOnSuccess) {
+            this.clearCart();
+          }
           resolve(sale);
         })
         .catch((error) => {
@@ -161,6 +185,20 @@ export class CartService {
         });
     });
     return promise;
+  }
+
+  private assertFulfillmentBeneficiariesHaveLicenses(items: CartItem[]): void {
+    for (const item of items) {
+      const product = this.productService.getProduct(item.product_id) as Product | undefined;
+      if (product?.fulfillmentAction !== 'CREATE_PLAYBOOK') continue;
+
+      const beneficiaries = [item.payee, item.paired_with].filter((member): member is Member => !!member);
+      const withoutLicense = beneficiaries.filter((member) => !String(member.license_number || '').trim());
+      if (withoutLicense.length > 0) {
+        const names = withoutLicense.map((member) => `${member.firstname} ${member.lastname}`.trim()).join(', ');
+        throw new Error(`Impossible de créer une carte : licence manquante pour ${names}`);
+      }
+    }
   }
 
   build_cart_item(product: Product, payee: Member, paired_with?: Member): CartItem {

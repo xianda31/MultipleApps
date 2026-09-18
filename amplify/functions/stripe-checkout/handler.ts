@@ -194,6 +194,9 @@ async function getValidatedProducts(
  */
 export async function handler(event: any): Promise<any> {
   const path = event.rawPath || event.path || '';
+  if (path.endsWith('/associate-book-entry')) {
+    return handleAssociateBookEntry(event);
+  }
   if (path.endsWith('/mark-processed')) {
     return handleMarkProcessed(event);
   }
@@ -225,6 +228,69 @@ export async function handler(event: any): Promise<any> {
     return handleCreateRefund(event);
   }
   return handleCheckout(event);
+}
+
+async function handleAssociateBookEntry(event: any): Promise<any> {
+  const CORS = { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' };
+  if (!BOOK_ENTRY_TABLE || !STRIPE_SECRET_KEY) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Checkout association is not configured' }) };
+  }
+
+  let body: any;
+  try {
+    body = typeof event.body === 'string' ? JSON.parse(event.body) : (event.body || {});
+  } catch {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+  }
+
+  const { sessionId, bookEntryId } = body;
+  if (!sessionId || typeof sessionId !== 'string' || !sessionId.startsWith('cs_')) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Valid sessionId is required' }) };
+  }
+  if (!bookEntryId || typeof bookEntryId !== 'string') {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'bookEntryId is required' }) };
+  }
+
+  try {
+    const [session, bookEntryResult] = await Promise.all([
+      stripe.checkout.sessions.retrieve(sessionId),
+      docClient.send(new GetCommand({ TableName: BOOK_ENTRY_TABLE, Key: { id: bookEntryId } })),
+    ]);
+    const bookEntry = bookEntryResult.Item;
+    if (!bookEntry || bookEntry.status !== 'pending') {
+      return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'Pending BookEntry not found' }) };
+    }
+
+    const expectedStripeTag = `stripe:${sessionId.slice(-12)}`;
+    if (bookEntry.stripeTag !== expectedStripeTag) {
+      return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'BookEntry does not match checkout session' }) };
+    }
+
+    const claims = event.requestContext?.authorizer?.jwt?.claims || event.requestContext?.authorizer?.claims || {};
+    const callerEmail = String(claims.email || '').trim().toLowerCase();
+    const stripeEmail = String(session.customer_email || session.customer_details?.email || '').trim().toLowerCase();
+    if (callerEmail && stripeEmail && callerEmail !== stripeEmail) {
+      return { statusCode: 403, headers: CORS, body: JSON.stringify({ error: 'Forbidden: checkout does not belong to current user' }) };
+    }
+
+    await docClient.send(new UpdateCommand({
+      TableName: BOOK_ENTRY_TABLE,
+      Key: { id: bookEntryId },
+      UpdateExpression: 'SET stripeSessionId = :sessionId, updatedAt = :now',
+      ConditionExpression: '#status = :pending',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':sessionId': sessionId,
+        ':pending': 'pending',
+        ':now': new Date().toISOString(),
+      },
+    }));
+
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, sessionId, bookEntryId }) };
+  } catch (error: any) {
+    console.error('[stripe-associate-book-entry] ERROR:', error?.message || error);
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: 'Failed to associate BookEntry' }) };
+  }
 }
 
 /**
@@ -294,7 +360,10 @@ async function handleMarkProcessed(event: any): Promise<any> {
     await docClient.send(new UpdateCommand({
       TableName: STRIPE_TRANSACTION_TABLE,
       Key: { id: sessionId },
-      UpdateExpression: 'SET processed = :processed, updatedAt = :updatedAt',
+      UpdateExpression: 'SET #processed = :processed, updatedAt = :updatedAt',
+      ExpressionAttributeNames: {
+        '#processed': 'processed',
+      },
       ExpressionAttributeValues: {
         ':processed': true,
         ':updatedAt': new Date().toISOString(),
@@ -1238,6 +1307,31 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
         source: 'terminal',
       },
     });
+
+    if (bookEntryId) {
+      if (!BOOK_ENTRY_TABLE) {
+        await stripe.paymentIntents.cancel(paymentIntent.id).catch(() => undefined);
+        throw new Error('BOOK_ENTRY_TABLE_NAME not configured');
+      }
+      try {
+        await docClient.send(new UpdateCommand({
+          TableName: BOOK_ENTRY_TABLE,
+          Key: { id: bookEntryId },
+          UpdateExpression: 'SET stripeSessionId = :paymentIntentId, stripeTag = :stripeTag, updatedAt = :now',
+          ConditionExpression: '#status = :pending',
+          ExpressionAttributeNames: { '#status': 'status' },
+          ExpressionAttributeValues: {
+            ':paymentIntentId': paymentIntent.id,
+            ':stripeTag': stripeTag,
+            ':pending': 'pending',
+            ':now': new Date().toISOString(),
+          },
+        }));
+      } catch (error) {
+        await stripe.paymentIntents.cancel(paymentIntent.id).catch(() => undefined);
+        throw error;
+      }
+    }
 
     return {
       statusCode: 200,

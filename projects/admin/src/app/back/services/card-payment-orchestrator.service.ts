@@ -12,10 +12,11 @@ export interface CardPaymentParams {
   date: string;
   buyerMemberId?: string;
   buyerEmail?: string;
+  bookEntryId?: string;
 }
 
 export interface CardPaymentCallbacks {
-  onPaymentIntentCreated?: (stripeTag: string) => void;
+  onPaymentIntentCreated?: (stripeTag: string, paymentIntentId: string) => void | Promise<void>;
   onSuccess: (result: TerminalPaymentResult) => void | Promise<void>;
   onFailed: (message: string) => void;
   onCancelled: () => void;
@@ -57,7 +58,7 @@ export class CardPaymentOrchestratorService {
     }
 
     const { clientSecret, paymentIntentId, stripeTag } = await this.stripeTerminal.createPaymentIntent(params);
-    callbacks.onPaymentIntentCreated?.(stripeTag);
+  await callbacks.onPaymentIntentCreated?.(stripeTag, paymentIntentId);
 
     const result = await this.stripeTerminal.collectAndProcess(clientSecret);
     await Promise.resolve(

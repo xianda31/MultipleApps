@@ -14,6 +14,8 @@ export interface SaleItem {
   active: boolean;
   shopEnabled?: boolean | null;   // visible dans Shop (vente nominative adhérent)
   batchEnabled?: boolean | null;  // visible dans Billetterie (vente en batch/événement)
+  fulfillmentAction?: 'CREATE_PLAYBOOK' | null;
+  fulfillmentParameters?: Record<string, unknown> | null;
   createdAt?: string;
   updatedAt?: string;
 }

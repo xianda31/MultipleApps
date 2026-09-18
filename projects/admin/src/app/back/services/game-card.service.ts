@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, switchMap } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, map, Observable, switchMap, take } from 'rxjs';
 import { GameCard, MAX_STAMPS, PlayBook_input } from '../game-cards/game-card.interface';
 import { Member } from '../../common/interfaces/member.interface';
 import { ToastService } from '../../common/services/toast.service';
@@ -351,6 +351,10 @@ export class GameCardService {
   get gameCards(): Observable<GameCard[]> {
     return this._gameCards ? this.gameCards$.asObservable() : this.listCards().pipe(
       switchMap(() => this.gameCards$.asObservable()));
+  }
+
+  async refreshCards(): Promise<void> {
+    await firstValueFrom(this.listCards().pipe(take(1)));
   }
 
   static readonly ORPHAN_CHECK_FROM = '2026-08-05';

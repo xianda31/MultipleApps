@@ -3,6 +3,7 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { addUserToGroup } from './add-user-to-group/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
+import { processBookEntryActions } from '../functions/process-book-entry-actions/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
@@ -60,6 +61,20 @@ const schema = a.schema({
     .handler(a.handler.function(listUsersInGroup))
     .returns(a.json()),
 
+  processBookEntryActions: a
+    .mutation()
+    .arguments({
+      bookEntryId: a.id().required(),
+    })
+    .authorization((allow) => [
+      allow.group(Group_names.System),
+      allow.group(Group_names.Admin),
+      allow.group(Group_names.Editor),
+      allow.group(Group_names.Support),
+    ])
+    .handler(a.handler.function(processBookEntryActions))
+    .returns(a.json()),
+
 
 
 
@@ -73,12 +88,20 @@ const schema = a.schema({
     productCodes:a.string()
   }),
 
+  PurchasedItem: a.customType({
+    productId: a.id().required(),
+    beneficiaryMemberIds: a.id().array().required(),
+    quantity: a.integer().required(),
+  }),
+
   BookEntry: a.model({
     season: a.string().required(),
     date: a.date().required(),
     tag: a.string(),
     stripeTag: a.string(),      // Tag court Stripe (stripe:XXXXX) — lien de réconciliation avec StripeTransaction
     stripeSessionId: a.string(), // Stripe session ID complet (cs_xxx) — pour annulation BookEntry-first
+    status: a.enum(['pending', 'confirmed', 'cancelled']),
+    purchasedItems: a.ref('PurchasedItem').array(),
     amounts: a.json().required(),
     operations: a.ref('Operation').array().required(),
 
@@ -254,6 +277,8 @@ const schema = a.schema({
     active: a.boolean().required(),
     shopEnabled: a.boolean(),          // visible dans Shop (vente nominative adhérent)
     batchEnabled: a.boolean(),         // visible dans CollecteVente (vente en batch/événement)
+    fulfillmentAction: a.enum(['CREATE_PLAYBOOK']),
+    fulfillmentParameters: a.json(),
   })
     .identifier(['id'])
     .authorization((allow) => [
@@ -263,6 +288,20 @@ const schema = a.schema({
       allow.group(Group_names.Editor).to(['read', 'create']),
       allow.group(Group_names.Support).to(['read', 'create']),
       allow.group(Group_names.Member).to(['read']),
+    ]),
+
+  FulfillmentExecution: a.model({
+    id: a.id().required(),
+    bookEntryId: a.id().required(),
+    purchasedItemIndex: a.integer().required(),
+    actionType: a.string().required(),
+    status: a.enum(['completed', 'failed']),
+    resultId: a.id(),
+    error: a.string(),
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read']),
     ]),
 
   TicketingReservationStatus: a.enum(['reserved', 'sold', 'cancelled']),

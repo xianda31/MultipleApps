@@ -25,6 +25,8 @@ export interface ShopInitState {
   providedIn: 'root'
 })
 export class ShopInitializationService implements OnDestroy {
+  private readonly tpeHeartbeatTtlSeconds = 3600;
+  private readonly tpeHeartbeatStaleSeconds = 45;
 
   // ── TPE state réactif — consommé par ShopComponent via subscription ──
   readonly tpeReaderConnected$ = new BehaviorSubject<boolean>(false);
@@ -159,10 +161,12 @@ export class ShopInitializationService implements OnDestroy {
           const sorted = [...items].sort((a: any, b: any) =>
             (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
           );
-          // Fraîcheur TTL : même fenêtre 5 min que le staleness timer.
+          // Trois heartbeats manqués (émis toutes les 15 s) rendent la session indisponible.
           // Évite le flash "connecté" au démarrage si le dernier record est stale.
-          // ppTPE en background < 5 min : heartbeat resume remet le TTL à jour immédiatement.
-          const staleFloor = Math.floor(Date.now() / 1000) + 3300; // 3600 - 300s (5 min)
+          // Au retour au premier plan, ppTPE republie immédiatement son état.
+          const staleFloor = Math.floor(Date.now() / 1000)
+            + this.tpeHeartbeatTtlSeconds
+            - this.tpeHeartbeatStaleSeconds;
           const fresh = (s: any) => Number(s.ttl) > staleFloor;
           const connected = sorted.find((s: any) => s.status === 'connected' && fresh(s));
           const scanning  = sorted.find((s: any) => s.status === 'scanning'  && fresh(s));
@@ -187,16 +191,15 @@ export class ShopInitializationService implements OnDestroy {
           console.warn('[TPESession] subscription error:', err?.message);
         },
       });
-      // Staleness timer : détecte ppTPE arrêté sans écriture explicite 'disconnected'
-      // Fenêtre 5 min : tolère les backgrounds courts, détecte un crash en ≤5 min.
-      // Math : TTL = write_time+3600 ; stale si write_time+3600 ≤ now+(3600-300)
-      //        ⇔ write_time ≤ now-300 ⇔ dernière écriture il y a > 5 min.
+      // Détecte ppTPE arrêté sans écriture explicite 'disconnected'.
       document.addEventListener('visibilitychange', this.onVisibilityChange);
       this.stalenessTimer = setInterval(() => {
         if (this.lastKnownConnectedTtl > 0 && Date.now() > this.wakeGraceUntil) {
-          const staleFloor = Math.floor(Date.now() / 1000) + 3300; // 3600 - 300s (5 min)
+          const staleFloor = Math.floor(Date.now() / 1000)
+            + this.tpeHeartbeatTtlSeconds
+            - this.tpeHeartbeatStaleSeconds;
           if (this.lastKnownConnectedTtl <= staleFloor) {
-            console.warn('[TPESession] Staleness détectée — ppTPE inactif depuis > 5 min');
+            console.warn('[TPESession] Staleness détectée — trois heartbeats ppTPE manqués');
             this.lastKnownConnectedTtl = 0;
             this.tpeReaderConnected$.next(false);
             this.tpeReaderLabel$.next('');
