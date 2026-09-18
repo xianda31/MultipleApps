@@ -61,6 +61,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
       active: new FormControl<boolean>(true, { nonNullable: true }),
       shopEnabled: new FormControl<boolean>(true, { nonNullable: true }),
       batchEnabled: new FormControl<boolean>(false, { nonNullable: true }),
+      fulfillmentAction: new FormControl<string>(''),
+      initialCredits: new FormControl<number>(12, [Validators.required, Validators.min(1)]),
       // glyph est auto-déterminé basé sur `account` — ne pas inclure dans le formulaire
     });
 
@@ -70,7 +72,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onNewProduct() {
-    this.productForm.reset({ productCode: '', paired: false, stripeEnabled: false, active: true, currency: 'EUR', shopEnabled: true, batchEnabled: false });
+    this.productForm.reset({ productCode: '', paired: false, stripeEnabled: false, active: true, currency: 'EUR', shopEnabled: true, batchEnabled: false, fulfillmentAction: '', initialCredits: 12 });
     this.accountInput = '';
     this.product_selected = false;
     this.showModal = true;
@@ -83,7 +85,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   async onCreateProduct() {
-    let new_product = this.productForm.getRawValue();
+    let new_product = this.productFromForm();
     // Déterminer auto le glyph basé sur le compte
     new_product.glyph = getGlyphForAccount(new_product.account);
     await this.productService.createProduct(new_product);
@@ -93,9 +95,12 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onReadProduct(product: Product) {
+    const parameters = this.parseFulfillmentParameters(product.fulfillmentParameters);
     this.productForm.patchValue({
       ...product,
-      productCode: product.productCode ?? ''
+      productCode: product.productCode ?? '',
+      fulfillmentAction: product.fulfillmentAction ?? '',
+      initialCredits: Number(parameters['initialCredits'] ?? 12),
     });
     this.accountInput = product.account ?? '';
     this.product_selected = true;
@@ -108,13 +113,37 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   }
   async onUpdateProduct() {
-    let product = this.productForm.getRawValue();
+    let product = this.productFromForm();
     // Déterminer auto le glyph basé sur le compte
     product.glyph = getGlyphForAccount(product.account);
     await this.productService.updateProduct(product);
     this.showModal = false;
     this.product_selected = false;
     this.productForm.reset();
+  }
+
+  private productFromForm(): any {
+    const { initialCredits, ...product } = this.productForm.getRawValue();
+    const fulfillmentAction = product.fulfillmentAction || null;
+    return {
+      ...product,
+      fulfillmentAction,
+      fulfillmentParameters: fulfillmentAction === 'CREATE_PLAYBOOK'
+        ? { initialCredits: Number(initialCredits) }
+        : null,
+    };
+  }
+
+  private parseFulfillmentParameters(value: unknown): Record<string, unknown> {
+    if (!value) return {};
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value) as Record<string, unknown>;
+      } catch {
+        return {};
+      }
+    }
+    return value as Record<string, unknown>;
   }
 
   async onDeleteProduct(product: Product) {

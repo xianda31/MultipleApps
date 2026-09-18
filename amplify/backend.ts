@@ -19,6 +19,7 @@ import { stripeCheckout } from "./functions/stripe-checkout/resource";
 import { stripeWebhooks } from "./functions/stripe-webhooks/resource";
 import { stripeConnectionToken } from "./functions/stripe-connection-token/resource";
 import { surveyRespond } from "./functions/survey-respond/resource";
+import { processBookEntryActions } from "./functions/process-book-entry-actions/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -35,6 +36,7 @@ const backend = defineBackend({
   stripeWebhooks,
   stripeConnectionToken,
   surveyRespond,
+  processBookEntryActions,
 });
 
 // Add SSM GetParameter permission to ffbProxy Lambda function
@@ -150,6 +152,13 @@ httpApi.addRoutes({
 // Stripe Cancel Checkout - utilisateur connecté (suppression BookEntry côté backend)
 httpApi.addRoutes({
   path: "/api/stripe/cancel",
+  methods: [HttpMethod.POST],
+  integration: stripeCheckoutIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
+httpApi.addRoutes({
+  path: "/api/stripe/associate-book-entry",
   methods: [HttpMethod.POST],
   integration: stripeCheckoutIntegration,
   authorizer: userPoolAuthorizer,
@@ -272,6 +281,37 @@ const stripeTransactionTable = backend.data.resources.tables['StripeTransaction'
 stripeTransactionTable.grantReadWriteData(backend.stripeCheckout.resources.lambda);
 backend.stripeCheckout.addEnvironment('STRIPE_TRANSACTION_TABLE_NAME', stripeTransactionTable.tableName);
 
+// Product fulfillment is executed server-side from a confirmed BookEntry.
+const fulfillmentMemberTable = backend.data.resources.tables['Member'];
+const playBookTable = backend.data.resources.tables['PlayBook'];
+const fulfillmentExecutionTable = backend.data.resources.tables['FulfillmentExecution'];
+const assistanceRequestTable = backend.data.resources.tables['AssistanceRequest'];
+bookEntryTable.grantReadData(backend.processBookEntryActions.resources.lambda);
+saleItemTable.grantReadData(backend.processBookEntryActions.resources.lambda);
+fulfillmentMemberTable.grantReadData(backend.processBookEntryActions.resources.lambda);
+playBookTable.grantWriteData(backend.processBookEntryActions.resources.lambda);
+fulfillmentExecutionTable.grantReadWriteData(backend.processBookEntryActions.resources.lambda);
+assistanceRequestTable.grantWriteData(backend.processBookEntryActions.resources.lambda);
+backend.processBookEntryActions.addEnvironment('BOOK_ENTRY_TABLE_NAME', bookEntryTable.tableName);
+backend.processBookEntryActions.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
+backend.processBookEntryActions.addEnvironment('MEMBER_TABLE_NAME', fulfillmentMemberTable.tableName);
+backend.processBookEntryActions.addEnvironment('PLAYBOOK_TABLE_NAME', playBookTable.tableName);
+backend.processBookEntryActions.addEnvironment('FULFILLMENT_EXECUTION_TABLE_NAME', fulfillmentExecutionTable.tableName);
+backend.processBookEntryActions.addEnvironment('ASSISTANCE_REQUEST_TABLE_NAME', assistanceRequestTable.tableName);
+
+bookEntryTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
+saleItemTable.grantReadData(backend.stripeWebhooks.resources.lambda);
+fulfillmentMemberTable.grantReadData(backend.stripeWebhooks.resources.lambda);
+playBookTable.grantWriteData(backend.stripeWebhooks.resources.lambda);
+fulfillmentExecutionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
+assistanceRequestTable.grantWriteData(backend.stripeWebhooks.resources.lambda);
+backend.stripeWebhooks.addEnvironment('BOOK_ENTRY_TABLE_NAME', bookEntryTable.tableName);
+backend.stripeWebhooks.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
+backend.stripeWebhooks.addEnvironment('MEMBER_TABLE_NAME', fulfillmentMemberTable.tableName);
+backend.stripeWebhooks.addEnvironment('PLAYBOOK_TABLE_NAME', playBookTable.tableName);
+backend.stripeWebhooks.addEnvironment('FULFILLMENT_EXECUTION_TABLE_NAME', fulfillmentExecutionTable.tableName);
+backend.stripeWebhooks.addEnvironment('ASSISTANCE_REQUEST_TABLE_NAME', assistanceRequestTable.tableName);
+
 // Grant stripeWebhooks write access to StripeTransaction table (data recording only)
 stripeTransactionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 backend.stripeWebhooks.addEnvironment('STRIPE_TRANSACTION_TABLE_NAME', stripeTransactionTable.tableName);
@@ -292,7 +332,6 @@ if (cfnStripeTransactionTable) {
 }
 
 // Activer TTL DynamoDB sur les demandes d'assistance résolues
-const assistanceRequestTable = backend.data.resources.tables['AssistanceRequest'];
 const cfnAssistanceRequestTable = assistanceRequestTable.node.tryFindChild('Resource') as CfnTable
   ?? assistanceRequestTable.node.children.find((c: Construct): c is CfnTable => c instanceof CfnTable);
 if (cfnAssistanceRequestTable) {

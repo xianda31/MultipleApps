@@ -5,7 +5,7 @@ import { LicenseStatus, Member } from '../../common/interfaces/member.interface'
 import { CartService } from './cart/cart.service';
 import { CommonModule } from '@angular/common';
 import { InputMemberComponent } from '../input-member/input-member.component';
-import { Expense, Revenue, Session } from '../../common/interfaces/accounting.interface';
+import { BookEntry, Expense, Revenue, Session } from '../../common/interfaces/accounting.interface';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { Product } from '../products/product.interface';
 import { CartComponent } from './cart/cart.component';
@@ -724,11 +724,10 @@ export class ShopComponent implements OnInit, OnDestroy {
 
   /**
    * Déclenche le flux de paiement TPE :
-   * 1. Crée le PaymentIntent côté serveur
-   * 2. SDK collecte la carte via le WisePad 3
-   * 3. SDK traite le paiement
-   * 4. Enregistre la vente (BookEntry)
-   * Le webhook payment_intent.succeeded enregistre la StripeTransaction en parallèle.
+    * 1. Enregistre un BookEntry pending
+    * 2. Crée le PaymentIntent lié au BookEntry
+    * 3. Le TPE collecte et traite le paiement
+    * 4. Le webhook confirme le BookEntry et exécute ses actions
    */
   async onPayByCard(): Promise<void> {
     if (!this.buyer) {
@@ -755,14 +754,40 @@ export class ShopComponent implements OnInit, OnDestroy {
     }
 
     this.tpePaymentInProgress = true;
-    const memberName = this.buyer.lastname + ' ' + this.buyer.firstname;
+    const buyer = this.buyer;
+    const memberName = buyer.lastname + ' ' + buyer.firstname;
+    this.cartService.payment = {
+      amount: this.cartService.getCartAmount(),
+      payer_id: buyer.id,
+      mode: PaymentMode.CARD,
+      bank: '',
+      cheque_no: '',
+    };
+
+    let pendingBookEntry: BookEntry;
+    try {
+      pendingBookEntry = await this.cartService.save_sale(this.session, buyer, 'deferred', false);
+    } catch (err: any) {
+      this.tpePaymentInProgress = false;
+      this.toastService.showError('Paiement CB', err?.message ?? 'Impossible de préparer la vente');
+      return;
+    }
+
     const paymentParams = {
       amountCents,
       memberName,
-      buyerMemberId: this.buyer.id,
-      buyerEmail: this.buyer.email || '',
+      buyerMemberId: buyer.id,
+      buyerEmail: buyer.email || '',
       season: this.session.season,
       date: this.session.date,
+      bookEntryId: pendingBookEntry.id,
+    };
+
+    const paymentSucceeded = () => {
+      this.cartService.clearCart();
+      this.buyerForm.reset();
+      this.tpePaymentInProgress = false;
+      this.toastService.showSuccess('Paiement CB', 'Carte acceptée — confirmation de la vente en cours');
     };
 
     // ── Conf A : mode distant — PC crée le PaymentRequest, ppTPE gère le TPE ──
@@ -771,18 +796,7 @@ export class ShopComponent implements OnInit, OnDestroy {
         paymentParams,
         {
           onPaymentIntentCreated: (stripeTag) => this.cartService.setStripeTag(stripeTag),
-          onSuccess: () => {
-            this.cartService.payment = {
-              amount: this.cartService.getCartAmount(),
-              payer_id: this.buyer!.id,
-              mode: PaymentMode.CARD,
-              bank: '',
-              cheque_no: '',
-            };
-            this.cart_confirmed();
-            this.tpePaymentInProgress = false;
-            this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
-          },
+          onSuccess: paymentSucceeded,
           onFailed: (msg) => {
             this.tpePaymentInProgress = false;
             this.toastService.showError('Paiement CB', msg);
@@ -812,17 +826,7 @@ export class ShopComponent implements OnInit, OnDestroy {
         paymentParams,
         {
           onPaymentIntentCreated: (stripeTag) => this.cartService.setStripeTag(stripeTag),
-          onSuccess: () => {
-            this.cartService.payment = {
-              amount: this.cartService.getCartAmount(),
-              payer_id: this.buyer!.id,
-              mode: PaymentMode.CARD,
-              bank: '',
-              cheque_no: '',
-            };
-            this.cart_confirmed();
-            this.toastService.showSuccess('Paiement CB', 'Carte acceptée — vente enregistrée');
-          },
+          onSuccess: paymentSucceeded,
           onFailed: (msg) => this.toastService.showError('Paiement CB', msg),
           onCancelled: () => this.toastService.showWarning('Paiement CB', 'Paiement annulé'),
           onTimeout: () => this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé'),

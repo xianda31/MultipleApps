@@ -129,8 +129,12 @@ export class StripeCheckoutOrchestrator {
 
     let bookEntry;
     try {
-      bookEntry = await this.cartService.save_sale(session);
+      bookEntry = await this.cartService.save_sale(session, undefined, 'deferred');
+      await this.stripeService.associateBookEntry(sessionId, bookEntry.id);
     } catch (error) {
+      if (bookEntry?.id) {
+        await this.stripeService.cancelCheckout(bookEntry.id, sessionId).catch(() => undefined);
+      }
       this.toastService.showError('Paiement', 'Erreur lors de l\'enregistrement de la vente');
       throw error;
     }

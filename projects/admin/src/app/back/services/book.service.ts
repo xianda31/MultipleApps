@@ -151,6 +151,14 @@ export class BookService {
     }
   }
 
+  async process_book_entry_actions(bookEntryId: string): Promise<any> {
+    const result = await this.dbHandler.processBookEntryActions(bookEntryId);
+    if (Number(result?.failed || 0) > 0) {
+      throw new Error(`Le traitement métier de l'écriture ${bookEntryId} a échoué`);
+    }
+    return result;
+  }
+
   // read 
 
   async read_book_entry(entry_id: string): Promise<BookEntry> {

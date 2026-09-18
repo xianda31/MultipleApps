@@ -20,6 +20,7 @@ describe('CardPaymentOrchestratorService', () => {
     season: '2025/2026',
     date: '2026-06-08',
     buyerMemberId: 'member-1',
+    bookEntryId: 'book-entry-1',
   };
 
   it('uses remote mode when running outside native Android', async () => {
@@ -28,7 +29,7 @@ describe('CardPaymentOrchestratorService', () => {
     const onSuccess = jasmine.createSpy('onSuccess');
 
     stripeTerminal.startRemotePayment.and.callFake(async (_p: any, callbacks: any) => {
-      callbacks.onPaymentIntentCreated?.('stripe:remote');
+      await callbacks.onPaymentIntentCreated?.('stripe:remote', 'pi_remote');
       callbacks.onSuccess('pi_remote', 'stripe:remote');
     });
 
@@ -44,7 +45,7 @@ describe('CardPaymentOrchestratorService', () => {
     expect(service.isRemoteMode).toBeTrue();
     expect(stripeTerminal.startRemotePayment).toHaveBeenCalledWith(params, jasmine.any(Object));
     expect(stripeTerminal.createPaymentIntent).not.toHaveBeenCalled();
-    expect(onPaymentIntentCreated).toHaveBeenCalledWith('stripe:remote');
+    expect(onPaymentIntentCreated).toHaveBeenCalledWith('stripe:remote', 'pi_remote');
     expect(onSuccess).toHaveBeenCalledWith({ paymentIntentId: 'pi_remote', stripeTag: 'stripe:remote' });
   });
 
@@ -76,7 +77,7 @@ describe('CardPaymentOrchestratorService', () => {
     expect(stripeTerminal.startRemotePayment).not.toHaveBeenCalled();
     expect(stripeTerminal.createPaymentIntent).toHaveBeenCalledWith(params);
     expect(stripeTerminal.collectAndProcess).toHaveBeenCalledWith('pi_local_secret');
-    expect(onPaymentIntentCreated).toHaveBeenCalledWith('stripe:local');
+    expect(onPaymentIntentCreated).toHaveBeenCalledWith('stripe:local', 'pi_local');
     expect(onSuccess).toHaveBeenCalledWith({ paymentIntentId: 'pi_local', stripeTag: 'stripe:local' });
   });
 
@@ -101,6 +102,34 @@ describe('CardPaymentOrchestratorService', () => {
     });
 
     expect(onSuccess).toHaveBeenCalledWith({ paymentIntentId: 'pi_local_2', stripeTag: 'stripe:local_2' });
+  });
+
+  it('waits for BookEntry preparation before collecting locally', async () => {
+    const { service, stripeTerminal } = buildService(true);
+    let releasePreparation!: () => void;
+    const preparation = new Promise<void>((resolve) => { releasePreparation = resolve; });
+    stripeTerminal.createPaymentIntent.and.resolveTo({
+      clientSecret: 'pi_order_secret',
+      paymentIntentId: 'pi_order',
+      stripeTag: 'stripe:order',
+    });
+    stripeTerminal.collectAndProcess.and.resolveTo({ paymentIntentId: 'pi_order', stripeTag: 'stripe:order' });
+
+    const payment = service.payByCard(params, {
+      onPaymentIntentCreated: () => preparation,
+      onSuccess: jasmine.createSpy('onSuccess'),
+      onFailed: jasmine.createSpy('onFailed'),
+      onCancelled: jasmine.createSpy('onCancelled'),
+      onTimeout: jasmine.createSpy('onTimeout'),
+      onError: jasmine.createSpy('onError'),
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(stripeTerminal.collectAndProcess).not.toHaveBeenCalled();
+    releasePreparation();
+    await payment;
+    expect(stripeTerminal.collectAndProcess).toHaveBeenCalledOnceWith('pi_order_secret');
   });
 
   it('propagates local processing errors', async () => {

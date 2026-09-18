@@ -47,6 +47,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private cachedToken: string | null = null;
   private cachedTokenAt = 0;
   private readonly TOKEN_TTL_MS = 4 * 60 * 1000;
+  private readonly BLE_SETTLE_MS = 1500;
 
   private client!: ReturnType<typeof generateClient<Schema>>;
   private tpeSessionId: string | null = null;
@@ -172,6 +173,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
 
       // Pré-charger le token pour que RequestedConnectionToken soit servi sans latence Lambda
+      this.clearCachedConnectionToken();
       await this.getCachedConnectionToken();
 
       this.state = 'connecting';
@@ -191,11 +193,13 @@ export class AppComponent implements OnInit, OnDestroy {
       await this.upsertTPESession('connected', this.readerLabel);
       this.startHeartbeat();
       this.subscribePaymentRequests();
+      this.cdr.detectChanges();
 
     } catch (e: any) {
       this.errorMessage = e.message || 'Erreur initialisation TPE';
       this.state = 'error';
       await this.upsertTPESession('disconnected', '');
+      this.cdr.detectChanges();
     } finally {
       this.tpeStarting = false;
     }
@@ -208,7 +212,7 @@ export class AppComponent implements OnInit, OnDestroy {
     await StripeTerminal.addListener(TerminalEventsEnum.RequestedConnectionToken, async () => {
       console.log('[ppTPE] RequestedConnectionToken fired — fetching token...');
       try {
-        const token = await this.getCachedConnectionToken();
+        const token = await this.takeConnectionToken();
         console.log('[ppTPE] Connection token fetched OK, longueur:', token?.length);
         this.tokenError = '';
         await StripeTerminal.setConnectionToken({ token });
@@ -284,7 +288,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // Motif de déconnexion BLE (diagnostic)
     await StripeTerminal.addListener(TerminalEventsEnum.DisconnectedReader, ({ reason }: any) => {
       console.warn('[ppTPE] DisconnectedReader reason:', reason ?? 'none');
-      if (reason) {
+      if (reason && reason !== 'DISCONNECT_REQUESTED') {
         this.tokenError = `Déco: ${reason}`;
         this.cdr.detectChanges();
       }
@@ -295,11 +299,10 @@ export class AppComponent implements OnInit, OnDestroy {
     // déconnexions attendues (disconnectReader) des inattendues → utiliser UnexpectedReaderDisconnect.
     await StripeTerminal.addListener(TerminalEventsEnum.ConnectionStatusChange, async ({ status }) => {
       console.log('[ppTPE] ConnectionStatusChange:', status);
-      if (status === ConnectionStatus.NotConnected) {
-        this.clearResumeWatchdog();
-      } else if (status === ConnectionStatus.Connected) {
+      if (status === ConnectionStatus.Connected) {
         // Confirme la connexion BLE (y compris après réveil de veille)
         this.clearResumeWatchdog();
+        this.tokenError = '';
         if (this.state === 'connected' || this.state === 'processing') {
           this.startHeartbeat(); // redémarre le timer suspendu pendant la veille
         }
@@ -367,7 +370,9 @@ export class AppComponent implements OnInit, OnDestroy {
         }
         clearTimeout(timer);
         handle?.remove();
-        StripeTerminal.cancelDiscoverReaders().catch(() => {}).finally(() => resolve(candidates));
+        StripeTerminal.cancelDiscoverReaders().catch(() => {}).finally(() => {
+          setTimeout(() => resolve(candidates), this.BLE_SETTLE_MS);
+        });
       }).then((h) => { handle = h; });
 
       if (environment.tpe_simulated) {
@@ -429,6 +434,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.currentMemberName = pr.memberName;
     this.currentAmountCents = pr.amountCents;
     this.state = 'processing';
+    this.cdr.detectChanges();
 
     try {
       await this.client.models.PaymentRequest.update({ id: pr.id, status: 'processing' } as any);
@@ -455,9 +461,12 @@ export class AppComponent implements OnInit, OnDestroy {
         errorMessage: msg,
       } as any).catch(() => {});
     } finally {
-      this.state = 'connected';
+      if (this.state === 'processing') {
+        this.state = 'connected';
+      }
       this.currentMemberName = '';
       this.currentAmountCents = 0;
+      this.cdr.detectChanges();
     }
   }
 
@@ -552,6 +561,17 @@ export class AppComponent implements OnInit, OnDestroy {
     this.cachedToken = token;
     this.cachedTokenAt = Date.now();
     return token;
+  }
+
+  private async takeConnectionToken(): Promise<string> {
+    const token = await this.getCachedConnectionToken();
+    this.clearCachedConnectionToken();
+    return token;
+  }
+
+  private clearCachedConnectionToken(): void {
+    this.cachedToken = null;
+    this.cachedTokenAt = 0;
   }
 
   private async fetchConnectionToken(): Promise<string> {

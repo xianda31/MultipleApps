@@ -70,6 +70,7 @@ export class StripeTerminalService {
   // ── Remote mode (PC) : relay AppSync → ppTPE ─────────────────────────────
   private _pendingPaymentRequestId: string | null = null;
   private _pendingPaymentIntentId: string | null = null;
+  private _pendingBookEntryId: string | null = null;
   private _pendingPaymentTimeout: any = null;
   private _paymentRequestSub: any = null;
 
@@ -277,6 +278,7 @@ export class StripeTerminalService {
     amountCents: number;
     memberName: string;
     buyerMemberId?: string;
+    buyerEmail?: string;
     season: string;
     date: string;
     bookEntryId?: string;
@@ -478,12 +480,14 @@ export class StripeTerminalService {
       amountCents: number;
       memberName: string;
       buyerMemberId?: string;
+      buyerEmail?: string;
       season: string;
       date: string;
+      bookEntryId?: string;
     },
     callbacks: {
       /** Appelé juste après createPaymentIntent — permet de capturer le stripeTag avant la collecte. */
-      onPaymentIntentCreated?: (stripeTag: string) => void;
+      onPaymentIntentCreated?: (stripeTag: string, paymentIntentId: string) => void | Promise<void>;
       /** ppTPE a pris en charge la demande (désactivation du timeout). */
       onProcessing?: () => void;
       /** Carte acceptée — le paiement est confirmé. */
@@ -498,11 +502,19 @@ export class StripeTerminalService {
       onError: () => void;
     },
   ): Promise<void> {
-    // 1. Créer le PaymentIntent côté serveur
-    const { clientSecret, paymentIntentId, stripeTag } = await this.createPaymentIntent(params);
-    callbacks.onPaymentIntentCreated?.(stripeTag);
-
     this.remotePendingAmount$.next(params.amountCents / 100);
+    this._pendingBookEntryId = params.bookEntryId ?? null;
+
+    // 1. Créer le PaymentIntent côté serveur
+    let paymentIntent: Awaited<ReturnType<StripeTerminalService['createPaymentIntent']>>;
+    try {
+      paymentIntent = await this.createPaymentIntent(params);
+      await callbacks.onPaymentIntentCreated?.(paymentIntent.stripeTag, paymentIntent.paymentIntentId);
+    } catch (error) {
+      this.remotePendingAmount$.next(0);
+      throw error;
+    }
+    const { clientSecret, paymentIntentId, stripeTag } = paymentIntent;
     this._pendingPaymentIntentId = paymentIntentId;
 
     // 2. Créer le PaymentRequest dans AppSync
@@ -516,6 +528,7 @@ export class StripeTerminalService {
       season: params.season,
       date: params.date,
       stripeTag,
+      bookEntryId: params.bookEntryId,
       status: 'pending',
       ttl,
     } as any);
@@ -539,7 +552,7 @@ export class StripeTerminalService {
     this._paymentRequestSub = (client.models.PaymentRequest.observeQuery({
       filter: { id: { eq: data.id } },
     }) as any).subscribe({
-      next: ({ items }: any) => {
+      next: async ({ items }: any) => {
         const updated = items?.[0];
         if (!updated) return;
 
@@ -561,6 +574,7 @@ export class StripeTerminalService {
           callbacks.onFailed(updated.errorMessage || 'Paiement refusé par le TPE');
         } else if (updated.status === 'cancelled') {
           this._clearPendingPaymentTimeout();
+          await this._markBookEntryCancelled(client, params.bookEntryId);
           this._cleanupPaymentSub();
           this.remotePendingAmount$.next(0);
           callbacks.onCancelled();
@@ -579,25 +593,32 @@ export class StripeTerminalService {
    */
   async cancelRemotePayment(): Promise<void> {
     this._clearPendingPaymentTimeout();
-    this._cleanupPaymentSub();
 
     const prId = this._pendingPaymentRequestId;
     const piId = this._pendingPaymentIntentId;
-    this._pendingPaymentRequestId = null;
-    this._pendingPaymentIntentId = null;
+    const bookEntryId = this._pendingBookEntryId;
+    this._cleanupPaymentSub();
     this.remotePendingAmount$.next(0);
 
+    const client = generateClient<Schema>() as any;
     if (prId) {
       try {
-        const client = generateClient<Schema>() as any;
         await client.models.PaymentRequest.update({ id: prId, status: 'cancelled' } as any);
       } catch { /* TTL nettoiera automatiquement */ }
     }
+    await this._markBookEntryCancelled(client, bookEntryId);
     if (piId) {
       try {
         await this.cancelPaymentIntent(piId);
       } catch { /* ignore — déjà capturé ou annulé */ }
     }
+  }
+
+  private async _markBookEntryCancelled(client: any, bookEntryId?: string | null): Promise<void> {
+    if (!bookEntryId) return;
+    try {
+      await client.models.BookEntry.update({ id: bookEntryId, status: 'cancelled' } as any);
+    } catch { /* Le BookEntry reste pending et pourra être réconcilié. */ }
   }
 
   private _clearPendingPaymentTimeout(): void {
@@ -611,5 +632,7 @@ export class StripeTerminalService {
     this._paymentRequestSub?.unsubscribe();
     this._paymentRequestSub = null;
     this._pendingPaymentRequestId = null;
+    this._pendingPaymentIntentId = null;
+    this._pendingBookEntryId = null;
   }
 }

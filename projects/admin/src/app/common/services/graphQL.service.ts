@@ -24,6 +24,7 @@ export class DBhandler {
   private sanitizeSaleItemInput(product: Partial<Product>): any {
     const {
       productCode,
+      fulfillmentParameters,
       createdAt,
       updatedAt,
       ...rest
@@ -34,6 +35,11 @@ export class DBhandler {
     return {
       ...rest,
       productCode: normalizedCode,
+      fulfillmentParameters: fulfillmentParameters == null
+        ? null
+        : typeof fulfillmentParameters === 'string'
+          ? fulfillmentParameters
+          : JSON.stringify(fulfillmentParameters),
     };
   }
 
@@ -1394,13 +1400,20 @@ export class DBhandler {
     return this.parsed_entry(data as unknown as BookEntry);
   }
 
+  async processBookEntryActions(bookEntryId: string): Promise<any> {
+    const client = generateClient<Schema>({ authMode: 'userPool' });
+    const { data, errors } = await client.mutations.processBookEntryActions({ bookEntryId });
+    if (errors) throw errors;
+    return typeof data === 'string' ? JSON.parse(data) : data;
+  }
+
   // READ (single)
   async readBookEntry(id: string): Promise<BookEntry> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.BookEntry.get(
       { id: id },
-      { selectionSet: ['id', 'season', 'tag', 'stripeTag', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report', 'invoice_ref'] }
+      { selectionSet: ['id', 'season', 'tag', 'stripeTag', 'status', 'purchasedItems.*', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report', 'invoice_ref'] }
 
     );
     if (errors) throw errors;

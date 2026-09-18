@@ -22,6 +22,7 @@
                         <th class="text-center">En ligne</th>
                         <th class="text-center">Vente membre</th>
                         <th class="text-center">Vente publique</th>
+                        <th class="text-center"> Pilote </th>
                         <th class="text-center">Actif</th>
                         <th class="text-center">Actions</th>
                     </tr>
@@ -68,6 +69,13 @@
                                     [id]="'batchEnabled-' + product.id" [checked]="product.batchEnabled"
                                     (change)="product.batchEnabled = !product.batchEnabled; onModProduct(product)">
                             </div>
+                        </td>
+                        <td class="text-center">
+                            @if (product.fulfillmentAction) {
+                            <i class="bi bi-gear-fill text-success" title="Action après vente configurée"></i>
+                            } @else {
+                            <span class="text-secondary">-</span>
+                            }
                         </td>
                         <td class="text-center">
                             <div class="form-check form-switch d-flex justify-content-center mb-0">
@@ -159,6 +167,19 @@
                                 <label class="form-check-label" for="modal-active">Actif</label>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="modal-fulfillment-action">Pilote</label>
+                            <select class="form-select" id="modal-fulfillment-action" formControlName="fulfillmentAction">
+                                <option value="">Aucun</option>
+                                <option value="CREATE_PLAYBOOK">Créer une carte</option>
+                            </select>
+                        </div>
+                        @if (productForm.get('fulfillmentAction')?.value === 'CREATE_PLAYBOOK') {
+                        <div class="col-md-3">
+                            <label class="form-label" for="modal-initial-credits">Nombre d'admissions</label>
+                            <input class="form-control" id="modal-initial-credits" type="number" min="1" step="1" formControlName="initialCredits">
+                        </div>
+                        }
                     </div>
                 </form>
             </div>
