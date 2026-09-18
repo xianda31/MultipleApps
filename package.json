@@ -95,6 +95,7 @@
     "@angular-devkit/build-angular": "^20.2.2",
     "@angular/cli": "^20.2.2",
     "@angular/compiler-cli": "^20.2.4",
+    "@angular/language-service": "20.3.26",
     "@angular/localize": "^20.2.4",
     "@aws-amplify/backend": "^1.8.0",
     "@aws-amplify/backend-cli": "^1.2.2",
