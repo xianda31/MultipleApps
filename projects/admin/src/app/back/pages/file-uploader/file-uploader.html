@@ -16,14 +16,14 @@
         (click)="uploadFiles()"
       >
         <i class="fas fa-upload me-1"></i>
-        {{ isUploading ? 'Uploading...' : 'Upload Files' }}
+        {{ isUploading ? 'Import en cours...' : 'Importer' }}
       </button>
     </div>
   </div>
 
   <!-- Files & Upload Progress -->
   <div *ngIf="selectedFiles.length > 0" class="selected-files mb-3">
-    <h6 class="small">Files ({{ selectedFiles.length }})</h6>
+    <h6 class="small">Fichiers ({{ selectedFiles.length }})</h6>
     
     <!-- Upload destination info -->
     <div class="alert alert-info mb-2" *ngIf="currentRoot === 'albums'">
@@ -50,7 +50,7 @@
           </div>
           <div class="flex-grow-1">
             <div class="fw-semibold small">{{ file.name }}</div>
-            <small class="text-muted">{{ formatFileSize(file.size) }} • {{ file.type || 'Unknown type' }}</small>
+            <small class="text-muted">{{ formatFileSize(file.size) }} • {{ file.type || 'Type inconnu' }}</small>
           </div>
         </div>
         
@@ -97,7 +97,7 @@
           </div>
           <div class="flex-grow-1">
             <div class="fw-semibold small">{{ thumbnailFile.name }}</div>
-            <small class="text-muted">{{ formatFileSize(thumbnailFile.size) }} • Thumbnail</small>
+            <small class="text-muted">{{ formatFileSize(thumbnailFile.size) }} • Version optimisée</small>
           </div>
         </div>
         
@@ -141,7 +141,7 @@
   </div>
 
   <!-- File Browser for Target Selection -->
-  <div class="file-browser-section">
+  <div class="file-browser-section" *ngIf="!hideTargetBrowser">
     <div class="card">
       <div class="card-header py-2">
         <h6 class="card-title mb-0">

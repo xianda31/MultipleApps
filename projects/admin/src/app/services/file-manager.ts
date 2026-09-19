@@ -186,6 +186,7 @@ export class FileManager {
       status: 'pending'
     }));
     this.uploadProgressSubject.next(progressItems);
+    const uploadErrors: string[] = [];
 
     try {
       // Real upload process using fileService
@@ -204,6 +205,7 @@ export class FileManager {
         } catch (error) {
           progressItem.status = 'error';
           progressItem.error = error instanceof Error ? error.message : 'Upload failed';
+          uploadErrors.push(`${file.name}: ${progressItem.error}`);
           console.error('FileManager: Upload failed for file:', file.name, error);
         }
         
@@ -218,6 +220,10 @@ export class FileManager {
       // Extract root from targetPath to refresh the tree
       const root = targetPath.split('/')[0];
       this.loadFileTree(root + '/');
+
+      if (uploadErrors.length > 0) {
+        throw new Error(uploadErrors.join(', '));
+      }
       
     } catch (error) {
       console.error('FileManager: Upload process failed:', error);

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule } from '@angular/forms';
-import { firstValueFrom, Subscription, Observable } from 'rxjs';
+import { combineLatest, firstValueFrom, Subscription, Observable } from 'rxjs';
 import { Page, Snippet, PAGE_TEMPLATES, MENU_TITLES, EXTRA_TITLES, CLIPBOARD_TITLE } from '../../../common/interfaces/page_snippet.interface';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
@@ -15,6 +15,11 @@ import { FileUploader } from '../file-uploader/file-uploader';
 import { GenericPageComponent } from '../../../front/front/pages/generic-page/generic-page.component';
 import { BreakpointsSettings } from '../../../common/interfaces/ui-conf.interface';
 import { SnippetEditor } from '../snippet-editor/snippet-editor';
+import { NavItemsService } from '../../../common/services/navitem.service';
+import { snippetMissingFields } from '../snippet-editor/snippet-template-rules';
+
+type CmsWorkspaceTab = 'content' | 'preview' | 'settings';
+type PageFilter = 'all' | 'linked' | 'unlinked';
 
 @Component({
   selector: 'app-cms-wrapper',
@@ -47,11 +52,20 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
   // Modal references
   @ViewChild('clipboardModal') clipboardModal: any;
+  @ViewChild('mediaModal') mediaModal: any;
 
   // File management state (will be moved to service later)
   fileSelectionMode: boolean = false;
   fileSelectionContext: string = '';
   fileMode: 'browse' | 'upload' = 'browse';
+  workspaceTab: CmsWorkspaceTab = 'content';
+  pageFilter: PageFilter = 'all';
+  pagePickerOpen = true;
+  linkedPageIds = new Set<string>();
+  mediaTargetPath = '';
+  mediaRoot = 'images';
+  mediaSelectionType: 'image' | 'document' | 'folder' | null = null;
+  private mediaModalRef: NgbModalRef | null = null;
 
   // File selection management
   private subscriptions: Subscription[] = [];
@@ -64,7 +78,8 @@ export class CmsWrapper implements OnInit, OnDestroy {
     private toastService: ToastService,
     private modalService: NgbModal,
     private fb: FormBuilder,
-    private fileManager: FileManager
+    private fileManager: FileManager,
+    private navItemsService: NavItemsService
   ) {
     this.initializeForm();
   }
@@ -85,12 +100,22 @@ export class CmsWrapper implements OnInit, OnDestroy {
       this.pages = pages.sort((a, b) => a.title.localeCompare(b.title));
     });
 
+    combineLatest([
+      this.navItemsService.loadNavItemsSandbox(),
+      this.navItemsService.loadNavItemsProduction(),
+    ]).subscribe(([sandboxItems, productionItems]) => {
+      this.linkedPageIds = new Set(
+        [...sandboxItems, ...productionItems].flatMap(item => item.page_id ? [item.page_id] : [])
+      );
+    });
+
     this.setupFileSelectionListener();
     this.clipboardSnippets$ = this.clipboardService.clipboardSnippets$;
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.mediaModalRef) this.closeMediaModal();
   }
 
   private initializeForm(): void {
@@ -116,6 +141,9 @@ export class CmsWrapper implements OnInit, OnDestroy {
   async selectPage(page: Page): Promise<void> {
     this.selectedPage = page;
     this.selectedPageId = page.id;
+    this.openSnippetId = null;
+    this.pagePickerOpen = false;
+    this.workspaceTab = 'content';
 
     // Clear pageSnippets immediately to prevent showing previous page's snippets
     this.pageSnippets = [];
@@ -241,11 +269,20 @@ export class CmsWrapper implements OnInit, OnDestroy {
   onFileSelectionRequested(event: { type: 'image' | 'document' | 'folder', snippet: Snippet, context: string }): void {
 
     this.activeSelectionSnippetId = event.snippet.id;
+    this.fileSelectionContext = event.context;
+    this.mediaSelectionType = event.type;
+    this.fileMode = 'browse';
 
     // Set the appropriate root folder based on selection type
     const rootFolder = event.type === 'image' ? 'images' :
       event.type === 'document' ? 'documents' :
         'albums';
+    this.mediaRoot = rootFolder;
+
+    const mediaFolder = event.type === 'image' ? 'images' :
+      event.type === 'document' ? 'documents' :
+        'album';
+    this.mediaTargetPath = `${rootFolder}/cms/snippets/${event.snippet.id}/${mediaFolder}/`;
 
     // Request file selection through FileManager
     this.fileManager.activateSelectionMode({
@@ -256,6 +293,16 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
     // Navigate to the appropriate root folder
     this.fileManager.setCurrentRoot(rootFolder);
+    const modalRef = this.modalService.open(this.mediaModal, {
+      size: 'xl',
+      centered: true,
+      scrollable: true,
+    });
+    this.mediaModalRef = modalRef;
+    modalRef.result.then(
+      () => this.resetMediaSelection(modalRef),
+      () => this.resetMediaSelection(modalRef),
+    );
   }
 
   private applyFileSelectionToSnippet(selection: { path: string, type: string, context: string, targetId?: string }): void {
@@ -273,7 +320,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
     // Get the full path including root prefix
     const currentRoot = this.fileManager.getCurrentRoot();
-    const fullPath = currentRoot + selection.path;
+    const fullPath = selection.path.startsWith(currentRoot) ? selection.path : currentRoot + selection.path;
 
     // Update the snippet object based on selection type
     if (selection.type === 'image') {
@@ -297,6 +344,33 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
     // Reset active selection
     this.activeSelectionSnippetId = null;
+    this.mediaModalRef?.close();
+    this.mediaModalRef = null;
+  }
+
+  onMediaUploaded(paths: string[]): void {
+    if (!this.activeSelectionSnippetId || !this.mediaSelectionType || paths.length === 0) return;
+
+    this.applyFileSelectionToSnippet({
+      path: this.mediaSelectionType === 'folder' ? this.mediaTargetPath : paths[0],
+      type: this.mediaSelectionType,
+      context: this.fileSelectionContext,
+      targetId: this.activeSelectionSnippetId,
+    });
+  }
+
+  closeMediaModal(): void {
+    const modalRef = this.mediaModalRef;
+    this.resetMediaSelection(modalRef);
+    modalRef?.dismiss();
+  }
+
+  private resetMediaSelection(modalRef: NgbModalRef | null): void {
+    if (this.mediaModalRef && modalRef && this.mediaModalRef !== modalRef) return;
+    this.fileManager.cancelSelectionMode();
+    this.activeSelectionSnippetId = null;
+    this.mediaSelectionType = null;
+    this.mediaModalRef = null;
   }
 
 
@@ -365,7 +439,29 @@ export class CmsWrapper implements OnInit, OnDestroy {
   }
 
   onSnippetAccordionClick(snippet: Snippet): void {
-    this.openSnippetId = this.openSnippetId === snippet.id ? null : snippet.id;
+    this.openSnippetId = snippet.id;
+  }
+
+  get selectedSnippet(): Snippet | null {
+    return this.pageSnippets.find(snippet => snippet.id === this.openSnippetId) ?? null;
+  }
+
+  get filteredPages(): Page[] {
+    return this.pages.filter(page => {
+      if (this.is_Clipboard(page)) return false;
+      const linked = this.linkedPageIds.has(page.id);
+      if (this.pageFilter === 'linked' && !linked) return false;
+      if (this.pageFilter === 'unlinked' && linked) return false;
+      return true;
+    });
+  }
+
+  isPageLinked(page: Page): boolean {
+    return this.linkedPageIds.has(page.id);
+  }
+
+  isSnippetComplete(snippet: Snippet): boolean {
+    return !this.selectedPage || snippetMissingFields(snippet, this.selectedPage.template).length === 0;
   }
 
   async onSnippetSaved(snippet: Snippet): Promise<void> {
@@ -483,6 +579,14 @@ export class CmsWrapper implements OnInit, OnDestroy {
       this.fileManager.cancelSelectionMode();
     }
     this.fileMode = mode;
+    if (mode === 'browse' && this.mediaSelectionType && this.activeSelectionSnippetId) {
+      this.fileManager.activateSelectionMode({
+        type: this.mediaSelectionType,
+        context: this.fileSelectionContext,
+        targetId: this.activeSelectionSnippetId,
+      });
+      this.fileManager.setCurrentRoot(this.mediaRoot);
+    }
   }
 
   activateFileSelection(type: 'image' | 'document' | 'folder', snippet: Snippet, context: string): void {

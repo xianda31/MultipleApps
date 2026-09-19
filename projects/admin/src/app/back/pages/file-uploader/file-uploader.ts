@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -15,6 +15,10 @@ import { FileBrowser } from '../file-browser/file-browser';
 })
 export class FileUploader implements OnInit, OnDestroy {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @Input() targetPathOverride: string | null = null;
+  @Input() rootOverride: string | null = null;
+  @Input() hideTargetBrowser = false;
+  @Output() uploaded = new EventEmitter<string[]>();
 
   selectedFiles: File[] = [];
   isUploading = false;
@@ -47,6 +51,7 @@ export class FileUploader implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Set initial root
+    if (this.rootOverride) this.currentRoot = this.rootOverride;
     this.fileManager.setCurrentRoot(this.currentRoot);
     
     // Subscribe to file manager state changes for target selection
@@ -132,7 +137,7 @@ export class FileUploader implements OnInit, OnDestroy {
       console.log('FileUploader: Current root is', this.currentRoot);
       // Special handling for ALBUMS: upload thumbnails to THUMBNAILS/albums
       if (this.currentRoot === S3_ROOT_FOLDERS.ALBUMS+'/' && this.selectedThumbnails.size > 0) {
-        const thumbnailPath = `${S3_ROOT_FOLDERS.THUMBNAILS}/albums/${this.targetPath ? this.targetPath + '/' : ''}`;
+        const thumbnailPath = this.getAlbumThumbnailPath();
         console.log('FileUploader: Uploading thumbnails to path:', thumbnailPath);
         const thumbnailFiles = Array.from(this.selectedThumbnails);
         
@@ -151,8 +156,13 @@ export class FileUploader implements OnInit, OnDestroy {
         uploads.push(this.fileManager.uploadFiles(targetPath));
       }
 
+      const preferredFiles = this.currentRoot.replace(/\/$/, '') === S3_ROOT_FOLDERS.IMAGES && this.selectedThumbnails.size > 0
+        ? Array.from(this.selectedThumbnails)
+        : Array.from(this.selectedOriginals);
+      const uploadedPaths = preferredFiles.map(file => `${this.getFullTargetPath()}${file.name}`);
       await Promise.all(uploads);
       this.isUploading = false;
+      this.uploaded.emit(uploadedPaths);
     } catch (error) {
       this.isUploading = false;
       this.uploadStatus = 'Upload failed: ' + (error as Error).message;
@@ -236,6 +246,10 @@ export class FileUploader implements OnInit, OnDestroy {
   }
 
   getFullTargetPath(): string {
+    if (this.targetPathOverride) {
+      return this.targetPathOverride.endsWith('/') ? this.targetPathOverride : `${this.targetPathOverride}/`;
+    }
+
     // Build the complete S3 path for upload
     let fullPath = this.currentRoot;
     
@@ -252,6 +266,12 @@ export class FileUploader implements OnInit, OnDestroy {
       }
     }
     return fullPath;
+  }
+
+  getAlbumThumbnailPath(): string {
+    const albumPath = this.getFullTargetPath();
+    const relativePath = albumPath.replace(/^albums\//, '');
+    return `${S3_ROOT_FOLDERS.THUMBNAILS}/albums/${relativePath}`;
   }
 
   trackByFile(index: number, file: File): string {

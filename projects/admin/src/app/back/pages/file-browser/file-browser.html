@@ -43,7 +43,7 @@
   <div class="current-path mb-2">
     <div class="d-flex justify-content-between align-items-center">
       <small class="text-muted">
-        <i class="bi bi-folder"></i> {{ currentRoot }}/{{ currentPath || '(racine)' }}
+        <i class="bi bi-folder"></i> {{ currentRoot }}{{ currentPath || '(racine)' }}
       </small>
       <!-- CRUD buttons: hidden in selection mode except Create -->
       <div class="btn-group btn-group-sm" >

@@ -1,6 +1,6 @@
 
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
-import { Snippet } from '../../../common/interfaces/page_snippet.interface';
+import { PAGE_TEMPLATES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SnippetService } from '../../../common/services/snippet.service';
@@ -8,7 +8,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/snippet-modal-editor.component';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { DomSanitizer } from '@angular/platform-browser';
-import { FileSystemSelectorComponent } from '../file-system-selector/file-system-selector.component';
+import { isSnippetFieldVisible, SNIPPET_TEMPLATE_RULES, SnippetField, snippetMissingFields } from './snippet-template-rules';
 
 @Component({
   selector: 'app-snippet-editor',
@@ -19,6 +19,7 @@ import { FileSystemSelectorComponent } from '../file-system-selector/file-system
 })
 export class SnippetEditor implements OnChanges {
   @Input() snippet: Snippet | null = null;
+  @Input() pageTemplate: PAGE_TEMPLATES = PAGE_TEMPLATES.PUBLICATION;
   @Input() selectedFilePath: string | null = null;
   @Input() selectionType: 'image' | 'document' | 'folder' | null = null;
   @Input() selectionTimestamp: number = 0;
@@ -29,6 +30,18 @@ export class SnippetEditor implements OnChanges {
   public readonly S3_ROOT_FOLDERS = S3_ROOT_FOLDERS;
   form: FormGroup;
   saving = false;
+  private savePending = false;
+  readonly fieldLabels: Record<SnippetField, string> = {
+    title: 'titre',
+    subtitle: 'sous-titre',
+    content: 'contenu',
+    publishedAt: 'date de publication',
+    public: 'audience',
+    featured: 'mise à la une',
+    image: 'illustration',
+    file: 'document',
+    folder: 'album photo',
+  };
 
   // selectors are opened as modals when needed
   
@@ -158,7 +171,10 @@ export class SnippetEditor implements OnChanges {
 
   async saveSnippetSelected() {
     if (!this.snippet) return;
-    if (this.saving) return;
+    if (this.saving) {
+      this.savePending = true;
+      return;
+    }
     // Patch publishedAt to yyyy-MM-dd if present
     let formValue = { ...this.form.value };
     if (formValue.publishedAt) {
@@ -171,6 +187,7 @@ export class SnippetEditor implements OnChanges {
     this.saving = true;
     try {
       const updatedSnippet = await this.snippetService.updateSnippet(payload);
+      if (this.savePending) return;
       // Emit updated snippet so parent can merge it into its state and keep references stable
       this.saved.emit(updatedSnippet as Snippet);
       // Refresh form with canonical values from backend
@@ -189,6 +206,10 @@ export class SnippetEditor implements OnChanges {
       console.error('Error updating snippet:', error);
     } finally {
       this.saving = false;
+      if (this.savePending) {
+        this.savePending = false;
+        await this.saveSnippetSelected();
+      }
     }
   }
 
@@ -202,6 +223,23 @@ export class SnippetEditor implements OnChanges {
       this.form.get(field)?.setValue(value, { emitEvent: false });
     }
     this.saveSnippetSelected();
+  }
+
+  isFieldVisible(field: SnippetField): boolean {
+    return isSnippetFieldVisible(this.pageTemplate, field);
+  }
+
+  isFieldRequired(field: SnippetField): boolean {
+    return SNIPPET_TEMPLATE_RULES[this.pageTemplate].required.includes(field);
+  }
+
+  get missingFields(): SnippetField[] {
+    if (!this.snippet) return [];
+    return snippetMissingFields({ ...this.snippet, ...this.form.getRawValue() }, this.pageTemplate);
+  }
+
+  get missingFieldLabels(): string {
+    return this.missingFields.map(field => this.fieldLabels[field]).join(', ');
   }
 
   onSnippetContentClick(snippet: Snippet) {

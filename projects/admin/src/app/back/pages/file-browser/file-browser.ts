@@ -52,8 +52,10 @@ export class FileBrowser implements OnInit, OnDestroy {
       })
     );
 
-    // Initialize file manager with IMAGES root folder (default)
-    this.fileManager.setCurrentRoot(S3_ROOT_FOLDERS.IMAGES);
+    if (!this.isSelectionMode) {
+      this.fileManager.setCurrentRoot(S3_ROOT_FOLDERS.IMAGES);
+    }
+
   }
 
   ngOnDestroy(): void {

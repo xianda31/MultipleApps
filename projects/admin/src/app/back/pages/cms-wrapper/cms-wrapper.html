@@ -1,235 +1,235 @@
-<div class="cms-wrapper-container">
-    <div class="row g-2">
+<div class="cms-workspace">
+    <header class="cms-toolbar">
+        <div class="d-flex align-items-center gap-2 min-w-0">
+            <button type="button" class="btn btn-outline-secondary" (click)="pagePickerOpen = !pagePickerOpen"
+                title="Choisir une page">
+                <i class="bi bi-layout-text-window-reverse"></i>
+            </button>
+            @if (selectedPage) {
+            <div class="active-page-summary">
+                <span class="text-truncate">{{ selectedPage.title }}</span>
+                <small>{{ selectedPage.template }}</small>
+                <i class="bi" [class.bi-link-45deg]="isPageLinked(selectedPage)"
+                    [class.bi-circle]="!isPageLinked(selectedPage)"
+                    [attr.aria-label]="isPageLinked(selectedPage) ? 'Dans la navigation' : 'Hors navigation'"
+                    [title]="isPageLinked(selectedPage) ? 'Dans la navigation' : 'Hors navigation'"></i>
+            </div>
+            } @else {
+            <h5 class="mb-0 text-truncate">Sélectionner une page</h5>
+            }
+        </div>
 
-        <!-- Colonne 1: Pages Selector -->
-        <div class="col-12 col-xl-2">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h6 class="mb-0">Pages</h6>
-                    <button type="button" class="btn btn-sm btn-outline-success" (click)="createNewPage()">
+        <nav class="cms-tabs" aria-label="Vue CMS">
+            <button type="button" class="btn" [class.active]="workspaceTab === 'content'"
+                (click)="workspaceTab = 'content'">
+                <i class="bi bi-pencil-square"></i> Contenu
+            </button>
+            <button type="button" class="btn" [class.active]="workspaceTab === 'preview'" [disabled]="!selectedPage"
+                (click)="workspaceTab = 'preview'">
+                <i class="bi bi-eye"></i> Aperçu
+            </button>
+            <button type="button" class="btn" [class.active]="workspaceTab === 'settings'" [disabled]="!selectedPage"
+                (click)="workspaceTab = 'settings'">
+                <i class="bi bi-sliders"></i> Paramètres
+            </button>
+        </nav>
+    </header>
+
+    @if (pagePickerOpen) {
+    <section class="page-picker" aria-label="Sélection de page">
+        <div class="page-picker-controls">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Filtrer les pages">
+                <button type="button" class="btn btn-outline-secondary" [class.active]="pageFilter === 'all'"
+                    (click)="pageFilter = 'all'">Toutes</button>
+                <button type="button" class="btn btn-outline-secondary" [class.active]="pageFilter === 'linked'"
+                    (click)="pageFilter = 'linked'">Navigation</button>
+                <button type="button" class="btn btn-outline-secondary" [class.active]="pageFilter === 'unlinked'"
+                    (click)="pageFilter = 'unlinked'">Hors navigation</button>
+            </div>
+            <button type="button" class="btn btn-sm btn-success" (click)="createNewPage()">
+                <i class="bi bi-plus-lg me-1"></i>Nouvelle page
+            </button>
+        </div>
+
+        <div class="page-list">
+            @for (page of filteredPages; track page.id) {
+            <button type="button" class="page-list-item" [class.active]="page.id === selectedPageId"
+                (click)="selectPage(page)">
+                <span class="text-truncate">{{ page.title }}</span>
+                <small>{{ page.template }}</small>
+                <i class="bi" [class.bi-link-45deg]="isPageLinked(page)" [class.bi-circle]="!isPageLinked(page)"
+                    [attr.aria-label]="isPageLinked(page) ? 'Dans la navigation' : 'Hors navigation'"
+                    [title]="isPageLinked(page) ? 'Dans la navigation' : 'Hors navigation'"></i>
+            </button>
+            } @empty {
+            <div class="text-muted small p-3">Aucune page ne correspond à ce filtre.</div>
+            }
+        </div>
+    </section>
+    }
+
+    @if (!selectedPage) {
+    <section class="cms-empty-state">
+        <i class="bi bi-layout-text-window-reverse"></i>
+        <h5>Choisissez une page</h5>
+        <p>La liste des articles et l'éditeur s'ouvriront ici.</p>
+    </section>
+    } @else if (workspaceTab === 'content') {
+    <main class="content-workspace">
+        <aside class="snippet-sidebar">
+            <div class="snippet-sidebar-header">
+                <div>
+                    <strong>Articles</strong>
+                    <span class="text-muted ms-1">{{ pageSnippets.length }}</span>
+                </div>
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-success" (click)="addNewSnippet()" title="Nouvel article">
                         <i class="bi bi-plus-lg"></i>
                     </button>
-                </div>
-                <div class="card-body p-2">
-                    <!-- Pages list will go here -->
-                    <div class="list-group list-group-flush">
-                        @for (page of pages; track page.id) {
-                        <button type="button" class="list-group-item list-group-item-action py-2 px-2"
-                            [class.active]="page.id === selectedPageId" (click)="selectPage(page)">
-                            <div class="small fw-medium">{{ page.title }}</div>
-                            <div class="x-small text-muted">{{ page.template }}</div>
-                        </button>
-                        }
-                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="openClipboard()"
+                        title="Contenus en attente">
+                        <i class="bi bi-inboxes"></i>
+                    </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Colonne 2: Page Preview -->
-        <div class="col-12 col-xl-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <h6 class="mb-0">Aperçu : {{ selectedPage?.title || 'Aucune page' }}</h6>
-                        <button type="button" class="btn btn-sm btn-outline-danger ms-2"
-                            [style.visibility]="(selectedPage && !is_Clipboard(selectedPage)) ? 'visible' : 'hidden'"
-                            [disabled]="!selectedPage" (click)="selectedPage && deletePage(selectedPage)">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
+            <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)"
+                class="snippet-list">
+                @for (snippet of pageSnippets; track snippet.id) {
+                <div cdkDrag class="snippet-row" [class.active]="openSnippetId === snippet.id">
+                    <button type="button" cdkDragHandle class="drag-handle" title="Réorganiser">
+                        <i class="bi bi-grip-vertical"></i>
+                    </button>
+                    <button type="button" class="snippet-select" (click)="onSnippetAccordionClick(snippet)">
+                        <span class="text-truncate">{{ snippet.title || 'Article sans titre' }}</span>
+                        <small [class.text-warning]="!isSnippetComplete(snippet)">
+                            <i class="bi" [class.bi-check-circle]="isSnippetComplete(snippet)"
+                                [class.bi-exclamation-triangle]="!isSnippetComplete(snippet)"></i>
+                            {{ isSnippetComplete(snippet) ? 'Complet' : 'À compléter' }}
+                        </small>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link text-secondary" (click)="moveSnippetToClipboard(snippet)"
+                        title="Retirer de cette page">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
                 </div>
-                <div class="card-body p-2">
-                    @if (selectedPage) {
-                    <!-- Page form controls -->
-                    <form [formGroup]="pageForm" class="mb-3">
-                        <div class="row g-2">
-                            <div class="col-12">
-                                <input type="text" class="form-control form-control-sm" formControlName="title"
-                                    placeholder="Titre de la page" (blur)="savePage()" (keydown.enter)="savePage()">
-                            </div>
-                            <div class="col-12">
-                                <select class="form-select form-select-sm" formControlName="template"
-                                    (change)="savePage()">
-                                    @for (tpl of pageTemplates; track tpl) {
-                                    <option [value]="tpl">{{ tpl }}</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                    </form>
+                } @empty {
+                <div class="cms-empty-inline">
+                    <p>Aucun article dans cette page.</p>
+                    <button type="button" class="btn btn-sm btn-success" (click)="addNewSnippet()">Créer le premier article</button>
+                </div>
+                }
+            </div>
+        </aside>
 
-                    <!-- Viewport simulator with vertical scrolling -->
-                    <div class="viewport-sim mx-auto" style="max-height: calc(80vh - 120px); overflow-y: auto;">
-                        <app-generic-page [page_title]="selectedPage.title" [row_cols]="getPageRowCols(selectedPage)"
-                            [page_snippets]="pageSnippets">
-                        </app-generic-page>
-                    </div>
-                    } @else {
-                    <div class="text-center text-muted p-4">
-                        <i class="bi bi-eye-slash mb-2 display-6"></i>
-                        <div>Sélectionnez une page</div>
-                    </div>
-                    }
+        <section class="snippet-editor-pane">
+            @if (selectedSnippet) {
+            <div class="editor-heading">
+                <div>
+                    <small class="text-muted">{{ selectedPage.template }}</small>
+                    <h5 class="mb-0">{{ selectedSnippet.title || 'Nouvel article' }}</h5>
                 </div>
             </div>
-        </div>
-
-        <!-- Colonne 3: Snippets Editor -->
-        <div class="col-12 col-xl-3">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h6 class="mb-0">Articles ({{ pageSnippets.length }})</h6>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-success" (click)="addNewSnippet()">
-                            <i class="bi bi-plus-square-fill"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" (click)="openClipboard()">
-                            <i class="bi bi-inboxes-fill"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-2">
-                    @if (selectedPage && pageSnippets.length > 0) {
-                    <!-- Snippets accordion with drag & drop -->
-                    <div cdkDropList [cdkDropListData]="pageSnippets" (cdkDropListDropped)="onDrop($event)"
-                        class="snippet-list">
-                        <div class="accordion" id="snippetAccordion">
-                            @for (snippet of pageSnippets; track snippet.id) {
-                            <div cdkDrag class="accordion-item mb-2">
-                                <h2 class="accordion-header d-flex align-items-center" id="heading-{{snippet.id}}">
-                                    <span cdkDragHandle class="me-2 text-muted" style="cursor:grab"
-                                        title="Glisser pour réorganiser">
-                                        <i class="bi bi-grip-vertical"></i>
-                                    </span>
-                                    <button class="accordion-button collapsed flex-grow-1" type="button"
-                                        [attr.aria-expanded]="openSnippetId === snippet.id"
-                                        [attr.aria-controls]="'collapse-' + snippet.id"
-                                        (click)="onSnippetAccordionClick(snippet)">
-                                        <div class="d-flex justify-content-between align-items-center w-100 me-2">
-                                            <span class="fw-semibold">{{ snippet.title || 'Snippet sans titre' }}</span>
-                                            <!-- <small class="text-muted">{{ snippet.id.substring(0,8) }}</small> -->
-                                        </div>
-                                    </button>
-                                    @if (is_Clipboard(selectedPage)) {
-                                    <button type="button" class="btn btn-sm btn-outline-warning ms-1 me-1"
-                                        (click)="deleteSnippetFromCurrentPage(snippet)"
-                                        title="supprimer definitivement du presse-papiers">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                    }@else{
-
-                                    <button type="button" class="btn btn-sm btn-outline-warning ms-1 me-1"
-                                        (click)="moveSnippetToClipboard(snippet)"
-                                        title="Déplacer vers le presse-papiers">
-                                        <i class="bi bi-scissors"></i>
-                                    </button>
-                                    }
-                                </h2>
-                                <div [id]="'collapse-' + snippet.id" class="accordion-collapse collapse"
-                                    [class.show]="openSnippetId === snippet.id"
-                                    [attr.aria-labelledby]="'heading-' + snippet.id" data-bs-parent="#snippetAccordion">
-                                    <div class="accordion-body">
-                                        <app-snippet-editor [snippet]="snippet" (saved)="onSnippetSaved($event)"
-                                            (fileSelectionRequested)="onFileSelectionRequested($event)">
-                                        </app-snippet-editor>
-                                    </div>
-                                </div>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                    } @else {
-                    <div class="text-center text-muted p-4">
-                        <i class="bi bi-file-text mb-2 display-6"></i>
-                        <div>Aucun article</div>
-                    </div>
-                    }
-                </div>
+            <app-snippet-editor [snippet]="selectedSnippet" [pageTemplate]="selectedPage.template"
+                (saved)="onSnippetSaved($event)" (fileSelectionRequested)="onFileSelectionRequested($event)">
+            </app-snippet-editor>
+            } @else {
+            <div class="cms-empty-state compact">
+                <i class="bi bi-file-earmark-text"></i>
+                <h6>Sélectionnez un article</h6>
+                <p>ou créez-en un nouveau pour commencer.</p>
             </div>
-        </div>
-
-        <!-- Colonne 4: File Manager + Uploader -->
-        <div class="col-12 col-xl-3">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h6 class="mb-0">Gestionnaire de fichiers</h6>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <input type="radio" class="btn-check" name="fileMode" id="browse-mode" value="browse"
-                            [checked]="fileMode === 'browse'" (change)="onFileModeChange('browse')">
-                        <label class="btn btn-outline-primary" for="browse-mode" title="Browse files">
-                            <i class="bi bi-search"></i>
-                        </label>
-
-                        <input type="radio" class="btn-check" name="fileMode" id="upload-mode" value="upload"
-                            [checked]="fileMode === 'upload'" (change)="onFileModeChange('upload')">
-                        <label class="btn btn-outline-primary" for="upload-mode" title="Upload files">
-                            <i class="bi bi-upload"></i>
-                        </label>
-                    </div>
-                </div>
-                <div class="card-body p-2">
-
-                    <!-- File Browser Mode -->
-                    @if (fileMode === 'browse') {
-                    <app-file-browser></app-file-browser>
-                    }
-
-                    <!-- File Upload Mode -->
-                    @if (fileMode === 'upload') {
-                    <app-file-uploader></app-file-uploader>
-                    }
-
-                </div>
+            }
+        </section>
+    </main>
+    } @else if (workspaceTab === 'preview') {
+    <section class="preview-workspace">
+        <app-generic-page [page_title]="selectedPage.title" [row_cols]="getPageRowCols(selectedPage)"
+            [page_snippets]="pageSnippets">
+        </app-generic-page>
+    </section>
+    } @else {
+    <section class="settings-workspace">
+        <form [formGroup]="pageForm">
+            <div>
+                <label for="page-title" class="form-label">Titre de la page</label>
+                <input id="page-title" type="text" class="form-control" formControlName="title"
+                    (blur)="savePage()" (keydown.enter)="savePage()">
             </div>
-        </div>
-
-    </div>
+            <div>
+                <label for="page-template" class="form-label">Modèle d'affichage</label>
+                <select id="page-template" class="form-select" formControlName="template" (change)="savePage()">
+                    @for (tpl of pageTemplates; track tpl) {
+                    <option [value]="tpl">{{ tpl }}</option>
+                    }
+                </select>
+                <div class="form-text">Le modèle détermine les champs requis pour chaque article.</div>
+            </div>
+        </form>
+        <button type="button" class="btn btn-outline-danger" (click)="deletePage(selectedPage)">
+            <i class="bi bi-trash me-1"></i>Supprimer la page
+        </button>
+    </section>
+    }
 </div>
 
-<!-- Modal Clipboard -->
+<ng-template #mediaModal>
+    <div class="modal-header">
+        <div>
+            <h5 class="modal-title mb-0">{{ fileSelectionContext }}</h5>
+            <small class="text-muted">Choisissez un média existant ou importez-en un nouveau.</small>
+        </div>
+        <button type="button" class="btn-close" aria-label="Fermer" (click)="closeMediaModal()"></button>
+    </div>
+    <div class="modal-body media-modal-body">
+        <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Source du média">
+            <button type="button" class="btn btn-outline-primary" [class.active]="fileMode === 'browse'"
+                (click)="onFileModeChange('browse')">
+                <i class="bi bi-images me-1"></i>Médiathèque
+            </button>
+            <button type="button" class="btn btn-outline-primary" [class.active]="fileMode === 'upload'"
+                (click)="onFileModeChange('upload')">
+                <i class="bi bi-upload me-1"></i>Importer
+            </button>
+        </div>
+
+        @if (fileMode === 'browse') {
+        <app-file-browser></app-file-browser>
+        } @else {
+        <div class="mb-2 small text-muted">Destination gérée automatiquement pour cet article.</div>
+        <app-file-uploader [rootOverride]="mediaRoot" [targetPathOverride]="mediaTargetPath"
+            [hideTargetBrowser]="true" (uploaded)="onMediaUploaded($event)">
+        </app-file-uploader>
+        }
+    </div>
+</ng-template>
+
 <ng-template #clipboardModal let-modal>
     <div class="modal-header">
-        <h5 class="modal-title">
-            <i class="bi bi-inboxes-fill me-2"></i>
-            Presse-papiers ({{ (clipboardSnippets$ | async)?.length || 0 }})
-        </h5>
+        <h5 class="modal-title"><i class="bi bi-inboxes me-2"></i>Contenus en attente</h5>
         <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
-        <div class="mb-3">
-            <small class="text-muted">
-                Articles stockés temporairement. Cliquez sur "Restaurer" pour les remettre dans la page courante.
-            </small>
-        </div>
-
         @if ((clipboardSnippets$ | async)?.length === 0) {
-        <div class="text-center text-muted p-4">
-            <i class="bi bi-inbox display-1 mb-3"></i>
-            <div>Presse-papiers vide</div>
-            <small>Utilisez l'icône ciseaux pour déplacer des articles ici.</small>
+        <div class="cms-empty-state compact">
+            <i class="bi bi-inbox"></i>
+            <p>Aucun contenu en attente.</p>
         </div>
         } @else {
         <div class="list-group">
             @for (snippet of (clipboardSnippets$ | async); track snippet.id) {
-            <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>{{ snippet.title || 'Sans titre' }}</strong>
-                    <br>
+            <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                <div class="min-w-0">
+                    <strong class="d-block text-truncate">{{ snippet.title || 'Sans titre' }}</strong>
                     <small class="text-muted">{{ snippet.subtitle }}</small>
                 </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-success" [disabled]="!selectedPage"
-                        (click)="restoreSnippetFromClipboard(snippet, modal)">
-                        <i class="bi bi-arrow-return-left me-1"></i>
-                        Restaurer
-                    </button>
-                </div>
+                <button type="button" class="btn btn-sm btn-success" [disabled]="!selectedPage"
+                    (click)="restoreSnippetFromClipboard(snippet, modal)">
+                    <i class="bi bi-arrow-return-left me-1"></i>Ajouter à cette page
+                </button>
             </div>
             }
         </div>
         }
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="modal.close()">Fermer</button>
     </div>
 </ng-template>
