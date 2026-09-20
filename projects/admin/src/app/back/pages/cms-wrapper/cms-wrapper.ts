@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule } from '@angular/forms';
 import { combineLatest, firstValueFrom, Subscription, Observable } from 'rxjs';
-import { Page, Snippet, PAGE_TEMPLATES, MENU_TITLES, EXTRA_TITLES, CLIPBOARD_TITLE } from '../../../common/interfaces/page_snippet.interface';
+import { Page, Snippet, PAGE_TEMPLATES, CLIPBOARD_TITLE } from '../../../common/interfaces/page_snippet.interface';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { ClipboardService } from '../../../common/services/clipboard.service';
@@ -16,10 +16,14 @@ import { GenericPageComponent } from '../../../front/front/pages/generic-page/ge
 import { BreakpointsSettings } from '../../../common/interfaces/ui-conf.interface';
 import { SnippetEditor } from '../snippet-editor/snippet-editor';
 import { NavItemsService } from '../../../common/services/navitem.service';
+import { FileService } from '../../../common/services/files.service';
 import { snippetMissingFields } from '../snippet-editor/snippet-template-rules';
+import { CmsImageProfile, cmsImageSourcePrefix, cmsImageVariantPath, imageProfileForTemplate } from '../../../common/images/cms-image-profiles';
+import { CMS_IMAGE_PROFILES } from '../../../common/images/cms-image-profiles';
+import { CmsImageReview } from '../../../common/images/cms-image-review/cms-image-review';
 
 type CmsWorkspaceTab = 'content' | 'preview' | 'settings';
-type PageFilter = 'all' | 'linked' | 'unlinked';
+type MediaSelection = { path: string, type: string, context: string, targetId?: string };
 
 @Component({
   selector: 'app-cms-wrapper',
@@ -32,7 +36,8 @@ type PageFilter = 'all' | 'linked' | 'unlinked';
     FileBrowser,
     FileUploader,
     GenericPageComponent,
-    SnippetEditor
+    SnippetEditor,
+    CmsImageReview,
   ],
   templateUrl: './cms-wrapper.html',
   styleUrl: './cms-wrapper.scss'
@@ -59,12 +64,20 @@ export class CmsWrapper implements OnInit, OnDestroy {
   fileSelectionContext: string = '';
   fileMode: 'browse' | 'upload' = 'browse';
   workspaceTab: CmsWorkspaceTab = 'content';
-  pageFilter: PageFilter = 'all';
   pagePickerOpen = true;
   linkedPageIds = new Set<string>();
   mediaTargetPath = '';
   mediaRoot = 'images';
   mediaSelectionType: 'image' | 'document' | 'folder' | null = null;
+  mediaImageProfile: CmsImageProfile | null = null;
+  mediaImporting = false;
+  mediaPreviewLoading = false;
+  mediaPreviewUrl: string | null = null;
+    mediaSourceWidth: number | null = null;
+    mediaSourceHeight: number | null = null;
+    mediaSourceSize: number | null = null;
+  private pendingMediaSelection: MediaSelection | null = null;
+  private pendingMediaBlob: Blob | null = null;
   private mediaModalRef: NgbModalRef | null = null;
 
   // File selection management
@@ -79,6 +92,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     private modalService: NgbModal,
     private fb: FormBuilder,
     private fileManager: FileManager,
+    private fileService: FileService,
     private navItemsService: NavItemsService
   ) {
     this.initializeForm();
@@ -260,7 +274,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.fileManager.fileSelected$.subscribe(selection => {
         if (selection && selection.context && this.activeSelectionSnippetId) {
-          this.applyFileSelectionToSnippet(selection as { path: string, type: string, context: string, targetId?: string });
+          void this.handleFileSelection(selection as MediaSelection);
         }
       })
     );
@@ -271,6 +285,9 @@ export class CmsWrapper implements OnInit, OnDestroy {
     this.activeSelectionSnippetId = event.snippet.id;
     this.fileSelectionContext = event.context;
     this.mediaSelectionType = event.type;
+    this.mediaImageProfile = event.type === 'image' && this.selectedPage
+      ? imageProfileForTemplate(this.selectedPage.template)
+      : null;
     this.fileMode = 'browse';
 
     // Set the appropriate root folder based on selection type
@@ -279,10 +296,12 @@ export class CmsWrapper implements OnInit, OnDestroy {
         'albums';
     this.mediaRoot = rootFolder;
 
-    const mediaFolder = event.type === 'image' ? 'images' :
-      event.type === 'document' ? 'documents' :
-        'album';
-    this.mediaTargetPath = `${rootFolder}/cms/snippets/${event.snippet.id}/${mediaFolder}/`;
+    if (event.type === 'image' && this.mediaImageProfile) {
+      this.mediaTargetPath = cmsImageSourcePrefix(event.snippet.id, this.mediaImageProfile);
+    } else {
+      const mediaFolder = event.type === 'image' ? 'images' : event.type === 'document' ? 'documents' : 'album';
+      this.mediaTargetPath = `${rootFolder}/cms/snippets/${event.snippet.id}/${mediaFolder}/`;
+    }
 
     // Request file selection through FileManager
     this.fileManager.activateSelectionMode({
@@ -305,7 +324,47 @@ export class CmsWrapper implements OnInit, OnDestroy {
     );
   }
 
-  private applyFileSelectionToSnippet(selection: { path: string, type: string, context: string, targetId?: string }): void {
+  private async handleFileSelection(selection: MediaSelection): Promise<void> {
+    if (selection.type !== 'image' || !this.mediaImageProfile) {
+      await this.applyFileSelectionToSnippet(selection);
+      return;
+    }
+
+    const currentRoot = this.fileManager.getCurrentRoot();
+    const fullPath = selection.path.startsWith(currentRoot) ? selection.path : currentRoot + selection.path;
+    this.clearMediaPreview();
+    this.mediaPreviewLoading = true;
+
+    try {
+      this.pendingMediaBlob = await this.fileService.download_file(fullPath);
+      this.pendingMediaSelection = selection;
+      this.mediaPreviewUrl = URL.createObjectURL(this.pendingMediaBlob);
+      this.mediaSourceSize = this.pendingMediaBlob.size;
+      try {
+        const dimensions = await this.readImageDimensions(this.mediaPreviewUrl);
+        this.mediaSourceWidth = dimensions.width;
+        this.mediaSourceHeight = dimensions.height;
+      } catch {
+        this.mediaSourceWidth = null;
+        this.mediaSourceHeight = null;
+      }
+    } catch {
+      this.toastService.showError('Illustration', 'Impossible de charger l’aperçu de l’image');
+    } finally {
+      this.mediaPreviewLoading = false;
+    }
+  }
+
+  async confirmMediaSelection(): Promise<void> {
+    if (!this.pendingMediaSelection || !this.pendingMediaBlob) return;
+    await this.applyFileSelectionToSnippet(this.pendingMediaSelection, this.pendingMediaBlob);
+  }
+
+  cancelMediaPreview(): void {
+    this.clearMediaPreview();
+  }
+
+  private async applyFileSelectionToSnippet(selection: MediaSelection, sourceBlob?: Blob, alreadyProcessed = false): Promise<void> {
 
     // Find the target snippet and apply the selection
     const targetSnippetIndex = this.pageSnippets.findIndex(s => s.id === selection.targetId);
@@ -320,10 +379,21 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
     // Get the full path including root prefix
     const currentRoot = this.fileManager.getCurrentRoot();
-    const fullPath = selection.path.startsWith(currentRoot) ? selection.path : currentRoot + selection.path;
+    let fullPath = selection.path.startsWith(currentRoot) ? selection.path : currentRoot + selection.path;
 
     // Update the snippet object based on selection type
     if (selection.type === 'image') {
+      if (this.mediaImageProfile && !alreadyProcessed) {
+        try {
+          this.mediaImporting = true;
+          fullPath = await this.importCmsImageFromS3(fullPath, targetSnippet.id, this.mediaImageProfile, sourceBlob);
+        } catch {
+          this.toastService.showError('Illustration', 'Impossible d’optimiser l’image sélectionnée');
+          return;
+        } finally {
+          this.mediaImporting = false;
+        }
+      }
       updatedSnippet.image = fullPath;
     } else if (selection.type === 'document') {
       updatedSnippet.file = fullPath;
@@ -343,20 +413,48 @@ export class CmsWrapper implements OnInit, OnDestroy {
     });
 
     // Reset active selection
+    this.clearMediaPreview();
     this.activeSelectionSnippetId = null;
     this.mediaModalRef?.close();
     this.mediaModalRef = null;
   }
 
+  private async importCmsImageFromS3(sourcePath: string, snippetId: string, profile: CmsImageProfile, selectedBlob?: Blob): Promise<string> {
+    const sourceBlob = selectedBlob ?? await this.fileService.download_file(sourcePath);
+    const extensionMatch = sourcePath.match(/\.([a-zA-Z0-9]+)$/);
+    const extension = extensionMatch?.[1].toLowerCase() || 'jpg';
+    const sourcePrefix = cmsImageSourcePrefix(snippetId, profile);
+    const sourceFile = new File(
+      [sourceBlob],
+      `${globalThis.crypto.randomUUID()}.${extension}`,
+      { type: sourceBlob.type || 'application/octet-stream' },
+    );
+    const cmsSourcePath = `${sourcePrefix}${sourceFile.name}`;
+    const variantPath = cmsImageVariantPath(cmsSourcePath);
+
+    await this.fileService.upload_file(sourceFile, sourcePrefix);
+    for (let attempt = 0; attempt < 30; attempt++) {
+      try {
+        await firstValueFrom(this.fileService.getPresignedUrl$(variantPath, true, true));
+        return variantPath;
+      } catch {
+        if (attempt === 29) break;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    throw new Error('CMS image processing timed out');
+  }
+
   onMediaUploaded(paths: string[]): void {
     if (!this.activeSelectionSnippetId || !this.mediaSelectionType || paths.length === 0) return;
 
-    this.applyFileSelectionToSnippet({
+    void this.applyFileSelectionToSnippet({
       path: this.mediaSelectionType === 'folder' ? this.mediaTargetPath : paths[0],
       type: this.mediaSelectionType,
       context: this.fileSelectionContext,
       targetId: this.activeSelectionSnippetId,
-    });
+    }, undefined, this.mediaSelectionType === 'image' && !!this.mediaImageProfile);
   }
 
   closeMediaModal(): void {
@@ -370,7 +468,30 @@ export class CmsWrapper implements OnInit, OnDestroy {
     this.fileManager.cancelSelectionMode();
     this.activeSelectionSnippetId = null;
     this.mediaSelectionType = null;
+    this.mediaImageProfile = null;
+    this.mediaImporting = false;
+    this.mediaPreviewLoading = false;
+    this.clearMediaPreview();
     this.mediaModalRef = null;
+  }
+
+  private clearMediaPreview(): void {
+    if (this.mediaPreviewUrl) URL.revokeObjectURL(this.mediaPreviewUrl);
+    this.mediaPreviewUrl = null;
+    this.pendingMediaSelection = null;
+    this.pendingMediaBlob = null;
+    this.mediaSourceWidth = null;
+    this.mediaSourceHeight = null;
+    this.mediaSourceSize = null;
+  }
+
+  private readImageDimensions(sourceUrl: string): Promise<{ width: number, height: number }> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      image.onerror = () => reject(new Error('Image dimensions unavailable'));
+      image.src = sourceUrl;
+    });
   }
 
 
@@ -447,13 +568,11 @@ export class CmsWrapper implements OnInit, OnDestroy {
   }
 
   get filteredPages(): Page[] {
-    return this.pages.filter(page => {
-      if (this.is_Clipboard(page)) return false;
-      const linked = this.linkedPageIds.has(page.id);
-      if (this.pageFilter === 'linked' && !linked) return false;
-      if (this.pageFilter === 'unlinked' && linked) return false;
-      return true;
-    });
+    return this.pages.filter(page => !this.is_Clipboard(page));
+  }
+
+  get mediaImageProfileDefinition() {
+    return this.mediaImageProfile ? CMS_IMAGE_PROFILES[this.mediaImageProfile] : null;
   }
 
   isPageLinked(page: Page): boolean {

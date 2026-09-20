@@ -3,7 +3,7 @@ import { Component, Input, Renderer2, ElementRef, OnChanges, SimpleChanges, OnIn
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { combineLatest, switchMap } from 'rxjs';
-import { EXTRA_TITLES, MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
+import { MENU_TITLES, Page, PAGE_TEMPLATES, Snippet } from '../../../../common/interfaces/page_snippet.interface';
 import { PageService } from '../../../../common/services/page.service';
 import { SnippetService } from '../../../../common/services/snippet.service';
 import { TitleService } from '../../../title/title.service';
@@ -116,14 +116,6 @@ export class GenericPageComponent implements OnInit, OnChanges {
   }
 
   filter_PageSnippets(page_title: string) {
-
-    if (page_title === EXTRA_TITLES.HIGHLIGHTS) {
-      this.page_snippets = this.snippets.filter(s => s.featured)
-        .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
-      this.pageTemplate = PAGE_TEMPLATES.A_LA_UNE;
-      return;
-    }
-
     const title = page_title;
     // load the page by its title, then load all snippets  for this page
     const page = this.pages.find(p => p.title === title);

@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { TitleService } from '../../../title/title.service';
-import { GenericPageComponent } from '../generic-page/generic-page.component';
 import { TournamentsComponent } from '../../../../common/tournaments/tournaments/tournaments.component';
-import { EXTRA_TITLES, MENU_TITLES } from '../../../../common/interfaces/page_snippet.interface';
+import { Snippet } from '../../../../common/interfaces/page_snippet.interface';
 import { MembersService } from '../../../../common/services/members.service';
 import { SystemDataService } from '../../../../common/services/system-data.service';
 import { BreakpointsSettings, UIConfiguration } from '../../../../common/interfaces/ui-conf.interface';
@@ -12,17 +11,18 @@ import { AuthentificationService } from '../../../../common/authentification/aut
 import { CommonModule } from '@angular/common';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { FileService } from '../../../../common/services/files.service';
+import { ALaUneRenderComponent } from '../generic-page/renderers/a-la-une-render/a-la-une-render.component';
+import { HomeHighlightsService } from '../../../../common/services/home-highlights.service';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, GenericPageComponent, TournamentsComponent],
+  imports: [CommonModule, ALaUneRenderComponent, TournamentsComponent],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss'
 })
 export class HomePage {
-  EXTRA_TITLES = EXTRA_TITLES;
-  MENU_TITLES = MENU_TITLES;
+  highlights$!: Observable<Snippet[]>;
   licensee_nbr = 0;
   student_nbr = 0;
   logged_member$: Observable<Member | null> = new Observable<Member | null>();
@@ -54,6 +54,7 @@ export class HomePage {
     private auth: AuthentificationService,
     private breakpointObserver: BreakpointObserver,
     private fileService: FileService,
+    private homeHighlightsService: HomeHighlightsService,
   ) {
     this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge])
       .subscribe(result => {
@@ -64,6 +65,7 @@ export class HomePage {
 
     this.getNextBirthdays();
     this.logged_member$ = this.auth.logged_member$;
+    this.highlights$ = this.homeHighlightsService.listHighlights();
 
     this.titleService.setTitle('Les actualités et les prochains tournois de régularité');
 

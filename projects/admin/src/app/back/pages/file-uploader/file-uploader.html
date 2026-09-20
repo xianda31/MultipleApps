@@ -1,11 +1,15 @@
 <div class="file-uploader">
   <!-- Upload Controls -->
   <div class="upload-controls mb-3">
+    <div *ngIf="imageProfileDefinition as profile" class="cms-format-guidance mb-2">
+      <strong>{{ profile.label }}</strong>
+      <span>{{ profile.recommendation }}</span>
+    </div>
     <div class="d-flex align-items-center gap-3">
       <input
         #fileInput
         type="file"
-        multiple
+        [multiple]="!imageProfile"
         class="form-control"
         [accept]="fileManager.getAcceptFilter(currentRoot)"
         (change)="onFilesSelected($event)"
@@ -16,7 +20,7 @@
         (click)="uploadFiles()"
       >
         <i class="fas fa-upload me-1"></i>
-        {{ isUploading ? 'Import en cours...' : 'Importer' }}
+        {{ isUploading ? 'Import en cours...' : imageProfile ? 'Valider le cadrage et importer' : 'Importer' }}
       </button>
     </div>
   </div>
@@ -24,6 +28,15 @@
   <!-- Files & Upload Progress -->
   <div *ngIf="selectedFiles.length > 0" class="selected-files mb-3">
     <h6 class="small">Fichiers ({{ selectedFiles.length }})</h6>
+
+    <div *ngIf="imageProfileDefinition as profile" class="cms-image-review mb-3">
+    <app-cms-image-review *ngIf="imageProfile && getFileThumbnail(selectedFiles[0]) as previewUrl"
+      [profile]="imageProfile"
+      [sourceUrl]="previewUrl"
+      [sourceWidth]="cmsSourceWidth"
+      [sourceHeight]="cmsSourceHeight"
+      [sourceSize]="selectedFiles[0].size">
+    </app-cms-image-review>
     
     <!-- Upload destination info -->
     <div class="alert alert-info mb-2" *ngIf="currentRoot === 'albums'">

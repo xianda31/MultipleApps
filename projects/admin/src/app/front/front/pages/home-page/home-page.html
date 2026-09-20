@@ -25,9 +25,9 @@
 
     <div [ngClass]="newsColClass">
         <h6 class="text-uppercase text-success fw-bolder mt-2 mb-2">Les dernières nouvelles</h6>
-        <!-- <div class="text-info" (click)="goToNews($event)" style="cursor: pointer;">... accéder à la totalité des
-            informations</div> -->
-        <app-generic-page [row_cols]="news_row_cols" [page_title]="EXTRA_TITLES.HIGHLIGHTS"></app-generic-page>
+        @if (highlights$ | async; as highlights) {
+        <app-a-la-une-render [snippets]="highlights" [row_cols]="news_row_cols"></app-a-la-une-render>
+        }
     </div>
 </div>
 

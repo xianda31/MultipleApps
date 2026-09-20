@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { FileUploader } from './file-uploader';
 
@@ -31,5 +32,26 @@ describe('FileUploader', () => {
     component.targetPathOverride = 'albums/cms/snippets/snippet-1/album';
 
     expect(component.getAlbumThumbnailPath()).toBe('thumbnails/albums/cms/snippets/snippet-1/album/');
+  });
+
+  it('emits the generated WebP variant after a contextual CMS upload', async () => {
+    component.imageProfile = 'landscape-card';
+    component.targetPathOverride = 'images/cms/sources/snippet-1/landscape-card/';
+    const source = new File(['image'], 'photo.jpg', { type: 'image/jpeg' });
+    (component as any).selectedOriginals.add(source);
+
+    spyOn(component.fileManager, 'addFilesToUpload');
+    spyOn(component.fileManager, 'uploadFiles').and.resolveTo();
+    const variantLookup = spyOn((component as any).fileService, 'getPresignedUrl$')
+      .and.returnValue(of('https://example.test/variant.webp'));
+    const emitted = jasmine.createSpy('uploaded');
+    component.uploaded.subscribe(emitted);
+
+    await component.uploadFiles();
+
+    const uploadedFiles = (component.fileManager.addFilesToUpload as jasmine.Spy).calls.mostRecent().args[1] as File[];
+    const variantPath = `images/cms/snippets/snippet-1/variants/landscape-card/${uploadedFiles[0].name.replace(/\.[^.]+$/, '')}.webp`;
+    expect(variantLookup).toHaveBeenCalledOnceWith(variantPath, true, true);
+    expect(emitted).toHaveBeenCalledOnceWith([variantPath]);
   });
 });

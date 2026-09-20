@@ -6,9 +6,9 @@
         <strong>{{ missingFieldLabels }}</strong>
     </div>
 
-    <h6 class="mt-1"><i class="bi bi-gear-fill me-2"></i>Contenu</h6>
-    <div class="row align-items-stretch">
-        <div class="col-8 d-flex flex-column justify-content-between">
+    <h6 class="mt-1"><i class="bi bi-gear-fill me-2"></i>Informations</h6>
+    <div class="snippet-heading-layout">
+        <div class="snippet-heading-fields">
             <label class="form-label form-label-sm mb-0">Titre <span *ngIf="isFieldRequired('title')" class="text-danger">*</span></label>
             <input type="text" formControlName="title" class="form-control form-control-sm mb-1"
                 placeholder="Titre de l'article" (blur)="saveSnippetSelected()" (keyup.enter)="onEnterSave($event)">
@@ -18,19 +18,37 @@
                     placeholder="Sous-titre de l'article" (blur)="saveSnippetSelected()" (keyup.enter)="onEnterSave($event)">
             </ng-container>
         </div>
-        <div class="col-4 d-flex align-items-center justify-content-center">
-            <img *ngIf="snippet && snippet.image_url" [src]="snippet.image_url"
-                alt="{{ form.get('title')?.value }}" class="img-fluid snippet-img-limited">
-            <div *ngIf="form.get('image')?.value && (!snippet || !snippet.image_url)" class="text-muted small">
-                <i class="bi bi-hourglass-split"></i> Chargement...
-            </div>
+        <div *ngIf="isFieldVisible('image')" class="snippet-heading-image">
+            <button type="button" class="snippet-image-preview" (click)="requestImageSelection()"
+                aria-label="Choisir ou importer une illustration" title="Choisir ou importer une illustration">
+                <img *ngIf="snippet && snippet.image_url" [src]="snippet.image_url"
+                    alt="{{ form.get('title')?.value }}" class="img-fluid snippet-img-limited">
+                <div *ngIf="form.get('image')?.value && (!snippet || !snippet.image_url)" class="text-muted small">
+                    <i class="bi bi-hourglass-split"></i> Chargement...
+                </div>
+                <div *ngIf="!form.get('image')?.value" class="snippet-image-placeholder text-muted">
+                    <i class="bi bi-image"></i>
+                    <span>Aucune illustration</span>
+                </div>
+            </button>
+            <small class="text-muted text-truncate" [title]="form.get('image')?.value || ''">
+                {{ form.get('image')?.value ? getNameFromPath(form.get('image')?.value) : 'Aucune image' }}
+                <span *ngIf="isFieldRequired('image')" class="text-danger">*</span>
+            </small>
         </div>
     </div>
 
-    <div *ngIf="isFieldVisible('content')" class="form-label text-muted mb-0 mt-2">
-        <button type="button" class="btn btn-sm btn-outline-success " (click)="snippet && onSnippetContentClick(snippet)">
+    <div *ngIf="isFieldVisible('content')" class="snippet-content-section mt-3">
+        <label class="form-label form-label-sm mb-1">
+            Contenu <span *ngIf="isFieldRequired('content')" class="text-danger">*</span>
+        </label>
+        <div class="snippet-content-preview" [class.is-empty]="!form.get('content')?.value">
+            <div *ngIf="form.get('content')?.value; else emptyContent" [innerHTML]="form.get('content')?.value"></div>
+            <ng-template #emptyContent>Aucun contenu</ng-template>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-success mt-2"
+            (click)="snippet && onSnippetContentClick(snippet)">
             <i class="bi bi-pencil-square"></i> Modifier le contenu
-            <span *ngIf="isFieldRequired('content')" class="text-danger">*</span>
         </button>
     </div>
 
@@ -57,22 +75,9 @@
         </div>
     </div>
 
-    <h6 *ngIf="isFieldVisible('image') || isFieldVisible('file') || isFieldVisible('folder')" class="mt-3">
+    <h6 *ngIf="isFieldVisible('file') || isFieldVisible('folder')" class="mt-3">
         <i class="bi bi-paperclip me-2"></i>Médias associés
     </h6>
-
-    <!-- image url input with selection button -->
-    <div *ngIf="isFieldVisible('image')" class="form-label mb-0 mt-2">
-        <label class="mb-1">Illustration <span *ngIf="isFieldRequired('image')" class="text-danger">*</span></label>
-        <div class="d-flex align-items-center gap-2">
-            <input class="form-control form-control-sm" 
-                   [value]="form.get('image')?.value ? getNameFromPath(form.get('image')?.value) : 'Aucune image'" 
-                   readonly>
-            <button type="button" class="btn btn-outline-success btn-sm" (click)="requestImageSelection()">
-                <i class="bi bi-images me-1"></i>Choisir ou importer
-            </button>
-        </div>
-    </div>
 
 
     <!-- file url input with selection button -->

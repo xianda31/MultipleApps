@@ -1,0 +1,33 @@
+<section class="cms-image-review" aria-label="Validation du cadrage">
+  <div class="cms-image-review__comparison">
+    <div>
+      <small>Original</small>
+      @if (hasSourceDimensions) {
+      <strong>{{ sourceWidth }} × {{ sourceHeight }} px · {{ sourceOrientationLabel }}</strong>
+      } @else {
+      <strong>Dimensions en cours d’analyse</strong>
+      }
+      @if (sourceSize) {
+      <span>{{ formatFileSize(sourceSize) }}</span>
+      }
+    </div>
+    <div class="cms-image-review__target">
+      <small>Version utilisée</small>
+      <strong>{{ definition.label }}</strong>
+      <span>{{ definition.width }} × {{ definition.height }} px · WebP</span>
+    </div>
+  </div>
+
+  @if (orientationMismatch) {
+  <div class="alert alert-warning py-2 mb-0" role="alert">
+    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+    Source {{ sourceOrientationLabel }} pour un cadre {{ definition.orientation === 'landscape' ? 'paysage' : 'portrait' }} : un recadrage important est probable.
+  </div>
+  }
+
+  <div class="cms-image-review__frame" [style.aspect-ratio]="definition.aspectRatio">
+    <img [src]="sourceUrl" [style.object-fit]="definition.fit" alt="Aperçu du cadrage final">
+  </div>
+
+  <p class="small text-muted mb-0">{{ definition.recommendation }}</p>
+</section>

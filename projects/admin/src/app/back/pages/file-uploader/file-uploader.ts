@@ -1,15 +1,17 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { FileManager, FileUploadProgress } from '../../../services/file-manager';
-import { S3_ROOT_FOLDERS } from '../../../common/services/files.service';
+import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { FileBrowser } from '../file-browser/file-browser';
+import { CMS_IMAGE_PROFILES, CmsImageProfile, cmsImageVariantPath } from '../../../common/images/cms-image-profiles';
+import { CmsImageReview } from '../../../common/images/cms-image-review/cms-image-review';
 
 @Component({
   selector: 'app-file-uploader',
   standalone: true,
-  imports: [CommonModule, FormsModule, FileBrowser],
+  imports: [CommonModule, FormsModule, FileBrowser, CmsImageReview],
   templateUrl: './file-uploader.html',
   styleUrl: './file-uploader.scss'
 })
@@ -17,6 +19,7 @@ export class FileUploader implements OnInit, OnDestroy {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   @Input() targetPathOverride: string | null = null;
   @Input() rootOverride: string | null = null;
+  @Input() imageProfile: CmsImageProfile | null = null;
   @Input() hideTargetBrowser = false;
   @Output() uploaded = new EventEmitter<string[]>();
 
@@ -27,6 +30,8 @@ export class FileUploader implements OnInit, OnDestroy {
   uploadStatusIcon = '';
   currentRoot: string = S3_ROOT_FOLDERS.IMAGES;
   targetPath: string = '';
+  cmsSourceWidth: number | null = null;
+  cmsSourceHeight: number | null = null;
   
   // Cache for file thumbnails and selections
   private fileThumbnails = new Map<File, string>();
@@ -38,11 +43,16 @@ export class FileUploader implements OnInit, OnDestroy {
 
   constructor(
     public fileManager: FileManager,
+    private fileService: FileService,
     private cdr: ChangeDetectorRef
   ) {}
 
   get hasSelectedFiles(): boolean {
     return this.selectedOriginals.size > 0 || this.selectedThumbnails.size > 0;
+  }
+
+  get imageProfileDefinition() {
+    return this.imageProfile ? CMS_IMAGE_PROFILES[this.imageProfile] : null;
   }
 
   get uploadProgress$() {
@@ -108,6 +118,8 @@ export class FileUploader implements OnInit, OnDestroy {
       this.selectedOriginals.clear();
       this.selectedThumbnails.clear();
       this.fileToThumbnail.clear();
+      this.cmsSourceWidth = null;
+      this.cmsSourceHeight = null;
       // Mark all files as candidates for upload by default
       this.selectedFiles.forEach(file => this.selectedOriginals.add(file));
       // Generate thumbnails for image files
@@ -122,6 +134,11 @@ export class FileUploader implements OnInit, OnDestroy {
     this.uploadStatus = '';
     
     try {
+      if (this.imageProfile) {
+        await this.uploadCmsImages();
+        return;
+      }
+
       const uploads: Promise<void>[] = [];
       
       // Upload selected original files
@@ -171,6 +188,51 @@ export class FileUploader implements OnInit, OnDestroy {
       
       setTimeout(() => { this.uploadStatus = ''; }, 3000);
     }
+  }
+
+  private async uploadCmsImages(): Promise<void> {
+    const originals = Array.from(this.selectedOriginals).filter(file => this.isImageFile(file));
+    if (originals.length === 0) throw new Error('Aucune image valide à importer');
+
+    const sourceFiles = originals.map(file => this.asImmutableCmsSource(file));
+    const sourcePath = this.getFullTargetPath();
+    this.fileManager.addFilesToUpload(sourcePath, sourceFiles);
+    await this.fileManager.uploadFiles(sourcePath);
+
+    this.uploadStatus = 'Optimisation de l’illustration...';
+    this.uploadStatusClass = 'alert-info';
+    this.uploadStatusIcon = 'fa-spinner fa-spin';
+
+    const variantPaths = sourceFiles.map(file => cmsImageVariantPath(`${sourcePath}${file.name}`));
+    await Promise.all(variantPaths.map(path => this.waitForVariant(path)));
+
+    this.isUploading = false;
+    this.uploadStatus = 'Illustration optimisée avec succès';
+    this.uploadStatusClass = 'alert-success';
+    this.uploadStatusIcon = 'fa-check-circle';
+    this.clearFiles();
+    this.uploaded.emit(variantPaths);
+    setTimeout(() => { this.uploadStatus = ''; }, 3000);
+  }
+
+  private asImmutableCmsSource(file: File): File {
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const assetId = globalThis.crypto.randomUUID();
+    return new File([file], `${assetId}.${extension}`, { type: file.type, lastModified: file.lastModified });
+  }
+
+  private async waitForVariant(path: string): Promise<void> {
+    const maxAttempts = 30;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        await firstValueFrom(this.fileService.getPresignedUrl$(path, true, true));
+        return;
+      } catch {
+        if (attempt === maxAttempts - 1) break;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    throw new Error('Le traitement de l’image n’a pas abouti dans le délai prévu');
   }
 
   removeFile(fileToRemove: File): void {
@@ -223,6 +285,8 @@ export class FileUploader implements OnInit, OnDestroy {
     this.selectedOriginals.clear();
     this.selectedThumbnails.clear();
     this.fileToThumbnail.clear();
+    this.cmsSourceWidth = null;
+    this.cmsSourceHeight = null;
     this.clearThumbnails();
     if (this.fileInput) {
       this.fileInput.nativeElement.value = '';
@@ -340,8 +404,11 @@ export class FileUploader implements OnInit, OnDestroy {
           const result = e.target?.result as string;
           if (result) {
             this.fileThumbnails.set(file, result);
-            // Create thumbnail file
-            this.createThumbnailFile(file, result);
+            if (this.imageProfile) {
+              this.readCmsSourceDimensions(result);
+            } else {
+              this.createThumbnailFile(file, result);
+            }
           }
         };
         reader.readAsDataURL(file);
@@ -420,6 +487,16 @@ export class FileUploader implements OnInit, OnDestroy {
     };
     
     img.src = dataUrl;
+  }
+
+  private readCmsSourceDimensions(dataUrl: string): void {
+    const image = new Image();
+    image.onload = () => {
+      this.cmsSourceWidth = image.naturalWidth;
+      this.cmsSourceHeight = image.naturalHeight;
+      this.cdr.detectChanges();
+    };
+    image.src = dataUrl;
   }
 
   private clearThumbnails(): void {

@@ -61,15 +61,4 @@ export enum MENU_TITLES {
 }
 export const CLIPBOARD_TITLE = '__CLIPBOARD__'
 
-export enum EXTRA_TITLES {
-    HIGHLIGHTS = 'à la une',
-}
-
-// export enum ALIAS_TITLES {
-//     HIGHLIGHTS = 'à la une',
-// }
-// export const ALIAS_REDIRECTIONS: { [key in ALIAS_TITLES]: {title: MENU_TITLES, template: PAGE_TEMPLATES} } = {
-//     [ALIAS_TITLES.HIGHLIGHTS]: { title: MENU_TITLES.NEWS, template: PAGE_TEMPLATES.A_LA_UNE },  
-// }
-
 

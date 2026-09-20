@@ -1,7 +1,9 @@
 import * as path from "path";
+import { execFileSync } from "child_process";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { defineBackend } from "@aws-amplify/backend";
 import { Stack } from "aws-cdk-lib";
+import { Architecture, CfnFunction, Code, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import {
   CorsHttpMethod,
@@ -12,6 +14,8 @@ import {  HttpUserPoolAuthorizer} from "aws-cdk-lib/aws-apigatewayv2-authorizers
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
 import { CfnTable } from "aws-cdk-lib/aws-dynamodb";
+import { EventType } from "aws-cdk-lib/aws-s3";
+import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
 import { sesMailing } from "./functions/ses-mailing/resource";
 import { emailUnsubscribe } from "./functions/email-unsubscribe/resource";
@@ -20,6 +24,7 @@ import { stripeWebhooks } from "./functions/stripe-webhooks/resource";
 import { stripeConnectionToken } from "./functions/stripe-connection-token/resource";
 import { surveyRespond } from "./functions/survey-respond/resource";
 import { processBookEntryActions } from "./functions/process-book-entry-actions/resource";
+import { processCmsImage } from "./functions/process-cms-image/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -37,7 +42,53 @@ const backend = defineBackend({
   stripeConnectionToken,
   surveyRespond,
   processBookEntryActions,
+  processCmsImage,
 });
+
+const storageBucket = backend.storage.resources.bucket;
+const processCmsImageLambda = backend.processCmsImage.resources.lambda;
+const sharpLayer = new LayerVersion(Stack.of(processCmsImageLambda), "CmsSharpLayer", {
+  code: Code.fromAsset(path.join(import.meta.dirname, "functions/process-cms-image"), {
+    bundling: {
+      image: Runtime.NODEJS_20_X.bundlingImage,
+      local: {
+        tryBundle(outputDir: string): boolean {
+          const npmCli = process.env.npm_execpath;
+          if (!npmCli) throw new Error("npm_execpath is required to bundle the Sharp layer");
+
+          execFileSync(process.execPath, [
+            npmCli,
+            "install",
+            "--prefix", path.join(outputDir, "nodejs"),
+            "--include=optional",
+            "--ignore-scripts",
+            "--no-package-lock",
+            "sharp@0.35.4",
+          ], {
+            env: {
+              ...process.env,
+              npm_config_os: "linux",
+              npm_config_cpu: "arm64",
+              npm_config_libc: "glibc",
+            },
+            stdio: "inherit",
+          });
+          return true;
+        },
+      },
+    },
+  }),
+  compatibleArchitectures: [Architecture.ARM_64],
+  compatibleRuntimes: [Runtime.NODEJS_20_X],
+});
+const processCmsImageCfnFunction = processCmsImageLambda.node.defaultChild as CfnFunction;
+processCmsImageCfnFunction.addPropertyOverride("Layers", [sharpLayer.layerVersionArn]);
+storageBucket.grantReadWrite(processCmsImageLambda);
+storageBucket.addEventNotification(
+  EventType.OBJECT_CREATED,
+  new LambdaDestination(processCmsImageLambda),
+  { prefix: "images/cms/sources/" },
+);
 
 // Add SSM GetParameter permission to ffbProxy Lambda function
 backend.ffbProxy.resources.lambda.role?.addToPrincipalPolicy(

@@ -7,6 +7,7 @@ import { NavItemsService } from '../../../common/services/navitem.service';
 import { PageService } from '../../../common/services/page.service';
 import { SnippetService } from '../../../common/services/snippet.service';
 import { ToastService } from '../../../common/services/toast.service';
+import { FileService } from '../../../common/services/files.service';
 import { FileManager } from '../../../services/file-manager';
 import { CmsWrapper } from './cms-wrapper';
 
@@ -19,7 +20,7 @@ describe('CmsWrapper', () => {
       imports: [CmsWrapper],
       providers: [
         { provide: PageService, useValue: { listPages: () => of([]) } },
-        { provide: SnippetService, useValue: { listSnippets: () => of([]) } },
+        { provide: SnippetService, useValue: { listSnippets: () => of([]), updateSnippet: jasmine.createSpy().and.resolveTo() } },
         { provide: ClipboardService, useValue: { clipboardSnippets$: of([]) } },
         { provide: ToastService, useValue: {} },
         {
@@ -27,6 +28,15 @@ describe('CmsWrapper', () => {
           useValue: {
             fileSelected$: of(null),
             cancelSelectionMode: () => undefined,
+            getCurrentRoot: () => 'images/',
+          },
+        },
+        {
+          provide: FileService,
+          useValue: {
+            download_file: jasmine.createSpy().and.resolveTo(new Blob(['image'], { type: 'image/jpeg' })),
+            upload_file: jasmine.createSpy().and.resolveTo(),
+            getPresignedUrl$: jasmine.createSpy().and.returnValue(of('https://example.test/variant.webp')),
           },
         },
         {
@@ -65,18 +75,12 @@ describe('CmsWrapper', () => {
     expect(fixture.nativeElement.querySelector('input[type="search"]')).toBeNull();
   });
 
-  it('filters linked pages and hides the technical clipboard page', () => {
+  it('hides the technical clipboard page from the page picker', () => {
     const linkedPage = { id: 'linked', title: 'Actualités', template: PAGE_TEMPLATES.PUBLICATION, snippet_ids: [] } as Page;
     const unlinkedPage = { id: 'unlinked', title: 'À préparer', template: PAGE_TEMPLATES.PUBLICATION, snippet_ids: [] } as Page;
     const clipboardPage = { id: 'clipboard', title: CLIPBOARD_TITLE, template: PAGE_TEMPLATES.PUBLICATION, snippet_ids: [] } as Page;
     component.pages = [linkedPage, unlinkedPage, clipboardPage];
-    component.linkedPageIds = new Set([linkedPage.id]);
-
-    component.pageFilter = 'linked';
-    expect(component.filteredPages).toEqual([linkedPage]);
-
-    component.pageFilter = 'unlinked';
-    expect(component.filteredPages).toEqual([unlinkedPage]);
+    expect(component.filteredPages).toEqual([linkedPage, unlinkedPage]);
   });
 
   it('marks an album article without a folder as incomplete', () => {
@@ -100,5 +104,85 @@ describe('CmsWrapper', () => {
 
     expect(component.isSnippetComplete(snippet)).toBeFalse();
     expect(component.isSnippetComplete({ ...snippet, folder: 'albums/sortie/' })).toBeTrue();
+  });
+
+  it('imports a selected S3 image through the CMS variant pipeline', async () => {
+    const snippet = {
+      id: 'snippet-1',
+      title: 'Article',
+      public: true,
+      featured: false,
+    } as Snippet;
+    component.pageSnippets = [snippet];
+    component.mediaImageProfile = 'inline';
+    component.activeSelectionSnippetId = snippet.id;
+
+    await (component as any).applyFileSelectionToSnippet({
+      path: 'legacy/photo.jpg',
+      type: 'image',
+      context: 'Illustration',
+      targetId: snippet.id,
+    });
+
+    const fileService = TestBed.inject(FileService) as jasmine.SpyObj<FileService>;
+    const uploadedFile = fileService.upload_file.calls.mostRecent().args[0] as File;
+    const expectedVariant = `images/cms/snippets/snippet-1/variants/inline/${uploadedFile.name.replace(/\.[^.]+$/, '')}.webp`;
+    expect(fileService.download_file).toHaveBeenCalledOnceWith('images/legacy/photo.jpg');
+    expect(fileService.upload_file).toHaveBeenCalledWith(uploadedFile, 'images/cms/sources/snippet-1/inline/');
+    expect(component.pageSnippets[0].image).toBe(expectedVariant);
+  });
+
+  it('waits for explicit crop validation before importing an S3 image', async () => {
+    const snippet = {
+      id: 'snippet-1',
+      title: 'Article',
+      public: true,
+      featured: false,
+    } as Snippet;
+    component.pageSnippets = [snippet];
+    component.mediaImageProfile = 'landscape-card';
+    component.activeSelectionSnippetId = snippet.id;
+    const fileService = TestBed.inject(FileService) as jasmine.SpyObj<FileService>;
+
+    await (component as any).handleFileSelection({
+      path: 'legacy/portrait.jpg',
+      type: 'image',
+      context: 'Illustration',
+      targetId: snippet.id,
+    });
+
+    expect(fileService.download_file).toHaveBeenCalledOnceWith('images/legacy/portrait.jpg');
+    expect(fileService.upload_file).not.toHaveBeenCalled();
+    expect(component.pageSnippets[0].image).toBeUndefined();
+    expect(component.mediaPreviewUrl).not.toBeNull();
+
+    await component.confirmMediaSelection();
+
+    expect(fileService.download_file).toHaveBeenCalledTimes(1);
+    expect(fileService.upload_file).toHaveBeenCalled();
+    expect(component.pageSnippets[0].image).toContain('/variants/landscape-card/');
+    expect(component.mediaPreviewUrl).toBeNull();
+  });
+
+  it('does not process an already generated local variant again', async () => {
+    const snippet = {
+      id: 'snippet-1',
+      title: 'Article',
+      public: true,
+      featured: false,
+    } as Snippet;
+    component.pageSnippets = [snippet];
+    component.mediaImageProfile = 'landscape-card';
+    component.mediaSelectionType = 'image';
+    component.activeSelectionSnippetId = snippet.id;
+    const fileService = TestBed.inject(FileService) as jasmine.SpyObj<FileService>;
+    const variantPath = 'images/cms/snippets/snippet-1/variants/landscape-card/asset.webp';
+
+    component.onMediaUploaded([variantPath]);
+    await fixture.whenStable();
+
+    expect(fileService.download_file).not.toHaveBeenCalled();
+    expect(fileService.upload_file).not.toHaveBeenCalled();
+    expect(component.pageSnippets[0].image).toBe(variantPath);
   });
 });

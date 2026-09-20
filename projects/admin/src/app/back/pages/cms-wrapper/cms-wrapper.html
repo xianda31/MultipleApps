@@ -19,38 +19,26 @@
             }
         </div>
 
+        @if (selectedPage) {
         <nav class="cms-tabs" aria-label="Vue CMS">
             <button type="button" class="btn" [class.active]="workspaceTab === 'content'"
                 (click)="workspaceTab = 'content'">
                 <i class="bi bi-pencil-square"></i> Contenu
             </button>
-            <button type="button" class="btn" [class.active]="workspaceTab === 'preview'" [disabled]="!selectedPage"
+            <button type="button" class="btn" [class.active]="workspaceTab === 'preview'"
                 (click)="workspaceTab = 'preview'">
                 <i class="bi bi-eye"></i> Aperçu
             </button>
-            <button type="button" class="btn" [class.active]="workspaceTab === 'settings'" [disabled]="!selectedPage"
+            <button type="button" class="btn" [class.active]="workspaceTab === 'settings'"
                 (click)="workspaceTab = 'settings'">
                 <i class="bi bi-sliders"></i> Paramètres
             </button>
         </nav>
+        }
     </header>
 
     @if (pagePickerOpen) {
     <section class="page-picker" aria-label="Sélection de page">
-        <div class="page-picker-controls">
-            <div class="btn-group btn-group-sm" role="group" aria-label="Filtrer les pages">
-                <button type="button" class="btn btn-outline-secondary" [class.active]="pageFilter === 'all'"
-                    (click)="pageFilter = 'all'">Toutes</button>
-                <button type="button" class="btn btn-outline-secondary" [class.active]="pageFilter === 'linked'"
-                    (click)="pageFilter = 'linked'">Navigation</button>
-                <button type="button" class="btn btn-outline-secondary" [class.active]="pageFilter === 'unlinked'"
-                    (click)="pageFilter = 'unlinked'">Hors navigation</button>
-            </div>
-            <button type="button" class="btn btn-sm btn-success" (click)="createNewPage()">
-                <i class="bi bi-plus-lg me-1"></i>Nouvelle page
-            </button>
-        </div>
-
         <div class="page-list">
             @for (page of filteredPages; track page.id) {
             <button type="button" class="page-list-item" [class.active]="page.id === selectedPageId"
@@ -62,8 +50,12 @@
                     [title]="isPageLinked(page) ? 'Dans la navigation' : 'Hors navigation'"></i>
             </button>
             } @empty {
-            <div class="text-muted small p-3">Aucune page ne correspond à ce filtre.</div>
+            <div class="text-muted small p-3">Aucune page disponible.</div>
             }
+            <button type="button" class="page-list-item page-list-create" (click)="createNewPage()">
+                <span>Nouvelle page</span>
+                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+            </button>
         </div>
     </section>
     }
@@ -193,11 +185,40 @@
             </button>
         </div>
 
+        @if (mediaImageProfileDefinition; as profile) {
+        <div class="media-format-guidance mb-3">
+            <strong>{{ profile.label }}</strong>
+            <span>{{ profile.recommendation }}</span>
+        </div>
+        }
+
         @if (fileMode === 'browse') {
+        @if (mediaPreviewLoading || mediaImporting) {
+        <div class="alert alert-info py-2" role="status">
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            {{ mediaImporting ? 'Optimisation de l’illustration…' : 'Chargement de l’aperçu…' }}
+        </div>
+        }
+        @if (mediaPreviewUrl && mediaImageProfileDefinition; as profile) {
+        <section class="media-review" aria-label="Validation du cadrage">
+            <app-cms-image-review [profile]="mediaImageProfile!" [sourceUrl]="mediaPreviewUrl"
+                [sourceWidth]="mediaSourceWidth" [sourceHeight]="mediaSourceHeight"
+                [sourceSize]="mediaSourceSize">
+            </app-cms-image-review>
+            <div class="media-review__actions">
+                <button type="button" class="btn btn-outline-secondary" (click)="cancelMediaPreview()"
+                    [disabled]="mediaImporting">Choisir une autre image</button>
+                <button type="button" class="btn btn-primary" (click)="confirmMediaSelection()"
+                    [disabled]="mediaImporting">Valider le cadrage</button>
+            </div>
+        </section>
+        } @else {
         <app-file-browser></app-file-browser>
+        }
         } @else {
         <div class="mb-2 small text-muted">Destination gérée automatiquement pour cet article.</div>
         <app-file-uploader [rootOverride]="mediaRoot" [targetPathOverride]="mediaTargetPath"
+            [imageProfile]="mediaImageProfile"
             [hideTargetBrowser]="true" (uploaded)="onMediaUploaded($event)">
         </app-file-uploader>
         }

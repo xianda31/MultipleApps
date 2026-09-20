@@ -1,4 +1,13 @@
 .file-uploader {
+  .cms-format-guidance {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.65rem 0.75rem;
+    background: #eef5f1;
+    border-left: 3px solid #198754;
+  }
+
   .upload-controls {
     input[type="file"] {
       cursor: pointer;
