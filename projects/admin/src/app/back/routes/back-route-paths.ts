@@ -40,6 +40,7 @@ export const BACK_ROUTE_PATHS = {
   FilemgrWindows: 'outils/disk/:root_folder',
   MenusEditor: 'site/menus',
   UiConf: 'site/ui',
+  ImageMaintenance: 'site/maintenance-images',
   Competitions: 'site/competitions',
   Home: 'home',
   OnlineHelp: 'communication/aide-en-ligne',

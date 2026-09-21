@@ -93,6 +93,11 @@ storageBucket.addEventNotification(
   new LambdaDestination(processCmsImageLambda),
   { prefix: "images/cms/sources/" },
 );
+storageBucket.addEventNotification(
+  EventType.OBJECT_CREATED,
+  new LambdaDestination(processCmsImageLambda),
+  { prefix: "images/home/sources/" },
+);
 
 const expireFeaturedLambda = backend.expireFeaturedSnippets.resources.lambda;
 const snippetTable = backend.data.resources.tables['Snippet'];

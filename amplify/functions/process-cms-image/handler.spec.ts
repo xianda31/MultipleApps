@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { parseCmsImageSource } from './handler';
+import { GALLERY_IMAGE_PROFILE, galleryResizeForDimensions, parseCmsImageSource, parseGalleryImageSource } from './handler';
 
 describe('process-cms-image path contract', () => {
   it('maps a valid source to its deterministic WebP variant', () => {
@@ -25,5 +25,28 @@ describe('process-cms-image path contract', () => {
       parseCmsImageSource('images/cms/sources/snippet-1/publication-landscape/banner.jpg')?.variantKey,
       'images/cms/snippets/snippet-1/variants/publication-landscape/banner.webp',
     );
+  });
+
+  it('maps a homepage source to the legacy public gallery', () => {
+    assert.deepEqual(
+      parseGalleryImageSource('images/home/sources/asset-123.jpeg'),
+      {
+        assetId: 'asset-123',
+        variantKey: 'images/_ACCUEIL_/asset-123.webp',
+      },
+    );
+    assert.equal(parseGalleryImageSource('images/_ACCUEIL_/asset-123.webp'), null);
+    assert.deepEqual(GALLERY_IMAGE_PROFILE, {
+      width: 1920,
+      height: 1080,
+      fit: 'cover',
+      position: 'centre',
+    });
+    assert.deepEqual(galleryResizeForDimensions(1280, 1920), {
+      ...GALLERY_IMAGE_PROFILE,
+      width: 1280,
+      height: 720,
+    });
+    assert.deepEqual(galleryResizeForDimensions(3840, 2160), GALLERY_IMAGE_PROFILE);
   });
 });

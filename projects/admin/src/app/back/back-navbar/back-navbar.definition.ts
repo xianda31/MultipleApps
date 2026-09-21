@@ -80,6 +80,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
             { label: 'paramètres UI', route: BACK_ROUTE_PATHS.UiConf },
             { label: 'les menus', route: BACK_ROUTE_PATHS.MenusEditor },
             { label: 'pages et datas', route: BACK_ROUTE_PATHS.CMSWrapper },
+            { label: 'maintenance images', route: BACK_ROUTE_PATHS.ImageMaintenance },
             { label: 'compétitions', route: BACK_ROUTE_PATHS.Competitions },
             { label: 'aller sur le site', route: '/front' }
         ]

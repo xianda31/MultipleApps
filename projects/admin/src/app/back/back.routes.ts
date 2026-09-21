@@ -41,6 +41,7 @@ import { SondageListComponent } from './sondage/sondage-list/sondage-list.compon
 import { SondageEditorComponent } from './sondage/sondage-editor/sondage-editor.component';
 import { SondageResultatsComponent } from './sondage/sondage-resultats/sondage-resultats.component';
 import { BilletterieComponent } from './collecte/collecte-vente.component';
+import { MaintenanceImagesComponent } from './maintenance-images/maintenance-images.component';
 
 
 export const routes: Routes = [
@@ -92,6 +93,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.UiConf, component: UiConfComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.MenusEditor, component: MenusEditorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.CMSWrapper, component: CmsWrapper, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.ImageMaintenance, component: MaintenanceImagesComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
       { path: BACK_ROUTE_PATHS.SignOut, component: BackPageComponent },
       { path: BACK_ROUTE_PATHS.OnlineHelp, component: BackOnlineHelpComponent, canActivate: [AuthGuard] },
