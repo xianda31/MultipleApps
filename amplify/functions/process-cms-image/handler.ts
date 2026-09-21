@@ -66,6 +66,7 @@ async function processRecord(record: S3Record): Promise<void> {
       width: profile.width,
       height: profile.height,
       fit: profile.fit,
+      position: 'centre',
       withoutEnlargement: true,
     })
     .webp({ quality: 82, effort: 4 })

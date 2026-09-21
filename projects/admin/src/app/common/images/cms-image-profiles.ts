@@ -76,6 +76,13 @@ export function imageProfileForTemplate(template: PAGE_TEMPLATES): CmsImageProfi
   return PAGE_TEMPLATE_IMAGE_PROFILE[template] ?? null;
 }
 
+export function cmsImageTargetDescription(profile: CmsImageProfile): string {
+  const definition = CMS_IMAGE_PROFILES[profile];
+  const ratio = definition.aspectRatio.replace(/\s*\/\s*/, ':');
+  const framing = definition.fit === 'cover' ? 'recadrage centré' : 'image entière sans recadrage';
+  return `${definition.width} × ${definition.height} px · ratio ${ratio} · WebP · ${framing}`;
+}
+
 export function cmsImageSourcePrefix(snippetId: string, profile: CmsImageProfile): string {
   return `images/cms/sources/${snippetId}/${profile}/`;
 }

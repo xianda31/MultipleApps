@@ -22,7 +22,7 @@ export class ImageService {
 
   }
 
-  private resize(img: HTMLImageElement, sizing: ImageSize, both: boolean): string {
+  private resize(img: HTMLImageElement, sizing: ImageSize, both: boolean, outputType?: string): string {
 
 // spec:
 // Landscape : crop centré au ratio sizing.ratio puis réduction à sizing.width.
@@ -58,7 +58,7 @@ export class ImageService {
       if (ctx) {
         ctx.drawImage(img, sx, sy, cropWidth, cropHeight, 0, 0, dw, dh);
       }
-      return canvas.toDataURL('image/jpeg', 0.8);
+      return canvas.toDataURL(outputType ?? 'image/jpeg', 0.82);
     } else { // PORTRAIT
       if (!both) {
         // 1. Rogner au centre pour obtenir le ratio 1/sizing.ratio
@@ -81,7 +81,7 @@ export class ImageService {
         if (ctx) {
           ctx.drawImage(img, sx, sy, cropWidth, cropHeight, 0, 0, dw, dh);
         }
-        return canvas.toDataURL('image/jpeg', 0.8);
+        return canvas.toDataURL(outputType ?? 'image/jpeg', 0.82);
       } else {
         // 1. Centrer l'image sur un fond transparent de taille sizing.width x sizing.height
         canvas.width = sizing.width;
@@ -96,7 +96,7 @@ export class ImageService {
           let dy = (sizing.height - dh) / 2;
           ctx.drawImage(img, 0, 0, width, height, dx, dy, dw, dh);
         }
-        return canvas.toDataURL('image/png', 0.95); // PNG pour transparence
+        return canvas.toDataURL(outputType ?? 'image/png', 0.82);
       }
     }
   }
@@ -109,6 +109,27 @@ export class ImageService {
         try {
           await img.decode();
           resolve(this.resize(img, this.album_thumbnailSize, toggle));
+        } catch (err) {
+          console.error('Image decode error:', err);
+          resolve('');
+        }
+      };
+      img.onerror = (err) => {
+        console.error('Error loading image from URL:', err);
+        resolve('');
+      };
+      img.src = url;
+    });
+  }
+
+  resizeImageAtUrlAsWebp(url: string, toggle: boolean): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = async () => {
+        try {
+          await img.decode();
+          resolve(this.resize(img, this.album_thumbnailSize, toggle, 'image/webp'));
         } catch (err) {
           console.error('Image decode error:', err);
           resolve('');
@@ -142,7 +163,8 @@ export class ImageService {
     });
   }
 
-  base64ToBlob(base64: string, contentType = 'image/jpeg', sliceSize = 512): Blob {
+  base64ToBlob(base64: string, contentType?: string, sliceSize = 512): Blob {
+    const resolvedContentType = contentType ?? base64.match(/^data:([^;,]+)/)?.[1] ?? 'application/octet-stream';
     const byteCharacters = atob(base64.split(',')[1]);
     const byteArrays = [];
 
@@ -158,7 +180,7 @@ export class ImageService {
       byteArrays.push(byteArray);
     }
 
-    const blob = new Blob(byteArrays, { type: contentType });
+    const blob = new Blob(byteArrays, { type: resolvedContentType });
     return blob;
   }
 }

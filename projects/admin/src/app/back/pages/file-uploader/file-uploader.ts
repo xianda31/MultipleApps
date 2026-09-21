@@ -5,8 +5,9 @@ import { firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { FileManager, FileUploadProgress } from '../../../services/file-manager';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { FileBrowser } from '../file-browser/file-browser';
-import { CMS_IMAGE_PROFILES, CmsImageProfile, cmsImageVariantPath } from '../../../common/images/cms-image-profiles';
+import { CMS_IMAGE_PROFILES, CmsImageProfile, cmsImageTargetDescription, cmsImageVariantPath } from '../../../common/images/cms-image-profiles';
 import { CmsImageReview } from '../../../common/images/cms-image-review/cms-image-review';
+import { replaceImageExtensionWithWebp } from '../../../common/images/album-thumbnail-path';
 
 @Component({
   selector: 'app-file-uploader',
@@ -51,8 +52,33 @@ export class FileUploader implements OnInit, OnDestroy {
     return this.selectedOriginals.size > 0 || this.selectedThumbnails.size > 0;
   }
 
+  get isAlbumMode(): boolean {
+    return this.currentRoot.replace(/\/$/, '') === S3_ROOT_FOLDERS.ALBUMS;
+  }
+
+  get albumThumbnailsReady(): boolean {
+    const images = this.selectedFiles.filter(file => this.isImageFile(file));
+    return images.length > 0 && images.every(file => this.fileToThumbnail.has(file));
+  }
+
+  get albumOriginalSize(): number {
+    return this.selectedFiles.reduce((total, file) => total + file.size, 0);
+  }
+
+  get albumThumbnailSize(): number {
+    return Array.from(this.selectedThumbnails).reduce((total, file) => total + file.size, 0);
+  }
+
+  get albumThumbnailCount(): number {
+    return this.selectedThumbnails.size;
+  }
+
   get imageProfileDefinition() {
     return this.imageProfile ? CMS_IMAGE_PROFILES[this.imageProfile] : null;
+  }
+
+  get imageProfileTargetDescription(): string {
+    return this.imageProfile ? cmsImageTargetDescription(this.imageProfile) : '';
   }
 
   get uploadProgress$() {
@@ -153,7 +179,7 @@ export class FileUploader implements OnInit, OnDestroy {
       }
       console.log('FileUploader: Current root is', this.currentRoot);
       // Special handling for ALBUMS: upload thumbnails to THUMBNAILS/albums
-      if (this.currentRoot === S3_ROOT_FOLDERS.ALBUMS+'/' && this.selectedThumbnails.size > 0) {
+      if (this.isAlbumMode && this.selectedThumbnails.size > 0) {
         const thumbnailPath = this.getAlbumThumbnailPath();
         console.log('FileUploader: Uploading thumbnails to path:', thumbnailPath);
         const thumbnailFiles = Array.from(this.selectedThumbnails);
@@ -278,6 +304,11 @@ export class FileUploader implements OnInit, OnDestroy {
 
   getThumbnailFile(originalFile: File): File | undefined {
     return this.fileToThumbnail.get(originalFile);
+  }
+
+  getGeneratedThumbnailPreview(originalFile: File): string | null {
+    const thumbnailFile = this.getThumbnailFile(originalFile);
+    return thumbnailFile ? this.getFileThumbnail(thumbnailFile) : null;
   }
 
   clearFiles(): void {
@@ -450,19 +481,19 @@ export class FileUploader implements OnInit, OnDestroy {
             // Create thumbnail filename
             const fileNameParts = originalFile.name.split('.');
             const extension = fileNameParts.pop();
-            const baseName = fileNameParts.join('.');
+            const baseName = fileNameParts.join('.') || originalFile.name;
             
             // Si ALBUMS: nom identique (sans suffixe), sinon: suffixe avec dimensions
             let thumbnailName: string;
-            if (this.currentRoot === S3_ROOT_FOLDERS.ALBUMS + '/') {
-              thumbnailName = originalFile.name;
+            if (this.isAlbumMode) {
+              thumbnailName = replaceImageExtensionWithWebp(originalFile.name);
             } else {
               const ratio = (width / height).toFixed(2);
               thumbnailName = `${baseName}_${Math.round(width)}x${Math.round(height)}_${ratio}.${extension}`;
             }
             
             const thumbnailFile = new File([blob], thumbnailName, {
-              type: originalFile.type
+              type: this.isAlbumMode ? 'image/webp' : originalFile.type
             });
             
             // Store the relationship and thumbnail preview
@@ -482,7 +513,7 @@ export class FileUploader implements OnInit, OnDestroy {
             };
             thumbnailReader.readAsDataURL(thumbnailFile);
           }
-        }, originalFile.type, 0.8); // 80% quality
+        }, this.isAlbumMode ? 'image/webp' : originalFile.type, this.isAlbumMode ? 0.82 : 0.8);
       }
     };
     

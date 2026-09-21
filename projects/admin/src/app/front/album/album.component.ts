@@ -11,6 +11,7 @@ import { S3Item } from '../../common/interfaces/file.interface';
 import { Snippet } from '../../common/interfaces/page_snippet.interface';
 import { SnippetService } from '../../common/services/snippet.service';
 import { TitleService } from '../title/title.service';
+import { replaceImageExtensionWithWebp } from '../../common/images/album-thumbnail-path';
 
 
 // Extend S3Item to allow highResUrl for template type safety
@@ -103,6 +104,10 @@ export class AlbumComponent implements OnChanges, OnInit {
     return S3_ROOT_FOLDERS.THUMBNAILS + '/' + originalUrl;
   }
 
+  getWebpThumbnailUrl(originalUrl: string): string {
+    return S3_ROOT_FOLDERS.THUMBNAILS + '/' + replaceImageExtensionWithWebp(originalUrl);
+  }
+
 
   loadPhotos(album: Snippet) {
     this.loading = true;
@@ -112,8 +117,9 @@ export class AlbumComponent implements OnChanges, OnInit {
       this.loading = false;
       return;
     }
+    const folderPrefix = `${folder.replace(/\/+$/, '')}/`;
     this.fileService
-      .list_files(folder + '/')
+      .list_files(folderPrefix)
       .pipe(
         map((S3items) => S3items.filter((item) => item.size !== 0)),
         tap((items) => {
@@ -125,7 +131,10 @@ export class AlbumComponent implements OnChanges, OnInit {
           return combineLatest(
             S3items.map((item) =>
               combineLatest([
-                this.fileService.getPresignedUrl$(this.getThumbnailUrl(item.path)).pipe(catchError(() => of(undefined))),
+                this.fileService.getPresignedUrl$(this.getWebpThumbnailUrl(item.path)).pipe(
+                  catchError(() => this.fileService.getPresignedUrl$(this.getThumbnailUrl(item.path))),
+                  catchError(() => of(undefined)),
+                ),
                 this.fileService.getPresignedUrl$(item.path).pipe(catchError(() => of(undefined)))
               ]).pipe(
                 map(([thumbUrl, highResUrl]) => {

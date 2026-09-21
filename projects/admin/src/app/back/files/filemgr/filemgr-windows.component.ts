@@ -31,6 +31,9 @@ export class FilemgrWindowsComponent {
 
     node_stack: FileSystemNode[] = [];
     imgDimensions: { [key: string]: { width: number, height: number } } = {};
+    downloadingRoot = false;
+    downloadCompleted = 0;
+    downloadTotal = 0;
 
     constructor(
         private fileService: FileService,
@@ -75,6 +78,70 @@ export class FilemgrWindowsComponent {
                 return 'image/*';
             default:
                 return '*/*';
+        }
+    }
+
+    get downloadableFileCount(): number {
+        return this.S3items.filter(item => item.size > 0).length;
+    }
+
+    async downloadRoot(): Promise<void> {
+        const files = this.S3items.filter(item => item.size > 0);
+        if (files.length === 0 || this.downloadingRoot) return;
+
+        this.downloadingRoot = true;
+        this.downloadCompleted = 0;
+        this.downloadTotal = files.length;
+        let failedCount = 0;
+
+        try {
+            const JSZip = (await import('jszip')).default;
+            const zip = new JSZip();
+            const prefix = `${this.root_folder}/`;
+
+            for (const item of files) {
+                try {
+                    const blob = await this.fileService.download_file(item.path);
+                    const relativePath = item.path.startsWith(prefix)
+                        ? item.path.slice(prefix.length)
+                        : item.path;
+                    zip.file(relativePath, blob);
+                } catch {
+                    failedCount++;
+                } finally {
+                    this.downloadCompleted++;
+                }
+            }
+
+            if (failedCount === files.length) {
+                throw new Error('No S3 object could be downloaded');
+            }
+
+            const archive = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(archive);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `s3-${this.root_folder}-${new Date().toISOString().slice(0, 10)}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+
+            if (failedCount > 0) {
+                this.toastService.showWarning(
+                    'Téléchargement incomplet',
+                    `${files.length - failedCount} fichier(s) exporté(s), ${failedCount} ignoré(s).`
+                );
+            } else {
+                this.toastService.showSuccess(
+                    'Téléchargement',
+                    `Archive de ${this.root_folder} créée (${files.length} fichiers).`
+                );
+            }
+        } catch {
+            this.toastService.showError('Téléchargement', 'Impossible de créer l’archive de cette racine S3.');
+        } finally {
+            this.downloadingRoot = false;
         }
     }
 

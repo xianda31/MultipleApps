@@ -43,7 +43,7 @@ export const SNIPPET_TEMPLATE_RULES: Record<PAGE_TEMPLATES, SnippetTemplateRule>
     visible: [...editorialFields, 'image'],
   },
   [PAGE_TEMPLATES.ALBUMS]: {
-    required: ['title', 'folder'],
+    required: ['title', 'image', 'folder'],
     visible: ['title', 'subtitle', 'public', 'image', 'folder'],
   },
   [PAGE_TEMPLATES.BOOKLET]: {

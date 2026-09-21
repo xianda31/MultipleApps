@@ -3,6 +3,7 @@ import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.ser
 import { S3Item } from '../../../common/interfaces/file.interface';
 import { from, map, mergeMap, Observable, of, Subject } from 'rxjs';
 import { ImageService } from '../../../common/services/image.service';
+import { replaceImageExtensionWithWebp } from '../../../common/images/album-thumbnail-path';
 
 @Injectable({
   providedIn: 'root'
@@ -31,17 +32,19 @@ export class ThumbnailsService {
 
         // list albums images from S3
         this.fileService.list_files(this.albums_folder + '/').subscribe((S3items) => {
-          this.S3items = S3items.filter(item => item.size > 0 && (item.path.endsWith('.jpg') || item.path.endsWith('.jpeg') || item.path.endsWith('.png')));
+          this.S3items = S3items.filter(item => item.size > 0 && /\.(jpe?g|png|webp)$/i.test(item.path));
 
           // for each image, check if thumbnail exists
           let processed = 0;
           const total = this.S3items.length;
           this.S3items.forEach(item => {
-            const thumbnailPath = item.path.replace(S3_ROOT_FOLDERS.ALBUMS, S3_ROOT_FOLDERS.THUMBNAILS);
+            const relativePath = item.path.replace(`${S3_ROOT_FOLDERS.ALBUMS}/`, '');
+            const thumbnailPath = `${S3_ROOT_FOLDERS.THUMBNAILS}/albums/${replaceImageExtensionWithWebp(relativePath)}`;
             if (!this.S3items.find(i => i.path === thumbnailPath)) {
               // Generate thumbnail & upload to S3
               this.generate_thumbnail(item.path).subscribe(async (file) => {
-                await this.fileService.upload_file(file, S3_ROOT_FOLDERS.THUMBNAILS+'/')
+                const thumbnailFolder = thumbnailPath.slice(0, thumbnailPath.lastIndexOf('/') + 1);
+                await this.fileService.upload_file(file, thumbnailFolder)
                   .catch((err) => {
                     console.error(`Error uploading thumbnail for ${item.path}: ${err}`);
                   })
@@ -73,11 +76,12 @@ export class ThumbnailsService {
     return new Observable<File>((subscriber) => {
       this.fileService.getPresignedUrl$(imagePath).subscribe({
         next: async (url) => {
-            await this.imageService.resizeImageAtUrl(url,true).then(async (resizedBase64) => {
+            await this.imageService.resizeImageAtUrlAsWebp(url,true).then(async (resizedBase64) => {
               await this.imageService.getBase64Dimensions(resizedBase64).then((dimensions) => {
-                const originalFilename = imagePath.split('/').pop() || 'thumbnail.jpg';
+                const originalFilename = imagePath.split('/').pop() || 'thumbnail';
+                const thumbnailFilename = replaceImageExtensionWithWebp(originalFilename);
                 let new_blob = this.imageService.base64ToBlob(resizedBase64);
-                let resized_file = new File([new_blob], originalFilename, { type: new_blob.type });
+                let resized_file = new File([new_blob], thumbnailFilename, { type: 'image/webp' });
                 subscriber.next(resized_file);
               });
             });

@@ -8,8 +8,9 @@
         <div class="row ">
           <div class="d-flex align-items-center mb-2">
             <div>
-              <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top me-2"
-                style="max-height:100px; width:auto; height:auto; object-fit:contain; display:block;">
+              <div class="inline-image-frame me-2">
+                <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top">
+              </div>
               <sub class="text-muted">{{snippet.publishedAt| date:'shortDate'}} </sub>
             </div>
             <h5 class="text-success fw-bolder mb-0 flex-grow-1 text-center">{{snippet.title}}</h5>

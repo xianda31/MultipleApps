@@ -18,7 +18,7 @@ import { SnippetEditor } from '../snippet-editor/snippet-editor';
 import { NavItemsService } from '../../../common/services/navitem.service';
 import { FileService } from '../../../common/services/files.service';
 import { snippetMissingFields } from '../snippet-editor/snippet-template-rules';
-import { CmsImageProfile, cmsImageSourcePrefix, cmsImageVariantPath, imageProfileForTemplate } from '../../../common/images/cms-image-profiles';
+import { CmsImageProfile, cmsImageSourcePrefix, cmsImageTargetDescription, cmsImageVariantPath, imageProfileForTemplate } from '../../../common/images/cms-image-profiles';
 import { CMS_IMAGE_PROFILES } from '../../../common/images/cms-image-profiles';
 import { CmsImageReview } from '../../../common/images/cms-image-review/cms-image-review';
 
@@ -306,7 +306,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     this.mediaImageProfile = event.type === 'image' && this.selectedPage
       ? imageProfileForTemplate(this.selectedPage.template)
       : null;
-    this.fileMode = 'browse';
+    this.fileMode = event.type === 'folder' ? 'upload' : 'browse';
 
     // Set the appropriate root folder based on selection type
     const rootFolder = event.type === 'image' ? 'images' :
@@ -416,7 +416,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     } else if (selection.type === 'document') {
       updatedSnippet.file = fullPath;
     } else if (selection.type === 'folder') {
-      updatedSnippet.folder = fullPath;
+      updatedSnippet.folder = fullPath.replace(/\/+$/, '');
     }
 
     // Update the array with the new snippet instance to trigger change detection
@@ -606,6 +606,10 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
   get mediaImageProfileDefinition() {
     return this.mediaImageProfile ? CMS_IMAGE_PROFILES[this.mediaImageProfile] : null;
+  }
+
+  get mediaImageTargetDescription(): string {
+    return this.mediaImageProfile ? cmsImageTargetDescription(this.mediaImageProfile) : '';
   }
 
   isPageLinked(page: Page): boolean {

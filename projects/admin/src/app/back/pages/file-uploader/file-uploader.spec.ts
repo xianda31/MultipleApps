@@ -34,6 +34,33 @@ describe('FileUploader', () => {
     expect(component.getAlbumThumbnailPath()).toBe('thumbnails/albums/cms/snippets/snippet-1/album/');
   });
 
+  it('recognizes the albums root with or without a trailing slash', () => {
+    component.currentRoot = 'albums';
+    expect(component.isAlbumMode).toBeTrue();
+
+    component.currentRoot = 'albums/';
+    expect(component.isAlbumMode).toBeTrue();
+  });
+
+  it('enables native multiple selection in album mode', () => {
+    component.currentRoot = 'albums/';
+
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(input.multiple).toBeTrue();
+  });
+
+  it('shows the automatic album review instead of the selectable file list', () => {
+    component.currentRoot = 'albums';
+    component.selectedFiles = [new File(['image'], 'photo.jpg', { type: 'image/jpeg' })];
+
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.album-review')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.file-list')).toBeNull();
+  });
+
   it('emits the generated WebP variant after a contextual CMS upload', async () => {
     component.imageProfile = 'landscape-card';
     component.targetPathOverride = 'images/cms/sources/snippet-1/landscape-card/';

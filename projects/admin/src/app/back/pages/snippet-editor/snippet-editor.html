@@ -119,8 +119,21 @@
                    [value]="form.get('folder')?.value ? getNameFromPath(form.get('folder')?.value) : 'Aucun dossier'"
                    readonly>
             <button type="button" class="btn btn-outline-success btn-sm" (click)="requestFolderSelection()">
-                <i class="bi bi-folder-plus me-1"></i>Choisir ou importer
+                <i class="bi bi-images me-1"></i>Gérer les photos
             </button>
+        </div>
+        <div class="small mt-1" role="status" aria-live="polite">
+            <span *ngIf="albumPhotosLoading" class="text-muted">
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Vérification des photos…
+            </span>
+            <span *ngIf="!albumPhotosLoading && albumPhotoCount !== null"
+                [class.text-success]="albumPhotoCount > 0" [class.text-warning]="albumPhotoCount === 0">
+                <i class="bi me-1" [ngClass]="albumPhotoCount > 0 ? 'bi-images' : 'bi-exclamation-triangle'"></i>
+                {{ albumPhotoCount }} photo{{ albumPhotoCount > 1 ? 's' : '' }} chargée{{ albumPhotoCount > 1 ? 's' : '' }}
+            </span>
+            <span *ngIf="!albumPhotosLoading && albumPhotosError" class="text-danger">
+                <i class="bi bi-exclamation-circle me-1"></i>Impossible de vérifier les photos
+            </span>
         </div>
     </div>
     

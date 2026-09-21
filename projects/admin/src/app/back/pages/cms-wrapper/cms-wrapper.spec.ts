@@ -133,7 +133,41 @@ describe('CmsWrapper', () => {
     } as Snippet;
 
     expect(component.isSnippetComplete(snippet)).toBeFalse();
-    expect(component.isSnippetComplete({ ...snippet, folder: 'albums/sortie/' })).toBeTrue();
+    expect(component.isSnippetComplete({ ...snippet, folder: 'albums/sortie/' })).toBeFalse();
+    expect(component.isSnippetComplete({
+      ...snippet,
+      image: 'images/cms/snippets/snippet-1/variants/portrait-card/cover.webp',
+      folder: 'albums/sortie/',
+    })).toBeTrue();
+  });
+
+  it('opens album photo management directly in multi-file upload mode', () => {
+    const snippet = {
+      id: 'snippet-1',
+      title: 'Sortie du club',
+      public: true,
+      featured: false,
+    } as Snippet;
+    component.selectedPage = {
+      id: 'albums',
+      title: 'Albums',
+      template: PAGE_TEMPLATES.ALBUMS,
+      snippet_ids: [snippet.id],
+    };
+    const fileManager = TestBed.inject(FileManager) as any;
+    fileManager.activateSelectionMode = jasmine.createSpy();
+    fileManager.setCurrentRoot = jasmine.createSpy();
+    const modalRef = {
+      result: new Promise(() => undefined),
+      dismiss: jasmine.createSpy(),
+    };
+    spyOn((component as any).modalService, 'open').and.returnValue(modalRef);
+
+    component.onFileSelectionRequested({ type: 'folder', snippet, context: 'Album' });
+
+    expect(component.fileMode).toBe('upload');
+    expect(component.mediaRoot).toBe('albums');
+    expect(component.mediaImageProfile).toBeNull();
   });
 
   it('does not save an article a second time after the editor emits it', () => {

@@ -189,9 +189,10 @@
             </button>
         </div>
 
-        @if (mediaImageProfileDefinition; as profile) {
+        @if (fileMode === 'browse' && mediaImageProfileDefinition; as profile) {
         <div class="media-format-guidance mb-3">
             <strong>{{ profile.label }}</strong>
+            <span>Format cible : {{ mediaImageTargetDescription }}</span>
             <span>{{ profile.recommendation }}</span>
         </div>
         }

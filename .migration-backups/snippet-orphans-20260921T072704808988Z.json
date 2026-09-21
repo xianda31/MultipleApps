@@ -1,0 +1,248 @@
+{
+  "table": "Snippet-373cu6s3mrdyvne3k6rvkrjoha-NONE",
+  "profile": "amplify-dev",
+  "region": "eu-west-3",
+  "createdAtUtc": "2026-09-21T07:27:04.809095+00:00",
+  "records": [
+    {
+      "id": "14d406ee-4cb7-4a2e-9562-1f9b8490ca96",
+      "item": {
+        "__typename": {
+          "S": "Snippet"
+        },
+        "content": {
+          "S": "<ul><li>La constitution du Conseil d'Administration</li></ul><ul><li>La tarification des differentes prestations</li></ul><ul><li>Les dates pr\u00e9visionnelles des \u00e9venements du Club</li></ul>"
+        },
+        "file": {
+          "S": "documents/Tableau de bord 2024_25.pdf"
+        },
+        "image": {
+          "S": ""
+        },
+        "updatedAt": {
+          "S": "2025-08-15T14:08:43.763Z"
+        },
+        "createdAt": {
+          "S": "2025-08-15T08:30:11.545Z"
+        },
+        "public": {
+          "BOOL": false
+        },
+        "subtitle": {
+          "S": "bureau"
+        },
+        "id": {
+          "S": "14d406ee-4cb7-4a2e-9562-1f9b8490ca96"
+        },
+        "featured": {
+          "BOOL": false
+        },
+        "title": {
+          "S": "Tableau de bord 2024/25"
+        }
+      }
+    },
+    {
+      "id": "29bdbedb-9b77-4232-8018-76837ddccf02",
+      "item": {
+        "__typename": {
+          "S": "Snippet"
+        },
+        "content": {
+          "S": "<p>Pour les \u00e9l\u00e8ves disponibles cet \u00e9t\u00e9</p>"
+        },
+        "image": {
+          "S": ""
+        },
+        "updatedAt": {
+          "S": "2025-08-15T12:49:04.917Z"
+        },
+        "createdAt": {
+          "S": "2025-08-11T06:35:53.569Z"
+        },
+        "public": {
+          "BOOL": true
+        },
+        "subtitle": {
+          "S": "Sp\u00e9cial \u00e9l\u00e8ves"
+        },
+        "id": {
+          "S": "29bdbedb-9b77-4232-8018-76837ddccf02"
+        },
+        "featured": {
+          "BOOL": false
+        },
+        "title": {
+          "S": "Et\u00e9 2025"
+        }
+      }
+    },
+    {
+      "id": "46ef6b0e-43bd-4acb-9eca-4bc26f2fc4b3",
+      "item": {
+        "__typename": {
+          "S": "Snippet"
+        },
+        "content": {
+          "S": "<p>Notre Assembl\u00e9e G\u00e9n\u00e9rale ordinaire annuelle, pr\u00e9vue \u00e0 l\u2019Article 11 de nos statuts est un moment important de notre association.</p><p>Elle se tiendra le : Mercredi 17 septembre 2025, \u00e0 17h apr\u00e8s le TOURNOI au Bridge Club de Saint-Orens et sera suivi du traditionnel pot de rentr\u00e9e</p><p>&nbsp; Le planning de cet apr\u00e8s-midi-l\u00e0 est donc le suivant :- 14h-17h : tournoi court- 17h-18h : Assembl\u00e9e G\u00e9n\u00e9rale- 18h : Pot de rentr\u00e9e&nbsp;&nbsp;</p>"
+        },
+        "template": {
+          "S": "news"
+        },
+        "image": {
+          "S": "images/logo/ST_ORENS FFB.jpg"
+        },
+        "updatedAt": {
+          "S": "2025-09-29T08:58:55.272Z"
+        },
+        "createdAt": {
+          "S": "2025-08-09T14:41:52.447Z"
+        },
+        "public": {
+          "BOOL": true
+        },
+        "subtitle": {
+          "S": "saison 2025/26"
+        },
+        "id": {
+          "S": "46ef6b0e-43bd-4acb-9eca-4bc26f2fc4b3"
+        },
+        "featured": {
+          "BOOL": false
+        },
+        "rank": {
+          "N": "1"
+        },
+        "title": {
+          "S": "Assembl\u00e9e g\u00e9n\u00e9rale ordinaire annuelle"
+        }
+      }
+    },
+    {
+      "id": "51c9f387-8d80-4415-810b-a6c010baa6b4",
+      "item": {
+        "__typename": {
+          "S": "Snippet"
+        },
+        "content": {
+          "S": "<p>Nouvelle vignette</p>"
+        },
+        "file": {
+          "S": ""
+        },
+        "image": {
+          "S": "images/anniversaires/719-Ballons bon anniversaire_maxi.gif"
+        },
+        "updatedAt": {
+          "S": "2025-10-10T16:00:27.752Z"
+        },
+        "createdAt": {
+          "S": "2025-09-28T06:35:30.564Z"
+        },
+        "public": {
+          "BOOL": false
+        },
+        "subtitle": {
+          "S": "subtitle"
+        },
+        "folder": {
+          "S": ""
+        },
+        "id": {
+          "S": "51c9f387-8d80-4415-810b-a6c010baa6b4"
+        },
+        "featured": {
+          "BOOL": false
+        },
+        "title": {
+          "S": "title"
+        }
+      }
+    },
+    {
+      "id": "597687c7-9c2e-458c-a508-8b8187c58bf0",
+      "item": {
+        "__typename": {
+          "S": "Snippet"
+        },
+        "content": {
+          "S": ""
+        },
+        "file": {
+          "S": ""
+        },
+        "createdAt": {
+          "S": "2026-06-22T12:13:05.303Z"
+        },
+        "public": {
+          "BOOL": true
+        },
+        "subtitle": {
+          "S": "Juin 2026"
+        },
+        "folder": {
+          "S": "albums/2026/F\u00eate du Club juin 2026"
+        },
+        "image": {
+          "S": ""
+        },
+        "publishedAt": {
+          "S": "2026-06-22"
+        },
+        "updatedAt": {
+          "S": "2026-06-22T12:33:55.610Z"
+        },
+        "id": {
+          "S": "597687c7-9c2e-458c-a508-8b8187c58bf0"
+        },
+        "featured": {
+          "BOOL": false
+        },
+        "title": {
+          "S": "F\u00eate du club"
+        }
+      }
+    },
+    {
+      "id": "8e5c0114-aed9-40b9-be36-cac616eedb69",
+      "item": {
+        "__typename": {
+          "S": "Snippet"
+        },
+        "content": {
+          "S": "<p>les tournois d'accession reprennent mercredi 01 octobre 9h30.&nbsp;</p><p>Ils s'inscrivent dans le cursus des cours du club de Saint-Orens;&nbsp;</p><p>ces tournois sont organis\u00e9s ainsi:</p><p>- il existe un th\u00e8me majoritairement sur le jeu de la carte ; ce th\u00e8me est communiqu\u00e9 aux \u00e9l\u00e8ves quelques jours avant le tournoi&nbsp;</p><p>- le tournoi comprend 8 \u00e0 10 donnes pr\u00e9par\u00e9es sur ce th\u00e8me</p><p>- les donnes comment\u00e9es sont ensuite envoy\u00e9es aux \u00e9l\u00e8ves&nbsp;</p><p>- un tournoi SDE ( simultan\u00e9 des \u00e9l\u00e8ves) est organis\u00e9 une fois par mois&nbsp; ( voir les dates sur l'onglet \"tournois\")</p><p>\u00e0 vous de jouer!</p>"
+        },
+        "file": {
+          "S": ""
+        },
+        "image": {
+          "S": "images/vignettes/ANDRE AYRAL_300x401.jpg"
+        },
+        "updatedAt": {
+          "S": "2025-11-25T14:52:00.988Z"
+        },
+        "createdAt": {
+          "S": "2025-09-30T17:13:34.424Z"
+        },
+        "public": {
+          "BOOL": true
+        },
+        "subtitle": {
+          "S": "d\u00e9marrage mercredi 01 octobre 9h30"
+        },
+        "folder": {
+          "S": ""
+        },
+        "id": {
+          "S": "8e5c0114-aed9-40b9-be36-cac616eedb69"
+        },
+        "featured": {
+          "BOOL": false
+        },
+        "title": {
+          "S": "Reprise des tournois d'accession "
+        }
+      }
+    }
+  ]
+}

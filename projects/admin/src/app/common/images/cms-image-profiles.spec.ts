@@ -3,6 +3,7 @@ import {
   CMS_IMAGE_PROFILES,
   cmsImageOrientationMismatch,
   cmsImageSourcePrefix,
+  cmsImageTargetDescription,
   cmsImageVariantPath,
   imageProfileForTemplate,
 } from './cms-image-profiles';
@@ -31,6 +32,10 @@ describe('CMS image profiles', () => {
       aspectRatio: '3 / 2',
     }));
     expect(CMS_IMAGE_PROFILES.inline.fit).toBe('contain');
+    expect(cmsImageTargetDescription('portrait-card'))
+      .toBe('600 × 800 px · ratio 3:4 · WebP · recadrage centré');
+    expect(cmsImageTargetDescription('inline'))
+      .toBe('400 × 300 px · ratio 4:3 · WebP · image entière sans recadrage');
   });
 
   it('detects an orientation mismatch from the profile contract', () => {

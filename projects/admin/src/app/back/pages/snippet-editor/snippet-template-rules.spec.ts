@@ -18,6 +18,10 @@ describe('snippet template rules', () => {
     expect(snippetMissingFields({ ...completeSnippet, folder: '' }, PAGE_TEMPLATES.ALBUMS)).toEqual(['folder']);
   });
 
+  it('requires an album cover image', () => {
+    expect(snippetMissingFields({ ...completeSnippet, image: '' }, PAGE_TEMPLATES.ALBUMS)).toEqual(['image']);
+  });
+
   it('requires a document for a download page', () => {
     expect(snippetMissingFields({ ...completeSnippet, file: '' }, PAGE_TEMPLATES.LOADABLE)).toEqual(['file']);
   });

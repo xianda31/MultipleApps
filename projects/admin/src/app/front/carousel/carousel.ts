@@ -56,7 +56,8 @@ export class Carousel {
             this.album = snippet;
             this.titleService.setTitle(this.album.title + ' - ' + this.album.subtitle);
 
-            this.photos$ = this.fileService.list_files(this.album.folder + '/').pipe(
+            const folderPrefix = `${this.album.folder.replace(/\/+$/, '')}/`;
+            this.photos$ = this.fileService.list_files(folderPrefix).pipe(
               map((S3items) => S3items.filter(item => item.size !== 0)),
             );
           }

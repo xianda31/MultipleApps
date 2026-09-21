@@ -28,11 +28,48 @@
   color: #66736c;
 }
 
+.cms-image-review__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cms-image-review__previews {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.cms-image-review__previews figure {
+  min-width: 0;
+  margin: 0;
+}
+
+.cms-image-review__previews figcaption {
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.cms-image-review__source,
 .cms-image-review__frame {
   overflow: hidden;
-  width: min(100%, 28rem);
+  width: 100%;
   background: #eef1ef;
   border: 1px solid #aeb8b2;
+}
+
+.cms-image-review__source {
+  display: grid;
+  place-items: center;
+}
+
+.cms-image-review__source img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
 }
 
 .cms-image-review__frame img {
@@ -43,6 +80,10 @@
 
 @media (max-width: 575.98px) {
   .cms-image-review__comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .cms-image-review__previews {
     grid-template-columns: 1fr;
   }
 

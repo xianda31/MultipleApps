@@ -33,6 +33,9 @@ export class SnippetEditor implements OnChanges {
   saving = false;
   saveState: 'idle' | 'saving' | 'saved' | 'error' = 'idle';
   readonly maxPublishedAt = localDateValue();
+  albumPhotoCount: number | null = null;
+  albumPhotosLoading = false;
+  albumPhotosError = false;
   private savePending = false;
   readonly fieldLabels: Record<SnippetField, string> = {
     title: 'titre',
@@ -162,6 +165,7 @@ export class SnippetEditor implements OnChanges {
           (this.snippet as any).image_url = '';
         }
       }
+      this.loadAlbumPhotoCount(this.snippet.folder);
     }
     
     // Handle file selection from parent - only if targeted to this snippet
@@ -173,6 +177,30 @@ export class SnippetEditor implements OnChanges {
     } else if (changes['selectionTimestamp'] && this.selectionTimestamp > 0 && this.snippet) {
       console.log('🚫 Snippet-editor', this.snippet.title, 'ignored selection - not targeted (target:', this.targetSnippetId, 'my id:', this.snippet.id, ')');
     }
+  }
+
+  private loadAlbumPhotoCount(folder?: string): void {
+    if (this.pageTemplate !== PAGE_TEMPLATES.ALBUMS || !folder?.trim()) {
+      this.albumPhotoCount = null;
+      this.albumPhotosLoading = false;
+      this.albumPhotosError = false;
+      return;
+    }
+
+    const folderPrefix = `${folder.replace(/\/+$/, '')}/`;
+    this.albumPhotosLoading = true;
+    this.albumPhotosError = false;
+    this.fileService.list_files(folderPrefix).subscribe({
+      next: items => {
+        this.albumPhotoCount = items.filter(item => item.size > 0 && /\.(jpe?g|png|webp|gif|avif)$/i.test(item.path)).length;
+        this.albumPhotosLoading = false;
+      },
+      error: () => {
+        this.albumPhotoCount = null;
+        this.albumPhotosLoading = false;
+        this.albumPhotosError = true;
+      },
+    });
   }
 
   async saveSnippetSelected() {

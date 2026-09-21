@@ -1,20 +1,26 @@
 <section class="cms-image-review" aria-label="Validation du cadrage">
   <div class="cms-image-review__comparison">
     <div>
-      <small>Original</small>
+      <div class="cms-image-review__heading">
+        <small>Original</small>
+        @if (sourceSize) {
+        <small>{{ formatFileSize(sourceSize) }}</small>
+        }
+      </div>
       @if (hasSourceDimensions) {
       <strong>{{ sourceWidth }} × {{ sourceHeight }} px · {{ sourceOrientationLabel }}</strong>
       } @else {
       <strong>Dimensions en cours d’analyse</strong>
       }
-      @if (sourceSize) {
-      <span>{{ formatFileSize(sourceSize) }}</span>
-      }
     </div>
     <div class="cms-image-review__target">
-      <small>Version utilisée</small>
-      <strong>{{ definition.label }}</strong>
-      <span>{{ definition.width }} × {{ definition.height }} px · WebP</span>
+      <div class="cms-image-review__heading">
+        <small>Version utilisée</small>
+        @if (cropDescription) {
+        <small>{{ cropDescription }}</small>
+        }
+      </div>
+      <strong>{{ targetDimensionsDescription }}</strong>
     </div>
   </div>
 
@@ -25,9 +31,26 @@
   </div>
   }
 
-  <div class="cms-image-review__frame" [style.aspect-ratio]="definition.aspectRatio">
-    <img [src]="sourceUrl" [style.object-fit]="definition.fit" alt="Aperçu du cadrage final">
+  @if (resolutionInsufficient) {
+  <div class="alert alert-warning py-2 mb-0 cms-image-review__resolution-warning" role="alert">
+    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+    Résolution insuffisante : {{ sourceWidth }} × {{ sourceHeight }} px pour une cible de {{ definition.width }} × {{ definition.height }} px. Le rendu risque d’être pixelisé.
+  </div>
+  }
+
+  <div class="cms-image-review__previews">
+    <figure>
+      <figcaption>Source originale</figcaption>
+      <div class="cms-image-review__source" [style.aspect-ratio]="sourceAspectRatio">
+        <img [src]="sourceUrl" alt="Aperçu de l’image originale">
+      </div>
+    </figure>
+    <figure>
+      <figcaption>Rendu final utilisé sur le site</figcaption>
+      <div class="cms-image-review__frame" [style.aspect-ratio]="definition.aspectRatio">
+        <img [src]="sourceUrl" [style.object-fit]="definition.fit" style="object-position: center center" alt="Aperçu du cadrage final">
+      </div>
+    </figure>
   </div>
 
-  <p class="small text-muted mb-0">{{ definition.recommendation }}</p>
 </section>

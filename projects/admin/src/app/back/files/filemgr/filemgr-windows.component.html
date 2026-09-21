@@ -21,6 +21,16 @@
                     </label>
                 </div>
                 <div class="col-auto">
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                        [disabled]="downloadingRoot || downloadableFileCount === 0"
+                        (click)="downloadRoot()"
+                        title="Télécharger toute la racine S3 dans une archive ZIP">
+                        <span *ngIf="downloadingRoot" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                        <i *ngIf="!downloadingRoot" class="bi bi-download me-1" aria-hidden="true"></i>
+                        {{ downloadingRoot ? 'Téléchargement ' + downloadCompleted + '/' + downloadTotal : 'Télécharger la racine' }}
+                    </button>
+                </div>
+                <div class="col-auto">
                     <div class="input-group input-group-sm mb-0 align-items-center" *ngIf="current_node_data as data">
                         <span class="input-group-text">Nouveau dossier</span>
                         <input #folderInput type="text" class="form-control"
