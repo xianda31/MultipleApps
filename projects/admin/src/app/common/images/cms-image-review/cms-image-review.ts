@@ -27,8 +27,15 @@ export class CmsImageReview {
   }
 
   get targetDimensionsDescription(): string {
+    if (this.definition.width === null || this.definition.aspectRatio === null) {
+      return `Hauteur ${this.definition.height} px · largeur proportionnelle`;
+    }
     const ratio = this.definition.aspectRatio.replace(/\s*\/\s*/, ':');
     return `${this.definition.width} × ${this.definition.height} px · ratio ${ratio}`;
+  }
+
+  get targetAspectRatio(): string | null {
+    return this.definition.aspectRatio ?? this.sourceAspectRatio;
   }
 
   get hasSourceDimensions(): boolean {
@@ -48,8 +55,10 @@ export class CmsImageReview {
   get resolutionInsufficient(): boolean {
     if (!this.hasSourceDimensions) return false;
 
-    const widthScale = this.definition.width / this.sourceWidth!;
     const heightScale = this.definition.height / this.sourceHeight!;
+    if (this.definition.width === null) return heightScale > 1;
+
+    const widthScale = this.definition.width / this.sourceWidth!;
     const requiredScale = this.definition.fit === 'cover'
       ? Math.max(widthScale, heightScale)
       : Math.min(widthScale, heightScale);
@@ -63,6 +72,7 @@ export class CmsImageReview {
     let widthCrop = 0;
     let heightCrop = 0;
     if (this.definition.fit === 'cover') {
+      if (this.definition.width === null) return null;
       const sourceRatio = this.sourceWidth! / this.sourceHeight!;
       const targetRatio = this.definition.width / this.definition.height;
 

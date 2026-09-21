@@ -1,12 +1,12 @@
 import { PAGE_TEMPLATES } from '../interfaces/page_snippet.interface';
 
-export type CmsImageProfile = 'inline' | 'landscape-card' | 'portrait-card' | 'booklet';
+export type CmsImageProfile = 'inline' | 'publication-landscape' | 'landscape-card' | 'portrait-card' | 'booklet';
 
 export interface CmsImageProfileDefinition {
-  width: number;
+  width: number | null;
   height: number;
   fit: 'contain' | 'cover';
-  aspectRatio: string;
+  aspectRatio: string | null;
   label: string;
   orientation: 'landscape' | 'portrait';
   recommendation: string;
@@ -21,6 +21,15 @@ export const CMS_IMAGE_PROFILES: Record<CmsImageProfile, CmsImageProfileDefiniti
     label: 'Illustration 4:3 sans recadrage',
     orientation: 'landscape',
     recommendation: 'Privilégiez une source proche du format 4:3. L’image entière sera conservée.',
+  },
+  'publication-landscape': {
+    width: null,
+    height: 300,
+    fit: 'contain',
+    aspectRatio: null,
+    label: 'Illustration paysage à hauteur fixe',
+    orientation: 'landscape',
+    recommendation: 'Privilégiez une image paysage. La hauteur sera fixée à 300 px et la largeur suivra les proportions de la source.',
   },
   'landscape-card': {
     width: 800,
@@ -61,7 +70,7 @@ export function cmsImageOrientationMismatch(profile: CmsImageProfile, width: num
 }
 
 export const PAGE_TEMPLATE_IMAGE_PROFILE: Partial<Record<PAGE_TEMPLATES, CmsImageProfile>> = {
-  [PAGE_TEMPLATES.PUBLICATION]: 'inline',
+  [PAGE_TEMPLATES.PUBLICATION]: 'publication-landscape',
   [PAGE_TEMPLATES.SEQUENTIAL]: 'inline',
   [PAGE_TEMPLATES.A_LA_UNE]: 'inline',
   [PAGE_TEMPLATES.CARDS_top]: 'landscape-card',
@@ -78,6 +87,9 @@ export function imageProfileForTemplate(template: PAGE_TEMPLATES): CmsImageProfi
 
 export function cmsImageTargetDescription(profile: CmsImageProfile): string {
   const definition = CMS_IMAGE_PROFILES[profile];
+  if (definition.width === null || definition.aspectRatio === null) {
+    return `hauteur ${definition.height} px · largeur proportionnelle · WebP · image entière sans recadrage`;
+  }
   const ratio = definition.aspectRatio.replace(/\s*\/\s*/, ':');
   const framing = definition.fit === 'cover' ? 'recadrage centré' : 'image entière sans recadrage';
   return `${definition.width} × ${definition.height} px · ratio ${ratio} · WebP · ${framing}`;

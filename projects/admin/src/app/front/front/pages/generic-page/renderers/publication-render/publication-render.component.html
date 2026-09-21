@@ -22,13 +22,13 @@
         <div class="col ">
             <div class="card border-0 mt-3" id="{{getAnchorId(snippet)}}">
 
-                <div class="row flex-nowrap align-items-stretch gx-0 snippet-header" style="width:100%">
-                    <div class="col-4 col-md-5 d-flex align-items-center p-0">
+                <div class="d-flex align-items-stretch snippet-header">
+                    <div class="snippet-image-column d-flex align-items-center">
                         <div class="inline-image-frame">
                             <img [src]="snippet.image_url" alt="{{snippet.title}}" class="rounded-start snippet-img">
                         </div>
                     </div>
-                    <div class="col-8 col-md-7 d-flex flex-column justify-content-center p-0 ">
+                    <div class="snippet-title-column d-flex flex-column justify-content-center">
                         <!-- <div class="card-body"> -->
                         <h4 class="card-title text-success">{{snippet.title}}                        </h4>
                         <h5 class="card-subtitle text-muted"> {{snippet.subtitle}}                        </h5>

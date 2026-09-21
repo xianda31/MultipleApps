@@ -1,0 +1,3646 @@
+{
+  "pageTable": "Page-sgykdji3wvd2nkrffu62facucq-NONE",
+  "snippetTable": "Snippet-sgykdji3wvd2nkrffu62facucq-NONE",
+  "pageItems": [
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "b83cc26b-342b-4d19-aeec-22c0db9489d8"
+          },
+          {
+            "S": "931a6701-ccca-47ad-a3e2-4eb1b36a6060"
+          },
+          {
+            "S": "7c7e1bb6-22e4-485e-ba47-5fad6bad808d"
+          },
+          {
+            "S": "83db5141-b734-41ba-b8de-f81c8054f402"
+          },
+          {
+            "S": "efc42043-8871-44ca-8922-3806c7ebb89b"
+          },
+          {
+            "S": "0dfdda41-35de-4dc9-8a02-bfceef71f71b"
+          },
+          {
+            "S": "368dc8d8-b8b4-40a2-8aa2-17d86d5b658f"
+          },
+          {
+            "S": "37aa36dd-5210-4c45-9fa3-e8cb1fef31c3"
+          },
+          {
+            "S": "bae2ac64-26bc-42f7-80e7-405bff27f5dc"
+          },
+          {
+            "S": "a2bf1a90-6b0f-4ddc-bc2c-30b302120c1d"
+          },
+          {
+            "S": "9993db12-9c29-4766-aac1-6eddc061a5f4"
+          },
+          {
+            "S": "3b39953b-d7a3-41b2-b7b8-a69b48fd1f22"
+          }
+        ]
+      },
+      "template": {
+        "S": "albums"
+      },
+      "updatedAt": {
+        "S": "2026-09-07T18:15:46.886Z"
+      },
+      "createdAt": {
+        "S": "2025-09-12T06:54:58.322Z"
+      },
+      "id": {
+        "S": "5be65d78-2271-40d9-85b8-6bdba2a44781"
+      },
+      "title": {
+        "S": "albums"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "0d440d42-c31c-48fc-bd71-4625aa90c19c"
+          },
+          {
+            "S": "50a59d98-db4f-4239-86de-b83071121da2"
+          }
+        ]
+      },
+      "template": {
+        "S": "à la une"
+      },
+      "updatedAt": {
+        "S": "2026-09-08T10:18:09.996Z"
+      },
+      "createdAt": {
+        "S": "2025-12-14T08:29:27.691Z"
+      },
+      "id": {
+        "S": "81340c32-8d7c-4f20-a18d-9c136ef7eee7"
+      },
+      "title": {
+        "S": "__CLIPBOARD__"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "4404af00-b10b-4284-8b5f-44631efde704"
+          },
+          {
+            "S": "34bf6cc9-ec89-4207-a6ce-e4405bbc0967"
+          },
+          {
+            "S": "66ac2d88-1bcb-4cad-a170-cf88988cc364"
+          },
+          {
+            "S": "872f4bcf-db6a-4df2-9165-acd546b333ea"
+          },
+          {
+            "S": "052f3031-4981-438e-aac2-fc6aa420edab"
+          },
+          {
+            "S": "2db3d06e-244f-4301-bb6d-5521de81aaf2"
+          },
+          {
+            "S": "e57369f7-d19b-4d3a-a11a-a89f183e43af"
+          },
+          {
+            "S": "9db200a2-be8a-4bb1-b43f-9e4595029069"
+          },
+          {
+            "S": "0bf831be-f9e8-4a7c-a1d6-5e49dd1b19e8"
+          },
+          {
+            "S": "a2e1161f-783c-4b7c-9ea3-251b66fe0cb1"
+          },
+          {
+            "S": "e4a1a299-933a-4e3a-a809-9b6e8f0d34e2"
+          }
+        ]
+      },
+      "template": {
+        "S": "trombinoscope"
+      },
+      "updatedAt": {
+        "S": "2026-02-01T07:14:43.771Z"
+      },
+      "createdAt": {
+        "S": "2025-08-25T07:07:30.001Z"
+      },
+      "id": {
+        "S": "0a88fdf1-c253-4384-959e-96968bb06216"
+      },
+      "title": {
+        "S": "acteurs"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "82d55181-7f8e-451b-8cba-6f6547245f7e"
+          },
+          {
+            "S": "c387bd16-65e1-49ea-8757-8cb3252c0f1b"
+          },
+          {
+            "S": "acae8904-fe19-482e-832a-98f521271a55"
+          },
+          {
+            "S": "15225a28-8d98-4679-8a2f-5f43ea0c3b47"
+          }
+        ]
+      },
+      "template": {
+        "S": "trombinoscope"
+      },
+      "updatedAt": {
+        "S": "2025-08-25T07:27:48.256Z"
+      },
+      "createdAt": {
+        "S": "2025-08-25T07:07:30.022Z"
+      },
+      "id": {
+        "S": "d6125a85-9092-4c29-867b-aa53ae9b86a6"
+      },
+      "title": {
+        "S": "bureau"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "59c10f60-03c9-4915-b5aa-070632eefe16"
+          }
+        ]
+      },
+      "template": {
+        "S": "publication"
+      },
+      "updatedAt": {
+        "S": "2025-09-16T18:05:06.508Z"
+      },
+      "createdAt": {
+        "S": "2025-09-16T12:29:23.005Z"
+      },
+      "id": {
+        "S": "3f647a7d-02d4-4ea1-a622-e5cf563fa44e"
+      },
+      "title": {
+        "S": "mentions légales"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": []
+      },
+      "template": {
+        "S": "publication"
+      },
+      "updatedAt": {
+        "S": "2026-02-10T09:28:05.102Z"
+      },
+      "createdAt": {
+        "S": "2025-09-30T15:32:22.341Z"
+      },
+      "id": {
+        "S": "605a1e50-bbb0-4788-985f-ac2bddb89390"
+      },
+      "title": {
+        "S": "autres rendez-vous"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "f381ce6f-39b6-4e4a-be7d-5db4c5ad3837"
+          },
+          {
+            "S": "86c27f77-cd72-47e4-ba85-8190236869e3"
+          },
+          {
+            "S": "69538fe1-4458-4515-905d-e0b201734b82"
+          },
+          {
+            "S": "5b59f949-2b2c-44b2-9905-d45d00cd115f"
+          },
+          {
+            "S": "33a964f0-42d8-4c6e-ad33-5d5f5c74d1f4"
+          },
+          {
+            "S": "09d9634f-e9df-4d88-86bb-47637f436428"
+          },
+          {
+            "S": "a3579b52-0101-4f09-b7fd-818ef75d4d5a"
+          },
+          {
+            "S": "9a52c897-fe25-4b6b-aed2-d421be5292aa"
+          },
+          {
+            "S": "84b37830-bfcc-4941-9fa0-1da066cf2e47"
+          },
+          {
+            "S": "cdd3a9e3-100a-4e91-b081-a945dd329a72"
+          },
+          {
+            "S": "0c3fca4e-f01c-4612-ba5b-d3055c4d2aca"
+          },
+          {
+            "S": "4f5179f5-4d64-43c6-b46b-5ce3c0be8796"
+          }
+        ]
+      },
+      "template": {
+        "S": "publication"
+      },
+      "updatedAt": {
+        "S": "2026-09-20T04:23:09.100Z"
+      },
+      "createdAt": {
+        "S": "2025-08-25T07:07:30.004Z"
+      },
+      "id": {
+        "S": "66583707-94da-4f89-a175-780c18ec298a"
+      },
+      "title": {
+        "S": "news"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "f4368816-b77f-498a-8471-f9d1a719a780"
+          },
+          {
+            "S": "6c4eb9e6-77d4-4cff-aa7d-cc415909e69c"
+          },
+          {
+            "S": "c1befffe-fac4-4afd-8221-b0397d51d599"
+          },
+          {
+            "S": "9cc4c7a9-6a79-4560-9b9b-96dde2ccf838"
+          },
+          {
+            "S": "336fdfc3-c303-4754-9336-f6d8f84ef539"
+          },
+          {
+            "S": "20bb3346-2295-48e6-a786-d888d84c852c"
+          },
+          {
+            "S": "b684cf4c-30ea-4dbd-8973-98e801bae9c4"
+          },
+          {
+            "S": "4f592c82-2697-4d6c-a0d8-ec6a1f8d308b"
+          },
+          {
+            "S": "d04703a6-c420-44be-b6bd-d1adc0e7165c"
+          },
+          {
+            "S": "fa8b80c6-30c9-4dd4-8821-3b7ea5354f8a"
+          },
+          {
+            "S": "d28effb8-e667-4e50-86f1-2744c46aa78f"
+          },
+          {
+            "S": "cdd7da63-60ee-4bf8-88fc-56d01b9add8f"
+          },
+          {
+            "S": "e11b5143-94a7-4a62-b4d2-796d3035e63a"
+          }
+        ]
+      },
+      "template": {
+        "S": "publication"
+      },
+      "updatedAt": {
+        "S": "2026-07-28T14:33:06.489Z"
+      },
+      "createdAt": {
+        "S": "2026-03-05T13:19:27.619Z"
+      },
+      "id": {
+        "S": "36eb505e-5c73-4fe4-a7a9-a48da19b2456"
+      },
+      "title": {
+        "S": "oldies - noshow"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "5f87e4e0-3756-4554-884a-ea0c6b0d400b"
+          },
+          {
+            "S": "c3f3ed9f-a141-4101-ad48-5aba45d6ca90"
+          },
+          {
+            "S": "2f710087-200f-45b1-8bac-f145aab3f542"
+          }
+        ]
+      },
+      "template": {
+        "S": "publication"
+      },
+      "updatedAt": {
+        "S": "2026-08-13T18:53:27.542Z"
+      },
+      "createdAt": {
+        "S": "2025-08-25T07:07:29.996Z"
+      },
+      "id": {
+        "S": "c1ae5471-03ee-4c90-96c1-93e3135f8357"
+      },
+      "title": {
+        "S": "cours"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "5ed3205e-7dcb-4432-b2a6-f7cd56ab4682"
+          }
+        ]
+      },
+      "template": {
+        "S": "fiches img haut"
+      },
+      "updatedAt": {
+        "S": "2025-12-14T14:10:14.872Z"
+      },
+      "createdAt": {
+        "S": "2025-09-16T17:31:47.966Z"
+      },
+      "id": {
+        "S": "191da2c1-3ebf-4c55-83b3-68a6bce4ac36"
+      },
+      "title": {
+        "S": "contacts"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "e14cad8f-8797-49e5-a0bb-59c6c6e3b14e"
+          },
+          {
+            "S": "48499265-7a16-4509-a9a8-124b322970b6"
+          },
+          {
+            "S": "8dee797b-fa78-4172-adbb-1a5c58437b52"
+          },
+          {
+            "S": "6ebcacda-440d-49f1-b6ca-a73d0f550b33"
+          }
+        ]
+      },
+      "template": {
+        "S": "téléchargement"
+      },
+      "updatedAt": {
+        "S": "2026-09-06T07:04:09.585Z"
+      },
+      "createdAt": {
+        "S": "2025-08-25T07:07:30.001Z"
+      },
+      "id": {
+        "S": "20592199-d501-4131-bde2-1cb4aa383315"
+      },
+      "title": {
+        "S": "documents"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "fc6963bf-1a7d-452d-9fa0-619100e35e7f"
+          }
+        ]
+      },
+      "template": {
+        "S": "publication"
+      },
+      "updatedAt": {
+        "S": "2026-07-14T13:31:02.018Z"
+      },
+      "createdAt": {
+        "S": "2025-12-19T09:46:39.498Z"
+      },
+      "id": {
+        "S": "bf0ab389-c47c-4d20-9b23-83efd20039a7"
+      },
+      "title": {
+        "S": "DOMI"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "abb59421-a5aa-4733-81c7-5dcc52022610"
+          },
+          {
+            "S": "68e63f51-60c4-4b71-a076-75e77ce095f3"
+          },
+          {
+            "S": "15adeeb9-0fba-499a-bb2e-3a66c82ae59a"
+          },
+          {
+            "S": "5e166194-f062-4c51-9d02-f233e92443d4"
+          }
+        ]
+      },
+      "template": {
+        "S": "livret"
+      },
+      "updatedAt": {
+        "S": "2026-04-02T06:18:29.534Z"
+      },
+      "createdAt": {
+        "S": "2025-09-17T06:00:46.099Z"
+      },
+      "id": {
+        "S": "31634401-570a-4bda-8255-f9da7e9ae9fb"
+      },
+      "title": {
+        "S": "histoire"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": []
+      },
+      "template": {
+        "S": "à la une"
+      },
+      "updatedAt": {
+        "S": "2025-09-30T15:24:26.512Z"
+      },
+      "createdAt": {
+        "S": "2025-09-30T15:19:09.676Z"
+      },
+      "id": {
+        "S": "b6803d9b-28e6-45c8-8993-9f30383bf21b"
+      },
+      "title": {
+        "S": "dates à retenir"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Page"
+      },
+      "snippet_ids": {
+        "L": [
+          {
+            "S": "6ffd7b98-8316-472c-a1bb-d0e94d99a9d5"
+          },
+          {
+            "S": "25eed62a-7e08-40d8-a4fd-156f422e4987"
+          },
+          {
+            "S": "24dc4b4b-fadf-4856-a324-98b3a1ac9875"
+          },
+          {
+            "S": "c3d8ee63-4043-4a18-ae44-7870b7695ca8"
+          },
+          {
+            "S": "f93f7e4f-552a-4461-af60-dd21287667a5"
+          },
+          {
+            "S": "c620f474-3e29-4eb8-b6e9-a680036be151"
+          },
+          {
+            "S": "95a2a881-aa34-44b4-9e61-044162bea900"
+          },
+          {
+            "S": "324ef046-45ff-43b7-8f7c-8346c89b81e4"
+          },
+          {
+            "S": "5b33ef34-0bff-4302-a757-0b259f4b18a9"
+          }
+        ]
+      },
+      "template": {
+        "S": "livret"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T16:56:10.420Z"
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:04:08.735Z"
+      },
+      "id": {
+        "S": "6c002cfc-3995-4494-aece-05e9b978c7d4"
+      },
+      "title": {
+        "S": "présentation"
+      }
+    }
+  ],
+  "snippetItems": [
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>En 2026, une centaine de membres participent ou ont\nparticipé aux différentes compétitions organisées par la FFB.<br>Quels que soient\nles catégories, les premiers tours se déroulent toujours à la<b> maison du bridge\nà Labège</b>.<br>Les résultats sont positifs, avec plusieurs équipes accédant aux\nfinales de comité, de ligue ou nationales.<br>La répartition des membres par série\nest très homogène, ce qui favorise la <b>diversité des niveaux</b> et l’<b>émulation au\nsein du club</b>.<br>Le club participe à la <b>coupe nationale des clubs</b> organisée par la FFB</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T14:04:21.744Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Une centaine d’adhérents engagés chaque année"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/competition espérance.jpeg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T15:00:00.496Z"
+      },
+      "id": {
+        "S": "324ef046-45ff-43b7-8f7c-8346c89b81e4"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "La compétition au rendez-vous"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T06:42:32.346Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "janvier 2025"
+      },
+      "folder": {
+        "S": "albums/2025/Fête des 3 clubs janvier 2025"
+      },
+      "image": {
+        "S": "images/album covers/Fête des 3 clubs janvier 2025_300x225_1.33.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-13"
+      },
+      "updatedAt": {
+        "S": "2026-01-01T17:07:22.367Z"
+      },
+      "id": {
+        "S": "9993db12-9c29-4766-aac1-6eddc061a5f4"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Fête des 3 clubs"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Vendredi 25 avril Carmen de Nayville a dit \" au revoir\" au club de Saint-Orens en offrant un sympathique goûter auquel elle tenait vraiment ...tant ce club , dont elle garde quelques bons souvenirs, lui a beaucoup apporté.&nbsp;</p><p>Carmen a toujours adoré les jeux de cartes et donc, tout naturellement , elle est arrivée au bridge qui en est le roi ! Entrée au club de Saint-Orens en 2001, cela fait donc plus de 20 ans qu’elle participe à sa vie ( au gré de ses disponibilités) que ce soit les cours, les tournois et les fêtes. Avec sa bonne humeur, sa sensibilité, son plaisir du jeu et de l'amusement Carmen a toujours été appréciée par ses partenaires qui ajoutent : \" Elle ne râlait jamais !\" ...une qualité qu'on aimerait trouver chez tout bridgeur...</p><p>Avec son mari, ils vont vivre dans le Gers, une région qu'ils connaissent bien et qu'ils adorent. Carmen va retrouver le club de bridge d'Auch qu'elle a fréquenté quand il était près de la cathédrale et se perdait dans des sous-sols \" inquiétants\" .&nbsp; Mais ayant apprécié pendant toutes ces années la convivialité du club de Saint-Orens , elle espère trouver une aussi bonne ambiance chez les gersois.&nbsp;</p><p>Et puis, le Gers ce n'est pas si loin ! Sans oublier \"Realbridge \"qui lui permettra de conserver le lien avec ses anciens partenaires.&nbsp;</p><p>Nous lui disons \" à bientôt, nous te reverrons avec plaisir à la Maison du bridge pour les compétitions\".</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-30T16:41:19.940Z"
+      },
+      "public": {
+        "BOOL": false
+      },
+      "subtitle": {
+        "S": "à bientôt ... à la Maison du Bridge"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Carmen/carmen/Carmen_200x129_1.55.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-04-30"
+      },
+      "updatedAt": {
+        "S": "2026-07-12T14:57:46.426Z"
+      },
+      "id": {
+        "S": "a3579b52-0101-4f09-b7fd-818ef75d4d5a"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Carmen bientôt gersoise"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p><b>consultable</b> <b>sous l'onglet Compétitions/Agenda comité</b>, vous pouvez aussi&nbsp; vous <b>fabriquer votre livret format A6</b> en téléchargeant depuis l'onglet Club/Documents :<br>imprimer sur papier <b>A4/Portrait/recto verso</b>, retournement : bord long , échelle : 100%<br>plier par 4 ,&nbsp;coupe-papier et agrafe : c'est prêt !</p>"
+      },
+      "file": {
+        "S": "documents/Agenda 2026_27 - booklet A6.pdf"
+      },
+      "createdAt": {
+        "S": "2026-09-06T07:04:09.385Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": ""
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/page-01 recadrée_200x134_1.49.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-09-06"
+      },
+      "updatedAt": {
+        "S": "2026-09-06T07:29:25.000Z"
+      },
+      "id": {
+        "S": "6ebcacda-440d-49f1-b6ca-a73d0f550b33"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Agenda 2026-2027"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>La Fédération Française de Bridge lance la <b>6ᵉ édition de la Coupe des Clubs</b> pour la saison 2025-2026 : une compétition conviviale et fédératrice qui met en valeur les clubs et leurs joueurs.</p><p>Vous pouvez y participer dans notre club :&nbsp;</p><p>14 tournois disponibles dont les 6 meilleurs résultats seront pris en compte pour la qualification à la <b>finale nationale du 20 juin prochain.</b></p><p>Les dates proposées sont :</p><p><b>Mercredi 8 octobre - vendredi 24 octobre -</b></p><p><b>Mercredi 5 novembre - vendredi 28 novembre -</b></p><p><b>Mercredi 3 décembre&nbsp; - Vendredi 12 décembre -</b></p><p><b>Mercredi 14 janvier - Vendredi 30 janvier -&nbsp;</b></p><p><b>Mercredi 11 février - Vendredi 27 Février -&nbsp;</b></p><p><b>Mercredi 4 mars - Vendredi 27 mars -&nbsp;</b></p><p><b>Vendredi 10 avril - Mercredi 29 avril -</b></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-30T15:19:19.677Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "saison 2025-2026"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/tournois_rdv/coupe des clubs_300x169.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-10-05"
+      },
+      "updatedAt": {
+        "S": "2026-03-05T13:23:43.719Z"
+      },
+      "id": {
+        "S": "fa8b80c6-30c9-4dd4-8821-3b7ea5354f8a"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "6eme Coupe des Clubs"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p><b><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">Forum des associations&nbsp;: notre club était présent …</span></b></p><p><b><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">&nbsp;</span></b></p><p><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">Ce <b>samedi 5 septembre,</b> le traditionnel Forum des associations de\nSaint-Orens a de nouveau attiré un large public, venu à la rencontre du riche\ntissu associatif de la commune. </span></p><p><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">Toute la journée, les habitants ont pu échanger avec les bénévoles,\ndécouvrir de nouvelles disciplines et s'engager pour l'année à venir.</span></p><p><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">Parmi les nombreux stands présents on pouvait compter notre club de bridge avec,\nentre autres, son président Daniel Ferry et notre responsable formation Didier\nCarral. </span></p><p><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">Madame le Maire Dominique Faure présente au forum a pris le temps de\ndiscuter sur notre stand.</span></p><p><span style=\"font-size:12.0pt;line-height:107%;font-family:&quot;Arial&quot;,sans-serif;\nmso-fareast-font-family:&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:\nnone;mso-ansi-language:FR;mso-fareast-language:FR;mso-bidi-language:AR-SA\">Quelques\ncurieux, une dizaine, ont sauté le pas et se sont laissés séduire par ce jeu de\ncartes. </span>\n\n\n\n</p><p>\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n<span style=\"font-size:12.0pt;line-height:107%;\nfont-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:&quot;Times New Roman&quot;;\nmso-font-kerning:0pt;mso-ligatures:none;mso-ansi-language:FR;mso-fareast-language:\nFR;mso-bidi-language:AR-SA\">Quelques-uns parmi ceux qui étaient disponibles </span>\n\n\n\n<span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">&nbsp;sont venus dès <b>ce mardi 8 septembre, 17h</b> à la\nrencontre de notre club. </span></p><p><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">Reçus chaleureusement par Didier, Daniel, Dominique Anne-Marie et Pierre,\nils sont repartis en ayant très envie de revenir pour commencer l’initiation…</span></p><p><span style=\"font-size:12.0pt;font-family:&quot;Arial&quot;,sans-serif;mso-fareast-font-family:\n&quot;Times New Roman&quot;;mso-font-kerning:0pt;mso-ligatures:none;mso-fareast-language:\nFR\">Une rentrée dynamique et nous espérons tous que ces nouvelles recrues vont\naimer découvrir ce jeu passionnant. </span></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-09-08T10:14:41.203Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Septembre 2026"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/St orens.webp"
+      },
+      "publishedAt": {
+        "S": "2026-09-08"
+      },
+      "updatedAt": {
+        "S": "2026-09-09T10:46:14.814Z"
+      },
+      "id": {
+        "S": "86c27f77-cd72-47e4-ba85-8190236869e3"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Forum des associations"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<h5>Public concerné</h5><p>Ces cours s’adressent aux débutants ou à des joueurs ayant déjà joué il y a longtemps et qui ont (presque) tout oublié. Le cycle de cours dure 3 ans</p><h5>Déroulement</h5><p>Chaque séance dure environ 2 heures :</p><h5>Horaires</h5><p><b>Mardi de 14h30 à 16h30</b>&nbsp;: cours de 2ème année&nbsp;avec <b>Anne-Marie GODARD</b> et <b>Pierre GROS</b>.\n</p><p><b>Mardi&nbsp; de 16h45 à 19h00&nbsp;</b>: cours de&nbsp;3eme année&nbsp; avec<b> Jacques-Louis MERAT</b>.\n\n</p><p>\n<b>Mardi de 19h30 à 21h30&nbsp;</b>: cours de&nbsp;1ère année avec <b>Dominique CASSAGNE</b> et <b>Daniel FERRY.</b>\n\n</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:57:09.499Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "le mardi "
+      },
+      "folder": {
+        "S": ""
+      },
+      "rank": {
+        "S": "F1"
+      },
+      "image": {
+        "S": "images/vignettes/initiation.png"
+      },
+      "publishedAt": {
+        "S": "2026-08-29"
+      },
+      "updatedAt": {
+        "S": "2026-09-01T20:44:52.119Z"
+      },
+      "id": {
+        "S": "5f87e4e0-3756-4554-884a-ea0c6b0d400b"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Cours d'initiation"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": ""
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-06-22T12:49:28.945Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "juin 2026"
+      },
+      "folder": {
+        "S": "albums/2026/Fête du Club juin 2026"
+      },
+      "image": {
+        "S": "images/fête du club 2026_200x132_1.52.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-06-22"
+      },
+      "updatedAt": {
+        "S": "2026-06-22T12:54:36.660Z"
+      },
+      "id": {
+        "S": "7c7e1bb6-22e4-485e-ba47-5fad6bad808d"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Fête du Club 2026"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Le club dispose de <b>15 tables</b> pouvant accueillir 60\nbridgeurs,&nbsp;des<b> bridgemates</b> pour noter les résultats en temps réel, une <b>machine\nà distribuer</b> les cartes, trois ordinateurs, un&nbsp;<b>téléviseur grand écran</b>&nbsp;\n\npour organiser au mieux les cours et les tournois&nbsp;, la <b>climatisation</b>, une <b>fontaine à eau</b>, une\n<b>machine à café</b>… <br><br>&nbsp;La fréquentation du club est en constante augmentation, même si\nl’espace commence à manquer; des solutions sont à l’étude avec la mairie pour\naccompagner cette croissance.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:16:25.174Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Tout pour jouer dans les meilleures conditions"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/29paires.jpeg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-19T07:11:41.732Z"
+      },
+      "id": {
+        "S": "24dc4b4b-fadf-4856-a324-98b3a1ac9875"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Des équipements à la pointe"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<h5>Public concerné</h5><p>Ce tournoi est destiné aux joueurs qui ont suivi les <b>deux années du cours d'initiation</b> ou à d'anciens joueurs ayant <b>conservé de bonnes bases désirant approfondir</b> leur connaissances et progresser au jeu de la carte. L'<b>indice maximum </b>de chaque joueur pour participer est de <b>3K</b>.</p><h5>Déroulement</h5><p>Les participants jouent de 12 à 16 donnes préparées. L'animateur est disponible pour aider.</p><p>Une fois par mois, le tournoi joué est le<b>&nbsp;\"tournoi simultané des élèves\", proposé par la FFB et joué en simultané national</b>.</p><h5>Horaires</h5><p><b>Lundi de 14h00 à 17h00</b>. Animateurs <b>André AYRAL</b> et <b>François SOVRAN</b>.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-08-11T09:30:40.532Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "le lundi"
+      },
+      "folder": {
+        "S": ""
+      },
+      "rank": {
+        "S": "F2"
+      },
+      "image": {
+        "S": "images/vignettes/accession.png"
+      },
+      "publishedAt": {
+        "S": "2026-08-29"
+      },
+      "updatedAt": {
+        "S": "2026-09-01T14:02:23.213Z"
+      },
+      "id": {
+        "S": "2f710087-200f-45b1-8bac-f145aab3f542"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Tournoi d'accession"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Beau succès pour le festival de bridge de la ville de Rodez. C'est un rendez-vous très attendu au niveau régional et les bridgeurs sont toujours nombreux à répondre présents à l'invitation de Club de Bridge de Rodez. Cette année, ce sont 200 bridgeurs ( 100 paires) de tous niveaux et de tous horizons, venus des 4 coins du département et au delà ( Haute Garonne, Tarn, Cantal) qui ont pu s'affronter tout au long de l'après -midi avec sérieux mais toujours dans la convivialité. Cette année, plusieurs membres du club ont participé et certains ont obtenu de beaux résultats;&nbsp;</p><p>A côté des \"éternels\" champions de l'épreuve, Michel Claret et Olivier Giard, on peut lister <b>Anne-Marie Godard et Pierre Gros</b> à la 8ème place suivis de près par <b>Alix Ghozland </b>et son partenaire Philippe Boutry à la 9ème place; Bravo à eux! Ce tournoi s'est prolongé par le fameux aligot saucisse, désormais incontournable.</p><p>Prochain rendez-vous avec le festival d' Albi qui a lieu les 7 et 8 mai 2026 . Vous avez encore un peu de temps pour être fin prêt...</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-11-16T15:13:31.582Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": " Rodez le 11 novembre 2025"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Articles/rodez_300x169.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-11-17"
+      },
+      "updatedAt": {
+        "S": "2025-12-31T15:52:50.003Z"
+      },
+      "id": {
+        "S": "e11b5143-94a7-4a62-b4d2-796d3035e63a"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Un festival de bridge réussi"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Comment allier balades en forêt, pétanque, soleil, jeu et progression ? En participant au stage de bridge d'ASPET qui a lieu durant les vacances de la Toussaint.</p><p> Créé il y a bientôt 40 ans, ce stage connaît toujours autant de succès.&nbsp;</p><p>Le programme est riche, varié et unique en son genre;&nbsp; les professeurs sont de qualité, (pour certains plusieurs fois champions de France ) et très disponibles ; cette année Patrick Altibelli était de la partie;&nbsp; Roger Pédoussat, le fondateur, était là évidemment... avec entre autres Jean-Pierre Rocafort (dit Roqui) , Nicolas Courtel, Denis Ancelin et Jean-Claude Elhiautout ; même&nbsp; Michel Claret, 1ère série nationale, est venu quelques jours!&nbsp;</p><p>Cette année, une élève du club de Saint-Orens, Véronique Portet, ainsi qu'une joueuse plus aguerrie (adhérente du club) Mylène Firmignac, ont tenté l'expérience ; elles sont revenues enchantées ;&nbsp;</p><p>Véronique nous dit: \" Je comprends que pour les participants, le stage d' Aspet soit devenu un véritable rituel, un rendez-vous annuel que chacun tient à honorer! J'ai eu l'impression de rejoindre une joyeuse réunion de famille; c'est très motivant et enrichissant de se frotter à des grands joueurs dans une ambiance amicale et bon enfant.\"</p><p>Quant à Mylène : \" Y goûter c'est devenir accro! la qualité de l'enseignement, la convivialité et la beauté de la nature environnante, tous les ingrédients sont là ... Ce fût un vrai plus pour moi, je ne rencontre pas tout cela dans mon club\"...</p><p>La confiance et la motivation gagnent du terrain chez tous ces bridgeurs ; tous sont repartis avec un goût de \"revenez-y\".</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-11-03T17:19:08.354Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "stage de bridge à ASPET du 26 octobre au 01 novembre 2025"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/20251027_122902.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-11-05"
+      },
+      "updatedAt": {
+        "S": "2026-03-05T13:20:39.635Z"
+      },
+      "id": {
+        "S": "c1befffe-fac4-4afd-8221-b0397d51d599"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Véronique et Mylène en stage"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "[Article vide]"
+      },
+      "template": {
+        "S": "enseignants"
+      },
+      "image": {
+        "S": "images/vignettes/Pierre Gros (2)_300x370.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-08-25T16:59:16.148Z"
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:22:11.761Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "vice-président du club moniteur"
+      },
+      "id": {
+        "S": "34bf6cc9-ec89-4207-a6ce-e4405bbc0967"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Pierre Gros"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T07:15:31.178Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "juin 2025"
+      },
+      "folder": {
+        "S": "albums/2025/Fête du Club juin 2025"
+      },
+      "image": {
+        "S": "images/album covers/Fëte du club juin 2025_300x225_1.33.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-14"
+      },
+      "updatedAt": {
+        "S": "2026-01-01T17:06:53.291Z"
+      },
+      "id": {
+        "S": "368dc8d8-b8b4-40a2-8aa2-17d86d5b658f"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Fête du Club"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Au château de Catala le club occupera tout le dernier étage.\nOn pouvait y jouer jusqu'à 18 tables</p><p>Le 1er président fut <b>Mr DANTIER</b> suivi de <b>Mr BRANSHUSSEN</b> puis de&nbsp;<b>Jean CARRAL</b>.</p><p>Le club se développera sous la présidence de <b>Georges BISO</b>\nqui fut aussi très actif au niveau du développement du bridge au niveau\nrégional.</p><p>Les présidents se succéderont : <b>Cécile ESQUIVIE</b>,\n<b>Christian CHAUVET</b>, <b>André AYRAL</b></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/historique/catala.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-09-20T15:33:52.357Z"
+      },
+      "createdAt": {
+        "S": "2025-09-17T06:16:51.867Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": " 1971-2018"
+      },
+      "folder": {
+        "S": ""
+      },
+      "id": {
+        "S": "15adeeb9-0fba-499a-bb2e-3a66c82ae59a"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Le château de Catala"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Le club de St Orens fut créé officiellement le 18 février 1971 avec un siège social au château de Catala.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/historique/historique.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-09-17T07:38:08.763Z"
+      },
+      "createdAt": {
+        "S": "2025-09-17T06:14:52.661Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "18 février 1971"
+      },
+      "folder": {
+        "S": ""
+      },
+      "id": {
+        "S": "68e63f51-60c4-4b71-a076-75e77ce095f3"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Déclaration au BO"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/xian_300x421.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-08-30T15:15:31.888Z"
+      },
+      "createdAt": {
+        "S": "2025-08-25T16:51:02.339Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "trésorier et support informatique"
+      },
+      "id": {
+        "S": "0bf831be-f9e8-4a7c-a1d6-5e49dd1b19e8"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Christian Renoux"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p><b>Paul Quéré</b> un bridgeur très investi dans notre club quitte notre région ... et il nous manque déjà !</p><p>Charmant, affable, attachant, discret, humble, plein d'humour... des qualités d'homme qui accompagnent bien sûr le bridgeur. C'est également un bon joueur qui est toujours sympathique avec tout le monde à la table.&nbsp;</p><p>Sa nouvelle vie va l'emmener vers d'autres horizons, dans l'arrière pays niçois, pays de Christine, son épouse, mais aussi à Vannes à proximité de ses enfants et donc... plus de famille et peut-être un peu moins de bridge ...car le Mercantour compte peu de clubs. Cependant la magie du bridge en ligne lui permettra de jouer avec quelques -uns d'entre nous; Merci BBO, merci Real Bridge !</p><p><b>Un parcours bridge tardif mais bien rempli :</b></p><p>Séduit par le bridge qu'il avait approché il y a quelques années, mais occupé par la vie de familiale et un activité voyageuse entre l' Allemagne et l'Angleterre, Paul a attendu la perspective de la retraite pour se mettre très sérieusement à ce jeu qu'il qualifie de distrayant... c'est à dire idéal pour se détendre et&nbsp; libérer son esprit.</p><p>C'est à Paris qu'il commence, dans le très renommé club \" PLM\" (Paris Lyon Marseille)&nbsp; club soutenu par la Poste dans lequel on pouvait compter jusqu'à 48 tables ! il poursuit sa formation à Toulouse où il prend des cours avec Jean-Pierre Desmoulins , un grand enseignant du bridge devenu parisien et vice-président de la FFB.&nbsp;&nbsp;</p><p>En 2011, Paul arrive au club de Saint-Orens qui se situait alors au château Catala, une grande maison de maître du XVIIème siècle dont certains gardent la nostalgie... Très vite, Paul entre au bureau de ce club local, et content de s'engager un peu plus il occupe plusieurs postes, participe à l'organisation de certaines compétitions et accompagne les formateurs André Ayral, Didier Carral, Daniel Ferry et de temps en temps Patrick Altibelli. Ce dernier le qualifie de \"précieux binôme\"! Ce club lui a permis de nouer de vraies amitiés et de partager des moments de convivialité. Son bridge personnel l'a poussé évidemment vers la compétition qu'il a beaucoup pratiquée.&nbsp;Aujourd'hui s'il cultive l'art d'être grand-père, le bridge reste et restera un plaisir et une passion.</p><p>Il restera le bienvenu au club lorsqu'il sera de passage dans la région. D'ailleurs, il nous a indiqué vouloir continuer à être adhérent au club.</p><p>On lui souhaite \"bon vent\" pour la suite et on le serre fort contre notre cœur !</p><p>&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-03-22T07:57:22.225Z"
+      },
+      "public": {
+        "BOOL": false
+      },
+      "subtitle": {
+        "S": ""
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Quéré Paul/QUERE Paul.jpg/QUERE Paul_199x200_0.99.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-03-22"
+      },
+      "updatedAt": {
+        "S": "2026-07-12T14:57:56.899Z"
+      },
+      "id": {
+        "S": "84b37830-bfcc-4941-9fa0-1da066cf2e47"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Paul Quéré : le bridge avec le coeur "
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Au départ, à la fin des années 60, quelques joueurs Mr\nDANTIER, Mr et Mme BRANSHUSSEN, Mr ALBA, Mr CARRAL, Mr SOVRAN jouaient des\nparties libres chez l'un ou chez l'autre.</p><p>Puis le maire de l'époque, Mr PLANTADE, mit à disposition un local situé juste à\ncôté du bureau de poste.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/historique/autrefois_300x169.jpeg"
+      },
+      "updatedAt": {
+        "S": "2025-09-17T07:36:10.704Z"
+      },
+      "createdAt": {
+        "S": "2025-09-17T06:03:26.238Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "quelques joueurs"
+      },
+      "folder": {
+        "S": ""
+      },
+      "id": {
+        "S": "abb59421-a5aa-4733-81c7-5dcc52022610"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Au départ"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T06:56:43.432Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "juin 2025"
+      },
+      "folder": {
+        "S": "albums/2025/Parrainage 06-2025"
+      },
+      "image": {
+        "S": "images/album covers/parrainage 06-2025_300x168_1.79.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-13"
+      },
+      "updatedAt": {
+        "S": "2026-01-01T17:08:48.048Z"
+      },
+      "id": {
+        "S": "0dfdda41-35de-4dc9-8a02-bfceef71f71b"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Parrainage"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Christian est au bureau depuis trois ans&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/xian_300x421.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-09-16T15:58:18.457Z"
+      },
+      "createdAt": {
+        "S": "2025-08-23T07:01:30.267Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "trésorier"
+      },
+      "id": {
+        "S": "15225a28-8d98-4679-8a2f-5f43ea0c3b47"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Christian Renoux"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": ""
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-12-19T09:25:13.253Z"
+      },
+      "public": {
+        "BOOL": false
+      },
+      "subtitle": {
+        "S": "10 décembre 2025"
+      },
+      "folder": {
+        "S": "albums/NOEL 2025"
+      },
+      "image": {
+        "S": "images/album covers/noel 2025_300x300_1.00.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-12-10"
+      },
+      "updatedAt": {
+        "S": "2026-06-22T12:36:38.048Z"
+      },
+      "id": {
+        "S": "83db5141-b734-41ba-b8de-f81c8054f402"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "NOEL 2025"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Après deux déménagements, le club a trouvé sa place à\nl’espace Marcaissonne, dans un <b>local récent, clair, lumineux</b> et très fonctionnel,\nmis à disposition gratuitement par la mairie.<br>L’accès au local bénéficie d’un<b>\nascenseur</b>, facilitant la venue des personnes à mobilité réduite.<br>Ce lieu offre\nun environnement idéal pour la pratique du bridge, favorisant la convivialité\net le bien-être des membres.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:13:02.589Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "L’espace Marcaissonne, un lieu dédié au bridge"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/marcaissonne.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T16:31:28.941Z"
+      },
+      "id": {
+        "S": "25eed62a-7e08-40d8-a4fd-156f422e4987"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Un cadre moderne et accueillant"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<h5>Donne n°30 du\ntournoi de régularité du Mercredi 15/10/2025&nbsp;:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h5><table class=\"table table-sm table-borderless fit-cols\"><tbody><tr><td><span style=\"font-size: 16px;\">Est&nbsp; donneur :</span></td><td></td><td>♠ 76</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥ </span>RV43</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦&nbsp;</span>AD7653</td><td></td></tr><tr><td></td><td></td><td>♣ 8</td><td></td></tr><tr><td></td><td>♠ D42</td><td></td><td>♠ ARV1083</td></tr><tr><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> A105</td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> 972</td></tr><tr><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> RV109</td><td></td><td></td></tr><tr><td></td><td>♣ 1053</td><td></td><td>♣ AVD2</td></tr><tr><td></td><td></td><td>♠ 95</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> D86</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> 842</td><td></td></tr><tr><td></td><td></td><td>♣ R9764</td><td></td></tr></tbody></table><table class=\"table table-sm table-borderless fit-cols\"><tbody><tr><td>&nbsp; &nbsp; &nbsp;&nbsp;</td><td>Les enchères</td><td>&nbsp;E</td><td></td><td>&nbsp;S</td><td></td><td>&nbsp;O</td><td></td><td>&nbsp;N</td></tr><tr><td></td><td></td><td>&nbsp;1♠</td><td></td><td>&nbsp;P</td><td></td><td>&nbsp;3♠</td><td></td><td>&nbsp;P</td></tr><tr><td></td><td></td><td>&nbsp;5<span style=\"color: rgb(255, 193, 7);\"><span style=\"color: rgb(220, 53, 69);\">♦</span></span></td><td></td><td>&nbsp;P</td><td></td><td>&nbsp;5<span style=\"color: rgb(220, 53, 69);\">♥</span></td><td></td><td>&nbsp;P</td></tr><tr><td></td><td></td><td>&nbsp;6♠</td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td></td><td><span style=\"font-size: 16px;\">&nbsp;Sud entame du 6</span><span style=\"font-size: 16px; color: rgb(220, 53, 69);\">♥</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p>L'enchère de 5<span style=\"color: rgb(220, 53, 69);\">♦</span>\nest un Blackwood Exclusion et la réponse de 5<span style=\"color: rgb(220, 53, 69);\">♥</span>&nbsp; indique 4 ou 1 clé. </p><p>Le coup n'est intéressant\nque sur l'entame à <span style=\"color: rgb(220, 53, 69);\">♥</span> , qui n'a été produite\nqu'à une seule table, les autres entamant le 2<span style=\"color: rgb(220, 53, 69);\">♦</span> , ce qui\nsimplifie grandement la tâche du déclarant.&nbsp;<br><b>Votre plan de jeu</b> prévoit 6 levées\nde ♠ , + 3 à ♣ (en perdant le Roi), + l'As de <span style=\"color: rgb(220, 53, 69);\">♥</span>.</p><p> Il faut donc trouver 2 levées à <span style=\"color: rgb(220, 53, 69);\">♦</span> , et comme vous y êtes chicane, vous devrez expasser AS et D de <span style=\"color: rgb(220, 53, 69);\">♦</span>, d'où l'<b>hypothèse de nécessité</b>&nbsp;: As et D de\n<span style=\"color: rgb(220, 53, 69);\">♦</span>&nbsp;\ndoivent être en Nord.</p><p>Vous prenez donc le 6<span style=\"color: rgb(220, 53, 69);\">♥</span>\nde l'As, vous présentez le 9<span style=\"color: rgb(220, 53, 69);\">♦</span> couvert par la\nD de Nord que vous coupez, tirez R et D&nbsp; de ♠ , puis\nle 10<span style=\"color: rgb(220, 53, 69);\">♦</span> couvert par l'As de Nord que vous\ncoupez, ça y est vous avez vos 2 levées maîtresses à <span style=\"color: rgb(220, 53, 69);\">♦</span>&nbsp; au\nmort&nbsp;!&nbsp;</p><p>Et il vous reste le 4♠ au mort pour aller les encaisser.... Mais\navez-vous pensé à garder votre précieux 3♠&nbsp;? </p><p><span style=\"color: rgb(25, 135, 84);\">Moralité&nbsp;: au bridge\nil faut anticiper, anticiper et anticiper</span>.&nbsp;</p><p>A la\nprochaine, pour de nouvelles aventures sur le tapis vert .</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-10-16T11:37:09.035Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "15 octobre 2025 par Patrick ALTIBELLI"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/tournois_rdv/Cartesajouer.JPG"
+      },
+      "publishedAt": {
+        "S": "2025-10-16"
+      },
+      "updatedAt": {
+        "S": "2026-01-20T17:07:21.217Z"
+      },
+      "id": {
+        "S": "6c4eb9e6-77d4-4cff-aa7d-cc415909e69c"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "La donne de la semaine 42"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>La maison du bridge était en fête ce vendredi 16 janvier 2026 pour la traditionnelle <b>\" fête des Rois\" des 3 clubs</b> ( Auzeville, Ramonville et Saint-Orens).</p><p>Cet évènement est pris en charge à tour de rôle par chaque club et cette année la responsabilité de son organisation était assurée par le club d'Auzeville et de son président Michel Roustan.&nbsp;</p><p><b>Un petit peu d'histoire&nbsp;</b>: cette manifestation existe depuis 2012 et elle permet d'entretenir des liens amicaux entre les clubs. Les lieux ont changé au fil des ans en passant du Grand Vatel à Auzeville, au foyer d'Occitanie de Ramonville, ainsi qu'au club de Saint-Orens à l'espace Marcaissonne, pour s'installer ces dernières années à la maison du bridge. La maison du bridge est un lieu idéal pour que tout se passe dans les meilleures conditions et suffisamment grand pour accueillir tous les participants .. cette année nous étions&nbsp;<b>142</b>!</p><p>Un dress code est proposé pour apporter un peu de fantaisie et lui aussi a varié au fil des ans : il est passé du disco à la mer, de la tenue olympique au rouge et noir ...</p><p><b>Cette année il jouait la carte du bicolore : le rouge et le blanc. </b>Ce bicolore festif a forcément inspiré les bridgeurs! Ainsi, le rouge et le blanc ont largement dominé la partie.&nbsp;</p><p><b>Un tournoi toujours au top </b>avec Corinne Cametti, arbitre au comité qui organisait la compétition. Ce sont <b>André Ayral et Anne Garcia qui ont brillamment gagné </b>avec un score de 68,30%. Une belle bouteille les a récompensés. Bravo à eux!</p><p>Un buffet et les galettes des rois ont clôturé la soirée; les rois et les reines se sont faits très discrets...aucune tête couronnée n'est apparue! Mais tout le monde était ravi de l'ambiance chaleureuse et conviviale qui anime ces fêtes et qui va bien au delà d'une partie de bridge...</p><p>Rendez-vous est pris pour janvier prochain.</p><p>&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-01-20T21:05:54.640Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Les rois s'invitent au bridge"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Fête des 3 clubs 2026_143x200_0.71.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-01-20"
+      },
+      "updatedAt": {
+        "S": "2026-01-20T22:17:41.313Z"
+      },
+      "id": {
+        "S": "0c3fca4e-f01c-4612-ba5b-d3055c4d2aca"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Fête des 3 clubs "
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "Contenu de l'article"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/AMG_300x329.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-09-16T12:38:11.310Z"
+      },
+      "createdAt": {
+        "S": "2025-08-16T14:04:28.151Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Secrétaire"
+      },
+      "id": {
+        "S": "acae8904-fe19-482e-832a-98f521271a55"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Anne-Marie Godard"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": ""
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-09-07T18:13:02.489Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Septembre 2026"
+      },
+      "folder": {
+        "S": "albums/2026/Journée des associations Sept 2026"
+      },
+      "image": {
+        "S": "images/st orens.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-09-07"
+      },
+      "updatedAt": {
+        "S": "2026-09-08T10:13:20.903Z"
+      },
+      "id": {
+        "S": "b83cc26b-342b-4d19-aeec-22c0db9489d8"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Forum des associations"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nous avons appris avec une infinie tristesse le décès de <b>Jean-Louis Lagouanelle</b>, le 3 juillet dernier à l'âge de 85 ans.&nbsp;</p><p>Il était un bridgeur très fidèle et très apprécié de notre club, mais aussi notre ami, pour beaucoup, depuis tant d'années déjà.&nbsp;</p><p>Jean-Louis, c'était l'incarnation de la gentillesse, la vrai de vraie. Il ne cherchait pas à paraître, il était bon tout naturellement, tout simplement.&nbsp;</p><p>Ils sont nombreux au club, ceux et celles, qui ont eu le plaisir de jouer au bridge avec lui&nbsp; dans les tournois et les compétitions...de partager des apéros, des repas... et elle était toujours là, cette belle gentillesse accompagnée de respect, de bienveillance, d'honnêteté et d'humilité. On peut dire qu'il était le partenaire de bridge idéal et qu'il faisait l'unanimité.&nbsp;</p><p>Jean-Louis avait été, dans sa vie professionnelle, un scientifique brillant, toujours capable de trouver l'idée subtile permettant de démontrer un théorème ou de développer une nouvelle méthode. C'était également un épéiste gaucher redoutable qui fut membre de l'équipe de France d'escrime.</p><p>Nous allons beaucoup le regretter.&nbsp;</p><p>En septembre, à la rentrée, le club organisera un tournoi de bridge pour lui rendre hommage, nous vous communiquerons la date après l'été.&nbsp;&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-07-14T13:31:14.092Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": ""
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/IMG-20250926-WA0006_158x200_0.79.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-07-14"
+      },
+      "updatedAt": {
+        "S": "2026-07-14T17:44:49.247Z"
+      },
+      "id": {
+        "S": "5b59f949-2b2c-44b2-9905-d45d00cd115f"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Au revoir Jean-Louis "
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<h5> Donne n°1 du tournoi de régularité du Vendredi 10/10/2025 :            </h5><table class=\"table table-sm table-borderless fit-cols\"><tbody><tr><td>Nord donneur</td><td></td><td>♠ 984</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> 83</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> D1032</td><td></td></tr><tr><td></td><td></td><td>♣ ADV2</td><td></td></tr><tr><td></td><td>♠ RV107632</td><td></td><td>♠ A5</td></tr><tr><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> 9</td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> D102</td></tr><tr><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> RV6</td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> A854</td></tr><tr><td></td><td>♣ 65</td><td></td><td>♣ R1094</td></tr><tr><td></td><td></td><td>♠ D</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> ARV7654</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> 97</td><td></td></tr><tr><td></td><td></td><td>♣ 873</td><td></td></tr></tbody></table><table class=\"table table-sm table-borderless fit-cols\"><tbody><tr><td>Les enchères</td><td>&nbsp;N</td><td></td><td>&nbsp;E</td><td></td><td>&nbsp;S</td><td></td><td>&nbsp;O</td></tr><tr><td></td><td>&nbsp;P</td><td></td><td>&nbsp;1<span style=\"color: rgb(220, 53, 69);\">♦</span></td><td></td><td>&nbsp;3<span style=\"color: rgb(220, 53, 69);\">♥</span></td><td></td><td>&nbsp;4♠</td></tr><tr><td>Nord entame du 8<span style=\"color: rgb(220, 53, 69);\">♥</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p>Sud prend du V<span style=\"color: rgb(220, 53, 69);\">♥</span> et rejoue son R<span style=\"color: rgb(220, 53, 69);\">♥</span> que vous coupez du 6P; vous jouez le 2♠ pour l'AS du mort, Sud fournissant la D♠ ; vous coupez votre D<span style=\"color: rgb(220, 53, 69);\">♥</span> du 10♠, notant que Nord défausse le 2<span style=\"color: rgb(220, 53, 69);\">♦</span>.&nbsp;<br>Vous encaissez R♠ et V♠ en défaussant le 4<span style=\"color: rgb(220, 53, 69);\">♦</span> du mort, Sud défaussant 2<span style=\"color: rgb(220, 53, 69);\">♥</span>.&nbsp;<br>A ce stade vous comptabilisez 9 levées : 7♠ et 2<span style=\"color: rgb(220, 53, 69);\">♦</span> ; la 10ème proviendra soit du R♣, en supposant l'A♣ en Nord, soit de l'impasse à la D<span style=\"color: rgb(220, 53, 69);\">♦</span> sur Sud.&nbsp;<br>Vous pensez, avec raison, que l'A♣ est en Nord, car Sud avec 7<span style=\"color: rgb(220, 53, 69);\">♥</span> par ARV + A♣ serait certainement intervenu à 1<span style=\"color: rgb(220, 53, 69);\">♥</span> plutôt que de faire son barrage à 3<span style=\"color: rgb(220, 53, 69);\">♥</span>.&nbsp;<br>Donc vous jouez votre 5♣ vers le R♣ du mort : Nord plonge de son A♣, craignant un singleton chez vous (s'il ne plonge pas le résultat final sera le même) . N ressort de sa D♣, que vous gobez du Roi, et vous coupez votre 9♣, notant que Sud fournit les 3 fois à ♣.</p><p>&nbsp;<br>Arrêtons-nous à ce moment crucial de la donne pour faire le bilan : vous connaissez 11 cartes de la main de Sud : la D♠ sèche + 7<span style=\"color: rgb(220, 53, 69);\">♥</span> + 3♣ ; il a donc 1 ou 2 cartes à <span style=\"color: rgb(220, 53, 69);\">♦</span> ( il ne peut pas être chicane à <span style=\"color: rgb(220, 53, 69);\">♦</span> car il aurait eu alors 5♣ et Nord n'aurait pas pu fournir son 2♣ quand vous avez coupé le 9♣ du mort) . Si Sud n'a qu'un <span style=\"color: rgb(220, 53, 69);\">♦</span> c'est qu'il avait au départ le V♣ 4ème et vous ne pourrez pas faire 11 levées sauf s'il a la D<span style=\"color: rgb(220, 53, 69);\">♦</span> sèche, auquel cas vous ferez vos 11 levés .&nbsp;<br>Il est donc plus que&nbsp;plausible de penser qu'il a 2<span style=\"color: rgb(220, 53, 69);\"><span style=\"color: rgb(33, 37, 41);\"><span style=\"color: rgb(220, 53, 69);\">♦</span></span></span> et que, donc, Nord a 4 cartes à ♣ par DV ce qui est corroboré par son retour de la D♣ après avoir plongé de son A♣. Nous sommes donc dans la position finale suivante :</p><table class=\"table table-sm table-borderless fit-cols\"><tbody><tr><td>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</td><td></td><td>♠</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span></td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span></td><td></td></tr><tr><td></td><td></td><td>♣ (D ou x) xx</td><td></td></tr><tr><td></td><td>♠ 7</td><td></td><td>♠</td></tr><tr><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span></td></tr><tr><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> RV6</td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> A85</td></tr><tr><td></td><td>♣</td><td></td><td>♣ 10</td></tr><tr><td></td><td></td><td>♠</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♥</span> 76</td><td></td></tr><tr><td></td><td></td><td><span style=\"color: rgb(220, 53, 69);\">♦</span> (D ou x) x</td><td></td></tr><tr><td></td><td></td><td>♣</td><td></td></tr></tbody></table><p>                                     -                                          Vous jouez votre 7♠ (la squeezante) et vous voyez  Nord&nbsp; défausser le 3<span style=\"color: rgb(220, 53, 69);\">♦</span>, vous défaussez votre menace du 10♣ devenue inutile, ou même votre 5<span style=\"color: rgb(220, 53, 69);\">♦</span>. Et là, vous jouez les yeux fermés, A<span style=\"color: rgb(220, 53, 69);\">♦</span> et R<span style=\"color: rgb(220, 53, 69);\">♦</span>, en disant à vos adversaires, toujours les yeux fermés : l'un de vous deux va me fournir sa D<span style=\"color: rgb(220, 53, 69);\">♦</span> , promouvant ma menace du V<span style=\"color: rgb(220, 53, 69);\">♦</span> au rang de 11ème levée, pour un top bien mérité !</p><p>A la prochaine, pour de nouvelles aventures sur le tapis vert .</p><p>                                      -                                         P.S. : à titre d'exercice vérifiez que si Nord ne plonge pas de son A♣ la fin du coup est la même</p>"
+      },
+      "file": {
+        "S": "documents/donne 10 oct 2025.pdf"
+      },
+      "createdAt": {
+        "S": "2025-10-14T10:28:01.163Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "10 octobre 2025 par Patrick ALTIBELLI"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/tournois_rdv/Cartesajouer.JPG"
+      },
+      "publishedAt": {
+        "S": "2025-10-12"
+      },
+      "updatedAt": {
+        "S": "2026-01-20T17:07:27.631Z"
+      },
+      "id": {
+        "S": "f4368816-b77f-498a-8471-f9d1a719a780"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "La donne de la semaine 41"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>La Maison du Bridge sera en fête <b>vendredi 16 janvier 2026 </b>pour le traditionnel <b>\"tournoi des Rois\" des 3 clubs (</b> Auzeville- Ramonville et Saint-orens) .</p><p>Le tournoi est ouvert à tous et vous attend dès 15h ; la galette des rois clôturera ce rendez-vous annuel toujours très riche en convivialité.</p><p>Cette année le <b>dress code</b> proposé par le club organisateur, Auzeville, est le bicolore \" <b>rouge et blanc</b>\"&nbsp; ( ex: un pull rouge et un foulard blanc).</p><p>Venez nombreux, vous êtes, bien sûr, les bienvenus! Les inscriptions sont ouvertes sur le site de la FFB.&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-12-26T15:34:00.240Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Fête des 3 clubs"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Articles/3clubs2026_225x300_0.75.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-01-26"
+      },
+      "updatedAt": {
+        "S": "2026-03-09T15:06:32.028Z"
+      },
+      "id": {
+        "S": "d28effb8-e667-4e50-86f1-2744c46aa78f"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Le rouge et le blanc ; un bicolore festif"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": ""
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-02-01T07:11:18.484Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "support fêtes"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/trombinoscope/Anne Garcia _197x200_0.99.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-02-01"
+      },
+      "updatedAt": {
+        "S": "2026-02-01T07:16:25.057Z"
+      },
+      "id": {
+        "S": "e4a1a299-933a-4e3a-a809-9b6e8f0d34e2"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Anne Garcia"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>blabla <b>dsff</b>dff</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-01-10T09:41:53.974Z"
+      },
+      "public": {
+        "BOOL": false
+      },
+      "subtitle": {
+        "S": "sourire"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/spidey.png"
+      },
+      "publishedAt": {
+        "S": "2026-01-07"
+      },
+      "updatedAt": {
+        "S": "2026-01-10T13:37:24.465Z"
+      },
+      "id": {
+        "S": "0d440d42-c31c-48fc-bd71-4625aa90c19c"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "essai pour rire"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>L'album photos est directement accessible en cliquant&nbsp;<a href=\"/front/les_albums/83db5141-b734-41ba-b8de-f81c8054f402?startAt=3&amp;autoWrapped=true\">ici</a> !</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-12-29T17:23:49.257Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "les photos"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Articles/20251210_192827_300x300_1.00.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-12-29"
+      },
+      "updatedAt": {
+        "S": "2026-03-05T13:20:48.816Z"
+      },
+      "id": {
+        "S": "336fdfc3-c303-4754-9336-f6d8f84ef539"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Fête de Noël du 10 décembre"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p><b>1.&nbsp;</b><b>Informations légales :</b></p><p>Conformément aux dispositions des\narticles 6-III et 19 de la loi pour la Confiance dans l'Économie Numérique,\nnous vous informons que :</p><p>\nLe site web <b><a href=\"http://bridgeclubsaintorens.fr/\">bridgeclubsaintorens.fr</a></b>&nbsp;est\nédité par&nbsp;:</p><p>&nbsp;<b>Bridge-Club Saint-Orens</b></p><p><b></b><b>13 boulevard du Libre Échange</b>\n<b></b></p><p><b>31650 SAINT-ORENS</b></p><p>Email&nbsp; :\nbridge.saintorens.free.fr\n</p><p>Téléphone : 05 61 20 10 09 ou 06 86 07 77 34</p><p>&nbsp;</p><p><b>2. Publication&nbsp; :</b>\n</p><p>Le contenu publié sur le site est sous la responsabilité du Président du Club, ou par délégation, toute autre personne habilitée par le Bureau de l'association. Pour plus de détails, se référer à la constitution du Comité d’Administration en vigueur.</p><p><b>3. Hébergeur :</b></p><p><b></b>\nLe site est hébergé par&nbsp;:</p><p>&nbsp;<b>Amazon Web Services (AWS)</b>\n<b>410 Terry Avenue North, Seattle, WA 98109, États-Unis</b>\n\n</p><p><b>4. Données personnelles et RGPD :</b></p><p><b></b>\nEn conformité avec le Règlement Général sur la Protection des Données (RGPD),\nvous disposez d’un droit d’accès, de rectification et de suppression de vos\ndonnées personnelles.\nPour exercer ce droit, vous pouvez contacter l’association par e-mail ou\ndirectement à un membre du Bureau.</p><p>Les données collectées via notre site sont uniquement\ndestinées à l’usage interne de l’association et ne seront pas transmises à des\ntiers sans votre consentement explicite.</p><p><b>5. Responsabilité :</b></p><p><b></b>\nL’association s’efforce d’assurer l’exactitude et la mise à jour des\ninformations diffusées sur son site. Toutefois, elle ne peut garantir\nl’exactitude, la complétude ou l’absence de modifications par des tiers.</p><p> En\nconséquence, l’association ne pourra être tenue responsable des erreurs,\nomissions ou résultats pouvant être obtenus par une mauvaise utilisation de ces\ninformations.</p><p><b>6. Propriété intellectuelle :</b>\n</p><p>Tous les contenus présents sur le site&nbsp;<a href=\"http://bridgeclubsaintorens.fr/\">bridgeclubsaintorens.fr</a>, y compris\nles textes, images, graphismes, logos, sont protégés par le droit d’auteur et\nrestent la propriété exclusive de l’association ou de leurs auteurs respectifs.\nToute reproduction, même partielle, est soumise à autorisation préalable.</p><p><b>7. Liens hypertextes :</b></p><p><b></b>\nLe site peut contenir des liens vers d’autres sites. L’association n’exerce\naucun contrôle sur ces sites et décline toute responsabilité quant à leur\ncontenu.</p><p><b>8. Données FFB</b><br>Certaines informations sont obtenues par l'intermédiaire de l'API FFB, et avec l'accord de la FFB; pour autant leur exploitation et leur présentation sur le Site ne sauraient engager la responsabilité de la FFB.&nbsp;</p><p><b>9. Modification des mentions légales :</b></p><p><b></b>\nL’association se réserve le droit de modifier ces mentions légales à tout\nmoment. Il est recommandé de les consulter régulièrement.</p><p>&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-16T18:05:02.849Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "bridgeclubsaintorens.fr"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/legal/mentions-legales.png"
+      },
+      "publishedAt": {
+        "S": "2025-09-25"
+      },
+      "updatedAt": {
+        "S": "2026-03-21T16:32:48.516Z"
+      },
+      "id": {
+        "S": "59c10f60-03c9-4915-b5aa-070632eefe16"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "mentions légales"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "Contenu de l'article"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/daniel.png"
+      },
+      "updatedAt": {
+        "S": "2025-08-25T17:00:36.934Z"
+      },
+      "createdAt": {
+        "S": "2025-08-16T15:43:14.455Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "président du Club et moniteur"
+      },
+      "id": {
+        "S": "4404af00-b10b-4284-8b5f-44631efde704"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Daniel Ferry"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Annexe au Réglement Intérieur en vigueur, listant les données particulières de la la saison.</p>"
+      },
+      "file": {
+        "S": "documents/Tableau de Bord 2025-2026.pdf"
+      },
+      "image": {
+        "S": ""
+      },
+      "updatedAt": {
+        "S": "2025-10-03T09:20:00.857Z"
+      },
+      "createdAt": {
+        "S": "2025-08-12T14:13:30.674Z"
+      },
+      "public": {
+        "BOOL": false
+      },
+      "subtitle": {
+        "S": "2025/2026"
+      },
+      "id": {
+        "S": "e14cad8f-8797-49e5-a0bb-59c6c6e3b14e"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Tableau de bord"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": ""
+      },
+      "file": {
+        "S": "documents/albums/2026/Fête école de bridge juin 2026"
+      },
+      "createdAt": {
+        "S": "2026-07-06T17:32:57.392Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "juin 2026"
+      },
+      "folder": {
+        "S": "albums/2026/Fête école de bridge juin 2026"
+      },
+      "image": {
+        "S": "images/20260630_174925_200x166_1.20.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-07-06"
+      },
+      "updatedAt": {
+        "S": "2026-08-13T14:08:08.810Z"
+      },
+      "id": {
+        "S": "931a6701-ccca-47ad-a3e2-4eb1b36a6060"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Fête de l'école de bridge"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>La<b> fête de Noël</b> du club est prévue pour <b>le mercredi 10 décembre</b>. Elle se déroulera entièrement dans les locaux de l'Espace Marcaissonne :</p><p>- dans notre salle de bridge pour le tournoi principal&nbsp;</p><p>- en salle Ophrys pour le tournoi des élèves&nbsp;</p><p>- en salle Bellavia pour les festivités&nbsp;</p><p>En voici <b>le programme </b>:</p><p><b>14h30 : tournois&nbsp;</b></p><p><b>18h45 : apéritif et spectacle&nbsp;</b></p><p><b>19h30 : repas</b>&nbsp;</p><p>Cette fête, comme toutes celles de décembre que nous organisons, sera <b>exclusivement réservée à nos adhérents,</b>&nbsp;y compris, bien sûr, tous nos élèves, quel que soit leur niveau d'enseignement : nous ne pourrons accueillir les conjoints, qui seront les bienvenus pour la fête de juin.</p><p><b>Le thème de l'animation</b> de cette année sera l<b>'Occitanie</b>, et nous accueillerons 6 musiciens qui nous inviteront à vous joindre à leurs danses occitanes. Ils partageront notre repas et vous aurez ainsi la possibilité d'échanger avec eux. Le repas sera servi sur des tables de 6 à 8 convives, dont les plans sont établis à l'avance, en fonction de vos desiderata,&nbsp; afin de simplifier l'organisation.&nbsp;</p><p><b>Menu </b>: après le traditionnel <b>foie gras</b>, le mets principal est au choix de chacun :&nbsp;</p><p>- soit une <b>coquille de lotte sauce normande sur fondue de poireau&nbsp;</b></p><p>- soit une <b>bouchée à la reine au poulet et morilles</b></p><p>Lors de votre inscription il vous est demandé de choisir votre mets.</p><p><b>Participation </b>:&nbsp;</p><p>- tournoi après-midi : tarif identique aux tournois de régularité de l'année&nbsp;</p><p>- apéritif et repas : 12€</p><p>Cette participation sera à régler le jour de la fête</p><p>Bien sûr, il est possible de venir uniquement au tournoi ou uniquement à l'apéritif ou uniquement au repas. A vous de choisir la formule qui vous va bien...</p><p>Un \"<b>chapeau</b>\" circulera parmi les tables afin de vous permettre d'apporter votre contribution à la rémunération des artistes. Nous comptons sur votre générosité .&nbsp;</p><p>Le nombre de participants à l'apéritif et au repas n'est pas limité et nous accueillerons tous ceux de nos adhérents qui désirent partager ce moment festif. En revanche, notre salle de tournoi n'étant pas extensible, l<b>e tournoi principal sera réservé aux 31 premières paires inscrites, </b>soit 15 tables.&nbsp;</p><p><b>Ne tardez pas à vous inscrire!</b> Pensez aux organisateurs et au traiteur...</p><p>&nbsp;<b>Les inscriptions seront closes le vendredi 5 décembre.</b>&nbsp;</p><p>A cette occasion, nous souhaitons, partager une fois de plus, un beau moment de gaîté et de convivialité.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-11-20T16:31:42.071Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Noël 2025 "
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/Noel 2025.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-11-21"
+      },
+      "updatedAt": {
+        "S": "2026-03-05T13:23:16.529Z"
+      },
+      "id": {
+        "S": "4f592c82-2697-4d6c-a0d8-ec6a1f8d308b"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Le 10 décembre c'est la fête !"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Aide à la création de compte et connexion au site avec accès aux données réservées aux membres</p>"
+      },
+      "file": {
+        "S": "documents/login v2.pdf"
+      },
+      "createdAt": {
+        "S": "2026-08-28T06:42:53.134Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Aide à la création de compte et connexion au site avec accès aux données réservées aux membres"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": ""
+      },
+      "publishedAt": {
+        "S": "2026-08-28"
+      },
+      "updatedAt": {
+        "S": "2026-08-28T09:27:27.534Z"
+      },
+      "id": {
+        "S": "8dee797b-fa78-4172-adbb-1a5c58437b52"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Connexion au site"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "[Article vide]"
+      },
+      "image": {
+        "S": "images/vignettes/Didier_300x404.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-08-25T17:02:26.353Z"
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:07:13.785Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "maître-assistant & moniteur cours de bridge"
+      },
+      "id": {
+        "S": "e57369f7-d19b-4d3a-a11a-a89f183e43af"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Didier Carral"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Labellisée FFB depuis 2018, l’école du club accueille plus de 50 élèves.</p><p>Les enseignements sont assurés par <b>Didier Carral</b> (Maître-Assistant) et sept moniteurs diplômés par la Fédération Française de Bridge.</p><p><b>Anne-Marie Godard</b> et <b>Pierre Gros</b> donnent les cours d’initiation, <b>Jacques-Louis Mérat</b> dispense les cours de 2ème année, <b>Daniel Ferry</b> et <b>Dominique Cassagne</b> ceux de 3ème année, Didier assure les deux niveaux de perfectionnement.</p><p><b>André Ayral</b> organise le tournoi des élèves du mercredi, aidé par <b>François Sovran</b>.</p><p>Toute l’équipe s’implique pour transmettre sa passion et offrir un passe-temps intelligent et populaire</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:37:46.352Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Un enseignement de qualité pour tous les niveaux"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/pc cuisine_200x115_1.75.png/école de bridge.jpeg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-13T05:50:02.501Z"
+      },
+      "id": {
+        "S": "c620f474-3e29-4eb8-b6e9-a680036be151"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Une école de bridge labellisée"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Ils sont jeunes, ils sont beaux et déjà très doués! initiés en novembre dernier ils viennent de participer à leur premier tournoi&nbsp; (le tournoi \"étoile\" du mois de mars au club de Bridge Académie à Toulouse).</p><p>Claire, Alicia, Maxandre et Hugo ont prouvé que \"la valeur n'attend point le nombre des années\" selon la formule consacrée.&nbsp;</p><p>Très chaleureusement reçus par le club d'Olivier Giard, chouchoutés par Nathalie, ils sont revenus enchantés de cette expérience . Ils ont apprécié l'ambiance du club, la découverte d'un \"vrai\" tournoi, les commentaires de donnes&nbsp; et sont repartis fiers de leurs résultats. Une des joueuses a même dépassé le classement de son père...c'est prometteur!</p><p><b>Initiés au roi des jeux </b>:</p><p>Ces quatre joueurs âgés d'une vingtaine d'années, <b>licenciés</b> à Bridge Académie et <b>au club de Saint-Orens</b>, ont débuté grâce aux cours offerts par la FFB aux étudiants et aux jeunes actifs. Ces cours ont lieu à la Maison du Bridge à Labège le lundi soir grâce à une équipe d'initiateurs bénévoles qui les accompagnent dans cet apprentissage. Les \"anciens\" qui voient arriver ces jeunes joueurs avec beaucoup de satisfaction et de fierté pour assurer la relève, espèrent qu'ils vivront ce jeu comme une véritable passion où l'on devient un architecte de stratégies, un artiste du raisonnement. Chaque carte étant une possibilité qui en fait le roi des jeux de cartes !&nbsp;&nbsp;</p><p>Accessible à tous les âges, le fait de commencer jeune est un atout déterminant pour eux. Après ce premier tournoi \"étoile\" on souhaite à Claire, Alicia, Maxandre et Hugo de devenir à leur tour des étoiles de bridge!</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-03-26T15:58:17.372Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": ""
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/jeunes talents_200x106_1.88.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-03-26"
+      },
+      "updatedAt": {
+        "S": "2026-03-31T11:30:29.337Z"
+      },
+      "id": {
+        "S": "9a52c897-fe25-4b6b-aed2-d421be5292aa"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Le tournoi des jeunes talents"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>En avril 2026, le club compte 163 membres\nadhérents/licenciés et 8 en apprentissage. <br>Depuis juin 2024, Daniel Ferry\npréside le club, entouré d’une équipe investie.<br>&nbsp;Le club se distingue par son\n<b>animation très dynamique</b>, la présence de 4 arbitres, une école labellisée, et\nsurtout une <b>ambiance chaleureuse</b> qui attire toujours plus de passionnés.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:04:32.989Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Un club dynamique et convivial, présidé par Daniel Ferry"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/logo/ST_ORENS FFB.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T16:31:56.310Z"
+      },
+      "id": {
+        "S": "6ffd7b98-8316-472c-a1bb-d0e94d99a9d5"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Le Club de Bridge de Saint-Orens"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T06:51:39.432Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "avril 2025"
+      },
+      "folder": {
+        "S": "albums/2025/Anniversaire 100 ans Jacotte"
+      },
+      "image": {
+        "S": "images/album covers/Anniversaire 100 ans Jacotte_300x168_1.79.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-13"
+      },
+      "updatedAt": {
+        "S": "2026-01-01T17:07:52.323Z"
+      },
+      "id": {
+        "S": "bae2ac64-26bc-42f7-80e7-405bff27f5dc"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "100 ans de Jacotte"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Les tournois de parrainage ont lieu une fois par mois;</p><p>Les dates retenues cette saison sont :</p><p>-<b> vendredi 17 octobre&nbsp;</b></p><p><b>- vendredi 21 novembre&nbsp;</b></p><p><b>- vendredi 19 décembre&nbsp;</b></p><p><b>- vendredi 23 janvier&nbsp;</b></p><p><b>- vendredi 20 février</b></p><p>-<b> vendredi 20 mars</b></p><p><b>- vendredi 17 avril&nbsp;</b></p><p><b>- vendredi 22 mai&nbsp;</b></p><p>- <b>vendredi 19 juin</b></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-10-05T15:56:26.555Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "saison 2025/2026 "
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Articles/tournoi parrainage st O_300x200.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-10-10"
+      },
+      "updatedAt": {
+        "S": "2026-07-28T14:31:51.624Z"
+      },
+      "id": {
+        "S": "cdd7da63-60ee-4bf8-88fc-56d01b9add8f"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Tournois de parrainage "
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T06:54:51.253Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "mai 2025"
+      },
+      "folder": {
+        "S": "albums/2025/Marathon 2025"
+      },
+      "image": {
+        "S": "images/album covers/marathon 2025_300x168_1.79.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-13"
+      },
+      "updatedAt": {
+        "S": "2026-01-01T17:08:09.958Z"
+      },
+      "id": {
+        "S": "37aa36dd-5210-4c45-9fa3-e8cb1fef31c3"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Marathon"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T06:33:37.858Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "décembre 2024"
+      },
+      "folder": {
+        "S": "albums/2024/Fête de Noël 2024"
+      },
+      "image": {
+        "S": "images/album covers/SPECTACLE NOEL 2024 SHU_300x225_1.33.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-13"
+      },
+      "updatedAt": {
+        "S": "2026-01-01T17:12:12.187Z"
+      },
+      "id": {
+        "S": "3b39953b-d7a3-41b2-b7b8-a69b48fd1f22"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Fête de Noël"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Les coordonnées du compte Club, pour vos achats par virement.</p>"
+      },
+      "file": {
+        "S": "documents/rib.pdf"
+      },
+      "image": {
+        "S": ""
+      },
+      "updatedAt": {
+        "S": "2025-08-15T14:08:30.530Z"
+      },
+      "createdAt": {
+        "S": "2025-08-15T08:31:41.611Z"
+      },
+      "public": {
+        "BOOL": false
+      },
+      "subtitle": {
+        "S": "membres"
+      },
+      "id": {
+        "S": "48499265-7a16-4509-a9a8-124b322970b6"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Relevé d'identité bancaire"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p><b>Le 10 juin </b>, nous nous sommes retrouvés à la Maison du Bridge à Labège, espace idéal, pour célébrer une saison riche en évènements et en compétitions, dans une ambiance chaleureuse.&nbsp;</p><p>Dès 14h , la Maison du Bridge résonnait d'éclats de voix autour d'un café d'accueil, ensuite à 14h30 le tournoi a rassemblé 90 participants- 45 paires- témoignant du dynamisme du club. <b>Mention spéciale à Sofia et à Jean-Baptiste,</b> deux nouveaux jeunes bridgeurs , qui ont disputé leur tout premier tournoi avec courage et enthousiasme. Ils étaient ravis... la relève est là !&nbsp;</p><p><b>Notre président, Daniel Ferry</b>, a honoré les champions de chaque série par des récompenses: une bouteille de vin et des bons pour des tournois gratuits. On relève la victoire en <b>1ère série de Josiane Erny et Michèle Lauvergnat,</b> en <b>2ème série de Brigitte Mangin et André Ferrand, </b>en<b> 3ème série d'Alain Mari et Christian Chauvet </b>et en<b> 4ème série de François Cazorla et Maryline Sanchez.</b>.. Bravo à eux !&nbsp;</p><p>La fête s'est poursuivie par un apéritif convivial avec <b>une sangria préparée par Martine Ferry,</b> ensuite par un dîner&nbsp; excellent au restaurant \"l'aléa table\", toujours à Labège, où chaque convive a reçu en cadeau un petit sachet de bonbons. <b>Anne-Marie Godard a animé la soirée </b>en lisant des anecdotes savoureuses tirées du \" Bouquin des méchancetés\" de François-Xavier Testu , provoquant rires et complicité.&nbsp;</p><p>Une journée joyeuse et pleine de partage : les membres du club toujours aussi sérieux au jeu, reste avant tout une grande famille...</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-06-17T12:04:57.814Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "fête du club "
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/20260610_144619_200x125_1.60.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-06-17"
+      },
+      "updatedAt": {
+        "S": "2026-06-20T14:50:18.679Z"
+      },
+      "id": {
+        "S": "09d9634f-e9df-4d88-86bb-47637f436428"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Notre club a célébré dans la bonne humeur la fin de saison"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "[Article vide]"
+      },
+      "image": {
+        "S": "images/vignettes/AMG_300x329.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-08-25T16:59:56.847Z"
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:13:28.128Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "secrétaire du Bureau, monitrice et organisation des fêtes"
+      },
+      "id": {
+        "S": "66ac2d88-1bcb-4cad-a170-cf88988cc364"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Anne-Marie Godard"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Pour toute question, contactez nous via le formulaire en\nligne , par mail ou téléphone&nbsp; (<b>Assistance</b> ou <b>Contacts</b> en pied de page)&nbsp; . <br></p><p>Il est possible de venir <b>d<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">é</span>couvrir\nle club</b> lors d<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:\nAptos;mso-bidi-font-family:Aptos\">’</span>une <b>s<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">é</span>ance d<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">’</span>essai</b>.</p><p>L’équipe du club répond rapidement à toutes vos\ndemandes.</p><p><b>Le club vous accueille toute l’année</b><span style=\"font-family:\n&quot;Arial&quot;,sans-serif\"> </span>!</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T14:06:41.733Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Inscription et prise de contact simplifiés"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/pont neuf.webp"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T15:45:08.947Z"
+      },
+      "id": {
+        "S": "5b33ef34-0bff-4302-a757-0b259f4b18a9"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Infos pratiques et contact"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Notre club participera à la 7e édition du festival des simultanés qui se déroulera durant le mois de septembre 2026.&nbsp;</p><p>🎁 A la clé, à gagner : 1 voyage, des stages, un bon séjour Belambra, des bons d'achats à la boutique FFB, des abonnements, des livres… offerts par les organisateurs.</p><p>Du 9 au 26 septembre, nos tournois du mercredi et vendredi se dérouleront sous forme d'un grand tournoi simultané national.</p><p>Les dotations en points d’expert seront doublées</p><p>Les commentaires des 24 premières donnes seront envoyés par mail, à l’issue du tournoi, avec les résultats du tournoi et en consultation sur l’espace licencié du site FFB.</p><p><span style=\"box-sizing: inherit; -webkit-tap-highlight-color: transparent; color: rgb(50, 103, 255);\">Un challenge est mis en place sur les 3 meilleurs tournois. </span><span style=\"box-sizing: inherit; -webkit-tap-highlight-color: transparent; color: black;\">Ce challenge est individuel et il suffit d’avoir joué 3 tournois du Festival des Simultanés, dans n’importe quel club et avec n’importe quel partenaire pour rentrer dans le challenge. La moyenne des trois meilleurs résultats permettra d’établir un classement final.</span></p><p><span style=\"box-sizing: inherit; -webkit-tap-highlight-color: transparent; color: black;\">Le challenge est catégoriel en fonction de l’IV. Il y a trois séries : 1res séries, 2es séries et 3/4es séries.</span></p><p>En espérant vous voir venir nombreux</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-09-08T10:20:08.855Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Septembre 2026"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Simultanés/affiche_festival_simultanes_2026.webp"
+      },
+      "publishedAt": {
+        "S": "2026-09-08"
+      },
+      "updatedAt": {
+        "S": "2026-09-14T07:55:35.876Z"
+      },
+      "id": {
+        "S": "f381ce6f-39b6-4e4a-be7d-5db4c5ad3837"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Festival des simultanés"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Le Simultané Des Elèves ou SDE&nbsp; reprend <b>mercredi 15 octobre 9h30 </b>au bridge club de Saint-Orens .</p><p>Ce championnat s'adresse aux joueurs ayant un classement maximal de 3♦;</p><p>Ce type de tournoi d'accession se déroulera tous les mois d'octobre 2025 à mai 2026 ;</p><p>Cette saison vous pourrez jouer entre 12&nbsp; et 20 donnes préparées à chaque épreuve et vous aurez un livret de commentaires complet .&nbsp;</p><p>Les donnes proposées suivent le programme du livre \"Le bridge français\":</p><p>-<b> Octobre :</b> révision&nbsp;</p><p>- <b>Novembre </b>:l'impasse forçante, sacrifice et contre punitif , intervention à 1♥/1♠, soutien à 2♥/2♠</p><p>- <b>Décembre</b> : honneur sur honneur , la double impasse, cue-bid fitté, soutien de l’intervention en barrage ;&nbsp;</p><p>-<b> Janvier :</b> plan de jeu à sans-atout , plan de jeu en défense, Stayman et Texas majeur sur 1SA&nbsp;</p><p>-<b> Février</b> : jouer un honneur en flanc, traitement des 5/4 et 5/5 majeurs de manche&nbsp; en face de 1SA , développements en face de 2SA&nbsp;</p><p><b>-Mars</b> : compte des levées du déclarant / du flanc à sans-atout, les ouvertures de barrage</p><p>- <b>Avril </b>: compte des levées du déclarant/ du flanc à l'atout , les barrages en intervention , l'intervention à 2♥ sans saut</p><p>- <b>Mai </b>: maniement de la couleur d'entame, le laisser passer, le changement de couleur en 2 sur 1 après l'ouverture de 1♥/1♠, les redemandes de l'ouvreur à sans-atout après 1♥/1♠ - 1SA&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/ffb/SDE_300x169.png"
+      },
+      "updatedAt": {
+        "S": "2025-11-21T10:29:49.325Z"
+      },
+      "createdAt": {
+        "S": "2025-10-05T17:38:56.519Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "saison 2025/2026 : demandez le programme!"
+      },
+      "folder": {
+        "S": ""
+      },
+      "id": {
+        "S": "b684cf4c-30ea-4dbd-8973-98e801bae9c4"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "SDE ( Simultané Des Elèves)"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-17T06:01:21.899Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "organisation des fêtes"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/trombinoscope/FERRY Martine (2).jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-17"
+      },
+      "updatedAt": {
+        "S": "2026-02-01T16:28:06.349Z"
+      },
+      "id": {
+        "S": "a2e1161f-783c-4b7c-9ea3-251b66fe0cb1"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Martine Ferry"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Le week-end dernier, les 8 et 9 novembre 2025, se déroulait et se terminait <b>la finale de la division Ligue de l'Open par 4.</b>&nbsp;<br>Ce 2nd week-end de cette compétition se déroulait dans un club de Montpellier \"La Bridgerie\"; 11 équipes, au lieu de 12, participaient à cette épreuve, en raison du forfait de l'équipe dans laquelle jouait Patrick Altibelli.<br><b>L'équipe de notre président Daniel Ferry termine 2ème </b>... équipe dans laquelle se trouvent également<b> Didier Carral</b>, notre responsable formation, Nadine et Patrick Peyrot, Bernard Béziat et Robert Petitjeans complétaient l'équipe.&nbsp;<br>Bravo à eux pour cette très belle performance. La compétition va se poursuivre avec la finale nationale qui se déroulera <b>les 13 et 14 décembre prochains; </b>Nous allons les suivre avec plaisir! La Division Nationale&nbsp; est peut-être au bout du chemin ...</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-11-12T14:51:18.706Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Division Ligue : Finale de Ligue de l'open par 4 "
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/DANIEL FERRY_300x426.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-11-14"
+      },
+      "updatedAt": {
+        "S": "2026-03-05T13:20:44.789Z"
+      },
+      "id": {
+        "S": "9cc4c7a9-6a79-4560-9b9b-96dde2ccf838"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "SAINT-ORENS SUR LE PODIUM "
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p><b>Bridge-Club de Saint Orens</b></p><p>ESPACE MARCAISSONNE<br>13 boulevard du Libre Echange<br>2ème étage avec ascenseur<br>31650 SAINT-ORENS</p><p>Email&nbsp; : bridge.saintorens@free.fr</p><p>Téléphone : 05 61 20 10 09 ou 06 86 07 77 34</p><p>Pour visualiser sur une carte , cliquez&nbsp;<a href=\"https://www.google.com/maps?q=ESPACE+MARCAISSONNE,+13+Boulevard+du+Libre+Echange,+31650+Saint+Orens&amp;output=embed\">&nbsp;ici</a></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-16T17:33:02.631Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "nous trouver"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/logo/marcaissonne.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-25"
+      },
+      "updatedAt": {
+        "S": "2025-12-03T14:14:04.484Z"
+      },
+      "id": {
+        "S": "5ed3205e-7dcb-4432-b2a6-f7cd56ab4682"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Bridge-Club de Saint-Orens"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>C'était la foule des grands jours le 10 décembre dernier au club de bridge de Saint-Orens qui organisait<b> sa traditionnelle fête de Noël.&nbsp;</b><br>Ainsi, pour accueillir dans de bonnes conditions tous les adhérents venus nombreux, deux tournois se sont tenus dans des salles différentes : l'une pour les 14 paires élèves et la salle principale pour les 25 autres paires de bridgeurs.<br>Après des parties conviviales les gagnants ont été récompensés avec au choix une bouteille de vin ou une carte de tournois gratuits : pour le tournoi principal ce sont les paires Jean-Louis Darréon/Noël Watrin en N/S, Marie-France Pleiber/Arnaud&nbsp; De Latude en E/O . Côté élèves ce sont les paires Jean-François Beaucamp/Sylvie Beaucamp en E/O et Kévin Taylor/ Alain Séraudie en N/S.</p><p><b>Une soirée de Nadal très festive:</b></p><p>Le soir après l'apéro, changement de tables pour savourer le repas dans la tradition de Noël et se régaler avec le fameux foie gras d' Anne-Marie! le tout enjolivé par le petit cadeau pour tous, soit un joli pochon garni de bonbons en chocolat en forme de béret et de ballon de rugby, Occitanie oblige!&nbsp;<br>La soirée à laquelle participaient 90 adhérents, s'est ainsi poursuivie sous le signe de l'Occitanie avec un groupe de musique traditionnelle pour entrainer tout le monde dans la danse. Et ce n'est pas un vain mot! car, avec les musiciens, accordéonistes et flûtiste, deux danseurs accompagnaient et guidaient des bridgeurs plus à l'aise avec leurs cartes qu'avec des pas de bourrées ou de brise-pieds! l'ambiance fût excellente, en témoignent de nombreuses photos visibles sur ce site dans la partie Album&nbsp;</p><p><b>Des perspectives pour la prochaine année :&nbsp;</b></p><p>Madame la Maire Dominique Faure est passée d'abord dans l'après-midi et aussi en fin de soirée pour nous saluer et,&nbsp; elle aussi, s'essayer à la danse&nbsp; occitane avec notre président. C'était l' occasion de lui faire part des projets du club qui face à l'augmentation constante du nombre de ses adhérents se trouve à l’étroit dans les locaux actuels. Très à l'écoute madame Faure a compris le problème et va aider le club à trouver une solution.</p><p>Au final, cette journée bien remplie a été avant tout un beau moment de partage et de gaité.&nbsp;<br>Et en attendant d'autres belles rencontres en 2026, <b>le club de bridge de Saint-Orens souhaite à tous et à toutes de très bonnes fêtes de Noël et de fin d'année.&nbsp;</b></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-12-19T09:38:09.698Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "L'esprit de Noël avait l'accent occitan"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Articles/vignette NOEL_300x168_1.79.webp"
+      },
+      "publishedAt": {
+        "S": "2025-12-19"
+      },
+      "updatedAt": {
+        "S": "2025-12-22T21:09:57.511Z"
+      },
+      "id": {
+        "S": "4f5179f5-4d64-43c6-b46b-5ce3c0be8796"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Joyeux Noël"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Ils sont venus nombreux (84) des quatre coins de Midi-Pyrénées pour le première session 2026 du<b> Championnat de France des écoles de bridge</b>, organisée à la maison du bridge à Labège ce <b>mardi 20 janvier.</b> Des élèves des écoles d' Auzeville, Castres, Mazamet, Revel, Rodez, Ségoufielle, Plaisance du Touch, Saint-Orens étaient présents. Le club de Saint-Orens était très bien représenté avec 14 paires participantes. Découverte pour certains, nouveaux niveaux pour d'autres , dans une ambiance agréable et une bonne organisation, tous les joueurs se sont concentrés pour réussir le meilleur résultat.</p><p><b>La compétition</b> est un simultané, au sens où toutes les donnes jouées sont les mêmes par toutes les autres écoles de bridge françaises. Chaque séance propose 3 niveaux : BF1 (Bridge Français niveau 1) , BF2 et SEF. Les élèves sont ainsi confrontés à des adversaires de même expérience. Nos élèves se partageaient les niveaux BF2 et SEF.&nbsp;</p><p><b>Les résultats</b> : vous pouvez les retrouver sur le site de la FFB à l'onglet \" simultanés\" : on note des résultats honorables et très encourageants pour nos élèves participants ravis d'avoir passé un moment convivial de compétition. On peut souligner,niveau SEF, la performance de la paire <b>Alain Séraudie et Kévin Taylor</b> qui a terminé à la 1ère place sur le comité des Pyrénées, et de la paire <b>Colette Pesso et Danielle Grèze </b>qui est 2ème&nbsp;. Au niveau national avec&nbsp; plus de 1000 paires participantes cela donne de beaux résultats ( 9ème et 21ème) .&nbsp;</p><p>Un joyeux goûter avec la galette des rois a clôturé cette belle après-midi riche en partage!</p><p><b>A vos agendas : la prochaine séance aura lieu le jeudi 28 mai.&nbsp;</b></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-01-22T20:34:24.665Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Belle participation saint-orennaise"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Articles/championnat des écoles de bridge 2026_183x200_0.91.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-01-22"
+      },
+      "updatedAt": {
+        "S": "2026-01-22T22:45:29.488Z"
+      },
+      "id": {
+        "S": "cdd3a9e3-100a-4e91-b081-a945dd329a72"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Championnat de France des écoles de bridge"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Le site du club, conçu spécifiquement pour répondre à nos\nbesoins, accompagne toutes les activités et actualités du club et intègre aussi la partie gestion du Club (tournois, adhérents et comptabilité).<br>Il propose aux adhérents les <b>dernières\nnouvelles</b>, les <b>albums photo</b>,&nbsp; l’<b>inscription directe</b> aux tournois de régularité, les\n<b>résultats de compétition</b>, et très bientôt l’<b>achat en ligne</b>,<br>Ce portail, <b>sécurisé</b> et pensé pour la communauté, reste <b>ouvert à\ntoutes suggestions</b> pour évoluer et s’enrichir de nouvelles fonctionnalités\nutiles à ses membres.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:41:23.944Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Un portail complet pour tous les bridgeurs"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/ai-image-2026-04-12-3f1d003c.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T16:48:49.855Z"
+      },
+      "id": {
+        "S": "95a2a881-aa34-44b4-9e61-044162bea900"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Un site internet vivant et évolutif"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Jacques-Louis est particulièrement intéressé à faire découvrir le bridge aux néophytes</p>"
+      },
+      "image": {
+        "S": "images/trombinoscope/MERAT Jacques-Louis_170x200_0.85.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-08-30"
+      },
+      "updatedAt": {
+        "S": "2026-02-01T08:21:59.872Z"
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:21:56.825Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "moniteur"
+      },
+      "id": {
+        "S": "9db200a2-be8a-4bb1-b43f-9e4595029069"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Jacques-Louis Merat"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Les joueurs partagent leur passion lors de nombreux tournois<span style=\"font-family:&quot;Arial&quot;,sans-serif\"> </span>:<br>le <b>mercredi matin</b> pour les <span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">é</span>l<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:\nAptos;mso-bidi-font-family:Aptos\">è</span>ves, <br>les <b>mercredi et vendredi apr<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">è</span>s-midi</b> pour les tournois de r<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">é</span>gularit<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">é</span>, dont&nbsp;un en simultané national ‘Roy René’ mensuel avec un livret de\ncommentaires des donnes, <br>un <b>tournoi de parrainage mensuel</b>,<br>&nbsp;un <b>simultan<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">é</span> des <span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:\nAptos;mso-bidi-font-family:Aptos\">é</span>l<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">è</span>ves</b><span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">…</span> Tous ces rendez-vous connaissent une tr<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">è</span>s belle\nfr<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;\nmso-bidi-font-family:Aptos\">é</span>quentation et rassemblent aussi bien les\npassionn<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;\nmso-bidi-font-family:Aptos\">é</span>s que les d<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">é</span>butants.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:19:59.317Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Une offre variée et une belle participation"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/ecole de bridge.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T16:07:04.575Z"
+      },
+      "id": {
+        "S": "c3d8ee63-4043-4a18-ae44-7870b7695ca8"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Des tournois pour tous"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>J'imagine que vous recevez en ce moment des tas de messages vous rappelant sur les tons que c'est la rentrée...</p><p>Nous en rajoutons un de plus pour notre club de bridge avec quatre petits points à noter pour les prochains jours :</p><p>- Nous serons présents au forum des associations ce <b>samedi 5 septembre </b>à la MAM (Maison des Activités Multidisciplinaires)&nbsp; à Saint-Orens dès 14h</p><p>- Notre AG aura lieu <b>le mercredi 23 septembre à 17h </b>avec un <b>tournoi à 14h </b>en hommage à notre ami bridgeur Jean-Louis Lagouanelle. Un pot de rentrée nous rassemblera vers 18h pour repartir dans la joie et la bonne humeur !</p><p>- Les tournois de parrainage reviennent le 3ème vendredi de chaque mois: le prochain <b>vendredi 16 octobre.</b></p><p>- Les cours reprennent dès la première semaine d'octobre avec dès le <b>1er octobre</b> les cours \"perfectionnement\" de Didier Carral.</p><p>A vos agendas !&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-09-04T07:24:07.773Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": ""
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/cartes_200x200_1.00.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-09-04"
+      },
+      "updatedAt": {
+        "S": "2026-09-04T11:36:09.768Z"
+      },
+      "id": {
+        "S": "69538fe1-4458-4515-905d-e0b201734b82"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Vive la rentrée !"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>La réputation du club repose sur sa convivialité et ses\nnombreux rendez-vous festifs<span style=\"font-family:&quot;Arial&quot;,sans-serif\"> </span>:\npot de rentrée, f<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:\nAptos;mso-bidi-font-family:Aptos\">ê</span>te de No<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">ë</span>l, f<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">ê</span>te des Rois, chandeleur, marathon de printemps (cette ann<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">é</span>e le 22 avril), f<span style=\"mso-ascii-font-family:Aptos;\nmso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">ê</span>te annuelle en\njuin (le mercredi 10 juin)<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:\nAptos;mso-bidi-font-family:Aptos\">…</span> Les buffets propos<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">é</span>s sont toujours succulents et permettent de partager de bons\nmoments, renfor<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:\nAptos;mso-bidi-font-family:Aptos\">ç</span>ant l<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">’</span>esprit d<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">’</span>amiti<span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:\nAptos;mso-bidi-font-family:Aptos\">é</span> qui r<span style=\"mso-ascii-font-family:\nAptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:Aptos\">è</span>gne <span style=\"mso-ascii-font-family:Aptos;mso-hansi-font-family:Aptos;mso-bidi-font-family:\nAptos\">à</span> Saint-Orens.</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-04-12T13:26:07.836Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Un club comme une famille"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/presentation/IMG_1443.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-04-12"
+      },
+      "updatedAt": {
+        "S": "2026-04-12T14:56:52.089Z"
+      },
+      "id": {
+        "S": "f93f7e4f-552a-4461-af60-dd21287667a5"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "La convivialité avant tout"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Le bridge, jeu de stratégie reconnu pour ses vertus cognitives et relationnelles, devient un outil puissant pour l'éducation, l'inclusion et la prévention. C'est dans cet esprit que la Fédération Française de Bridge œuvre à la création de la <b>fondation \"Bridge pour tous\" </b>soutenue pas la fondation FACE. Créée en juillet 2025, elle a pour mission de soutenir le développement et la transmission du bridge partout en France. Plus précisément, \"Bridge pour tous\" vise à favoriser l’inclusion sociale , à lutter contre l'isolement , la santé mentale et à soutenir la réussite éducative grâce au bridge. Elle soutiendra des actions concrètes sur le terrain avec des opérations de découverte et d’initiation au bridge pour des publics tels que les séniors en situation précaire, les femmes isolées, les jeunes issus de quartiers populaires, dans les écoles , les structures d'accueil...</p><p>Pour accompagner son lancement et financer ses premières actions, la FFB invite tous les clubs à soutenir&nbsp; cette fondation, en organisant un ou deux tournois solidaires.&nbsp;</p><p>Notre club s'inscrit dans cette campagne de mobilisation solidaire qui a lieu de mi-janvier à mi-février, et vous propose deux dates de tournois : l<b>e mercredi 21 janvier et le vendredi 06 février 2026.</b></p><p><b>Les droits de table seront reversés à la Fondation </b>et<b> </b>notre club rajoutera également une participation. Lors de ces tournois les <b>PE seront doublés</b>.</p><p>Faisons de ces tournois un moment de solidarité et de partage autour du bridge! Merci .</p><p>Pour plus de renseignements voici le lien internet :</p><a href=\"https://licencie.ffbridge.fr/#/news/tournois-fondation-1\">https://licencie.ffbridge.fr/#/news/tournois-fondation-1</a>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-01-10T16:51:48.085Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Deux tournois dans notre club"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/les images de domi/fondation-bridge_158x200_0.79.png"
+      },
+      "publishedAt": {
+        "S": "2026-01-10"
+      },
+      "updatedAt": {
+        "S": "2026-01-12T08:09:57.955Z"
+      },
+      "id": {
+        "S": "33a964f0-42d8-4c6e-ad33-5d5f5c74d1f4"
+      },
+      "featured": {
+        "BOOL": true
+      },
+      "title": {
+        "S": "Fondation \"Bridge pour tous\" et tous pour le bridge"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "Contenu de l'article"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/daniel.png"
+      },
+      "updatedAt": {
+        "S": "2025-08-20T10:11:46.547Z"
+      },
+      "createdAt": {
+        "S": "2025-08-16T13:48:32.667Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Président"
+      },
+      "id": {
+        "S": "82d55181-7f8e-451b-8cba-6f6547245f7e"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Daniel Ferry"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>François enseigne le bridge depuis des décennies</p>"
+      },
+      "image": {
+        "S": "images/trombinoscope/SOVRAN François_156x200_0.78.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-08-25"
+      },
+      "updatedAt": {
+        "S": "2026-02-01T16:17:33.663Z"
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:22:43.478Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "moniteur et support tournois"
+      },
+      "id": {
+        "S": "872f4bcf-db6a-4df2-9165-acd546b333ea"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "François Sovran"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Le club vous invite à partager un moment chaleureux et convivial le<b> mercredi 10 juin, à partir de 14h, à la Maison du Bridge à Labège .&nbsp;</b></p><p>Préparez-vous à passer une belle après-midi... et une excellente soirée...&nbsp;</p><p>La rencontre débutera par un&nbsp;&nbsp;<b>tournoi ouvert à tous et toutes.</b>&nbsp; Il sera suivi d'un moment de détente autour <b>d'un&nbsp;&nbsp;apéritif</b>, toujours à la Maison du Bridge. </p><p>Nous poursuivrons la soirée&nbsp;<b> au restaurant \" L'aléa table\" </b>( situé à 2 min à pied de la maison du bridge) qui nous accueillera pour le repas du soir.&nbsp;</p><p>Informations pratiques : menus, tarifs, modalités d'inscription et confirmation de présence ... à venir très prochainement par mail.</p><p>Venez nombreux !&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-05-16T16:23:09.589Z"
+      },
+      "public": {
+        "BOOL": false
+      },
+      "subtitle": {
+        "S": "Réservez la date!"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/maison du bridge_150x200_0.75.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-05-16"
+      },
+      "updatedAt": {
+        "S": "2026-06-29T06:16:41.884Z"
+      },
+      "id": {
+        "S": "fc6963bf-1a7d-452d-9fa0-619100e35e7f"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "10 juin fête du club !"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<h5>Public concerné</h5><p>Ces cours s’adressent aux joueurs qui ont déjà acquis les bases du bridge et qui souhaitent approfondir leurs connaissances.</p><h5>Déroulement</h5><p>Un thème différent est abordé à chaque séance, ensuite les participants jouent 12 donnes préparées avec l'aide de l'animateur.</p><p>Le cours et les commentaires sont envoyés par courriel aux participants.</p><h5>Horaires</h5><p>Chaque séance dure environ 2 heures et 1/2, animée par Didier CARRAL.&nbsp;</p><p><b>Jeudi fin d'après-midi de 16h30 à 19h00</b>. Perfectionnement <b>niveau 1</b>.&nbsp;</p><p>\n<b>Jeudi soir</b>\n<b>de 19h30 à 22h00</b>. Perfectionnement <b>niveau 2</b>.&nbsp;</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-08-11T09:16:56.756Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "le jeudi "
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/Didider Carral.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-08-29"
+      },
+      "updatedAt": {
+        "S": "2026-09-01T20:44:23.634Z"
+      },
+      "id": {
+        "S": "c3f3ed9f-a141-4101-ad48-5aba45d6ca90"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Perfectionnement"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Vous n'avez pas pû obtenir une version papier du livret des compétions à venir, vous pouvez le consulter à partir de ce lien :&nbsp;</p><a href=\"https://indd.adobe.com/view/d01ab392-e4e8-4160-a9a3-4997f701ae82\">https://indd.adobe.com/view/d01ab392-e4e8-4160-a9a3-4997f701ae82</a>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-18T10:00:21.530Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "agenda 2025_26"
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/logo/comité MP.png"
+      },
+      "publishedAt": {
+        "S": "2025-09-30"
+      },
+      "updatedAt": {
+        "S": "2025-11-26T10:14:51.776Z"
+      },
+      "id": {
+        "S": "20bb3346-2295-48e6-a786-d888d84c852c"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Comité Midi-Pyrénées"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "Contenu de l'article"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/vignettes/Pierre Gros (2)_300x370.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-08-25T16:58:51.766Z"
+      },
+      "createdAt": {
+        "S": "2025-08-16T13:52:51.354Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "Vice-président"
+      },
+      "id": {
+        "S": "c387bd16-65e1-49ea-8757-8cb3252c0f1b"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Pierre Gros"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T06:53:28.246Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "juin 2025"
+      },
+      "folder": {
+        "S": "albums/2025/Fête école de bridge juin 2025"
+      },
+      "image": {
+        "S": "images/album covers/Fëte école de bridge juin 2025_300x225_1.33.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-13"
+      },
+      "updatedAt": {
+        "S": "2026-08-13T14:07:05.535Z"
+      },
+      "id": {
+        "S": "efc42043-8871-44ca-8922-3806c7ebb89b"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Fête école de bridge"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "[Article vide]"
+      },
+      "image": {
+        "S": "images/trombinoscope/CASSAGNE Dominique 2_200x186_1.08.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-08-25"
+      },
+      "updatedAt": {
+        "S": "2026-02-01T16:16:41.026Z"
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:11:28.045Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "monitrice et support festivités"
+      },
+      "id": {
+        "S": "052f3031-4981-438e-aac2-fc6aa420edab"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Dominique Cassagne"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "[Article vide]"
+      },
+      "image": {
+        "S": "images/vignettes/ANDRE AYRAL_300x401.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-08-25T16:53:47.370Z"
+      },
+      "createdAt": {
+        "S": "2025-08-11T08:22:26.657Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "moniteur"
+      },
+      "id": {
+        "S": "2db3d06e-244f-4301-bb6d-5521de81aaf2"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "André Ayral"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": ""
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2026-06-17T12:03:47.566Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": ""
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/IMG-20250926-WA0006_158x200_0.79.jpg"
+      },
+      "publishedAt": {
+        "S": "2026-06-17"
+      },
+      "updatedAt": {
+        "S": "2026-07-14T13:29:48.930Z"
+      },
+      "id": {
+        "S": "50a59d98-db4f-4239-86de-b83071121da2"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": ""
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Nouvelle vignette</p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-09-13T06:55:53.858Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "février 2025"
+      },
+      "folder": {
+        "S": "albums/2025/Parrainage 02-2025"
+      },
+      "image": {
+        "S": "images/album covers/parrainage 02-2025_300x300_1.00.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-09-13"
+      },
+      "updatedAt": {
+        "S": "2026-01-01T17:07:39.765Z"
+      },
+      "id": {
+        "S": "a2bf1a90-6b0f-4ddc-bc2c-30b302120c1d"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Parrainage"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>La nécessité d'avoir des locaux adaptés aux personnes en\nsituation de handicap le fera déménager dans ses locaux actuels à l'espace\nMarcaissonne en 2018.</p><p>Les présidents sont :</p><ul><li><b>André AYRAL</b> jusqu'en 2019</li><li><b>Pierre GROS</b> jusqu'en 2024</li><li>et actuellement<b> Daniel FERRY </b></li></ul>"
+      },
+      "file": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/logo/marcaissonne.jpg"
+      },
+      "updatedAt": {
+        "S": "2025-09-17T06:26:42.317Z"
+      },
+      "createdAt": {
+        "S": "2025-09-17T06:21:54.176Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "2018"
+      },
+      "folder": {
+        "S": ""
+      },
+      "id": {
+        "S": "5e166194-f062-4c51-9d02-f233e92443d4"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "L'espace Marcaissonne"
+      }
+    },
+    {
+      "__typename": {
+        "S": "Snippet"
+      },
+      "content": {
+        "S": "<p>Ce vendredi 17 octobre , on comptait plus de 25 paires venues jouer au bridge dans la bienveillance et la bonne humeur;&nbsp; </p><p>Les débutants sont venus pour le plaisir de s'associer avec un joueur plus aguerri qu'eux et partager un bon moment de bridge et de convivialité.</p><p>Cette rencontre, qui a débuté l'an passé, est devenue régulière, fixée au 3ème vendredi du mois; un beau succès qui récompense l'engagement du club et l'excellent état d'esprit qui y règne; en témoigne, un participant, François, qui nous dit : \" C'est magnifique, c'est génial, cela a permis de redynamiser le tournoi du vendredi , de nouer des liens entre les débutants et les autres membres du club et de créer un flux des élèves vers les vrais tournois\".&nbsp;</p><p>Un grand merci à tous les coachs de s'être rendus disponibles. <b>Prochain rendez-vous le vendredi 21 novembre !</b></p>"
+      },
+      "file": {
+        "S": ""
+      },
+      "createdAt": {
+        "S": "2025-10-14T11:14:36.092Z"
+      },
+      "public": {
+        "BOOL": true
+      },
+      "subtitle": {
+        "S": "tournoi du 17 octobre 2025 "
+      },
+      "folder": {
+        "S": ""
+      },
+      "image": {
+        "S": "images/Articles/PARRAINAGE_300x200.jpg"
+      },
+      "publishedAt": {
+        "S": "2025-10-24"
+      },
+      "updatedAt": {
+        "S": "2026-03-05T13:23:29.710Z"
+      },
+      "id": {
+        "S": "d04703a6-c420-44be-b6bd-d1adc0e7165c"
+      },
+      "featured": {
+        "BOOL": false
+      },
+      "title": {
+        "S": "Le parrainage a cartonné!"
+      }
+    }
+  ]
+}

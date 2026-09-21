@@ -306,7 +306,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
     this.mediaImageProfile = event.type === 'image' && this.selectedPage
       ? imageProfileForTemplate(this.selectedPage.template)
       : null;
-    this.fileMode = event.type === 'folder' ? 'upload' : 'browse';
+    this.fileMode = event.type === 'folder' || !!this.mediaImageProfile ? 'upload' : 'browse';
 
     // Set the appropriate root folder based on selection type
     const rootFolder = event.type === 'image' ? 'images' :
@@ -321,15 +321,14 @@ export class CmsWrapper implements OnInit, OnDestroy {
       this.mediaTargetPath = `${rootFolder}/cms/snippets/${event.snippet.id}/${mediaFolder}/`;
     }
 
-    // Request file selection through FileManager
-    this.fileManager.activateSelectionMode({
-      type: event.type,
-      context: event.context,
-      targetId: event.snippet.id
-    });
-
-    // Navigate to the appropriate root folder
-    this.fileManager.setCurrentRoot(rootFolder);
+    if (this.fileMode === 'browse') {
+      this.fileManager.activateSelectionMode({
+        type: event.type,
+        context: event.context,
+        targetId: event.snippet.id
+      });
+      this.fileManager.setCurrentRoot(rootFolder);
+    }
     const modalRef = this.modalService.open(this.mediaModal, {
       size: 'xl',
       centered: true,
@@ -774,6 +773,8 @@ export class CmsWrapper implements OnInit, OnDestroy {
   // These methods will be moved to a service later
 
   onFileModeChange(mode: 'browse' | 'upload') {
+    if (mode === 'browse' && this.mediaImageProfile) return;
+
     // If switching to upload mode, cancel any active selection mode
     if (mode === 'upload' && this.fileMode === 'browse') {
       this.fileManager.cancelSelectionMode();

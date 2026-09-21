@@ -19,4 +19,11 @@ describe('process-cms-image path contract', () => {
     assert.equal(parseCmsImageSource('images/cms/sources/snippet-1/unknown/asset.jpg'), null);
     assert.equal(parseCmsImageSource('images/cms/snippets/snippet-1/variants/inline/asset.webp'), null);
   });
+
+  it('accepts the fixed-height publication profile', () => {
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/snippet-1/publication-landscape/banner.jpg')?.variantKey,
+      'images/cms/snippets/snippet-1/variants/publication-landscape/banner.webp',
+    );
+  });
 });

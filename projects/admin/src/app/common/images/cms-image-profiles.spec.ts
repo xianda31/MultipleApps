@@ -10,7 +10,7 @@ import {
 
 describe('CMS image profiles', () => {
   it('groups page templates by actual image usage', () => {
-    expect(imageProfileForTemplate(PAGE_TEMPLATES.PUBLICATION)).toBe('inline');
+    expect(imageProfileForTemplate(PAGE_TEMPLATES.PUBLICATION)).toBe('publication-landscape');
     expect(imageProfileForTemplate(PAGE_TEMPLATES.CARDS_top)).toBe('landscape-card');
     expect(imageProfileForTemplate(PAGE_TEMPLATES.ALBUMS)).toBe('portrait-card');
     expect(imageProfileForTemplate(PAGE_TEMPLATES.LOADABLE)).toBeNull();
@@ -32,10 +32,18 @@ describe('CMS image profiles', () => {
       aspectRatio: '3 / 2',
     }));
     expect(CMS_IMAGE_PROFILES.inline.fit).toBe('contain');
+    expect(CMS_IMAGE_PROFILES['publication-landscape']).toEqual(jasmine.objectContaining({
+      width: null,
+      height: 300,
+      fit: 'contain',
+      aspectRatio: null,
+    }));
     expect(cmsImageTargetDescription('portrait-card'))
       .toBe('600 × 800 px · ratio 3:4 · WebP · recadrage centré');
     expect(cmsImageTargetDescription('inline'))
       .toBe('400 × 300 px · ratio 4:3 · WebP · image entière sans recadrage');
+    expect(cmsImageTargetDescription('publication-landscape'))
+      .toBe('hauteur 300 px · largeur proportionnelle · WebP · image entière sans recadrage');
   });
 
   it('detects an orientation mismatch from the profile contract', () => {

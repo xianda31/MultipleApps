@@ -170,6 +170,41 @@ describe('CmsWrapper', () => {
     expect(component.mediaImageProfile).toBeNull();
   });
 
+  it('restricts managed CMS illustrations to local upload', () => {
+    const snippet = {
+      id: 'snippet-1',
+      title: 'Article',
+      public: true,
+      featured: false,
+    } as Snippet;
+    component.selectedPage = {
+      id: 'news',
+      title: 'Actualités',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: [snippet.id],
+    };
+    const fileManager = TestBed.inject(FileManager) as any;
+    fileManager.activateSelectionMode = jasmine.createSpy();
+    fileManager.setCurrentRoot = jasmine.createSpy();
+    const modalRef = {
+      result: new Promise(() => undefined),
+      dismiss: jasmine.createSpy(),
+    };
+    spyOn((component as any).modalService, 'open').and.returnValue(modalRef);
+
+    component.onFileSelectionRequested({ type: 'image', snippet, context: 'Illustration' });
+
+    expect(component.fileMode).toBe('upload');
+    expect(component.mediaImageProfile).toBe('inline');
+    expect(fileManager.activateSelectionMode).not.toHaveBeenCalled();
+
+    component.onFileModeChange('browse');
+    expect(component.fileMode).toBe('upload');
+
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Médiathèque');
+  });
+
   it('does not save an article a second time after the editor emits it', () => {
     const snippet = { id: 'snippet-1', title: 'Titre', subtitle: 'Sous-titre' } as Snippet;
     component.pageSnippets = [{ ...snippet, subtitle: '' }];

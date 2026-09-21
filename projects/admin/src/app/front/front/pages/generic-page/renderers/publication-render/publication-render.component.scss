@@ -19,19 +19,25 @@
 .main-content {
 	min-width: 0;
 }
-// Empêche les images de dépasser du cadre de la card
-// Empêche les images de dépasser du cadre de la card
 .snippet-header {
 	border-bottom: 1px solid #dee2e6;
 	border-radius: 0 0 0.5rem 0.5rem;
 	background: #f8f9fa; // Bootstrap bg-light
 	position: relative;
+	width: 100%;
+	min-width: 0;
 }
 
-// Ajoute un overflow caché sur la colonne image
-.snippet-header > .col-4,
-.snippet-header > .col-md-5 {
+.snippet-image-column {
+	flex: 0 1 auto;
+	max-width: 55%;
 	overflow: hidden;
+}
+
+.snippet-title-column {
+	flex: 1 1 0;
+	min-width: 0;
+	padding: 0 0.75rem;
 }
 
 
@@ -50,16 +56,39 @@
 
 .inline-image-frame {
 	display: flex;
-	width: min(100%, 120px);
-	aspect-ratio: 4 / 3;
+	height: 72px;
+	max-width: 100%;
 }
 
 .snippet-img {
 	display: block;
-	width: 100%;
 	height: 100%;
+	width: auto;
+	max-width: 100%;
 	object-fit: contain;
 	object-position: center;
+}
+
+@media (max-width: 575.98px) {
+	.snippet-image-column {
+		max-width: 48%;
+	}
+
+	.inline-image-frame {
+		height: 64px;
+	}
+
+	.snippet-title-column {
+		padding: 0 0.5rem;
+	}
+
+	.snippet-title-column .card-title {
+		font-size: 1rem;
+	}
+
+	.snippet-title-column .card-subtitle {
+		font-size: 0.875rem;
+	}
 }
 
 /* Force tables inside rendered HTML ([innerHTML]) to be borderless and compact

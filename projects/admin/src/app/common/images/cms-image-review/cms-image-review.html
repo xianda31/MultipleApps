@@ -34,7 +34,7 @@
   @if (resolutionInsufficient) {
   <div class="alert alert-warning py-2 mb-0 cms-image-review__resolution-warning" role="alert">
     <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
-    Résolution insuffisante : {{ sourceWidth }} × {{ sourceHeight }} px pour une cible de {{ definition.width }} × {{ definition.height }} px. Le rendu risque d’être pixelisé.
+    Résolution insuffisante : {{ sourceWidth }} × {{ sourceHeight }} px pour {{ targetDimensionsDescription }}. Le rendu risque d’être pixelisé.
   </div>
   }
 
@@ -47,7 +47,7 @@
     </figure>
     <figure>
       <figcaption>Rendu final utilisé sur le site</figcaption>
-      <div class="cms-image-review__frame" [style.aspect-ratio]="definition.aspectRatio">
+      <div class="cms-image-review__frame" [style.aspect-ratio]="targetAspectRatio">
         <img [src]="sourceUrl" [style.object-fit]="definition.fit" style="object-position: center center" alt="Aperçu du cadrage final">
       </div>
     </figure>

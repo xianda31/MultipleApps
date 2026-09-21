@@ -173,11 +173,14 @@
     <div class="modal-header">
         <div>
             <h5 class="modal-title mb-0">{{ fileSelectionContext }}</h5>
-            <small class="text-muted">Choisissez un média existant ou importez-en un nouveau.</small>
+            <small class="text-muted">
+                {{ mediaImageProfile ? 'Importez une image depuis votre ordinateur.' : 'Choisissez un média existant ou importez-en un nouveau.' }}
+            </small>
         </div>
         <button type="button" class="btn-close" aria-label="Fermer" (click)="closeMediaModal()"></button>
     </div>
     <div class="modal-body media-modal-body">
+        @if (!mediaImageProfile) {
         <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Source du média">
             <button type="button" class="btn btn-outline-primary" [class.active]="fileMode === 'browse'"
                 (click)="onFileModeChange('browse')">
@@ -188,6 +191,7 @@
                 <i class="bi bi-upload me-1"></i>Importer
             </button>
         </div>
+        }
 
         @if (fileMode === 'browse' && mediaImageProfileDefinition; as profile) {
         <div class="media-format-guidance mb-3">

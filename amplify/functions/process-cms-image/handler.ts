@@ -12,10 +12,11 @@ interface S3Event {
   Records: S3Record[];
 }
 
-type CmsImageProfile = 'inline' | 'landscape-card' | 'portrait-card' | 'booklet';
+type CmsImageProfile = 'inline' | 'publication-landscape' | 'landscape-card' | 'portrait-card' | 'booklet';
 
-const profiles: Record<CmsImageProfile, { width: number; height: number; fit: 'contain' | 'cover' }> = {
+const profiles: Record<CmsImageProfile, { width?: number; height: number; fit: 'contain' | 'cover' }> = {
   inline: { width: 400, height: 300, fit: 'contain' },
+  'publication-landscape': { height: 300, fit: 'contain' },
   'landscape-card': { width: 800, height: 533, fit: 'cover' },
   'portrait-card': { width: 600, height: 800, fit: 'cover' },
   booklet: { width: 960, height: 640, fit: 'cover' },
@@ -68,6 +69,7 @@ async function processRecord(record: S3Record): Promise<void> {
       fit: profile.fit,
       position: 'centre',
       withoutEnlargement: true,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
     .webp({ quality: 82, effort: 4 })
     .toBuffer();
