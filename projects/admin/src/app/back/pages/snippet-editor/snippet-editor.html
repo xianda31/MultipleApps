@@ -6,7 +6,20 @@
         <strong>{{ missingFieldLabels }}</strong>
     </div>
 
-    <h6 class="mt-1"><i class="bi bi-gear-fill me-2"></i>Informations</h6>
+    <div class="snippet-section-heading mt-1">
+        <h6 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Informations</h6>
+        <small class="snippet-save-state" role="status" aria-live="polite">
+            <ng-container *ngIf="saveState === 'saving'">
+                <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Enregistrement…
+            </ng-container>
+            <ng-container *ngIf="saveState === 'saved'">
+                <i class="bi bi-check-circle text-success" aria-hidden="true"></i> Enregistré
+            </ng-container>
+            <ng-container *ngIf="saveState === 'error'">
+                <i class="bi bi-exclamation-circle text-danger" aria-hidden="true"></i> Échec de l’enregistrement
+            </ng-container>
+        </small>
+    </div>
     <div class="snippet-heading-layout">
         <div class="snippet-heading-fields">
             <label class="form-label form-label-sm mb-0">Titre <span *ngIf="isFieldRequired('title')" class="text-danger">*</span></label>
@@ -57,7 +70,11 @@
     <div *ngIf="isFieldVisible('publishedAt')" class="mt-2 d-flex flex-row align-items-center gap-3">
         <span class="form-label text-muted mb-0">Publié le (sinon aujourd'hui):</span>
         <input type="date" formControlName="publishedAt" class="form-control form-control-sm d-inline-block w-auto"
-            (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()" placeholder="publication">
+            [max]="maxPublishedAt" (keydown.enter)="saveSnippetSelected()" (change)="saveSnippetSelected()"
+            placeholder="publication">
+        <small *ngIf="form.get('publishedAt')?.hasError('futurePublicationDate')" class="text-danger">
+            La date de publication ne peut pas être future.
+        </small>
     </div>
 
     <div class="mt-2 d-flex flex-row align-items-center gap-3">

@@ -106,6 +106,17 @@ describe('CmsWrapper', () => {
     expect(component.isSnippetComplete({ ...snippet, folder: 'albums/sortie/' })).toBeTrue();
   });
 
+  it('does not save an article a second time after the editor emits it', () => {
+    const snippet = { id: 'snippet-1', title: 'Titre', subtitle: 'Sous-titre' } as Snippet;
+    component.pageSnippets = [{ ...snippet, subtitle: '' }];
+    const snippetService = TestBed.inject(SnippetService) as jasmine.SpyObj<SnippetService>;
+
+    component.onSnippetSaved(snippet);
+
+    expect(component.pageSnippets[0]).toBe(snippet);
+    expect(snippetService.updateSnippet).not.toHaveBeenCalled();
+  });
+
   it('imports a selected S3 image through the CMS variant pipeline', async () => {
     const snippet = {
       id: 'snippet-1',

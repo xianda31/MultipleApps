@@ -56,6 +56,7 @@ export interface UIConfiguration {
     unfold_on_hover?: boolean;
     hover_unfold_delay_ms?: number;
     hover_unfold_duration_ms?: number;
+    featured_duration_days?: number;
     // layout ratio for homepage: 1 = equal columns (col-md-6 / col-md-6), 2 = tournaments wider (col-md-8 / col-md-4)
     home_layout_ratio?: 1 | 2;
   };

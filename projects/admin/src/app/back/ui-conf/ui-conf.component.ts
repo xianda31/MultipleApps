@@ -103,6 +103,7 @@ export class UiConfComponent implements OnInit {
       hover_unfold_delay_ms: [500, [Validators.min(0), Validators.max(10000)]],
       hover_unfold_duration_ms: [300, [Validators.min(0), Validators.max(10000)]],
       home_layout_ratio: [2, [Validators.min(0), Validators.max(2)]],
+      featured_duration_days: [30, [Validators.required, Validators.min(1), Validators.max(365)]],
 
       tournaments_type: this.fb.array([]),
       default_tournament_image: [''],
@@ -369,6 +370,7 @@ export class UiConfComponent implements OnInit {
       hover_unfold_delay_ms: homepage.hover_unfold_delay_ms ?? ui?.hover_unfold_delay_ms ?? 500,
       hover_unfold_duration_ms: homepage.hover_unfold_duration_ms ?? ui?.hover_unfold_duration_ms ?? 300,
       home_layout_ratio: homepage.home_layout_ratio ?? ui?.home_layout_ratio ?? 2,
+      featured_duration_days: homepage.featured_duration_days ?? 30,
       tournaments_type: [] as any,
       default_tournament_image: inferredDefault ?? (ui?.default_tournament_image ?? ''),
       frontBannerEnabled: ui?.frontBannerEnabled ?? false,
@@ -563,7 +565,8 @@ export class UiConfComponent implements OnInit {
           unfold_on_hover: !!formVal.unfold_on_hover,
           hover_unfold_delay_ms: Number(formVal.hover_unfold_delay_ms) || 500,
           hover_unfold_duration_ms: Number(formVal.hover_unfold_duration_ms) || 300,
-          home_layout_ratio: formVal.home_layout_ratio ?? 2
+          home_layout_ratio: formVal.home_layout_ratio ?? 2,
+          featured_duration_days: Number(formVal.featured_duration_days) || 30
         },
         tournaments_type: tournamentsTypeMap,
         default_tournament_image: formVal.default_tournament_image || '',
@@ -657,7 +660,8 @@ export class UiConfComponent implements OnInit {
           unfold_on_hover: !!formVal.unfold_on_hover,
           hover_unfold_delay_ms: Number(formVal.hover_unfold_delay_ms) || 500,
           hover_unfold_duration_ms: Number(formVal.hover_unfold_duration_ms) || 300,
-          home_layout_ratio: formVal.home_layout_ratio ?? 2
+          home_layout_ratio: formVal.home_layout_ratio ?? 2,
+          featured_duration_days: Number(formVal.featured_duration_days) || 30
         },
         tournaments_type: tournamentsTypeMap,
         default_tournament_image: formVal.default_tournament_image || '',

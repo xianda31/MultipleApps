@@ -3,6 +3,8 @@ import { execFileSync } from "child_process";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { defineBackend } from "@aws-amplify/backend";
 import { Stack } from "aws-cdk-lib";
+import { Rule, Schedule } from "aws-cdk-lib/aws-events";
+import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { Architecture, CfnFunction, Code, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
 import { Construct } from "constructs";
 import {
@@ -25,6 +27,7 @@ import { stripeConnectionToken } from "./functions/stripe-connection-token/resou
 import { surveyRespond } from "./functions/survey-respond/resource";
 import { processBookEntryActions } from "./functions/process-book-entry-actions/resource";
 import { processCmsImage } from "./functions/process-cms-image/resource";
+import { expireFeaturedSnippets } from "./functions/expire-featured-snippets/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -43,6 +46,7 @@ const backend = defineBackend({
   surveyRespond,
   processBookEntryActions,
   processCmsImage,
+  expireFeaturedSnippets,
 });
 
 const storageBucket = backend.storage.resources.bucket;
@@ -89,6 +93,17 @@ storageBucket.addEventNotification(
   new LambdaDestination(processCmsImageLambda),
   { prefix: "images/cms/sources/" },
 );
+
+const expireFeaturedLambda = backend.expireFeaturedSnippets.resources.lambda;
+const snippetTable = backend.data.resources.tables['Snippet'];
+storageBucket.grantRead(expireFeaturedLambda, 'system/ui_settings.txt');
+snippetTable.grantReadWriteData(expireFeaturedLambda);
+backend.expireFeaturedSnippets.addEnvironment('STORAGE_BUCKET_NAME', storageBucket.bucketName);
+backend.expireFeaturedSnippets.addEnvironment('SNIPPET_TABLE_NAME', snippetTable.tableName);
+new Rule(Stack.of(expireFeaturedLambda), 'ExpireFeaturedSnippetsDaily', {
+  schedule: Schedule.cron({ minute: '15', hour: '0' }),
+  targets: [new LambdaFunction(expireFeaturedLambda)],
+});
 
 // Add SSM GetParameter permission to ffbProxy Lambda function
 backend.ffbProxy.resources.lambda.role?.addToPrincipalPolicy(

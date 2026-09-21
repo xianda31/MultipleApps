@@ -9,6 +9,7 @@ import { SnippetModalEditorComponent } from '../../site/snippet-modal-editor/sni
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { isSnippetFieldVisible, SNIPPET_TEMPLATE_RULES, SnippetField, snippetMissingFields } from './snippet-template-rules';
+import { localDateValue, noFuturePublicationDate } from '../../../common/utils/publication-date';
 
 @Component({
   selector: 'app-snippet-editor',
@@ -30,6 +31,8 @@ export class SnippetEditor implements OnChanges {
   public readonly S3_ROOT_FOLDERS = S3_ROOT_FOLDERS;
   form: FormGroup;
   saving = false;
+  saveState: 'idle' | 'saving' | 'saved' | 'error' = 'idle';
+  readonly maxPublishedAt = localDateValue();
   private savePending = false;
   readonly fieldLabels: Record<SnippetField, string> = {
     title: 'titre',
@@ -57,7 +60,7 @@ export class SnippetEditor implements OnChanges {
       title: ['', Validators.required],
       subtitle: [''],
       content: [''],
-      publishedAt: [''],
+      publishedAt: ['', noFuturePublicationDate],
       public: [true],
       featured: [false],
       image: [''],
@@ -124,6 +127,9 @@ export class SnippetEditor implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['snippet'] && this.snippet) {
+      if (changes['snippet'].previousValue?.id !== this.snippet.id) {
+        this.saveState = 'idle';
+      }
       // Patch form values from input snippet - emit events for image/file/folder to trigger URL generation
       const previousImage = this.form.get('image')?.value;
       const newImage = this.snippet.image || '';
@@ -171,6 +177,10 @@ export class SnippetEditor implements OnChanges {
 
   async saveSnippetSelected() {
     if (!this.snippet) return;
+    if (this.form.get('publishedAt')?.hasError('futurePublicationDate')) {
+      this.form.get('publishedAt')?.markAsTouched();
+      return;
+    }
     if (this.saving) {
       this.savePending = true;
       return;
@@ -184,10 +194,13 @@ export class SnippetEditor implements OnChanges {
       }
     }
     const payload: any = { ...this.snippet, ...formValue };
+    const currentImageUrl = payload.image === this.snippet.image ? this.snippet.image_url : undefined;
     this.saving = true;
+    this.saveState = 'saving';
     try {
       const updatedSnippet = await this.snippetService.updateSnippet(payload);
       if (this.savePending) return;
+      if (currentImageUrl) updatedSnippet.image_url = currentImageUrl;
       // Emit updated snippet so parent can merge it into its state and keep references stable
       this.saved.emit(updatedSnippet as Snippet);
       // Refresh form with canonical values from backend
@@ -202,8 +215,10 @@ export class SnippetEditor implements OnChanges {
         file: updatedSnippet.file || '',
         folder: updatedSnippet.folder || ''
       }, { emitEvent: false });
+      this.saveState = 'saved';
     } catch (error) {
       console.error('Error updating snippet:', error);
+      this.saveState = 'error';
     } finally {
       this.saving = false;
       if (this.savePending) {

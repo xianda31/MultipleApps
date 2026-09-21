@@ -283,7 +283,11 @@ export class SystemDataService {
         footer: { bg: '#ffffff', text_color: '#222222' },
         club: { name: '', logo: '', image: '', font: 'Roboto, serif' }
       },
-      homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
+      homepage: {
+        tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
+        news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
+        featured_duration_days: 30,
+      },
       frontBannerEnabled: false,
       homepage_intro: '',
       competitions: {

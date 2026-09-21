@@ -1,5 +1,18 @@
 /* Snippet editor styles */
 
+.snippet-section-heading {
+	display: flex;
+	min-height: 1.5rem;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.snippet-save-state {
+	color: #6c757d;
+	white-space: nowrap;
+}
+
 /* Image selector offcanvas styles */
 .image-selector-backdrop {
 	position: fixed;

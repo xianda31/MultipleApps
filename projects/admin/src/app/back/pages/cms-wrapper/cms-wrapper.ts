@@ -583,20 +583,11 @@ export class CmsWrapper implements OnInit, OnDestroy {
     return !this.selectedPage || snippetMissingFields(snippet, this.selectedPage.template).length === 0;
   }
 
-  async onSnippetSaved(snippet: Snippet): Promise<void> {
-    // Update UI IMMEDIATELY (synchronously) before DB call
+  onSnippetSaved(snippet: Snippet): void {
     const index = this.pageSnippets.findIndex(s => s.id === snippet.id);
     if (index !== -1) {
       this.pageSnippets[index] = snippet;
-      this.pageSnippets = [...this.pageSnippets]; // Force change detection
-    }
-
-    // Then persist to DB asynchronously
-    try {
-      await this.snippetService.updateSnippet(snippet);
-    } catch (error) {
-      this.toastService.showError('Erreur', 'Impossible de sauvegarder l\'article');
-      // On error, could reload snippets to revert local changes
+      this.pageSnippets = [...this.pageSnippets];
     }
   }
 
