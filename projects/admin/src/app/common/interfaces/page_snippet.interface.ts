@@ -12,6 +12,7 @@ export interface Snippet {
     featured: boolean;
     image_url?: string;
     pageId?: string;
+    ownerPageId?: string | null;
     createdAt?: string;
     updatedAt?: string;     // in ISO format
     publishedAt?: string;  // in YYYY-MM-DD format

@@ -239,31 +239,49 @@ export class CmsWrapper implements OnInit, OnDestroy {
   async deletePage(page: Page): Promise<void> {
     if (!page) return;
     try {
-      const confirmed = confirm(`Supprimer la page « ${page.title} » et tous ses articles ?`);
+      const confirmed = confirm(`Supprimer la page « ${page.title} » ? Ses articles seront conservés dans le presse-papiers.`);
       if (!confirmed) return;
 
-      // Supprimer tous les snippets associés à la page
-      if (page.snippet_ids && page.snippet_ids.length > 0) {
-        for (const snippetId of page.snippet_ids) {
-          try {
-            const snippet = await this.snippetService.readSnippet(snippetId);
-            await this.snippetService.deleteSnippet(snippet);
-          } catch (err) {
-            // Erreur lors de la suppression d'un snippet, on continue
-          }
-        }
+      const snippets = await Promise.all(
+        (page.snippet_ids ?? []).map(snippetId => this.snippetService.readSnippet(snippetId)),
+      );
+      const ownershipMismatch = snippets.find(snippet => snippet.ownerPageId && snippet.ownerPageId !== page.id);
+      if (ownershipMismatch) {
+        this.toastService.showWarning(
+          'Page conservée',
+          'La propriété de certains articles doit être régularisée avant de supprimer cette page.',
+        );
+        return;
       }
 
-      await this.pageService.deletePage(page);
+      const parkedSnippets: Snippet[] = [];
+      try {
+        for (const snippet of snippets) {
+          await this.clipboardService.addSnippet(snippet);
+          parkedSnippets.push(snippet);
+        }
+        await this.pageService.deletePage(page);
+      } catch (error) {
+        for (const snippet of parkedSnippets.reverse()) {
+          try {
+            await this.snippetService.updateSnippet({ ...snippet, ownerPageId: snippet.ownerPageId ?? null });
+            await this.clipboardService.removeSnippet(snippet.id);
+          } catch {
+            // The ownership audit reports any compensation that still needs manual repair.
+          }
+        }
+        throw error;
+      }
+
       this.pages = this.pages.filter(p => p.id !== page.id);
       if (this.selectedPageId === page.id) {
         this.selectedPage = null;
         this.selectedPageId = null;
         this.pageSnippets = [];
       }
-      this.toastService.showSuccess('Page', 'Page et articles supprimés');
+      this.toastService.showSuccess('Page', 'Page supprimée et articles conservés');
     } catch (error) {
-      this.toastService.showError('Erreur', 'Impossible de supprimer la page ou ses articles');
+      this.toastService.showError('Erreur', 'Impossible de supprimer la page ou de conserver ses articles');
     }
   }
 
@@ -518,12 +536,14 @@ export class CmsWrapper implements OnInit, OnDestroy {
       public: true,
       featured: false,
       file: '',
-      folder: ''
+      folder: '',
+      ownerPageId: this.selectedPage.id,
     };
 
     try {
       const created = await this.snippetService.createSnippet(newSnippet);
       if (created) {
+        const originalSnippetIds = [...this.selectedPage.snippet_ids];
         // Update UI IMMEDIATELY (synchronously) before DB calls
 
         // Add the new snippet to the array (check for duplicates)
@@ -551,7 +571,20 @@ export class CmsWrapper implements OnInit, OnDestroy {
           await this.pageService.updatePage(this.selectedPage);
           this.toastService.showSuccess('Article', 'Nouvel article créé');
         } catch (dbError) {
-          this.toastService.showWarning('Article créé', 'Erreur lors de la mise à jour de la page');
+          this.selectedPage.snippet_ids = originalSnippetIds;
+          this.pageSnippets = this.pageSnippets.filter(item => item.id !== created.id);
+          if (pageIndex !== -1) {
+            this.pages[pageIndex] = { ...this.selectedPage };
+            this.pages = [...this.pages];
+          }
+          this.openSnippetId = null;
+          try {
+            await this.snippetService.deleteSnippet(created);
+          } catch {
+            this.toastService.showError('Erreur', 'Article créé sans rattachement : une régularisation est nécessaire');
+            return;
+          }
+          this.toastService.showError('Erreur', 'Impossible de rattacher le nouvel article à la page');
         }
       }
     } catch (error) {
@@ -591,21 +624,36 @@ export class CmsWrapper implements OnInit, OnDestroy {
     }
   }
 
-  deleteSnippetFromCurrentPage(snippet: Snippet): void {
+  async deleteSnippetFromCurrentPage(snippet: Snippet): Promise<void> {
     const confirmed = confirm(`Supprimer le snippet « ${snippet.title} » ?`);
-    if (!confirmed) return;
+    if (!confirmed || !this.selectedPage) return;
 
-    this.snippetService.deleteSnippet(snippet).then(async () => {
-      // Remove from local pageSnippets array
-      this.pageSnippets = this.pageSnippets.filter(s => s.id !== snippet.id);
-      // Also remove from selectedPage's snippet_ids
-      this.selectedPage!.snippet_ids = this.selectedPage!.snippet_ids.filter(id => id !== snippet.id);
+    const sourcePage = this.selectedPage;
+    try {
+      const persistedSnippet = await this.snippetService.readSnippet(snippet.id);
+      if (persistedSnippet.ownerPageId !== sourcePage.id) {
+        this.toastService.showWarning('Article conservé', 'La propriété de cet article doit être régularisée avant sa suppression.');
+        return;
+      }
 
-      await this.pageService.updatePage(this.selectedPage!);
+      const updatedPage = {
+        ...sourcePage,
+        snippet_ids: sourcePage.snippet_ids.filter(id => id !== snippet.id),
+      };
+      await this.pageService.updatePage(updatedPage);
+      try {
+        await this.snippetService.deleteSnippet(persistedSnippet);
+      } catch (error) {
+        await this.pageService.updatePage(sourcePage);
+        throw error;
+      }
+
+      this.selectedPage = updatedPage;
+      this.pageSnippets = this.pageSnippets.filter(item => item.id !== snippet.id);
       this.toastService.showSuccess('Article', 'Article supprimé');
-    }).catch(() => {
+    } catch {
       this.toastService.showError('Erreur', 'Impossible de supprimer l\'article');
-    });
+    }
   }
 
 
@@ -635,31 +683,69 @@ export class CmsWrapper implements OnInit, OnDestroy {
   async moveSnippetToClipboard(snippet: Snippet): Promise<void> {
     const index = this.pageSnippets.findIndex(s => s.id === snippet.id);
     if (index > -1 && this.selectedPage) {
-      // Retirer de la page courante
-      const newSnippets = this.pageSnippets.filter(s => s.id !== snippet.id);
-      this.pageSnippets = newSnippets; // Use setter for safety
-      this.selectedPage.snippet_ids = this.pageSnippets.map(s => s.id);
-      await this.pageService.updatePage(this.selectedPage);
+      const sourcePage = this.selectedPage;
+      const updatedSourcePage = {
+        ...sourcePage,
+        snippet_ids: sourcePage.snippet_ids.filter(id => id !== snippet.id),
+      };
 
-      // Ajouter au clipboard
-      await this.clipboardService.addSnippet(snippet);
+      try {
+        await this.clipboardService.addSnippet(snippet);
+        try {
+          await this.pageService.updatePage(updatedSourcePage);
+        } catch (error) {
+          await this.snippetService.updateSnippet({ ...snippet, ownerPageId: sourcePage.id });
+          await this.clipboardService.removeSnippet(snippet.id);
+          throw error;
+        }
 
-      this.toastService.showSuccess('Article', 'Article déplacé vers le presse-papiers');
+        this.selectedPage = updatedSourcePage;
+        this.pageSnippets = this.pageSnippets.filter(item => item.id !== snippet.id);
+        this.toastService.showSuccess('Article', 'Article déplacé vers le presse-papiers');
+      } catch {
+        this.toastService.showError('Erreur', 'Impossible de déplacer l\'article');
+      }
     }
   }
 
   async restoreSnippetFromClipboard(snippet: Snippet, modal?: NgbModalRef): Promise<void> {
     if (!this.selectedPage) return;
 
-    // Use setter to safely add the snippet with deduplication
-    this.pageSnippets = [...this.pageSnippets, snippet];
-    this.selectedPage.snippet_ids.push(snippet.id);
+    const destinationPage = this.selectedPage;
+    const restoredSnippet = { ...snippet, ownerPageId: destinationPage.id };
+    const updatedDestinationPage = {
+      ...destinationPage,
+      snippet_ids: destinationPage.snippet_ids.includes(snippet.id)
+        ? [...destinationPage.snippet_ids]
+        : [...destinationPage.snippet_ids, snippet.id],
+    };
 
-    await this.clipboardService.removeSnippet(snippet.id);
-    await this.pageService.updatePage(this.selectedPage);
+    try {
+      await this.pageService.updatePage(updatedDestinationPage);
+      try {
+        await this.snippetService.updateSnippet(restoredSnippet);
+      } catch (error) {
+        await this.pageService.updatePage(destinationPage);
+        throw error;
+      }
+      try {
+        await this.clipboardService.removeSnippet(snippet.id);
+      } catch (error) {
+        await this.snippetService.updateSnippet(snippet);
+        await this.pageService.updatePage(destinationPage);
+        throw error;
+      }
 
-    modal?.close();
-    this.toastService.showSuccess('Article', 'Article restitué depuis le presse-papiers');
+      this.selectedPage = updatedDestinationPage;
+      if (!this.pageSnippets.some(item => item.id === snippet.id)) {
+        this.pageSnippets = [...this.pageSnippets, restoredSnippet];
+      }
+
+      modal?.close();
+      this.toastService.showSuccess('Article', 'Article restitué depuis le presse-papiers');
+    } catch {
+      this.toastService.showError('Erreur', 'Impossible de restituer l\'article');
+    }
   }
 
   // === PREVIEW METHODS ===

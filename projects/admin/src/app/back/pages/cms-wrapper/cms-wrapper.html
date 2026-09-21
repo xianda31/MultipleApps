@@ -104,6 +104,10 @@
                         title="Retirer de cette page">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
+                    <button type="button" class="btn btn-sm btn-link text-danger"
+                        (click)="deleteSnippetFromCurrentPage(snippet)" title="Supprimer définitivement l'article">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
                 } @empty {
                 <div class="cms-empty-inline">

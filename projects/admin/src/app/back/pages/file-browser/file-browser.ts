@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FileManager } from '../../../services/file-manager';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
+import { SnippetService } from '../../../common/services/snippet.service';
+import { ToastService } from '../../../common/services/toast.service';
+import { findSnippetMediaReferences } from '../../../common/utils/snippet-media-references';
 import JSZip from 'jszip';
 
 @Component({
@@ -28,7 +31,12 @@ export class FileBrowser implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
 
-  constructor(private fileManager: FileManager, private fileService: FileService) {}
+  constructor(
+    private fileManager: FileManager,
+    private fileService: FileService,
+    private snippetService: SnippetService,
+    private toastService: ToastService,
+  ) {}
 
   ngOnInit(): void {
     
@@ -266,6 +274,7 @@ export class FileBrowser implements OnInit, OnDestroy {
     if (confirm(`Supprimer le fichier "${this.currentPath}" ?`)) {
       try {
         const filePath = `${this.currentRoot}${this.currentPath}`;
+        if (await this.isMediaReferenced(filePath)) return;
         await this.fileManager.deleteFile(filePath);
         
         // Navigate back to parent folder
@@ -288,6 +297,7 @@ export class FileBrowser implements OnInit, OnDestroy {
     if (confirm(`Supprimer le dossier "${this.currentPath}" et tout son contenu ?`)) {
       try {
         const folderPath = `${this.currentRoot}${this.currentPath}/`;
+        if (await this.isMediaReferenced(folderPath)) return;
         await this.fileManager.deleteFolder(folderPath);
         
         // Navigate back to parent
@@ -303,6 +313,18 @@ export class FileBrowser implements OnInit, OnDestroy {
         console.error('FileBrowser: Error deleting folder:', error);
       }
     }
+  }
+
+  private async isMediaReferenced(path: string): Promise<boolean> {
+    const snippets = await this.snippetService.listAllSnippetsStrict();
+    const references = findSnippetMediaReferences(snippets, path);
+    if (references.length === 0) return false;
+
+    this.toastService.showWarning(
+      'Suppression impossible',
+      `Ce média est encore utilisé par ${references.length} article(s).`,
+    );
+    return true;
   }
 
   // Get appropriate icon for file type

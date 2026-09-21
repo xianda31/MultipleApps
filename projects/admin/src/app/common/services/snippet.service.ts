@@ -79,6 +79,10 @@ export class SnippetService {
         return of(snippets);
     }
 
+    listAllSnippetsStrict(): Promise<Snippet[]> {
+        return this.dbHandler.listAllSnippetsStrict();
+    }
+
     async readSnippet(snippet_id: string): Promise<Snippet> {
         try {
             let snippet = await this.dbHandler.readSnippet(snippet_id);
@@ -112,21 +116,21 @@ export class SnippetService {
         }
     }
 
-    deleteSnippet(snippet: Snippet): Promise<boolean> {
+    async deleteSnippet(snippet: Snippet): Promise<boolean> {
         try {
-            let done = this.dbHandler.deleteSnippet(snippet.id);
+            await this.dbHandler.deleteSnippet(snippet.id);
             this._snippets = this._snippets.filter((s) => s.id !== snippet.id);
             this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
-            return Promise.resolve(true);
+            return true;
         } catch (errors) {
             if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
                 if ((errors[0] as any).errorType === 'Unauthorized') {
                     this.toastService.showError('Gestion des snippets', 'Vous n\'êtes pas autorisé à supprimer un snippet');
-                    return Promise.reject('Delete not authorized');
+                    throw new Error('Delete not authorized');
                 }
             }
             this.toastService.showError('Gestion des snippets', 'Une erreur est survenue lors de la suppression d\'un snippet');
-            return Promise.reject('Error deleting snippet');
+            throw new Error('Error deleting snippet');
         }
     }
 

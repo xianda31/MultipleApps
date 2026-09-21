@@ -804,6 +804,25 @@ export class DBhandler {
     );
   }
 
+  async listAllSnippetsStrict(): Promise<Snippet[]> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const snippets: Snippet[] = [];
+    let nextToken: string | null | undefined;
+
+    do {
+      const page = await client.models.Snippet.list({
+        limit: 300,
+        nextToken: nextToken || undefined,
+      });
+      if (page.errors?.length) throw page.errors;
+      snippets.push(...((page.data ?? []) as unknown as Snippet[]));
+      nextToken = page.nextToken;
+    } while (nextToken);
+
+    return snippets;
+  }
+
 
  // STRIPE PRODUCT SERVICE
 

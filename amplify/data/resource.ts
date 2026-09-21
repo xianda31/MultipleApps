@@ -410,6 +410,7 @@ const schema = a.schema({
     image: a.string(),
     file: a.string(),
     folder: a.string(),
+    ownerPageId: a.id(),
     publishedAt: a.string(),
   })
     .authorization((allow) => [

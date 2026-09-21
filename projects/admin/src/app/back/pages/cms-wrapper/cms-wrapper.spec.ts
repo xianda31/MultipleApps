@@ -19,10 +19,40 @@ describe('CmsWrapper', () => {
     await TestBed.configureTestingModule({
       imports: [CmsWrapper],
       providers: [
-        { provide: PageService, useValue: { listPages: () => of([]) } },
-        { provide: SnippetService, useValue: { listSnippets: () => of([]), updateSnippet: jasmine.createSpy().and.resolveTo() } },
-        { provide: ClipboardService, useValue: { clipboardSnippets$: of([]) } },
-        { provide: ToastService, useValue: {} },
+        {
+          provide: PageService,
+          useValue: {
+            listPages: () => of([]),
+            updatePage: jasmine.createSpy().and.callFake((page: Page) => Promise.resolve(page)),
+            deletePage: jasmine.createSpy().and.resolveTo(true),
+          },
+        },
+        {
+          provide: SnippetService,
+          useValue: {
+            listSnippets: () => of([]),
+            createSnippet: jasmine.createSpy().and.callFake((snippet: Snippet) => Promise.resolve({ ...snippet, id: 'snippet-created' })),
+            updateSnippet: jasmine.createSpy().and.callFake((snippet: Snippet) => Promise.resolve(snippet)),
+            readSnippet: jasmine.createSpy(),
+            deleteSnippet: jasmine.createSpy().and.resolveTo(true),
+          },
+        },
+        {
+          provide: ClipboardService,
+          useValue: {
+            clipboardSnippets$: of([]),
+            addSnippet: jasmine.createSpy().and.resolveTo(),
+            removeSnippet: jasmine.createSpy().and.resolveTo(),
+          },
+        },
+        {
+          provide: ToastService,
+          useValue: {
+            showSuccess: jasmine.createSpy(),
+            showWarning: jasmine.createSpy(),
+            showError: jasmine.createSpy(),
+          },
+        },
         {
           provide: FileManager,
           useValue: {
@@ -115,6 +145,120 @@ describe('CmsWrapper', () => {
 
     expect(component.pageSnippets[0]).toBe(snippet);
     expect(snippetService.updateSnippet).not.toHaveBeenCalled();
+  });
+
+  it('assigns the selected page as owner when creating an article', async () => {
+    component.selectedPage = {
+      id: 'news',
+      title: 'Actualités',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: [],
+    };
+
+    await component.addNewSnippet();
+
+    const snippetService = TestBed.inject(SnippetService) as jasmine.SpyObj<SnippetService>;
+    expect(snippetService.createSnippet).toHaveBeenCalledWith(jasmine.objectContaining({ ownerPageId: 'news' }));
+  });
+
+  it('removes a newly created article when linking it to the page fails', async () => {
+    component.selectedPage = {
+      id: 'news',
+      title: 'Actualités',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: [],
+    };
+    component.pages = [component.selectedPage];
+    const pageService = TestBed.inject(PageService) as jasmine.SpyObj<PageService>;
+    const snippetService = TestBed.inject(SnippetService) as jasmine.SpyObj<SnippetService>;
+    pageService.updatePage.and.rejectWith(new Error('link failed'));
+
+    await component.addNewSnippet();
+
+    expect(snippetService.deleteSnippet).toHaveBeenCalledWith(jasmine.objectContaining({ id: 'snippet-created' }));
+    expect(component.selectedPage.snippet_ids).toEqual([]);
+    expect(component.pageSnippets).toEqual([]);
+  });
+
+  it('updates ownership before removing an article from the clipboard', async () => {
+    component.selectedPage = {
+      id: 'news',
+      title: 'Actualités',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: [],
+    };
+    const snippet = { id: 'snippet-1', title: 'Article' } as Snippet;
+
+    await component.restoreSnippetFromClipboard(snippet);
+
+    const snippetService = TestBed.inject(SnippetService) as jasmine.SpyObj<SnippetService>;
+    const clipboardService = TestBed.inject(ClipboardService) as jasmine.SpyObj<ClipboardService>;
+    expect(snippetService.updateSnippet).toHaveBeenCalledWith(jasmine.objectContaining({ ownerPageId: 'news' }));
+    expect(clipboardService.removeSnippet).toHaveBeenCalledOnceWith(snippet.id);
+    expect(component.pageSnippets).toContain(jasmine.objectContaining({ id: snippet.id, ownerPageId: 'news' }));
+  });
+
+  it('keeps a page when one of its article ownership records is inconsistent', async () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    const page = {
+      id: 'news',
+      title: 'Actualités',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: ['owned', 'foreign', 'legacy'],
+    } as Page;
+    const snippetService = TestBed.inject(SnippetService) as jasmine.SpyObj<SnippetService>;
+    snippetService.readSnippet.and.callFake((snippetId: string) => Promise.resolve({
+      id: snippetId,
+      ownerPageId: snippetId === 'owned' ? page.id : snippetId === 'foreign' ? 'other-page' : undefined,
+    } as Snippet));
+
+    await component.deletePage(page);
+
+    const clipboardService = TestBed.inject(ClipboardService) as jasmine.SpyObj<ClipboardService>;
+    const pageService = TestBed.inject(PageService) as jasmine.SpyObj<PageService>;
+    expect(clipboardService.addSnippet).not.toHaveBeenCalled();
+    expect(pageService.deletePage).not.toHaveBeenCalled();
+  });
+
+  it('parks owned and legacy articles before deleting a page', async () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    const page = {
+      id: 'news',
+      title: 'Actualités',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: ['owned', 'legacy'],
+    } as Page;
+    const snippetService = TestBed.inject(SnippetService) as jasmine.SpyObj<SnippetService>;
+    snippetService.readSnippet.and.callFake((snippetId: string) => Promise.resolve({
+      id: snippetId,
+      ownerPageId: snippetId === 'owned' ? page.id : undefined,
+    } as Snippet));
+
+    await component.deletePage(page);
+
+    const clipboardService = TestBed.inject(ClipboardService) as jasmine.SpyObj<ClipboardService>;
+    const pageService = TestBed.inject(PageService) as jasmine.SpyObj<PageService>;
+    expect(clipboardService.addSnippet).toHaveBeenCalledTimes(2);
+    expect(pageService.deletePage).toHaveBeenCalledOnceWith(page);
+  });
+
+  it('keeps a page when parking one of its articles fails', async () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+    const page = {
+      id: 'news',
+      title: 'Actualités',
+      template: PAGE_TEMPLATES.PUBLICATION,
+      snippet_ids: ['owned'],
+    } as Page;
+    const snippetService = TestBed.inject(SnippetService) as jasmine.SpyObj<SnippetService>;
+    const pageService = TestBed.inject(PageService) as jasmine.SpyObj<PageService>;
+    const clipboardService = TestBed.inject(ClipboardService) as jasmine.SpyObj<ClipboardService>;
+    snippetService.readSnippet.and.resolveTo({ id: 'owned', ownerPageId: page.id } as Snippet);
+    clipboardService.addSnippet.and.rejectWith(new Error('parking failed'));
+
+    await component.deletePage(page);
+
+    expect(pageService.deletePage).not.toHaveBeenCalled();
   });
 
   it('imports a selected S3 image through the CMS variant pipeline', async () => {
