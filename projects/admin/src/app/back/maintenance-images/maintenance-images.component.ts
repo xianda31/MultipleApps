@@ -22,13 +22,13 @@ interface PreparedGalleryImage {
 }
 
 @Component({
-  selector: 'app-maintenance-images',
+  selector: 'app-gallery-mgr',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './maintenance-images.component.html',
   styleUrl: './maintenance-images.component.scss',
 })
-export class MaintenanceImagesComponent implements OnInit {
+export class GalleryMgrComponent implements OnInit {
   readonly galleryPath = 'images/_ACCUEIL_/';
   readonly gallerySourcePath = 'images/home/sources/';
 

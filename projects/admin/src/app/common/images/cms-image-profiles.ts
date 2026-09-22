@@ -1,6 +1,6 @@
 import { PAGE_TEMPLATES } from '../interfaces/page_snippet.interface';
 
-export type CmsImageProfile = 'inline' | 'publication-landscape' | 'landscape-card' | 'portrait-card' | 'booklet';
+export type CmsImageProfile = 'inline' | 'publication-landscape' | 'landscape-card' | 'portrait-card' | 'booklet' | 'tournament-thumbnail';
 
 export interface CmsImageProfileDefinition {
   width: number | null;
@@ -58,6 +58,15 @@ export const CMS_IMAGE_PROFILES: Record<CmsImageProfile, CmsImageProfileDefiniti
     orientation: 'landscape',
     recommendation: 'Privilégiez une image paysage avec une zone centrale dégagée.',
   },
+  'tournament-thumbnail': {
+    width: 300,
+    height: 200,
+    fit: 'cover',
+    aspectRatio: '3 / 2',
+    label: 'Vignette tournoi 3:2',
+    orientation: 'landscape',
+    recommendation: 'Privilégiez une image paysage avec le sujet principal proche du centre.',
+  },
 };
 
 export function cmsImageSourceOrientation(width: number, height: number): 'landscape' | 'portrait' | 'square' {
@@ -80,6 +89,11 @@ export const PAGE_TEMPLATE_IMAGE_PROFILE: Partial<Record<PAGE_TEMPLATES, CmsImag
   [PAGE_TEMPLATES.ALBUMS]: 'portrait-card',
   [PAGE_TEMPLATES.BOOKLET]: 'booklet',
 };
+
+export const TOURNAMENT_THUMBNAIL_OWNER_ID = 'tournament-thumbnails';
+export const TOURNAMENT_THUMBNAIL_PROFILE: CmsImageProfile = 'tournament-thumbnail';
+export const TOURNAMENT_THUMBNAIL_VARIANT_PREFIX =
+  `images/cms/snippets/${TOURNAMENT_THUMBNAIL_OWNER_ID}/variants/${TOURNAMENT_THUMBNAIL_PROFILE}/`;
 
 export function imageProfileForTemplate(template: PAGE_TEMPLATES): CmsImageProfile | null {
   return PAGE_TEMPLATE_IMAGE_PROFILE[template] ?? null;

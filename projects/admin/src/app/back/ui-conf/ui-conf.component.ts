@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
-import { map, Observable, first, catchError, of, Subscription } from 'rxjs';
+import { map, Observable, first, firstValueFrom, catchError, of, Subscription } from 'rxjs';
 import { CompetitionsUIConfig } from '../../common/interfaces/ui-conf.interface';
 import { COMPETITION_DIVISION_LABELS, COMPETITION_DIVISIONS } from '../competitions/competitions.interface';
 
@@ -514,19 +514,7 @@ export class UiConfComponent implements OnInit {
   async saveSettings() {
     try {
       const formVal: any = this.uiForm.value || {};
-
-      // Build clean payload conforming STRICTLY to UIConfiguration interface
-      // Convert tournaments_type FormArray (array [{key,image},...]) into mapping { key: image }
-      const tournamentsTypeMap: { [k: string]: string } = {};
-      if (Array.isArray(formVal.tournaments_type)) {
-        formVal.tournaments_type.forEach((entry: any) => {
-          if (entry && entry.key) tournamentsTypeMap[entry.key] = entry.image || '';
-        });
-      }
-      // If default_tournament_image is set, store it under the forced key 'defaut'
-      if (formVal.default_tournament_image) {
-        tournamentsTypeMap['defaut'] = formVal.default_tournament_image;
-      }
+      const currentSettings = await firstValueFrom(this.systemDataService.get_ui_settings().pipe(first()));
 
       // Build payload with ONLY fields from UIConfiguration interface
       const payload: any = {
@@ -568,8 +556,8 @@ export class UiConfComponent implements OnInit {
           home_layout_ratio: formVal.home_layout_ratio ?? 2,
           featured_duration_days: Number(formVal.featured_duration_days) || 30
         },
-        tournaments_type: tournamentsTypeMap,
-        default_tournament_image: formVal.default_tournament_image || '',
+        tournaments_type: currentSettings.tournaments_type || {},
+        default_tournament_image: currentSettings.default_tournament_image || '',
         frontBannerEnabled: !!formVal.frontBannerEnabled,
         homepage_intro: formVal.homepage_intro || '',
         email: {

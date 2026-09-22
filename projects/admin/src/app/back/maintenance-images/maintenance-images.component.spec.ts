@@ -3,10 +3,10 @@ import { of } from 'rxjs';
 import { FileService } from '../../common/services/files.service';
 import { ImgService } from '../../common/services/img.service';
 import { ToastService } from '../../common/services/toast.service';
-import { MaintenanceImagesComponent } from './maintenance-images.component';
+import { GalleryMgrComponent } from './maintenance-images.component';
 
 describe('MaintenanceImagesComponent', () => {
-  let component: MaintenanceImagesComponent;
+  let component: GalleryMgrComponent;
   let fileService: jasmine.SpyObj<FileService>;
   let imgService: jasmine.SpyObj<ImgService>;
   let toastService: jasmine.SpyObj<ToastService>;
@@ -25,7 +25,7 @@ describe('MaintenanceImagesComponent', () => {
       'showError',
     ]);
     fileService.list_files.and.returnValue(of([]));
-    component = new MaintenanceImagesComponent(fileService, imgService, toastService);
+    component = new GalleryMgrComponent(fileService, imgService, toastService);
   });
 
   it('lists only direct images from the homepage folder', async () => {

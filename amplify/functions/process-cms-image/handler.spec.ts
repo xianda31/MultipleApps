@@ -27,6 +27,18 @@ describe('process-cms-image path contract', () => {
     );
   });
 
+  it('maps a tournament thumbnail source to the reserved variants namespace', () => {
+    assert.deepEqual(
+      parseCmsImageSource('images/cms/sources/tournament-thumbnails/tournament-thumbnail/asset-456.png'),
+      {
+        snippetId: 'tournament-thumbnails',
+        profile: 'tournament-thumbnail',
+        assetId: 'asset-456',
+        variantKey: 'images/cms/snippets/tournament-thumbnails/variants/tournament-thumbnail/asset-456.webp',
+      },
+    );
+  });
+
   it('maps a homepage source to the legacy public gallery', () => {
     assert.deepEqual(
       parseGalleryImageSource('images/home/sources/asset-123.jpeg'),

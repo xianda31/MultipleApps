@@ -1,0 +1,121 @@
+<section class="thumbnail-manager p-4" aria-labelledby="tournament-thumbnails-title">
+  <header class="thumbnail-manager__header">
+    <div>
+      <h5 id="tournament-thumbnails-title" class="mb-1">Vignettes des tournois</h5>
+      <p class="text-muted mb-0">Chargez une image depuis votre ordinateur puis associez sa version optimisée au mot-clé.</p>
+    </div>
+    <button type="button" class="btn btn-success" (click)="save()"
+      [disabled]="loading || saving || form.invalid || hasDuplicateKeys()">
+      @if (saving) {
+        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+      } @else {
+        <i class="bi bi-floppy me-2" aria-hidden="true"></i>
+      }
+      Enregistrer
+    </button>
+  </header>
+
+  @if (loading) {
+    <div class="thumbnail-manager__state" role="status">
+      <span class="spinner-border text-success" aria-hidden="true"></span>
+      <span>Chargement de la configuration...</span>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div formArrayName="mappings" class="thumbnail-mappings">
+        @for (control of mappings.controls; track control; let index = $index) {
+          <div class="thumbnail-mapping" [formGroupName]="index">
+            <label>
+              <span>Mot-clé</span>
+              <input type="text" class="form-control form-control-sm" formControlName="key" placeholder="Ex. simultané"
+                (change)="saveKeywordChange(index)">
+            </label>
+            <div class="thumbnail-preview">
+              @if (control.get('key')?.value && previewMap[control.get('key')?.value]) {
+                <img [src]="previewMap[control.get('key')?.value]" alt="Aperçu de la vignette">
+              } @else {
+                <i class="bi bi-image text-muted" aria-hidden="true"></i>
+              }
+            </div>
+            <label class="btn btn-outline-secondary btn-sm icon-button mb-0" title="Choisir une image sur le PC"
+              aria-label="Choisir une image sur le PC">
+              <i class="bi bi-folder2-open" aria-hidden="true"></i>
+              <input type="file" accept="image/*" hidden (change)="onFileSelected($event, index)">
+            </label>
+            <button type="button" class="btn btn-outline-danger btn-sm icon-button" (click)="removeMapping(index)"
+              title="Supprimer le mapping" aria-label="Supprimer le mapping">
+              <i class="bi bi-trash" aria-hidden="true"></i>
+            </button>
+            @if (pendingThumbnail?.target === index) {
+              <section #importReview class="thumbnail-import-review" aria-label="Vérification de la vignette avant import">
+                <app-cms-image-review [profile]="thumbnailProfile" [sourceUrl]="pendingThumbnail!.previewUrl"
+                  [sourceWidth]="pendingThumbnail!.width" [sourceHeight]="pendingThumbnail!.height"
+                  [sourceSize]="pendingThumbnail!.file.size">
+                </app-cms-image-review>
+                <div class="d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearPendingThumbnail()"
+                    [disabled]="uploading">Annuler</button>
+                  <button type="button" class="btn btn-success btn-sm" (click)="uploadPendingThumbnail()"
+                    [disabled]="uploading">
+                    @if (uploading) {
+                      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Traitement en cours
+                    } @else {
+                      <i class="bi bi-upload me-2" aria-hidden="true"></i>Importer et associer
+                    }
+                  </button>
+                </div>
+              </section>
+            }
+          </div>
+        }
+      </div>
+
+      @if (hasDuplicateKeys()) {
+        <div class="alert alert-danger py-2">Chaque mot-clé doit être unique.</div>
+      }
+
+      <button type="button" class="btn btn-outline-success btn-sm mb-4" (click)="addMapping()">
+        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Ajouter un mot-clé
+      </button>
+
+      <div class="default-thumbnail">
+        <div>
+          <strong>Vignette par défaut</strong>
+          <span>Utilisée quand aucun mot-clé ne correspond.</span>
+        </div>
+        <div class="thumbnail-preview">
+          @if (previewMap['defaut']) {
+            <img [src]="previewMap['defaut']" alt="Aperçu de la vignette par défaut">
+          } @else {
+            <i class="bi bi-image text-muted" aria-hidden="true"></i>
+          }
+        </div>
+        <label class="btn btn-outline-secondary btn-sm icon-button mb-0" title="Choisir une image sur le PC"
+          aria-label="Choisir une image sur le PC">
+          <i class="bi bi-folder2-open" aria-hidden="true"></i>
+          <input type="file" accept="image/*" hidden (change)="onFileSelected($event, 'default')">
+        </label>
+        @if (pendingThumbnail?.target === 'default') {
+          <section #importReview class="thumbnail-import-review" aria-label="Vérification de la vignette avant import">
+            <app-cms-image-review [profile]="thumbnailProfile" [sourceUrl]="pendingThumbnail!.previewUrl"
+              [sourceWidth]="pendingThumbnail!.width" [sourceHeight]="pendingThumbnail!.height"
+              [sourceSize]="pendingThumbnail!.file.size">
+            </app-cms-image-review>
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearPendingThumbnail()"
+                [disabled]="uploading">Annuler</button>
+              <button type="button" class="btn btn-success btn-sm" (click)="uploadPendingThumbnail()"
+                [disabled]="uploading">
+              @if (uploading) {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Traitement en cours
+              } @else {
+                <i class="bi bi-upload me-2" aria-hidden="true"></i>Importer et associer
+              }
+              </button>
+            </div>
+          </section>
+        }
+      </div>
+    </form>
+  }
+</section>

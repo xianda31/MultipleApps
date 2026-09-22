@@ -1,16 +1,4 @@
-<main class="image-maintenance container-fluid p-4">
-  <header class="image-maintenance__header">
-    <div>
-      <h4 class="mb-1">Maintenance images</h4>
-      <p class="text-muted mb-0">Contrôle et optimisation des médias du site</p>
-    </div>
-    <button type="button" class="btn btn-outline-secondary" (click)="refresh()" [disabled]="loading || uploading"
-      title="Actualiser la galerie">
-      <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
-      <span class="visually-hidden">Actualiser la galerie</span>
-    </button>
-  </header>
-
+<section class="image-maintenance container-fluid p-4">
   <section class="gallery-section" aria-labelledby="homepage-gallery-title">
     <div class="gallery-section__heading">
       <div class="gallery-section__title">
@@ -18,17 +6,23 @@
         <p class="text-muted mb-0">Format paysage 16:9, 1920 × 1080 px maximum, recadrage centré par Sharp. Poids conseillé inférieur à 1 Mo.</p>
         <span>{{ images.length }} image{{ images.length > 1 ? 's' : '' }} · {{ formatFileSize(totalSize) }} · {{ galleryPath }}</span>
       </div>
-      <label class="btn btn-success mb-0" [class.disabled]="uploading || preparing">
-        @if (preparing) {
-          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-          Optimisation en cours
-        } @else {
-          <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
-          Ajouter des images
-        }
-        <input #fileInput type="file" accept="image/*" multiple hidden [disabled]="uploading || preparing"
-          (change)="onFilesSelected($event)">
-      </label>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="refresh()" [disabled]="loading || uploading"
+          title="Actualiser la galerie" aria-label="Actualiser la galerie">
+          <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+        </button>
+        <label class="btn btn-success mb-0" [class.disabled]="uploading || preparing">
+          @if (preparing) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            Optimisation en cours
+          } @else {
+            <i class="bi bi-plus-lg me-2" aria-hidden="true"></i>
+            Ajouter des images
+          }
+          <input #fileInput type="file" accept="image/*" multiple hidden [disabled]="uploading || preparing"
+            (change)="onFilesSelected($event)">
+        </label>
+      </div>
     </div>
 
   @if (oversizedImageCount > 0) {
@@ -118,4 +112,4 @@
     </section>
   }
   </section>
-</main>
+</section>

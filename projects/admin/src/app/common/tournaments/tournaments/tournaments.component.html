@@ -40,10 +40,9 @@
                         </div>
                     </div>
                     <div class="col col-sm-3 col-md-4 d-flex">
-                        <div class="overflow-hidden w-100">
+                        <div class="tournament-thumbnail-frame overflow-hidden w-100">
                             <ng-container *ngIf="getImageUrl(t) as imgUrl; else noImg">
-                                <img [attr.src]="imgUrl" class="img-fluid " [alt]="name_of(t) || 'vignette'"
-                                    style="object-fit:cover; display:block; width:100%;">
+                                <img [attr.src]="imgUrl" [alt]="name_of(t) || 'vignette'">
                             </ng-container>
                             <ng-template #noImg>
                                 <div class="w-100 h-100" style=" background: transparent;"></div>

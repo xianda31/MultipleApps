@@ -12,7 +12,7 @@ interface S3Event {
   Records: S3Record[];
 }
 
-type CmsImageProfile = 'inline' | 'publication-landscape' | 'landscape-card' | 'portrait-card' | 'booklet';
+type CmsImageProfile = 'inline' | 'publication-landscape' | 'landscape-card' | 'portrait-card' | 'booklet' | 'tournament-thumbnail';
 
 const profiles: Record<CmsImageProfile, { width?: number; height: number; fit: 'contain' | 'cover' }> = {
   inline: { width: 400, height: 300, fit: 'contain' },
@@ -20,6 +20,7 @@ const profiles: Record<CmsImageProfile, { width?: number; height: number; fit: '
   'landscape-card': { width: 800, height: 533, fit: 'cover' },
   'portrait-card': { width: 600, height: 800, fit: 'cover' },
   booklet: { width: 960, height: 640, fit: 'cover' },
+  'tournament-thumbnail': { width: 300, height: 200, fit: 'cover' },
 };
 
 const s3 = new S3Client({});

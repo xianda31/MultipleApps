@@ -254,6 +254,7 @@ export class SystemDataService {
     } catch (err) {
       console.warn('save_ui_settings: upload error', err);
       try { console.error('[SystemDataService] save_ui_settings(): upload_to_S3 failed', { err, timestamp: new Date().toISOString() }); } catch (e) { /* ignore */ }
+      throw err;
     }
   }
 

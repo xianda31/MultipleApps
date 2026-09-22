@@ -1,0 +1,43 @@
+<main class="image-tools container-fluid p-4">
+  <header class="image-tools__header">
+    <div>
+      <h4 class="mb-1">Utilitaires images</h4>
+      <p class="text-muted mb-0">Gestion des médias et opérations de maintenance</p>
+    </div>
+  </header>
+
+  <nav class="image-tools__tabs" aria-label="Utilitaires images">
+    <button type="button" class="image-tool-tab" [class.active]="activeTool === 'gallery'"
+      [attr.aria-current]="activeTool === 'gallery' ? 'page' : null" (click)="selectTool('gallery')">
+      <i class="bi bi-images" aria-hidden="true"></i>
+      <span>Galerie d'accueil</span>
+    </button>
+    <button type="button" class="image-tool-tab" [class.active]="activeTool === 'tournament-thumbnails'"
+      [attr.aria-current]="activeTool === 'tournament-thumbnails' ? 'page' : null"
+      (click)="selectTool('tournament-thumbnails')">
+      <i class="bi bi-card-image" aria-hidden="true"></i>
+      <span>Vignettes tournois</span>
+    </button>
+    <button type="button" class="image-tool-tab" disabled title="Fonction à venir">
+      <i class="bi bi-trash3" aria-hidden="true"></i>
+      <span>Nettoyage</span>
+      <small>À venir</small>
+    </button>
+    <button type="button" class="image-tool-tab" disabled title="Fonction à venir">
+      <i class="bi bi-cloud-arrow-down" aria-hidden="true"></i>
+      <span>Téléchargement</span>
+      <small>À venir</small>
+    </button>
+  </nav>
+
+  <section class="image-tools__content">
+    @switch (activeTool) {
+      @case ('gallery') {
+        <app-gallery-mgr></app-gallery-mgr>
+      }
+      @case ('tournament-thumbnails') {
+        <app-tournament-thumbnails-mgr></app-tournament-thumbnails-mgr>
+      }
+    }
+  </section>
+</main>

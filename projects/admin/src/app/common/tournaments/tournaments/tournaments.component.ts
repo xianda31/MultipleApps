@@ -11,6 +11,7 @@ import { SystemDataService } from '../../services/system-data.service';
 import { catchError, combineLatest, filter, forkJoin, map, merge, of, scan, startWith, switchMap, take } from 'rxjs';
 import { Member } from '../../interfaces/member.interface';
 import { isFemaleGender } from '../../utils/gender.util';
+import { findTournamentImageUrl } from '../../utils/tournament-thumbnail.util';
 
 const MAX_TOURNAMENTS_LISTED = 9;
 const DEFAULT_ROW_COLS: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
@@ -163,9 +164,7 @@ export class TournamentsComponent {
 
   private enrichWithImages(tournamentTeams: TournamentTeams[]): TournamentTeams[] {
     return tournamentTeams.map((team) => {
-      const rawName = team.tournament.title || '';
-      const nameKey = rawName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const imageUrl = this.findImageUrlForName(nameKey, this.tournamentTypeUrls);
+      const imageUrl = findTournamentImageUrl(team.tournament.title || '', this.tournamentTypeUrls);
       return Object.assign(team as any, { image_url: imageUrl });
     });
   }
@@ -175,28 +174,6 @@ export class TournamentsComponent {
       tournament,
       items: []
     };
-  }
-
-  private findImageUrlForName(nameKey: string, mapObj: any): string | null {
-    if (!mapObj) return null;
-    for (const [k, url] of Object.entries(mapObj)) {
-      const nk = String(k || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      if (!nk) continue;
-      if (!nameKey.includes(nk)) continue;
-      if (typeof url === 'string') return url;
-      if (url && typeof (url as any).url === 'string') return (url as any).url;
-      if (url && typeof (url as any).presigned_url === 'string') return (url as any).presigned_url;
-    }
-    // If no specific match found, try known default keys in the ui config mapping
-    const defaultKeys = ['defaut', 'défaut', 'default', '__default__', 'fallback'];
-    for (const dk of defaultKeys) {
-      const v = (mapObj as any)[dk];
-      if (!v) continue;
-      if (typeof v === 'string') return v;
-      if (v && typeof (v as any).url === 'string') return (v as any).url;
-      if (v && typeof (v as any).presigned_url === 'string') return (v as any).presigned_url;
-    }
-    return null;
   }
 
   date_of(tTeams: TournamentTeams): string {
