@@ -29,6 +29,10 @@ export class StripeReconciliationHealthService {
   private refreshInProgress: Promise<StripeReconciliationHealthSnapshot> | null = null;
 
   readonly snapshot$: Observable<StripeReconciliationHealthSnapshot> = this.snapshotSubject.asObservable();
+  readonly abandonedCheckoutCount$: Observable<number> = this.snapshot$.pipe(
+    map(snapshot => snapshot.abandonedCheckouts.length),
+    distinctUntilChanged(),
+  );
   readonly staleAbandonedCheckoutCount$: Observable<number> = this.snapshot$.pipe(
     map(snapshot => snapshot.staleAbandonedCheckouts.length),
     distinctUntilChanged(),

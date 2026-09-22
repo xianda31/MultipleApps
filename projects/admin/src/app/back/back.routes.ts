@@ -25,6 +25,8 @@ import { BackPageComponent } from './back-page/back-page.component';
 import { FilemgrWindowsComponent } from './files/filemgr/filemgr-windows.component';
 import { RootVolumeComponent } from './files/root-volume/root-volume';
 import { AuthGuard } from '../auth.guard';
+import { AccreditationGuard } from '../accreditation.guard';
+import { Group_priorities } from '../common/authentification/group.interface';
 import { MenusEditorComponent } from './menus/menus-editor/menus-editor';
 import { UiConfComponent } from './ui-conf/ui-conf.component';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
@@ -104,8 +106,18 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.SondageEditor, component: SondageEditorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.SondageResultats, component: SondageResultatsComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Competitions, component: CompetitionsComponent, data: { access: 'full' }, canActivate: [AuthGuard] },
-      { path: BACK_ROUTE_PATHS.StripeReconciliation, component: StripeReconciliationComponent, canActivate: [AuthGuard] },
-      { path: BACK_ROUTE_PATHS.StripeRefunds, component: StripeRefundsComponent, canActivate: [AuthGuard] },
+      {
+        path: BACK_ROUTE_PATHS.StripeReconciliation,
+        component: StripeReconciliationComponent,
+        canActivate: [AuthGuard, AccreditationGuard],
+        data: { minimumAccreditationLevel: Group_priorities.Administrateur },
+      },
+      {
+        path: BACK_ROUTE_PATHS.StripeRefunds,
+        component: StripeRefundsComponent,
+        canActivate: [AuthGuard, AccreditationGuard],
+        data: { minimumAccreditationLevel: Group_priorities.Administrateur },
+      },
 
 
       { path: '', component: BackPageComponent },

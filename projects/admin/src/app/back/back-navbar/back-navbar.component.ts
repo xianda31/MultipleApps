@@ -52,6 +52,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   new_assistances_nbr : number = 0;
   in_progress_assistances_nbr : number = 0;
   authorizationFlag$: Observable<boolean>;
+  abandonedCheckoutCount$: Observable<number>;
   stripeWarningCount$: Observable<number>;
   gameCardOrphanCount$: Observable<number>;
   readonly ffbAvailability$: FfbAvailabilityService['snapshot$'];
@@ -99,6 +100,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     private gameCardService: GameCardService,
   ) { 
     this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
+    this.abandonedCheckoutCount$ = this.stripeReconciliationHealth.abandonedCheckoutCount$;
     this.stripeWarningCount$ = this.stripeReconciliationHealth.staleAbandonedCheckoutCount$;
     this.gameCardOrphanCount$ = this.gameCardService.gameCards.pipe(
       switchMap(cards => from(this.gameCardService.findOrphanCards(cards))),
