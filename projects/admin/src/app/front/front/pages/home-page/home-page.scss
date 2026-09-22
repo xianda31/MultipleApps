@@ -1,3 +1,30 @@
+/* Club image belongs to the homepage content, not the application shell. */
+.home-club-image {
+	width: 100%;
+	height: 180px;
+	overflow: hidden;
+	background: var(--content-bg, #fff);
+}
+
+.home-club-image img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+}
+
+:host-context(.laptop-main-shell) .home-club-image {
+	width: calc(100% + var(--bs-gutter-x, 1.5rem));
+	margin-inline: calc(var(--bs-gutter-x, 1.5rem) * -0.5);
+}
+
+@media (max-width: 767.98px) {
+	.home-club-image {
+		height: 120px;
+	}
+}
+
 /* Sequential fade single-image styling */
 .fade-seq {
 	position: relative;

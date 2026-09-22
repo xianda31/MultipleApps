@@ -1,5 +1,26 @@
+<!-- Mode laptop : navigation latérale -->
+<div *ngIf="!isMobile && sidebar" class="sidebar-navbar d-flex flex-column h-100 w-100">
+  <nav class="d-flex flex-column h-100" aria-label="Navigation principale">
+    <ul class="navbar-nav sidebar-menu flex-nowrap">
+      <li *ngIf="brandNavitem" class="nav-item">
+        <a class="nav-link main-nav-link" [routerLink]="brandNavitem.path">
+          {{ brandNavitem.label }}
+        </a>
+      </li>
+      <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: true, excludeLast: true }"></ng-container>
+    </ul>
+  </nav>
+</div>
+
+<!-- Mode laptop : compte dans la barre supérieure -->
+<div *ngIf="!isMobile && accountOnly" class="account-navbar">
+  <ul class="navbar-nav flex-row align-items-center mb-0">
+    <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: false, onlyLast: true }"></ng-container>
+  </ul>
+</div>
+
 <!-- Mode laptop : barre de navigation complète -->
-<div *ngIf="!isMobile" class="row d-md-flex h-auto g-0 w-100 py-0 my-0 laptop-navbar-row">
+<div *ngIf="!isMobile && !sidebar && !accountOnly" class="row d-md-flex h-auto g-0 w-100 py-0 my-0 laptop-navbar-row">
   <nav class="navbar navbar-dark navbar-expand d-flex w-100 justify-content-center position-relative align-items-center">
     <!-- Logo du club positionné indépendamment (remplace le nom) -->
     <div class="club-name-sticky-independent d-none">
@@ -33,14 +54,15 @@
 
 <!-- Mode mobile : liste simple pour l'offcanvas -->
 <ul *ngIf="isMobile" class="navbar-nav mb-0 flex-nowrap">
-  <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: true }"></ng-container>
+  <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: true, excludeLast: excludeAccount }"></ng-container>
 </ul>
 
 <!-- Templates dynamiques pour menus -->
-<ng-template #dyn_navbar_unified let-isMobile="isMobile">
+<ng-template #dyn_navbar_unified let-isMobile="isMobile" let-excludeLast="excludeLast" let-onlyLast="onlyLast">
   <ng-container *ngFor="let menu of navbar_menus; let last = last; trackBy: trackNavitemId">
     <ng-container
-      *ngIf="menu.navitem.position === NAVITEM_POSITION.NAVBAR &&
+      *ngIf="(!excludeLast || !last) && (!onlyLast || last) &&
+            menu.navitem.position === NAVITEM_POSITION.NAVBAR &&
             (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.ANY
             || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.LOGGED_ONLY && (logged_member$ | async))
             || (menu.navitem.logging_criteria === NAVITEM_LOGGING_CRITERIA.UNLOGGED_ONLY && !(logged_member$ | async)))">

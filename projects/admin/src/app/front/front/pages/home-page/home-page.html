@@ -1,3 +1,7 @@
+<div *ngIf="imageClubUrl" class="home-club-image">
+    <img [src]="imageClubUrl" alt="Bridge Club de Saint-Orens" />
+</div>
+
 <div class="row mt-3 px-1">
     <div class="col-xs-6 col-md-4">
         <ng-container *ngTemplateOutlet="welcome"></ng-container>

@@ -1,4 +1,10 @@
-  /* Banner complètement masqué en mode sticky */
+/* Images club spécifiques par mode */
+  .compact-laptop-navbar .navbar {
+    padding-top: 0 !important;
+  }
+
+
+/* Banner complètement masqué en mode sticky */
   .laptop-banner-row.scrolled-sticky {
     height: 0 !important;
     min-height: 0 !important;
@@ -43,6 +49,132 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+}
+
+.laptop-sidebar-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(
+    to right,
+    var(--navbar-bg, var(--banner-bg, #2e332d)) 0 248px,
+    var(--content-bg, #fff) 248px 100%
+  );
+}
+
+.laptop-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex: 0 0 248px;
+  flex-direction: column;
+  height: 100vh;
+  padding: 1.25rem 1rem 1rem;
+  overflow-y: auto;
+  color: var(--navbar-text, #fff);
+  background: var(--navbar-bg, var(--banner-bg, #2e332d));
+  border-right: 1px solid color-mix(in srgb, var(--navbar-text, #fff) 18%, transparent);
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+}
+
+.sidebar-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0 0.5rem 1.15rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--navbar-text, #fff) 24%, transparent);
+}
+
+.sidebar-logo-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  margin-bottom: 0.35rem;
+}
+
+.sidebar-logo {
+  display: block;
+  max-width: 150px;
+  max-height: 56px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.sidebar-club-name {
+  color: var(--navbar-text, #fff);
+  font-family: var(--site-font, inherit);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.sidebar-date {
+  color: color-mix(in srgb, var(--navbar-text, #fff) 72%, transparent);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.sidebar-navigation {
+  display: flex !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch !important;
+}
+
+.laptop-main-shell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  background: var(--content-bg, #fff);
+}
+
+.laptop-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0.35rem 1.25rem;
+  color: var(--content-text, #222);
+  background: var(--content-bg, #fff);
+  border-bottom: 1px solid color-mix(in srgb, var(--content-text, #222) 14%, transparent);
+}
+
+.laptop-topbar__club {
+  font-family: var(--site-font, inherit);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.laptop-topbar__account {
+  display: flex !important;
+  height: auto !important;
+  align-items: center !important;
+}
+
+.mobile-topbar__account {
+  display: flex !important;
+  width: auto !important;
+  height: auto !important;
+  align-items: center !important;
+}
+
+.mobile-topbar__account .account-navbar .nav-link.main-nav-link {
+  color: var(--navbar-text, #fff) !important;
+  font-size: 0.8rem !important;
+}
+
+.laptop-main-shell .footer-banner {
+  width: 100%;
 }
 
 /* Mode laptop: suppression de la bordure entre banner et navbar */

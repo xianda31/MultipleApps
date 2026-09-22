@@ -46,6 +46,7 @@ export class HomePage {
   tournamentsColClass: string = 'col-12 col-md-8';
   newsColClass: string = 'col-12 col-md-4';
   logoPreview: string | null = null;
+  imageClubUrl: string | null = null;
 
   constructor(
     private titleService: TitleService,
@@ -131,6 +132,13 @@ export class HomePage {
     // Read UI settings from dedicated UI settings file to control homepage and layout
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const conf: UIConfiguration = ui || {} as UIConfiguration;
+      const imagePath = conf?.template?.club?.image ?? (conf as any)?.template?.image;
+      if (imagePath) {
+        this.fileService.getPresignedUrl$(imagePath).subscribe({
+          next: (url) => this.imageClubUrl = url,
+          error: () => this.imageClubUrl = null,
+        });
+      }
       // breakpoints stored under `homepage` by contract; use defaults when missing
       this.tournaments_row_cols = (conf && conf.homepage && conf.homepage.tournaments_row_cols) ? conf.homepage.tournaments_row_cols : this.tournaments_row_cols;
       this.news_row_cols = (conf && conf.homepage && conf.homepage.news_row_cols) ? conf.homepage.news_row_cols : this.news_row_cols;

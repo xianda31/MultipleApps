@@ -24,6 +24,9 @@ export class FrontNavbarComponent {
   @Input() avatar$!: Observable<string>;
   @Input() isPortrait: boolean = false;
   @Input() isMobile: boolean = false;
+  @Input() sidebar: boolean = false;
+  @Input() accountOnly: boolean = false;
+  @Input() excludeAccount: boolean = false;
   @Input() label_transformer!: (label: string) => Promise<string>;
   @Input() trackNavitemId!: (index: number, menu: any) => any;
   @Input() onCommand!: (item: NavItem) => void;

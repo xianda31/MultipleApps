@@ -1,4 +1,87 @@
 /* Styles pour la barre de navigation */
+.sidebar-navbar {
+  color: var(--navbar-text, #fff);
+  font-family: var(--site-font, inherit);
+}
+
+.sidebar-menu {
+  gap: 0.25rem;
+}
+
+.sidebar-navbar .nav-item {
+  width: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.sidebar-navbar .nav-link,
+.sidebar-navbar .dropdown-item,
+.sidebar-navbar .mobile-submenu-parent > span {
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.75rem !important;
+  border-radius: 6px;
+  color: var(--navbar-text, #fff) !important;
+  background: transparent;
+  text-decoration: none;
+  white-space: normal;
+}
+
+.sidebar-navbar .nav-link:hover,
+.sidebar-navbar .dropdown-item:hover {
+  background: color-mix(in srgb, var(--navbar-text, #fff) 12%, transparent);
+}
+
+.sidebar-navbar .mobile-submenu-parent > .navbar-nav {
+  margin: 0 0 0.35rem 0.75rem !important;
+  padding-left: 0.6rem;
+  border-left: 1px solid color-mix(in srgb, var(--navbar-text, #fff) 28%, transparent);
+}
+
+.sidebar-navbar .mobile-submenu-parent > .navbar-nav .dropdown-item {
+  min-height: 36px;
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.4rem !important;
+  font-size: 0.92rem;
+}
+
+.sidebar-member-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  color: var(--navbar-bg, #2e332d);
+  background: var(--navbar-text, #fff);
+  border: 0;
+  border-radius: 6px;
+  font-family: var(--site-font, inherit);
+}
+
+.account-navbar {
+  display: flex;
+  align-items: center;
+}
+
+.account-navbar .nav-item,
+.account-navbar .nav-link {
+  margin: 0 !important;
+}
+
+.account-navbar .nav-link.main-nav-link {
+  min-height: 32px;
+  padding: 0.25rem 0.5rem !important;
+  color: var(--content-text, #222) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.2;
+}
+
+.account-navbar .dropdown-toggle::after {
+  color: currentColor !important;
+}
+
 .laptop-navbar-row {
   transition: top 0.1s ease-out;
   z-index: 1050;
