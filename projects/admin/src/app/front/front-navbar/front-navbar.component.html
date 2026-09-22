@@ -14,6 +14,11 @@
 
 <!-- Mode laptop : compte dans la barre supérieure -->
 <div *ngIf="!isMobile && accountOnly" class="account-navbar">
+  <button *ngIf="!(logged_member$ | async)" type="button" class="btn account-member-button"
+    (click)="espaceMembre.emit()" aria-label="Accéder à la connexion membre">
+    <i class="bi bi-person-bounding-box" aria-hidden="true"></i>
+    <span>Accès Membre</span>
+  </button>
   <ul class="navbar-nav flex-row align-items-center mb-0">
     <ng-container *ngTemplateOutlet="dyn_navbar_unified; context: { isMobile: false, onlyLast: true }"></ng-container>
   </ul>
