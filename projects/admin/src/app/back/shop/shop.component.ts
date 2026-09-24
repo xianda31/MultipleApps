@@ -458,6 +458,7 @@ export class ShopComponent implements OnInit, OnDestroy {
       .finally(() => {
         this.buyerForm.reset();
         this.isSaving = false;
+        this.validateMembershipGuardrailBeforeCheckout();
       });
   }
 
@@ -496,6 +497,12 @@ export class ShopComponent implements OnInit, OnDestroy {
   }
 
   private validateMembershipGuardrailBeforeCheckout(): boolean {
+    if (this.isSaving || this.tpePaymentInProgress) {
+      this.membershipCheckoutBlocked = false;
+      this.membershipCheckoutWarning = '';
+      return true;
+    }
+
     const beneficiaryNames = this.getMembershipBeneficiaryNamesInCart();
     if (beneficiaryNames.length === 0) {
       this.membershipCheckoutBlocked = false;
@@ -769,6 +776,7 @@ export class ShopComponent implements OnInit, OnDestroy {
       pendingBookEntry = await this.cartService.save_sale(this.session, buyer, 'deferred', false);
     } catch (err: any) {
       this.tpePaymentInProgress = false;
+      this.validateMembershipGuardrailBeforeCheckout();
       this.toastService.showError('Paiement CB', err?.message ?? 'Impossible de préparer la vente');
       return;
     }
@@ -799,24 +807,29 @@ export class ShopComponent implements OnInit, OnDestroy {
           onSuccess: paymentSucceeded,
           onFailed: (msg) => {
             this.tpePaymentInProgress = false;
+            this.validateMembershipGuardrailBeforeCheckout();
             this.toastService.showError('Paiement CB', msg);
           },
           onCancelled: () => {
             this.tpePaymentInProgress = false;
+            this.validateMembershipGuardrailBeforeCheckout();
             this.toastService.showWarning('Paiement CB', 'Paiement annulé');
           },
           onTimeout: () => {
             this.tpePaymentInProgress = false;
+            this.validateMembershipGuardrailBeforeCheckout();
             this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
           },
           onError: () => {
             this.tpePaymentInProgress = false;
+            this.validateMembershipGuardrailBeforeCheckout();
             this.toastService.showError('TPE', 'Connexion AppSync perdue');
           },
         },
       ).catch(err => {
         this.toastService.showError('Paiement CB', err.message || 'Erreur PaymentRequest');
         this.tpePaymentInProgress = false;
+        this.validateMembershipGuardrailBeforeCheckout();
       });
       return;
     }
@@ -838,6 +851,7 @@ export class ShopComponent implements OnInit, OnDestroy {
       this.stripeTerminal.resetStatus();
     } finally {
       this.tpePaymentInProgress = false;
+      this.validateMembershipGuardrailBeforeCheckout();
     }
   }
 
@@ -845,7 +859,8 @@ export class ShopComponent implements OnInit, OnDestroy {
    * Annule le PaymentRequest en attente (mode distant) — délégué au service.
    */
   async cancelRemotePayment(): Promise<void> {
-    this.tpePaymentInProgress = false;
     await this.cardPaymentOrchestrator.cancelRemotePayment();
+    this.tpePaymentInProgress = false;
+    this.validateMembershipGuardrailBeforeCheckout();
   }
 }
