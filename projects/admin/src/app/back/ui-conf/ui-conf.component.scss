@@ -46,6 +46,19 @@
 	color: #222222 !important;
 }
 
+.homepage-intro-editor {
+	min-height: 9rem;
+	padding: .5rem .75rem;
+	background: #ffffff;
+	color: #222222;
+	border: 1px solid #ced4da;
+	border-radius: .25rem;
+}
+
+:host ::ng-deep .homepage-intro-editor .codex-editor__redactor {
+	padding-bottom: 2rem !important;
+}
+
 /* Keep previews and small color inputs unchanged */
 .ui-conf-root .preview img { filter: none !important; }
 .ui-conf-root input[type="color"] { outline: none; }

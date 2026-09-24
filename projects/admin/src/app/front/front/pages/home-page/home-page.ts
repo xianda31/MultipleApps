@@ -22,6 +22,8 @@ import { HomeHighlightsService } from '../../../../common/services/home-highligh
   styleUrl: './home-page.scss'
 })
 export class HomePage {
+  readonly defaultHomepageIntro = '<p>Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.</p>';
+  homepageIntro = this.defaultHomepageIntro;
   highlights$!: Observable<Snippet[]>;
   licensee_nbr = 0;
   student_nbr = 0;
@@ -145,6 +147,7 @@ export class HomePage {
       this.home_layout_ratio = (conf && conf.homepage && conf.homepage.home_layout_ratio !== undefined)
         ? conf.homepage.home_layout_ratio
         : this.home_layout_ratio;
+      this.homepageIntro = conf.homepage_intro || this.defaultHomepageIntro;
       this.updateColClasses();
     });
 

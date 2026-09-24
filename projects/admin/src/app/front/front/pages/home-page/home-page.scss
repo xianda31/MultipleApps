@@ -93,14 +93,18 @@
 
 .welcome-label {
 	display: block;
-	width: 7rem;
-	height: 7rem;
+	width: 6rem;
+	height: 6rem;
 	object-fit: contain;
 	opacity: 0.9;
 }
 
 .welcome-intro {
 	margin-bottom: 0.75rem;
+}
+
+:host ::ng-deep .welcome-intro > :last-child {
+	margin-bottom: 0;
 }
 
 .club-members-card {

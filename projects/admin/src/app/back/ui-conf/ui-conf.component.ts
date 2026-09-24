@@ -1,6 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import EditorJS from '@editorjs/editorjs';
+import Header from '@editorjs/header';
+import List from '@editorjs/list';
+import Table from '@editorjs/table';
+import ColorPicker from 'editorjs-color-picker';
+import edjsHTML from 'editorjs-html';
+// @ts-ignore
+import '../../common/editorjs-link-relative.js';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.service';
@@ -15,7 +23,16 @@ import { COMPETITION_DIVISION_LABELS, COMPETITION_DIVISIONS } from '../competiti
   templateUrl: './ui-conf.component.html',
   styleUrls: ['./ui-conf.component.scss']
 })
-export class UiConfComponent implements OnInit {
+export class UiConfComponent implements OnInit, OnDestroy {
+  private readonly defaultHomepageIntro = '<p>Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.</p>';
+  private homepageIntroEditor?: EditorJS;
+  private homepageIntroEditorTimer?: ReturnType<typeof setTimeout>;
+  private readonly editorHtmlParser = edjsHTML({
+    linkTool: (block: any) => {
+      const url = block.data.link;
+      return `<a href="${url}">${block.data.text || url}</a>`;
+    }
+  });
   divisions = Object.values(COMPETITION_DIVISION_LABELS);
   // Subset Google Fonts populaires (label = affiché, css = valeur à injecter)
   googleFontsSubset = [
@@ -290,6 +307,7 @@ export class UiConfComponent implements OnInit {
           this.imageClubPreviewUrl = null;
         }
         this.loaded = true;
+        this.scheduleHomepageIntroEditor();
         // Appliquer le thème seulement après chargement effectif
         this.applyTheme();
       },
@@ -298,6 +316,95 @@ export class UiConfComponent implements OnInit {
       }
     });
 
+  }
+
+  ngOnDestroy(): void {
+    if (this.homepageIntroEditorTimer) clearTimeout(this.homepageIntroEditorTimer);
+    this.homepageIntroEditor?.destroy();
+  }
+
+  private scheduleHomepageIntroEditor(): void {
+    if (this.homepageIntroEditorTimer) clearTimeout(this.homepageIntroEditorTimer);
+    this.homepageIntroEditorTimer = setTimeout(() => this.initializeHomepageIntroEditor());
+  }
+
+  private async initializeHomepageIntroEditor(): Promise<void> {
+    const html = this.uiForm.get('homepage_intro')?.value || this.defaultHomepageIntro;
+    const data = this.htmlToEditorJsBlocks(html);
+
+    if (this.homepageIntroEditor) {
+      await this.homepageIntroEditor.isReady;
+      await this.homepageIntroEditor.render(data);
+      return;
+    }
+
+    this.homepageIntroEditor = new EditorJS({
+      holder: 'homepage-intro-editor',
+      placeholder: 'Texte d’accueil...',
+      tools: {
+        header: { class: Header as any, inlineToolbar: true },
+        list: { class: List as any, inlineToolbar: true },
+        linkTool: { class: (window as any).LinkToolRelative, inlineToolbar: true },
+        table: { class: Table as any, inlineToolbar: true },
+        ColorPicker: {
+          class: ColorPicker as any,
+          config: {
+            colors: ['#0d6efd', '#6c757d', '#198754', '#dc3545', '#ffc107', '#0dcaf0', '#f8f9fa', '#212529']
+          }
+        }
+      },
+      data
+    });
+  }
+
+  private htmlToEditorJsBlocks(html: string): any {
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    const blocks: any[] = [];
+
+    container.childNodes.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+        blocks.push({ type: 'paragraph', data: { text: node.textContent.trim() } });
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+      const element = node as HTMLElement;
+      const tag = element.tagName;
+      if (/^H[1-6]$/.test(tag)) {
+        blocks.push({ type: 'header', data: { text: element.innerHTML, level: Number(tag[1]) } });
+      } else if (tag === 'UL' || tag === 'OL') {
+        blocks.push({
+          type: 'list',
+          data: {
+            style: tag === 'UL' ? 'unordered' : 'ordered',
+            items: Array.from(element.querySelectorAll('li')).map(item => item.innerHTML)
+          }
+        });
+      } else if (tag === 'TABLE') {
+        blocks.push({
+          type: 'table',
+          data: {
+            content: Array.from(element.querySelectorAll('tr')).map(row =>
+              Array.from(row.querySelectorAll('td,th')).map(cell => cell.innerHTML)
+            )
+          }
+        });
+      } else {
+        blocks.push({ type: 'paragraph', data: { text: element.innerHTML } });
+      }
+    });
+
+    return { blocks: blocks.length ? blocks : [{ type: 'paragraph', data: { text: '' } }] };
+  }
+
+  private async syncHomepageIntroFromEditor(): Promise<void> {
+    if (!this.homepageIntroEditor) return;
+    await this.homepageIntroEditor.isReady;
+    const data = await this.homepageIntroEditor.save();
+    const parsed = this.editorHtmlParser.parse(data);
+    const html = Array.isArray(parsed) ? parsed.join('') : String(parsed);
+    this.uiForm.get('homepage_intro')?.setValue(html);
   }
 
 
@@ -513,6 +620,7 @@ export class UiConfComponent implements OnInit {
 
   async saveSettings() {
     try {
+      await this.syncHomepageIntroFromEditor();
       const formVal: any = this.uiForm.value || {};
       const currentSettings = await firstValueFrom(this.systemDataService.get_ui_settings().pipe(first()));
 
@@ -597,8 +705,9 @@ export class UiConfComponent implements OnInit {
     }
   }
 
-  previewSettings() {
+  async previewSettings() {
     try {
+      await this.syncHomepageIntroFromEditor();
       const formVal: any = this.uiForm.value || {};
 
       // Build clean preview conforming to UIConfiguration interface (same as saveSettings)
