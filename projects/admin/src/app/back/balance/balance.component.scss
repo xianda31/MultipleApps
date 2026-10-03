@@ -9,3 +9,35 @@
     background-color: #f0f0f0;
   }
 }
+
+@media (max-width: 767.98px) {
+  .container-lg {
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+  }
+
+  .card-header {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+
+  .card-body {
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+  }
+
+  .card-body > .row {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  .card-body > .row > [class*='col-'] {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .card-body .d-lg-none.border {
+    padding-right: 0.25rem !important;
+    padding-left: 0.25rem !important;
+  }
+}
