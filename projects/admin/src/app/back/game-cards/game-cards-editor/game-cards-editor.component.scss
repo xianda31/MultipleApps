@@ -25,3 +25,311 @@
 .btn-animated:hover {
     color: #fff;
 }
+
+:host {
+    display: block;
+}
+
+.admission-page {
+    max-width: 1180px;
+    padding-bottom: 1rem;
+}
+
+.admission-panel {
+    overflow: hidden;
+    border-radius: 0.375rem;
+}
+
+.admission-header {
+    padding: 1rem;
+    background: #fff;
+}
+
+.admission-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.admission-title h1 {
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.admission-title p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.86rem;
+    white-space: nowrap;
+}
+
+.admission-title-short,
+.admission-filter-short {
+    display: none;
+}
+
+.admission-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    padding-top: 0.75rem;
+}
+
+.admission-toolbar .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.admission-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admission-filter .form-check-input {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.admission-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.admission-export {
+    margin-left: auto;
+}
+
+.admission-panel .card-body {
+    padding: 0;
+}
+
+.admission-table-wrap {
+    overflow-x: auto;
+}
+
+.admission-table {
+    min-width: 680px;
+}
+
+.admission-table th {
+    color: #6c757d;
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.card-owners {
+    font-weight: 600;
+}
+
+.card-created,
+.card-credit {
+    white-space: nowrap;
+}
+
+.card-comment {
+    max-width: 24rem;
+}
+
+.card-actions {
+    white-space: nowrap;
+}
+
+.card-actions .btn {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+}
+
+.card-actions .btn + .btn {
+    margin-left: 0.25rem;
+}
+
+@media (max-width: 800px) {
+    .admission-page {
+        padding-right: 0.75rem;
+        padding-left: 0.75rem;
+    }
+
+    .admission-panel {
+        margin-top: 0.75rem !important;
+        border: 0;
+        box-shadow: none !important;
+    }
+
+    .admission-header {
+        padding: 0 0 0.75rem;
+    }
+
+    .admission-title {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.2rem 0.75rem;
+        padding-bottom: 0.65rem;
+    }
+
+    .admission-title h1 {
+        font-size: 1.15rem;
+    }
+
+    .admission-title p {
+        grid-column: 1 / -1;
+        margin-top: 0.2rem;
+        font-size: 0.8rem;
+        white-space: normal;
+    }
+
+    .admission-title-long,
+    .admission-filter-long {
+        display: none;
+    }
+
+    .admission-title-short,
+    .admission-filter-short {
+        display: inline;
+    }
+
+    .admission-title .admission-filter {
+        grid-column: 2;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+
+    .admission-toolbar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.6rem;
+        padding-top: 0.65rem;
+    }
+
+    .admission-toolbar > .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .admission-export {
+        grid-column: 2;
+        grid-row: 1;
+        margin-left: 0;
+    }
+
+    .admission-delete-empty,
+    .admission-warning {
+        grid-column: 1 / -1;
+    }
+
+    .admission-filter {
+        font-size: 0.82rem;
+    }
+
+    .admission-table-wrap {
+        overflow: visible;
+    }
+
+    .admission-table,
+    .admission-table tbody {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .admission-table thead {
+        display: none;
+    }
+
+    .admission-table tbody tr {
+        display: grid;
+        grid-template-columns: 4.2rem minmax(0, 1fr) 2.6rem 3.75rem;
+        grid-template-areas:
+            "owners owners credit actions"
+            "created comment credit actions";
+        column-gap: 0.35rem;
+        align-items: center;
+        min-height: 52px;
+        padding: 0.35rem 0.25rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .admission-table tbody tr:nth-child(odd) {
+        background: #f8f9fa;
+    }
+
+    .admission-table tbody tr > td {
+        display: block;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .card-owners {
+        grid-area: owners;
+        overflow: hidden;
+        font-size: 0.82rem;
+        line-height: 1.15;
+    }
+
+    .card-owner {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .card-created {
+        grid-area: created;
+        color: #6c757d;
+        font-size: 0.72rem;
+    }
+
+    .card-credit {
+        grid-area: credit;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    .card-credit span {
+        display: inline-grid;
+        place-items: center;
+        min-width: 1.75rem;
+        height: 1.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .card-comment {
+        grid-area: comment;
+        overflow: hidden;
+        color: #6c757d;
+        font-size: 0.72rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .admission-table .card-actions {
+        grid-area: actions;
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        gap: 0.25rem;
+    }
+
+    .card-actions .btn {
+        width: 1.7rem;
+        height: 1.7rem;
+        font-size: 0.78rem;
+    }
+
+    .card-actions .btn + .btn {
+        margin-left: 0;
+    }
+}
