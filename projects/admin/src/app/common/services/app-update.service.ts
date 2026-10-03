@@ -2,11 +2,16 @@ import { Injectable } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { environment } from '../../../environments/environment';
 
+export function shouldRecoverFromBrokenCache(reason: string, recoveryAttempted: boolean): boolean {
+  return !recoveryAttempted && /hash mismatch|unrecoverable/i.test(reason);
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AppUpdateService {
   private readonly activatedBuildKey = 'app-update-activated-build';
+  private readonly recoveryAttemptedKey = 'app-update-cache-recovery-attempted';
   private updateInProgress = false;
 
   constructor(private swUpdate: SwUpdate) {
@@ -37,8 +42,14 @@ export class AppUpdateService {
             versionHash: event.version.hash,
             error: event.error,
           });
+          void this.recoverFromBrokenCache(event.error);
           break;
       }
+    });
+
+    this.swUpdate.unrecoverable.subscribe((event) => {
+      console.error('[AppUpdate] Current build is unrecoverable', event.reason);
+      void this.recoverFromBrokenCache(event.reason);
     });
   }
 
@@ -84,5 +95,28 @@ export class AppUpdateService {
       currentBuild: environment.buildInfo,
       activation: JSON.parse(activation),
     });
+  }
+
+  private async recoverFromBrokenCache(reason: string): Promise<void> {
+    if (!shouldRecoverFromBrokenCache(reason, !!sessionStorage.getItem(this.recoveryAttemptedKey))) {
+      return;
+    }
+
+    sessionStorage.setItem(this.recoveryAttemptedKey, new Date().toISOString());
+    console.warn('[AppUpdate] Clearing the broken application cache and reloading', { reason });
+
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map(registration => registration.unregister()));
+
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames
+          .filter(cacheName => cacheName.startsWith('ngsw:'))
+          .map(cacheName => caches.delete(cacheName))
+      );
+    }
+
+    window.location.reload();
   }
 }

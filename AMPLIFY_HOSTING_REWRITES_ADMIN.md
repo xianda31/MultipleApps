@@ -35,6 +35,8 @@ Preview only:
 ```powershell
 curl.exe --ssl-no-revoke -I -L https://www.bridgeclubsaintorens.fr/manifest.webmanifest
 curl.exe --ssl-no-revoke -I -L https://www.bridgeclubsaintorens.fr/ngsw-worker.js
+curl.exe --ssl-no-revoke -I -L https://www.bridgeclubsaintorens.fr/ngsw.json
+curl.exe --ssl-no-revoke -I -L https://www.bridgeclubsaintorens.fr/index.html
 curl.exe --ssl-no-revoke -L https://www.bridgeclubsaintorens.fr/manifest.webmanifest | Select-Object -First 20
 ```
 
@@ -43,6 +45,10 @@ Expected:
 - `/manifest.webmanifest` returns `200` with `Content-Type: application/manifest+json` (or `application/json`).
 - Response body is JSON (not HTML).
 - `/ngsw-worker.js` returns `200` and `Content-Type: text/javascript`.
+- `index.html`, `ngsw.json`, `ngsw-worker.js`, and `manifest.webmanifest` return a `Cache-Control` header with `s-maxage=0`.
+- Hashed JavaScript and CSS bundles may keep a long immutable cache duration.
+
+The repository root `customHttp.yml` owns these cache headers. Keeping the PWA control files out of the shared CDN cache prevents Angular service-worker `Hash mismatch` failures and clients remaining on an older build.
 
 ## Rollback
 

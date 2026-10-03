@@ -1,0 +1,17 @@
+customHeaders:
+  - pattern: "/index.html"
+    headers:
+      - key: "Cache-Control"
+        value: "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0"
+  - pattern: "/ngsw.json"
+    headers:
+      - key: "Cache-Control"
+        value: "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0"
+  - pattern: "/ngsw-worker.js"
+    headers:
+      - key: "Cache-Control"
+        value: "no-cache, no-store, must-revalidate, max-age=0, s-maxage=0"
+  - pattern: "/manifest.webmanifest"
+    headers:
+      - key: "Cache-Control"
+        value: "no-cache, must-revalidate, max-age=0, s-maxage=0"

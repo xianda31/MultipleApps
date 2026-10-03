@@ -16,6 +16,7 @@ import { applyUiThemeInitializer } from './common/utils/ui-utils';
 import { provideServiceWorker } from '@angular/service-worker';
 import { AppInstallService } from './common/services/app-install.service';
 import { AppUpdateService } from './common/services/app-update.service';
+import { environment } from '../environments/environment';
 
 // Fonction d'initialisation pour précharger les routes dynamiques du front
 export const APP_SANDBOX = new InjectionToken<boolean>('APP_SANDBOX');
@@ -99,7 +100,7 @@ export const appConfig: ApplicationConfig = {
       void inject(AppUpdateService).checkAtStartup();
     }),
     provideServiceWorker('ngsw-worker.js', {
-      enabled: true,
+      enabled: environment.production,
       registrationStrategy: 'registerImmediately'
     })
   ]
