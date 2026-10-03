@@ -1,62 +1,36 @@
-<div *ngIf="db_loaded" >
-  <div class="card mt-2">
-    <div class="card-header">
-      <div class=" d-flex d-inline-block align-items-center justify-content-between">
-        <h5>compte bancaire</h5>
-        <div class="d-inline justify-content-around text-muted small pe-5">
-          situation initiale :
-          <span class="ps-5">compte courant : {{former_balance_sheet.bank | number:truncature:'fr'}} €</span>
-          <span class="ps-5">épargne : {{former_balance_sheet.savings | number:truncature:'fr'}} €</span>
-        </div>
-      </div>
+<div *ngIf="db_loaded" class="bank-page">
+  <header class="bank-header">
+    <div>
+      <h1>Rapprochement bancaire</h1>
+      <p>Pointage des opérations et suivi des relevés · {{current_season}}</p>
     </div>
+    <div class="bank-summary" aria-label="Situation bancaire initiale">
+      <span><strong>{{bank_reports.length}}</strong> relevés</span>
+      <span><strong>{{unreconciledCount}}</strong> non pointées</span>
+      <span>Courant <strong>{{former_balance_sheet.bank | number:truncature:'fr'}} €</strong></span>
+      <span>Épargne <strong>{{former_balance_sheet.savings | number:truncature:'fr'}} €</strong></span>
+    </div>
+  </header>
 
+  <div class="report-heading" aria-hidden="true">
+    <span class="report-identity">Relevé / Épargne</span>
+    <span class="report-balance text-end">Solde</span>
+    <span class="report-debit text-end">Débit</span>
+    <span class="report-credit text-end">Crédit</span>
+  </div>
 
-    <div class="card-body">
-
-      <div class="row align-items-center px-4 fw-bolder">
-        <div class="col-4 text-start">
-          relevés de banque
-        </div>
-        <div class="col-2 text-start">
-          solde
-        </div>
-        <div class="col-2 text-end pe-4">
-          Débit
-        </div>
-        <div class="col-2 text-end pe-4">
-          Crédit
-        </div>
-        <div class="col-2">
-        </div>
-      </div>
-      <br />
-
-      <div ngbAccordion>
+      <div ngbAccordion class="report-list">
         <div ngbAccordionItem [collapsed]="!last || always_collapsed"
           *ngFor="let bank_report of bank_reports ;  let last = last">
           <div ngbAccordionHeader>
-            <button ngbAccordionButton>
-
-              <div class="row w-100 justify-content-start align-items-center">
-                <div class="col-4 text-start fw-bolder">
-                  n° {{bank_report}}
-                </div>
-                <div class="col-2 text-start fw-bolder">
-                  {{balance(bank_report).bank | number:truncature:'fr'}}
-                </div>
-                <div class="col-2 text-end pe-2">
-                  {{movement_out(bank_report).bank | number:truncature:'fr' }}
-                </div>
-                <div class="col-2 text-end pe-2">
-                  {{movement_in(bank_report).bank | number:truncature:'fr'}}
-                </div>
-
-                <div class="col-2 text-end pe-4  text-muted small">
-                  (épargne : {{balance(bank_report).savings| number:truncature:'fr'}} €)
-                </div>
-              </div>
-
+            <button ngbAccordionButton class="report-summary">
+              <span class="report-identity">
+                <strong class="report-number">n° {{bank_report}}</strong>
+                <span class="report-savings">Épargne {{balance(bank_report).savings| number:truncature:'fr'}} €</span>
+              </span>
+              <strong class="report-balance text-end">{{balance(bank_report).bank | number:truncature:'fr'}} €</strong>
+              <span class="report-debit text-end">{{movement_out(bank_report).bank | number:truncature:'fr' }} €</span>
+              <span class="report-credit text-end text-success">{{movement_in(bank_report).bank | number:truncature:'fr'}} €</span>
             </button>
           </div>
           <div ngbAccordionCollapse>
@@ -68,17 +42,14 @@
 
         <div ngbAccordionItem [collapsed]="false">
           <h2 ngbAccordionHeader>
-            <button ngbAccordionButton>
-              <div class="col-4 text-start fw-bolder">
-                opérations non pointées
-              </div>
-              <div class="offset-2 col-2 text-end pe-4">
-                {{movement_out(null).bank | number:truncature:'fr' }}
-              </div>
-              <div class="col-2 text-end pe-4">
-                {{movement_in(null).bank | number:truncature:'fr' }}
-              </div>
-              <div class="col-2"></div>
+            <button ngbAccordionButton class="report-summary report-summary--pending">
+              <span class="report-identity">
+                <strong class="report-pending-label">Opérations non pointées</strong>
+                <span class="report-status text-muted">{{unreconciledCount}} opération(s)</span>
+              </span>
+              <span class="report-balance"></span>
+              <span class="report-debit text-end">{{movement_out(null).bank | number:truncature:'fr' }} €</span>
+              <span class="report-credit text-end text-success">{{movement_in(null).bank | number:truncature:'fr' }} €</span>
             </button>
           </h2>
           <div ngbAccordionCollapse>
@@ -88,45 +59,65 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+</div>
+<div *ngIf="!db_loaded" class="bank-loading">
+  <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+  Chargement du rapprochement bancaire…
 </div>
 <ng-template #report let-bank_report="bank_report">
-  <table class="table table-sm table-borderless table-hover table-responsive">
-    <!-- <thead>
+  <div class="report-detail">
+  <table class="table table-sm align-middle mb-0 reconciliation-table">
+    <colgroup>
+      <col class="detail-report">
+      <col class="detail-date">
+      <col>
+      <col>
+      <col class="detail-debit">
+      <col class="detail-credit">
+      <col class="detail-actions">
+    </colgroup>
+    <thead>
       <tr>
-        <th class="col-1">Date </th>
-        <th class="col-3">opération </th>
-        <th class="col-2 text-start">info</th>
-        <th class="col-2 text-end pe-3">Débit </th>
-        <th class="col-2 text-end pe-3">Crédit</th>
-        <th class="col-1 text-end ">{{bank_report ? bank_report : 'relevé'}}</th>
-        <th class="col-1 "> </th>
+        <th>Relevé</th>
+        <th>Date</th>
+        <th>Opération</th>
+        <th>Information</th>
+        <th class="text-end">Débit</th>
+        <th class="text-end">Crédit</th>
+        <th><span class="visually-hidden">Actions</span></th>
       </tr>
-    </thead> -->
+    </thead>
 
     <tbody class="fst-italic">
       <ng-container *ngIf="bank_report === null">
         <tr *ngFor="let transfer of pending_transfer_entries">
-          <td class="col-1">
-            <input type="date" class="form-control form-control-sm"
-              [(ngModel)]="transfer_receipt_dates[transfer.id]">
-          </td>
-          <td class="col-3">VIREMENT ANNONCÉ</td>
-          <td class="col-4 text-start">{{transfer_member(transfer)}}</td>
-          <td class="col-1"></td>
-          <td class="col-1 text-end text-success fw-bolder pe-3">
-            {{transfer_amount(transfer) | number:truncature:'fr'}}
-          </td>
-          <td class="col-1 text-end">
+          <td class="entry-report">
             <select class="form-select form-select-sm" [(ngModel)]="transfer_reports[transfer.id]">
               <option value="" disabled></option>
               <option *ngFor="let report of bank_reports" [value]="report">{{report}}</option>
             </select>
           </td>
-          <td class="col-1 text-end">
-            <i (click)="show_book_entry(transfer.id)" class="bi bi-eye"></i>
-            <button type="button" class="btn btn-link btn-sm text-success p-0 ms-5"
+          <td class="desktop-entry-date">
+            <input type="date" class="form-control form-control-sm"
+              [(ngModel)]="transfer_receipt_dates[transfer.id]">
+          </td>
+          <td class="mobile-entry-date">{{transfer_receipt_dates[transfer.id] | date:'dd/MM/yy'}}</td>
+          <td class="desktop-entry-operation">VIREMENT ANNONCÉ</td>
+          <td class="desktop-entry-information">{{transfer_member(transfer)}}</td>
+          <td class="mobile-entry-description" [title]="'Virement annoncé · ' + transfer_member(transfer)">
+            <strong>Virement annoncé</strong><span>{{transfer_member(transfer)}}</span>
+          </td>
+          <td class="desktop-entry-amount"></td>
+          <td class="desktop-entry-amount text-end text-success fw-bolder">
+            {{transfer_amount(transfer) | number:truncature:'fr'}} €
+          </td>
+          <td class="mobile-entry-amount text-success fw-bolder">{{transfer_amount(transfer) | number:truncature:'fr'}} €</td>
+          <td class="entry-actions">
+            <button type="button" class="btn btn-sm btn-link" (click)="show_book_entry(transfer.id)"
+              title="Voir l'écriture" aria-label="Voir l'écriture du virement">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn-link btn-sm text-success"
               [disabled]="settling_transfer_ids.has(transfer.id)"
               [ngbTooltip]="'Confirmer la réception du virement'"
               (click)="settle_transfer(transfer)">
@@ -139,18 +130,10 @@
       <ng-container *ngFor="let book_entry of bank_book_entries">
 
         <tr [class]="highlight_class(book_entry)" *ngIf="book_entry.bank_report === bank_report">
-          <td class="col-1">{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
-          <td class="col-3"> {{transaction_label(book_entry)}} </td>
-          <td class="col-4 text-start"> {{book_label(book_entry)}}</td>
-          <td class="col-1 text-end pe-3">{{book_entry.amounts['bank_out'] ? (book_entry.amounts['bank_out'] | number:
-            truncature) : '' }}</td>
-          <td class="col-1 text-end text-success fw-bolder pe-3">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] |
-            number:truncature) : ''}}
-          </td>
-
-          <td class="col-1 text-end">
+          <td class="entry-report">
             <div *ngIf="bank_report !== null" class="form-check form-switch form-check-inline">
-              <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault"
+              <input class="form-check-input" type="checkbox" role="switch"
+                [attr.aria-label]="'Retirer du relevé ' + bank_report"
                 [checked]="book_entry.bank_report !== null" (change)="set_bank_report(book_entry,bank_report)">
             </div>
             <div *ngIf="bank_report === null">
@@ -161,14 +144,35 @@
               </select>
             </div>
           </td>
-          <td class="col-1 text-end">
-            <i (click)="show_book_entry(book_entry.id)" class="bi bi-eye"></i>
-            <i (click)="highlight(book_entry)" class="bi bi-highlighter ms-5"></i>
-            <!-- <i [ngbTooltip]="book_label(book_entry)" tooltipClass="my-custom-class" placement="end"
-              class="bi bi-info-circle"></i> -->
+          <td class="desktop-entry-date">{{book_entry.date | date: 'dd/MM/yyyy'}}</td>
+          <td class="mobile-entry-date">{{book_entry.date | date: 'dd/MM/yy'}}</td>
+          <td class="desktop-entry-operation">{{transaction_label(book_entry)}}</td>
+          <td class="desktop-entry-information">{{book_label(book_entry)}}</td>
+          <td class="mobile-entry-description" [title]="transaction_label(book_entry) + ' · ' + book_label(book_entry)">
+            <strong>{{transaction_label(book_entry)}}</strong><span>{{book_label(book_entry)}}</span>
+          </td>
+          <td class="desktop-entry-amount text-end">{{book_entry.amounts['bank_out'] ? (book_entry.amounts['bank_out'] | number:
+            truncature) + ' €' : '' }}</td>
+          <td class="desktop-entry-amount text-end text-success fw-bolder">{{book_entry.amounts['bank_in'] ? (book_entry.amounts['bank_in'] |
+            number:truncature) + ' €' : ''}}
+          </td>
+          <td class="mobile-entry-amount" [class.text-success]="book_entry.amounts['bank_in']">
+            {{(book_entry.amounts['bank_in'] || book_entry.amounts['bank_out']) | number:truncature:'fr'}} €
+          </td>
+
+          <td class="entry-actions">
+            <button type="button" class="btn btn-sm btn-link" (click)="show_book_entry(book_entry.id)"
+              title="Voir l'écriture" aria-label="Voir l'écriture">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-link" (click)="highlight(book_entry)"
+              title="Surligner l'écriture" aria-label="Surligner l'écriture">
+              <i class="bi bi-highlighter" aria-hidden="true"></i>
+            </button>
           </td>
         </tr>
       </ng-container>
     </tbody>
   </table>
+  </div>
 </ng-template>

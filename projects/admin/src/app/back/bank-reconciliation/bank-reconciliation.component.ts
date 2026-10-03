@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
@@ -16,7 +16,6 @@ import { TransactionService } from '../services/transaction.service';
 @Component({
   selector: 'app-bank-reconciliation',
   standalone: true,
-  encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
   imports: [CommonModule, FormsModule, NgbModule],
   templateUrl: './bank-reconciliation.component.html',
   styleUrl: './bank-reconciliation.component.scss'
@@ -44,6 +43,11 @@ export class BankReconciliationComponent {
 
 
   db_loaded: boolean = false;
+
+  get unreconciledCount(): number {
+    return this.pending_transfer_entries.length
+      + this.bank_book_entries.filter((entry) => entry.bank_report === null).length;
+  }
 
   constructor(
     private bookService: BookService,
