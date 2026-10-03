@@ -66,4 +66,29 @@ describe('buildChequeDeposits', () => {
     expect(result.map(item => item.status)).toEqual(['pending_reference', 'in_cashbox']);
     expect(result.some(item => item.displayReference === 'Non déposés')).toBeTrue();
   });
+
+  it('lists a direct cheque deposit without a deposit reference', () => {
+    const directDeposit = {
+      id: 'direct-99',
+      season: '2026/2027',
+      date: '2026-09-23',
+      transaction_id: TRANSACTION_ID.dépôt_collecte_chèques,
+      bank_report: '26-09',
+      amounts: { [FINANCIAL_ACCOUNT.BANK_debit]: 99 },
+      operations: [{ label: 'don hommage', values: { DON: 99 } }],
+    } as BookEntry;
+
+    const result = buildChequeDeposits([directDeposit], banks, () => false);
+
+    expect(result.length).toBe(1);
+    expect(result[0].displayReference).toBe('—');
+    expect(result[0].date).toBe('2026-09-23');
+    expect(result[0].bankReport).toBe('26-09');
+    expect(result[0].amount).toBe(99);
+    expect(result[0].depositedAmount).toBe(99);
+    expect(result[0].difference).toBe(0);
+    expect(result[0].status).toBe('deposited');
+    expect(result[0].chequeCount).toBeNull();
+    expect(result[0].depositEntry).toBe(directDeposit);
+  });
 });

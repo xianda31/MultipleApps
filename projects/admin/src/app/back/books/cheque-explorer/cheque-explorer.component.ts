@@ -29,11 +29,13 @@ export interface ChequeDeposit {
   depositedAmount: number;
   difference: number;
   status: ChequeDepositStatus;
+  chequeCount: number | null;
   cheques: ChequeReference[];
   depositEntry?: BookEntry;
 }
 
 const UNASSIGNED_DEPOSIT = '__UNASSIGNED_DEPOSIT__';
+const DIRECT_DEPOSIT_PREFIX = '__DIRECT_DEPOSIT__';
 
 function splitChequeReference(reference: string | undefined, banks: Bank[]): { bank: string; number: string } {
   if (!reference) return { bank: '', number: '' };
@@ -58,9 +60,12 @@ export function buildChequeDeposits(
   });
 
   entries
-    .filter(entry => entry.transaction_id === TRANSACTION_ID.dépôt_caisse_chèques && !!entry.deposit_ref)
+    .filter(entry =>
+      (entry.transaction_id === TRANSACTION_ID.dépôt_caisse_chèques && !!entry.deposit_ref)
+      || entry.transaction_id === TRANSACTION_ID.dépôt_collecte_chèques
+    )
     .forEach(entry => {
-      const reference = entry.deposit_ref!;
+      const reference = entry.deposit_ref || `${DIRECT_DEPOSIT_PREFIX}${entry.id}`;
       const group = groups.get(reference) ?? { cheques: [] };
       group.depositEntry = entry;
       groups.set(reference, group);
@@ -78,9 +83,15 @@ export function buildChequeDeposits(
           amount: entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit] ?? 0,
         };
       });
-      const amount = cheques.reduce((total, cheque) => total + cheque.amount, 0);
-      const depositedAmount = group.depositEntry?.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] ?? 0;
-      const difference = Math.round((depositedAmount - amount) * 100) / 100;
+      const chequeAmount = cheques.reduce((total, cheque) => total + cheque.amount, 0);
+      const directDeposit = group.depositEntry?.transaction_id === TRANSACTION_ID.dépôt_collecte_chèques;
+      const depositedAmount = directDeposit
+        ? group.depositEntry?.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0
+        : group.depositEntry?.amounts[FINANCIAL_ACCOUNT.CASHBOX_credit] ?? 0;
+      const amount = directDeposit && cheques.length === 0 ? depositedAmount : chequeAmount;
+      const difference = directDeposit && cheques.length === 0
+        ? 0
+        : Math.round((depositedAmount - chequeAmount) * 100) / 100;
       const temporary = reference.startsWith('TEMP_');
       const status: ChequeDepositStatus = group.depositEntry
         ? (difference === 0 ? 'deposited' : 'anomaly')
@@ -88,13 +99,16 @@ export function buildChequeDeposits(
 
       return {
         reference,
-        displayReference: reference === UNASSIGNED_DEPOSIT ? 'Non déposés' : reference,
+        displayReference: reference === UNASSIGNED_DEPOSIT
+          ? 'Non déposés'
+          : reference.startsWith(DIRECT_DEPOSIT_PREFIX) ? '—' : reference,
         date: group.depositEntry?.date,
         bankReport: group.depositEntry?.bank_report,
         amount,
         depositedAmount,
         difference,
         status,
+        chequeCount: directDeposit && cheques.length === 0 ? null : cheques.length,
         cheques: cheques.sort((a, b) => b.entry.date.localeCompare(a.entry.date)),
         depositEntry: group.depositEntry,
       };
@@ -166,7 +180,7 @@ export class ChequeExplorerComponent {
   }
 
   get chequeCount(): number {
-    return this.deposits.reduce((total, deposit) => total + deposit.cheques.length, 0);
+    return this.deposits.reduce((total, deposit) => total + (deposit.chequeCount ?? 0), 0);
   }
 
   get chequeAmount(): number {

@@ -6,7 +6,7 @@
     </div>
     <div class="cheque-summary" aria-label="Synthèse des chèques">
       <span><strong>{{deposits.length}}</strong> remises</span>
-      <span><strong>{{chequeCount}}</strong> chèques</span>
+      <span><strong>{{chequeCount}}</strong> chèques tracés</span>
       <span><strong>{{chequeAmount | number:'1.2-2':'fr'}} €</strong></span>
       <span [class.text-danger]="anomalyCount > 0"><strong>{{anomalyCount}}</strong> écarts</span>
     </div>
@@ -42,7 +42,9 @@
         <span class="deposit-reference">{{deposit.displayReference}}</span>
         <span>{{deposit.date ? (deposit.date | date:'dd/MM/yyyy') : '—'}}</span>
         <strong class="text-end">{{deposit.amount | number:'1.2-2':'fr'}} €</strong>
-        <span class="text-end">{{deposit.cheques.length}}</span>
+        <span class="text-end" [title]="deposit.chequeCount === null ? 'Nombre de chèques non renseigné' : ''">
+          {{deposit.chequeCount === null ? '—' : deposit.chequeCount}}
+        </span>
         <span>{{deposit.bankReport || '—'}}</span>
         <span class="deposit-status" [attr.data-status]="deposit.status">{{statusLabels[deposit.status]}}</span>
       </summary>
@@ -73,7 +75,10 @@
                 </button>
               </td>
             </tr>
-            <tr *ngIf="deposit.cheques.length === 0">
+            <tr *ngIf="deposit.chequeCount === null">
+              <td colspan="6" class="text-muted text-center py-3">Détail des chèques non disponible pour cette remise directe.</td>
+            </tr>
+            <tr *ngIf="deposit.chequeCount === 0">
               <td colspan="6" class="text-muted text-center py-3">Aucun chèque associé à ce bordereau.</td>
             </tr>
           </tbody>
