@@ -1,0 +1,103 @@
+<div class="cheque-page">
+  <header class="cheque-header">
+    <div>
+      <h1>Chèques</h1>
+      <p>Exploration des remises et des références associées · {{season}}</p>
+    </div>
+    <div class="cheque-summary" aria-label="Synthèse des chèques">
+      <span><strong>{{deposits.length}}</strong> remises</span>
+      <span><strong>{{chequeCount}}</strong> chèques</span>
+      <span><strong>{{chequeAmount | number:'1.2-2':'fr'}} €</strong></span>
+      <span [class.text-danger]="anomalyCount > 0"><strong>{{anomalyCount}}</strong> écarts</span>
+    </div>
+  </header>
+
+  <div class="cheque-toolbar">
+    <div class="input-group input-group-sm cheque-search">
+      <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+      <input type="search" class="form-control" [(ngModel)]="search"
+        placeholder="Bordereau, chèque, banque ou adhérent" aria-label="Rechercher dans les chèques">
+    </div>
+    <select class="form-select form-select-sm cheque-filter" [(ngModel)]="statusFilter" aria-label="Filtrer par état">
+      <option value="all">Tous les états</option>
+      <option value="in_cashbox">En caisse</option>
+      <option value="pending_reference">Référence à compléter</option>
+      <option value="deposited">Déposés</option>
+      <option value="anomaly">Écarts à contrôler</option>
+    </select>
+  </div>
+
+  <div class="deposit-heading" aria-hidden="true">
+    <span>Bordereau</span>
+    <span>Date</span>
+    <span class="text-end">Montant</span>
+    <span class="text-end">Chèques</span>
+    <span>Relevé</span>
+    <span>État</span>
+  </div>
+
+  <div class="deposit-list">
+    <details *ngFor="let deposit of visibleDeposits" class="deposit-row" [open]="deposit.status === 'anomaly'">
+      <summary>
+        <span class="deposit-reference">{{deposit.displayReference}}</span>
+        <span>{{deposit.date ? (deposit.date | date:'dd/MM/yyyy') : '—'}}</span>
+        <strong class="text-end">{{deposit.amount | number:'1.2-2':'fr'}} €</strong>
+        <span class="text-end">{{deposit.cheques.length}}</span>
+        <span>{{deposit.bankReport || '—'}}</span>
+        <span class="deposit-status" [attr.data-status]="deposit.status">{{statusLabels[deposit.status]}}</span>
+      </summary>
+
+      <div class="deposit-detail">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Banque</th>
+              <th>N° de chèque</th>
+              <th>Adhérent</th>
+              <th class="text-end">Montant</th>
+              <th><span class="visually-hidden">Voir l'écriture</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cheque of deposit.cheques">
+              <td>{{cheque.entry.date | date:'dd/MM/yyyy'}}</td>
+              <td>{{cheque.bank || '—'}}</td>
+              <td>{{cheque.number || '—'}}</td>
+              <td>{{cheque.member || '—'}}</td>
+              <td class="text-end text-nowrap">{{cheque.amount | number:'1.2-2':'fr'}} €</td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-link" (click)="showEntry(cheque.entry)"
+                  title="Voir l'écriture" aria-label="Voir l'écriture du chèque">
+                  <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="deposit.cheques.length === 0">
+              <td colspan="6" class="text-muted text-center py-3">Aucun chèque associé à ce bordereau.</td>
+            </tr>
+          </tbody>
+          <tfoot *ngIf="deposit.depositEntry">
+            <tr>
+              <td colspan="4">Montant de l'écriture de remise</td>
+              <td class="text-end text-nowrap">{{deposit.depositedAmount | number:'1.2-2':'fr'}} €</td>
+              <td class="text-end">
+                <button type="button" class="btn btn-sm btn-link" (click)="showEntry(deposit.depositEntry)"
+                  title="Voir l'écriture de remise" aria-label="Voir l'écriture de remise">
+                  <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="deposit.difference !== 0" class="text-danger">
+              <td colspan="4">Écart</td>
+              <td class="text-end text-nowrap">{{deposit.difference | number:'1.2-2':'fr'}} €</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <p *ngIf="visibleDeposits.length === 0" class="cheque-empty">Aucun dépôt ne correspond aux filtres.</p>
+</div>

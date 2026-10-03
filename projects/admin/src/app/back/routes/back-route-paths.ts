@@ -9,6 +9,7 @@ export const BACK_ROUTE_PATHS = {
   GameCardsEditor: 'members/cartes-admission',
   MemberSales: 'members/controls',
   CashBoxStatus: 'finance/état-de-caisse',
+  Cheques: 'finance/cheques',
   BankReconciliation: 'finance/bank-reconciliation',
   ExpenseAndRevenue: 'finance/expense-and-revenue',
   ExpenseAndRevenueDetails: 'finance/expense-and-revenue/details',

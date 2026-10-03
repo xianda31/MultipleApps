@@ -113,6 +113,12 @@ describe('BookService', () => {
     expect(service.get_unpointed_transfer_settlements()).toEqual([unpointedSettlement]);
   });
 
+  it('returns no unpointed transfer while entries are still loading', () => {
+    const service = createService();
+
+    expect(service.get_unpointed_transfer_settlements()).toEqual([]);
+  });
+
   it('creates only missing entries when closure generation is resumed', async () => {
     const createBookEntry = jasmine.createSpy('createBookEntry').and.callFake(async (entry: BookEntry) => entry);
     const listBookEntries = jasmine.createSpy('listBookEntries').and.returnValue(of([{

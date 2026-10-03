@@ -40,6 +40,7 @@ export const STATIC_MENUS: NavbarMenu[] = [
         minLevel: Group_priorities.Administrateur,
         subMenus: [
             { label: 'état de caisse', route: BACK_ROUTE_PATHS.CashBoxStatus },
+            { label: 'chèques', route: BACK_ROUTE_PATHS.Cheques },
             { label: 'rapprochement bancaire', route: BACK_ROUTE_PATHS.BankReconciliation },
             { label: 'écriture', route: BACK_ROUTE_PATHS.BooksEditor },
             { label: 'résultats', route: BACK_ROUTE_PATHS.ExpenseAndRevenue },

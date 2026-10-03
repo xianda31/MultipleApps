@@ -604,7 +604,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
   }
 
   get_unpointed_transfer_settlements(): BookEntry[] {
-    return this._book_entries.filter(entry =>
+    return (this._book_entries ?? []).filter(entry =>
       entry.deposit_ref?.startsWith(TRANSFER_PROMISE_REF_PREFIX)
       && !entry.bank_report
     );

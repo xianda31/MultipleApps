@@ -44,6 +44,7 @@ import { SondageEditorComponent } from './sondage/sondage-editor/sondage-editor.
 import { SondageResultatsComponent } from './sondage/sondage-resultats/sondage-resultats.component';
 import { BilletterieComponent } from './collecte/collecte-vente.component';
 import { ImageToolsComponent } from './image-tools/image-tools.component';
+import { ChequeExplorerComponent } from './books/cheque-explorer/cheque-explorer.component';
 
 
 export const routes: Routes = [
@@ -66,6 +67,7 @@ export const routes: Routes = [
 
 
       { path: BACK_ROUTE_PATHS.CashBoxStatus, component: CashBoxStatusComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.Cheques, component: ChequeExplorerComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BankReconciliation, component: BankReconciliationComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.ExpenseAndRevenue, component: ExpenseAndRevenueComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BooksEditor, component: BooksEditorComponent, canActivate: [AuthGuard] },
