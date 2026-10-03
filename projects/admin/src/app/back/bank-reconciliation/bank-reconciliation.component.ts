@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BookEntry, FINANCIAL_ACCOUNT } from '../../common/interfaces/accounting.interface';
+import { BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -27,6 +27,10 @@ export class BankReconciliationComponent {
   current_season!: string;
   former_balance_sheet !: Balance_sheet;
   bank_book_entries: BookEntry[] = [];
+  pending_transfer_entries: BookEntry[] = [];
+  transfer_receipt_dates: Record<string, string> = {};
+  transfer_reports: Record<string, string> = {};
+  settling_transfer_ids = new Set<string>();
 
   bank_accounts: FINANCIAL_ACCOUNT[] = [
     FINANCIAL_ACCOUNT.BANK_credit,
@@ -77,6 +81,23 @@ export class BankReconciliationComponent {
           .sort((a, b) => {
             return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
           });
+        const settled_transfer_ids = new Set(
+          book_entries
+            .map(entry => entry.deposit_ref)
+            .filter((ref): ref is string => !!ref?.startsWith(TRANSFER_PROMISE_REF_PREFIX))
+            .map(ref => ref.slice(TRANSFER_PROMISE_REF_PREFIX.length))
+        );
+        this.pending_transfer_entries = book_entries
+          .filter(entry => entry.transaction_id === TRANSACTION_ID.achat_adhérent_par_virement)
+          .filter(entry => !entry.amounts[FINANCIAL_ACCOUNT.BANK_debit])
+          .filter(entry => this.transfer_amount(entry) > 0)
+          .filter(entry => !settled_transfer_ids.has(entry.id));
+        this.pending_transfer_entries.forEach(entry => {
+          this.transfer_receipt_dates[entry.id] ??= entry.date;
+          this.transfer_reports[entry.id] ??= this.bank_reports.includes(entry.date.slice(2, 7))
+            ? entry.date.slice(2, 7)
+            : '';
+        });
         this.db_loaded = true;
       });
   }
@@ -97,6 +118,10 @@ highlight(book_entry: BookEntry) {
   }
 
   transaction_label(book_entry: BookEntry): string {
+    if (book_entry.transaction_id === TRANSACTION_ID.achat_adhérent_par_virement
+      && (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0) > 0) {
+      return 'VIREMENT';
+    }
     let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
     return transaction.label + (book_entry.cheque_ref ? ' - ' + book_entry.cheque_ref : '');
   }
@@ -114,6 +139,61 @@ highlight(book_entry: BookEntry) {
   }
   show_book_entry(book_entry_id: string) {
     this.backNavigationService.goToBooksEditorFull(book_entry_id);
+  }
+
+  transfer_amount(book_entry: BookEntry): number {
+    return book_entry.operations.reduce((total, operation) =>
+      total + (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0), 0);
+  }
+
+  transfer_member(book_entry: BookEntry): string {
+    return book_entry.operations.find(operation =>
+      (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0)?.member ?? '';
+  }
+
+  async settle_transfer(book_entry: BookEntry): Promise<void> {
+    if (this.settling_transfer_ids.has(book_entry.id)) return;
+
+    const receipt_date = this.transfer_receipt_dates[book_entry.id];
+    const bank_report = this.transfer_reports[book_entry.id];
+    if (!receipt_date || !bank_report) {
+      this.ToastService.showWarning('virement', 'Renseignez la date bancaire et le relevé');
+      return;
+    }
+    if (bank_report < receipt_date.slice(2, 7)) {
+      this.ToastService.showWarning('virement', 'Le relevé ne peut pas être antérieur à la réception du virement');
+      return;
+    }
+    const receipt_season = this.systemDataService.get_season(new Date(`${receipt_date}T12:00:00`));
+    if (receipt_season !== this.current_season) {
+      this.ToastService.showWarning('virement', `La date bancaire appartient à la saison ${receipt_season}`);
+      return;
+    }
+
+    const settlement_operations = book_entry.operations
+      .filter(operation => (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0)
+      .map(operation => ({
+        label: 'règlement du virement annoncé',
+        member: operation.member,
+        values: { [CUSTOMER_ACCOUNT.DEBT_credit]: operation.values[CUSTOMER_ACCOUNT.DEBT_debit] },
+      }));
+    const amount = this.transfer_amount(book_entry);
+    this.settling_transfer_ids.add(book_entry.id);
+    try {
+      await this.bookService.create_book_entry({
+        id: '',
+        season: receipt_season,
+        date: receipt_date,
+        transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+        amounts: { [FINANCIAL_ACCOUNT.BANK_debit]: amount },
+        operations: settlement_operations,
+        bank_report,
+        deposit_ref: `${TRANSFER_PROMISE_REF_PREFIX}${book_entry.id}`,
+      });
+      this.ToastService.showSuccess('virement', 'Virement encaissé et créance soldée');
+    } finally {
+      this.settling_transfer_ids.delete(book_entry.id);
+    }
   }
 
   set_bank_report(book_entry: BookEntry, report: string) {
@@ -136,7 +216,7 @@ highlight(book_entry: BookEntry) {
 
 
 
-  movement_in(report: string): { bank: number, savings: number } {
+  movement_in(report: string | null): { bank: number, savings: number } {
     let book_entries = this.bank_book_entries.filter(book_entry => book_entry.bank_report === report);
     let bank = book_entries.reduce((acc, book_entry) => {
       return acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0);

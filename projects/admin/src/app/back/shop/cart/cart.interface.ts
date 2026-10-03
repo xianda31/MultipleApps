@@ -15,7 +15,7 @@ export enum PaymentMode {
 export const SALE_ACCOUNTS: { [key in PaymentMode]: FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT } = {
   [PaymentMode.CASH]: FINANCIAL_ACCOUNT.CASHBOX_debit,
   [PaymentMode.CHEQUE]: _CHEQUES_FIRST_IN_CASHBOX ? FINANCIAL_ACCOUNT.CASHBOX_debit : FINANCIAL_ACCOUNT.BANK_debit,
-  [PaymentMode.TRANSFER]: FINANCIAL_ACCOUNT.BANK_debit,
+  [PaymentMode.TRANSFER]: CUSTOMER_ACCOUNT.DEBT_debit,
   [PaymentMode.CREDIT]: CUSTOMER_ACCOUNT.DEBT_debit,
   [PaymentMode.ASSETS]: CUSTOMER_ACCOUNT.ASSET_debit,
   [PaymentMode.CARD]: FINANCIAL_ACCOUNT.STRIPE_debit,  // Stripe : compte intermédiaire (crédité via payout bancaire en Phase 2)

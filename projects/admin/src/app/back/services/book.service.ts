@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS,  Formatted_purchase, Item } from '../../common/interfaces/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, Formatted_purchase, Item, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, filter, firstValueFrom, from, map, Observable, of, race, skipWhile, switchMap, tap, timer } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -102,9 +102,16 @@ export class BookService {
 
   // bulk create
 
-  book_entries_bulk_create$(book_entries: BookEntry[]): Observable<number> {
+  book_entries_bulk_create$(book_entries: BookEntry[], seasonInitialization = false): Observable<number> {
 
     try {
+      book_entries.forEach(book_entry => {
+        if (seasonInitialization) {
+          this.systemDataService.assert_season_initialization_allowed(book_entry.season);
+        } else {
+          this.systemDataService.assert_accounting_write_allowed(book_entry.season);
+        }
+      });
       book_entries.forEach(book_entry => this.assert_book_entry_balanced(book_entry));
     } catch (error) {
       console.error('[BookService.book_entries_bulk_create$] Unbalanced BookEntry rejected', error);
@@ -132,6 +139,7 @@ export class BookService {
 
   async create_book_entry(book_entry: BookEntry): Promise<BookEntry> {
 
+    this.systemDataService.assert_accounting_write_allowed(book_entry.season);
     this.assert_book_entry_balanced(book_entry);
 
     try {
@@ -193,6 +201,7 @@ export class BookService {
   // update
 
   async update_book_entry(book_entry: BookEntry) {
+    this.systemDataService.assert_accounting_write_allowed(book_entry.season);
     this.assert_book_entry_balanced(book_entry);
 
     try {
@@ -221,6 +230,7 @@ export class BookService {
   // delete
 
   async delete_book_entry(book_entry: BookEntry) {
+    this.systemDataService.assert_accounting_write_allowed(book_entry.season);
     try {
       let done = await this.dbHandler.deleteBookEntry(book_entry.id);
       if (done) {
@@ -585,9 +595,19 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       return 0; // no outstanding expenses
     }
     return this.Round(this._book_entries
-      .filter((entry) => (entry.bank_report !== null && entry.bank_report !== undefined))
+      .filter((entry) =>
+        (entry.bank_report !== null && entry.bank_report !== undefined)
+        || entry.deposit_ref?.startsWith(TRANSFER_PROMISE_REF_PREFIX)
+      )
       .reduce((acc, book_entry) =>
         acc + (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] || 0) - (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_credit] || 0), 0));
+  }
+
+  get_unpointed_transfer_settlements(): BookEntry[] {
+    return this._book_entries.filter(entry =>
+      entry.deposit_ref?.startsWith(TRANSFER_PROMISE_REF_PREFIX)
+      && !entry.bank_report
+    );
   }
 
   get_uncashed_cheques_amount(): number {
@@ -1190,14 +1210,56 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
     // C. report des dettes clients
     let debts = this.get_debts();
+    const remaining_debts = new Map(
+      Array.from(debts, ([member, value]) => [member, Math.max(value.total, 0)] as const)
+    );
+    const settled_transfer_ids = new Set(
+      this._book_entries
+        .map(entry => entry.deposit_ref)
+        .filter((ref): ref is string => !!ref?.startsWith(TRANSFER_PROMISE_REF_PREFIX))
+        .map(ref => ref.slice(TRANSFER_PROMISE_REF_PREFIX.length))
+    );
+
+    this._book_entries
+      .filter(entry => entry.transaction_id === TRANSACTION_ID.achat_adhérent_par_virement)
+      .filter(entry => !entry.amounts[FINANCIAL_ACCOUNT.BANK_debit])
+      .filter(entry => !settled_transfer_ids.has(entry.id))
+      .forEach(entry => {
+        entry.operations
+          .filter(operation => operation.member && (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0)
+          .forEach(operation => {
+            const member = operation.member!;
+            const remaining_debt = remaining_debts.get(member) ?? 0;
+            const amount = this.Round(Math.min(
+              operation.values[CUSTOMER_ACCOUNT.DEBT_debit],
+              remaining_debt
+            ));
+            if (amount <= 0) return;
+
+            next_season_entries.push({
+              id: '',
+              season: next_season,
+              date: this.systemDataService.start_date(next_season),
+              transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+              amounts: { [BALANCE_ACCOUNT.BAL_credit]: amount },
+              operations: [{
+                member,
+                label: `report virement annoncé du ${entry.date}`,
+                values: { [CUSTOMER_ACCOUNT.DEBT_debit]: amount },
+              }],
+            });
+            remaining_debts.set(member, this.Round(remaining_debt - amount));
+          });
+      });
+
     if (Array.from(debts).length !== 0) {
       let operations: Operation[] = [];
       let grand_total = 0;
-      Array.from(debts)
-        .filter(([, value]: [string, { total: number; entries: BookEntry[] }]) => value.total > 0)
-        .forEach(([member, value]: [string, { total: number; entries: BookEntry[] }]) => {
-          grand_total += value.total;
-          operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: value.total } });
+      Array.from(remaining_debts)
+        .filter(([, total]) => total > 0)
+        .forEach(([member, total]) => {
+          grand_total += total;
+          operations.push({ member: member, label: 'report dette', values: { [CUSTOMER_ACCOUNT.DEBT_debit]: total } });
         });
 
 
@@ -1239,7 +1301,24 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
         next_season_entries.push(book_entry);
       });
 
-    return this.book_entries_bulk_create$(next_season_entries);
+    const closure_tag_prefix = `closure:${this.season}:${next_season}:`;
+    next_season_entries.forEach((entry, index) => {
+      entry.tag = `${closure_tag_prefix}${index}`;
+    });
+
+    return this.dbHandler.listBookEntries(next_season).pipe(
+      switchMap((existing_entries) => {
+        const existing_tags = new Set(
+          existing_entries
+            .map((entry: BookEntry) => entry.tag)
+            .filter((tag: string | undefined): tag is string => !!tag?.startsWith(closure_tag_prefix))
+        );
+        const missing_entries = next_season_entries.filter(entry => !existing_tags.has(entry.tag!));
+        return missing_entries.length > 0
+          ? this.book_entries_bulk_create$(missing_entries, true)
+          : of(0);
+      })
+    );
   }
 
   Round(value: number) {
@@ -1303,8 +1382,10 @@ private payment_mode2bank_op_type(payment_mode: PaymentMode): TRANSACTION_ID {
     const today = new Date();
    let values: { [key: string]: number } = {'CAR': card_price };
    let amounts : AMOUNTS = this.payments2fValue( mode, card_price);
-    if (mode === PaymentMode.CREDIT) {
+    if (mode === PaymentMode.CREDIT || mode === PaymentMode.TRANSFER) {
       values[CUSTOMER_ACCOUNT.DEBT_debit] = card_price;
+    }
+    if (mode === PaymentMode.CREDIT) {
       amounts = { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 };
     }
     const bookEntry: BookEntry = {

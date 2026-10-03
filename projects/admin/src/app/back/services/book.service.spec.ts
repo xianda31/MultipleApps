@@ -1,13 +1,18 @@
 import { firstValueFrom, of } from 'rxjs';
 
-import { BALANCE_ACCOUNT, BookEntry, FINANCIAL_ACCOUNT, TRANSACTION_ID } from '../../common/interfaces/accounting.interface';
+import { BALANCE_ACCOUNT, BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 import { BookService } from './book.service';
 
 describe('BookService', () => {
   function createService(transactionOverrides: Record<string, unknown> = {}, dbHandler: Record<string, unknown> = {}) {
     return new BookService(
-      { get_configuration: () => of({ season: '2026/2027' }) } as any,
-      {} as any,
+      {
+        get_configuration: () => of({ season: '2026/2027' }),
+        start_date: (season: string) => `${season.slice(0, 4)}-07-01`,
+        assert_accounting_write_allowed: () => undefined,
+        assert_season_initialization_allowed: () => undefined,
+      } as any,
+      { showInfo: () => undefined } as any,
       { get_transaction: () => ({ revenue_account_to_show: true, ...transactionOverrides }) } as any,
       dbHandler as any,
       { logged_member$: of(null) } as any,
@@ -73,6 +78,74 @@ describe('BookService', () => {
     expect(service.get_unbalanced_book_entries()).toEqual([]);
   });
 
+  it('keeps an announced-transfer settlement in the bank balance after unpointing', () => {
+    const service = createService();
+    const promise: BookEntry = {
+      id: 'promise-1',
+      season: '2026/2027',
+      date: '2026-10-02',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+      amounts: {},
+      operations: [{
+        label: 'vente',
+        member: 'TEST Jean',
+        values: { ADH: 50, [CUSTOMER_ACCOUNT.DEBT_debit]: 50 },
+      }],
+    };
+    const unpointedSettlement: BookEntry = {
+      id: 'settlement-1',
+      season: '2026/2027',
+      date: '2026-10-03',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+      amounts: { [FINANCIAL_ACCOUNT.BANK_debit]: 50 },
+      operations: [{
+        label: 'règlement du virement annoncé',
+        member: 'TEST Jean',
+        values: { [CUSTOMER_ACCOUNT.DEBT_credit]: 50 },
+      }],
+      bank_report: null,
+      deposit_ref: `${TRANSFER_PROMISE_REF_PREFIX}${promise.id}`,
+    };
+    (service as any)._book_entries = [promise, unpointedSettlement];
+
+    expect(service.get_bank_movements_amount()).toBe(50);
+    expect(service.get_clients_debts_value()).toBe(0);
+    expect(service.get_unpointed_transfer_settlements()).toEqual([unpointedSettlement]);
+  });
+
+  it('creates only missing entries when closure generation is resumed', async () => {
+    const createBookEntry = jasmine.createSpy('createBookEntry').and.callFake(async (entry: BookEntry) => entry);
+    const listBookEntries = jasmine.createSpy('listBookEntries').and.returnValue(of([{
+      id: 'existing-opening',
+      season: '2027/2028',
+      date: '2027-07-01',
+      tag: 'closure:2026/2027:2027/2028:0',
+    }]));
+    const service = createService({}, { createBookEntry, listBookEntries });
+    (service as any)._book_entries = [
+      {
+        id: 'stripe-1',
+        season: '2026/2027',
+        date: '2027-06-29',
+        transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+        amounts: { [FINANCIAL_ACCOUNT.STRIPE_debit]: 30 },
+        operations: [{ label: 'paiement 1', values: { VENTES: 30 } }],
+      },
+      {
+        id: 'stripe-2',
+        season: '2026/2027',
+        date: '2027-06-30',
+        transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+        amounts: { [FINANCIAL_ACCOUNT.STRIPE_debit]: 20 },
+        operations: [{ label: 'paiement 2', values: { VENTES: 20 } }],
+      },
+    ];
+
+    expect(await firstValueFrom(service.generate_next_season_entries('2027/2028'))).toBe(1);
+    expect(createBookEntry).toHaveBeenCalledTimes(1);
+    expect(createBookEntry.calls.mostRecent().args[0].tag).toBe('closure:2026/2027:2027/2028:1');
+  });
+
   it('identifies an unbalanced opening entry', () => {
     const service = createService();
     const openingEntry: BookEntry = {
@@ -106,6 +179,25 @@ describe('BookService', () => {
     };
 
     await expectAsync(service.create_book_entry(entry)).toBeRejectedWithError(/déséquilibrée de 10\.00/);
+    expect(createBookEntry).not.toHaveBeenCalled();
+  });
+
+  it('rejects a new entry when its accounting season is locked', async () => {
+    const createBookEntry = jasmine.createSpy('createBookEntry');
+    const service = createService({}, { createBookEntry });
+    const seasonGuard = spyOn((service as any).systemDataService, 'assert_accounting_write_allowed')
+      .and.throwError('Saison non initialisée');
+    const entry: BookEntry = {
+      id: '',
+      season: '2027/2028',
+      date: '2027-07-01',
+      transaction_id: TRANSACTION_ID.vente_en_espèces,
+      amounts: { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 100 },
+      operations: [{ label: 'vente', values: { VENTES: 100 } }],
+    };
+
+    await expectAsync(service.create_book_entry(entry)).toBeRejectedWithError(/Saison non initialisée/);
+    expect(seasonGuard).toHaveBeenCalledOnceWith(entry.season);
     expect(createBookEntry).not.toHaveBeenCalled();
   });
 

@@ -100,6 +100,16 @@ export class ShopComponent implements OnInit, OnDestroy {
   private traceModeEnabled = false;
   membershipCheckoutBlocked = false;
   membershipCheckoutWarning = '';
+  accountingCheckoutBlocked = false;
+  accountingCheckoutWarning = '';
+
+  get checkoutBlocked(): boolean {
+    return this.accountingCheckoutBlocked || this.membershipCheckoutBlocked;
+  }
+
+  get checkoutWarning(): string {
+    return this.accountingCheckoutWarning || this.membershipCheckoutWarning;
+  }
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
   tpePaymentActive: boolean = false;
@@ -181,13 +191,18 @@ export class ShopComponent implements OnInit, OnDestroy {
     });
 
     this.systemDataService.get_configuration().subscribe(conf => {
+      const accountingState = this.systemDataService.get_accounting_season_state();
+      this.accountingCheckoutBlocked = !accountingState.writesAllowed;
+      this.accountingCheckoutWarning = this.accountingCheckoutBlocked
+        ? `Saison ${accountingState.calendarSeason} non initialisée : ventes temporairement bloquées`
+        : '';
       this.traceModeEnabled = !!conf.trace_mode;
-      this.onlinePaymentActive = conf.online_payment_active;
-      this.tpePaymentActive = conf.tpe_payment_active;
+      this.onlinePaymentActive = conf.online_payment_active && !this.accountingCheckoutBlocked;
+      this.tpePaymentActive = conf.tpe_payment_active && !this.accountingCheckoutBlocked;
       this.minimumCbAmount = conf.minimum_cb_amount;
       // Lancer l'auto-connexion TPE dès que la config est connue
       if (!this.onlineMode) {
-        this.shopInit.initTPE(conf.tpe_payment_active).catch(console.error);
+        this.shopInit.initTPE(this.tpePaymentActive).catch(console.error);
       }
     });
     // Brancher les observables TPE du service sur les champs locaux

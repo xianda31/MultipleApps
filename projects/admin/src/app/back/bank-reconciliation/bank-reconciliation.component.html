@@ -14,7 +14,6 @@
 
     <div class="card-body">
 
-
       <div class="row align-items-center px-4 fw-bolder">
         <div class="col-4 text-start">
           relevés de banque
@@ -76,7 +75,10 @@
               <div class="offset-2 col-2 text-end pe-4">
                 {{movement_out(null).bank | number:truncature:'fr' }}
               </div>
-              <div class="col-4"></div>
+              <div class="col-2 text-end pe-4">
+                {{movement_in(null).bank | number:truncature:'fr' }}
+              </div>
+              <div class="col-2"></div>
             </button>
           </h2>
           <div ngbAccordionCollapse>
@@ -104,6 +106,36 @@
     </thead> -->
 
     <tbody class="fst-italic">
+      <ng-container *ngIf="bank_report === null">
+        <tr *ngFor="let transfer of pending_transfer_entries">
+          <td class="col-1">
+            <input type="date" class="form-control form-control-sm"
+              [(ngModel)]="transfer_receipt_dates[transfer.id]">
+          </td>
+          <td class="col-3">VIREMENT ANNONCÉ</td>
+          <td class="col-4 text-start">{{transfer_member(transfer)}}</td>
+          <td class="col-1"></td>
+          <td class="col-1 text-end text-success fw-bolder pe-3">
+            {{transfer_amount(transfer) | number:truncature:'fr'}}
+          </td>
+          <td class="col-1 text-end">
+            <select class="form-select form-select-sm" [(ngModel)]="transfer_reports[transfer.id]">
+              <option value="" disabled></option>
+              <option *ngFor="let report of bank_reports" [value]="report">{{report}}</option>
+            </select>
+          </td>
+          <td class="col-1 text-end">
+            <i (click)="show_book_entry(transfer.id)" class="bi bi-eye"></i>
+            <button type="button" class="btn btn-link btn-sm text-success p-0 ms-5"
+              [disabled]="settling_transfer_ids.has(transfer.id)"
+              [ngbTooltip]="'Confirmer la réception du virement'"
+              (click)="settle_transfer(transfer)">
+              <i class="bi bi-check-lg"></i>
+              <span class="visually-hidden">Confirmer le virement</span>
+            </button>
+          </td>
+        </tr>
+      </ng-container>
       <ng-container *ngFor="let book_entry of bank_book_entries">
 
         <tr [class]="highlight_class(book_entry)" *ngIf="book_entry.bank_report === bank_report">

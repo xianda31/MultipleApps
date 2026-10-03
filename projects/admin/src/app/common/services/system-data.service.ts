@@ -6,6 +6,14 @@ import { FileService } from './files.service';
 import { ToastService } from './toast.service';
 import { normalizeBreakpoints } from '../utils/ui-utils';
 
+export type AccountingSeasonStatus = 'open' | 'closure_required' | 'preopened';
+
+export interface AccountingSeasonState {
+  calendarSeason: string;
+  initializedSeason: string;
+  status: AccountingSeasonStatus;
+  writesAllowed: boolean;
+}
 
 
 @Injectable({
@@ -46,7 +54,17 @@ export class SystemDataService {
     // Premier appel : charger depuis S3, puis émettre via le BehaviorSubject
     return from(this.fileService.download_json_file('system/system_configuration.txt')).pipe(
       tap((conf) => {
+        if (!conf.accounting_initialized_season) {
+          conf.accounting_initialized_season = this.get_today_season();
+          void this.persistConfiguration(conf).catch((error) =>
+            console.warn('Unable to persist accounting season migration', error)
+          );
+        }
         this._system_configuration = conf;
+        const accountingState = this.get_accounting_season_state();
+        if (accountingState.status !== 'open') {
+          this._active_season = accountingState.initializedSeason;
+        }
         this._system_configuration$.next(this._system_configuration);
         const missing: string[] = [];
         if (conf.include_system_visits == null) missing.push('include_system_visits');
@@ -75,6 +93,47 @@ export class SystemDataService {
 
   get_local_season(): string {
     return this._active_season;
+  }
+
+  get_accounting_season_state(date: Date = new Date()): AccountingSeasonState {
+    const calendarSeason = this.get_season(date);
+    const initializedSeason = this._system_configuration?.accounting_initialized_season ?? calendarSeason;
+    const calendarStart = Number(calendarSeason.slice(0, 4));
+    const initializedStart = Number(initializedSeason.slice(0, 4));
+    const status: AccountingSeasonStatus = initializedStart < calendarStart
+      ? 'closure_required'
+      : initializedStart > calendarStart
+        ? 'preopened'
+        : 'open';
+    return {
+      calendarSeason,
+      initializedSeason,
+      status,
+      writesAllowed: status === 'open',
+    };
+  }
+
+  can_write_accounting_season(season: string, date: Date = new Date()): boolean {
+    const state = this.get_accounting_season_state(date);
+    return state.status === 'open' && season === state.initializedSeason;
+  }
+
+  assert_accounting_write_allowed(season: string, date: Date = new Date()): void {
+    if (!this.can_write_accounting_season(season, date)) {
+      const state = this.get_accounting_season_state(date);
+      throw new Error(
+        `Saison ${state.calendarSeason} non initialisée : clôturez ${state.initializedSeason} avant toute nouvelle écriture`
+      );
+    }
+  }
+
+  assert_season_initialization_allowed(season: string, date: Date = new Date()): void {
+    const state = this.get_accounting_season_state(date);
+    const expectedSeason = this.next_season(state.initializedSeason);
+    if (season !== expectedSeason
+      || (state.calendarSeason !== state.initializedSeason && state.calendarSeason !== expectedSeason)) {
+      throw new Error(`L'initialisation de la saison ${season} n'est pas autorisée`);
+    }
   }
 
   /**
@@ -312,21 +371,28 @@ export class SystemDataService {
   async save_configuration(conf: SystemConfiguration) {
     // Update local cache and notify subscribers immediately so UI can react without waiting for S3 upload
     try {
-      this._system_configuration = conf;
+      this._system_configuration = {
+        ...conf,
+        accounting_initialized_season: conf.accounting_initialized_season
+          ?? this._system_configuration?.accounting_initialized_season
+          ?? this.get_today_season(),
+      };
       try { this._system_configuration$.next(this._system_configuration); } catch (e) { /* ignore */ }
     } catch (e) { /* ignore */ }
     // Persist to S3 — season is NOT persisted (managed locally)
     try {
-      const toUpload: any = { ...(conf as any) };
-      if (toUpload.ui_settings !== undefined) delete toUpload.ui_settings;
-      delete toUpload.season; // saison gérée localement, pas dans S3
-      this.fileService.upload_to_S3(toUpload, 'system/', 'system_configuration.txt', true).then(() => {
-      }).catch((err) => {
-        console.warn('save_configuration: upload error', err);
-      });
+      await this.persistConfiguration(this._system_configuration);
     } catch (e) {
       console.warn('save_configuration: unable to prepare payload', e);
+      throw e;
     }
+  }
+
+  private async persistConfiguration(conf: SystemConfiguration): Promise<void> {
+    const toUpload: any = { ...(conf as any) };
+    if (toUpload.ui_settings !== undefined) delete toUpload.ui_settings;
+    delete toUpload.season;
+    await this.fileService.upload_to_S3(toUpload, 'system/', 'system_configuration.txt', true);
   }
 
   /**
@@ -359,7 +425,18 @@ export class SystemDataService {
   }
 
   async change_to_new_season(season: string) {
-    // Mise à jour locale uniquement — la saison n'est plus persistée en S3
+    if (!this._system_configuration) throw new Error('Configuration système non chargée');
+    const expectedSeason = this.next_season(
+      this._system_configuration.accounting_initialized_season ?? this.get_today_season()
+    );
+    if (season !== expectedSeason) {
+      throw new Error(`Initialisation attendue pour ${expectedSeason}, reçue pour ${season}`);
+    }
+    this._system_configuration = {
+      ...this._system_configuration,
+      accounting_initialized_season: season,
+    };
+    await this.persistConfiguration(this._system_configuration);
     this.set_local_season(season);
   }
 

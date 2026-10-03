@@ -6,6 +6,13 @@
   </div>
   <div class="container-fluid px-0 justify-content-center admin-scrollable-content" style="overflow-x: hidden;">
     <app-toaster></app-toaster>
+    <div *ngIf="accountingSeasonState && !accountingSeasonState.writesAllowed"
+      class="alert alert-warning rounded-0 border-start-0 border-end-0 mb-0 py-2 text-center" role="alert">
+      <i class="bi bi-lock-fill me-1"></i>
+      Saison {{accountingSeasonState.calendarSeason}} non initialisée : les nouvelles écritures sont bloquées.
+      <span *ngIf="canCloseAccountingSeason">Clôturez {{accountingSeasonState.initializedSeason}} depuis le bilan.</span>
+      <span *ngIf="!canCloseAccountingSeason">Contactez un administrateur.</span>
+    </div>
     <router-outlet></router-outlet>
   </div>
   <div class="d-none d-md-block" style="position: sticky; bottom: 0; z-index: 1030;">

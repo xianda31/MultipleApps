@@ -1,5 +1,7 @@
 import { InvocationType } from "aws-cdk-lib/triggers"
 
+export const TRANSFER_PROMISE_REF_PREFIX = 'TRANSFER_PROMISE:';
+
 export enum TRANSACTION_ID {
   achat_adhérent_en_espèces = 'achat_adhérent_en_espèces',
   achat_adhérent_par_chèque = 'achat_adhérent_par_chèque',

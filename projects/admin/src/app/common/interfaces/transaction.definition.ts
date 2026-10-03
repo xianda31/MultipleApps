@@ -141,13 +141,13 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // paiement par virement d'un adhérent
   [TRANSACTION_ID.achat_adhérent_par_virement]: {
-     label: 'VIREMENT EN NOTRE FAVEUR',
+     label: 'VIREMENT ANNONCÉ',
      invoice_required: false,
-    tooltip: 'virement d\'un adhérent sur compte association',
+    tooltip: 'virement annoncé par un adhérent, à confirmer au rapprochement bancaire',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
     optional_accounts: customer_options,
-    financial_accounts_to_charge: [FINANCIAL_ACCOUNT.BANK_debit],
+    financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],
     nominative: true,
     pure_financial: false,
     revenue_account_to_show: true,

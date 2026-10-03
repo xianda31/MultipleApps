@@ -1,4 +1,5 @@
 import { Member } from '../../../common/interfaces/member.interface';
+import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 import { CartService } from './cart.service';
 import { PaymentMode } from './cart.interface';
 
@@ -111,6 +112,33 @@ describe('CartService', () => {
     expect(bookService.process_book_entry_actions).toHaveBeenCalledOnceWith(sale.id);
     expect(gameCardService.refreshCards).toHaveBeenCalledTimes(1);
     expect(gameCardService.createCard).not.toHaveBeenCalled();
+  });
+
+  it('records an announced bank transfer as a member debt until reconciliation', async () => {
+    const sale = { id: 'transfer-promise', season: '2026/2027', date: '2026-09-16' };
+    const member = {
+      id: 'member-1', firstname: 'Jean', lastname: 'TEST', license_number: '00000001',
+    } as Member;
+    const bookService = jasmine.createSpyObj('BookService', ['create_book_entry', 'process_book_entry_actions']);
+    bookService.create_book_entry.and.resolveTo(sale);
+    bookService.process_book_entry_actions.and.resolveTo({ completed: 0, failed: 0 });
+    const productService = jasmine.createSpyObj('ProductService', ['getProduct']);
+    productService.getProduct.and.returnValue({ productCode: '' });
+    const gameCardService = jasmine.createSpyObj('GameCardService', ['refreshCards']);
+    gameCardService.refreshCards.and.resolveTo();
+    const service = new CartService(bookService, productService, gameCardService);
+    service.setBuyer('TEST Jean');
+    service.payment = { mode: PaymentMode.TRANSFER, amount: 30, payer_id: member.id, bank: '', cheque_no: '' };
+    service.addToCart({
+      product_id: 'membership', product_account: 'ADH', payee: member, payee_name: 'TEST Jean', paied: 30,
+    });
+
+    await service.save_sale({ season: sale.season, date: sale.date });
+
+    const createdEntry = bookService.create_book_entry.calls.mostRecent().args[0];
+    expect(createdEntry.amounts[FINANCIAL_ACCOUNT.BANK_debit]).toBeUndefined();
+    expect(createdEntry.operations[0].values[CUSTOMER_ACCOUNT.DEBT_debit]).toBe(30);
+    expect(createdEntry.operations[0].values['ADH']).toBe(30);
   });
 
   it('keeps the cart while preparing a deferred terminal sale', async () => {

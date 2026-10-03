@@ -332,8 +332,9 @@ export class CartService {
           }
         }
       });
-      // paiement du panier à crédit
-      if (payee === this._cart.buyer_name && this.payment.mode === PaymentMode.CREDIT) {
+      // paiement différé : crédit explicite ou virement annoncé
+      if (payee === this._cart.buyer_name
+        && (this.payment.mode === PaymentMode.CREDIT || this.payment.mode === PaymentMode.TRANSFER)) {
         ops[0].values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();
       }
       // console.log('operation', operation);

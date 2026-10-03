@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
-import { switchMap } from 'rxjs';
+import { finalize, from, switchMap } from 'rxjs';
 import { BookService } from '../services/book.service';
 import { ParenthesisPipe } from '../../common/pipes/parenthesis.pipe';
 import { Balance_board } from '../../common/interfaces/balance.interface';
@@ -13,6 +13,8 @@ import { BackNavigationService } from '../services/back-navigation.service';
 import { DebtsAndAssetsDetailsComponent } from "../books/details/debts-and-assets/debts-and-assets-details.component";
 import { FinancialReportService } from '../services/financial_report.service';
 import { BookEntry } from '../../common/interfaces/accounting.interface';
+import { GroupService } from '../../common/authentification/group.service';
+import { Group_priorities } from '../../common/authentification/group.interface';
 
 @Component({
   selector: 'app-balance',
@@ -33,6 +35,9 @@ export class BalanceComponent {
   balance_board!: Balance_board;
   balance_error: number = 0;
   unbalanced_entries: { entry: BookEntry, error: number }[] = [];
+  unpointed_transfer_settlements: BookEntry[] = [];
+  can_close_season = false;
+  closing_season = false;
 
   show_details_flag = false;
   due: 'dettes' | 'avoirs' = 'dettes';
@@ -46,7 +51,8 @@ export class BalanceComponent {
     private bookService: BookService,
     private toastService: ToastService,
     private financialService: FinancialReportService,
-    private backNavigationService: BackNavigationService
+    private backNavigationService: BackNavigationService,
+    private groupService: GroupService,
   ) {
     this.isMobile = window.innerWidth < 768;
     window.addEventListener('resize', () => {
@@ -56,6 +62,10 @@ export class BalanceComponent {
 
 
   ngOnInit() {
+
+    this.groupService.getUserAccreditation()
+      .then(accreditation => this.can_close_season = accreditation.level >= Group_priorities.Administrateur)
+      .catch(() => this.can_close_season = false);
 
     this.systemDataService.get_configuration().subscribe(
       (configuration) => {
@@ -77,6 +87,7 @@ export class BalanceComponent {
       this.export_url = this.financialService.export_balance_sheets();
       this.loaded = true;
       this.check_balance_vs_profit_and_loss();
+      this.unpointed_transfer_settlements = this.bookService.get_unpointed_transfer_settlements();
     });
   }
 
@@ -104,26 +115,33 @@ export class BalanceComponent {
   }
 
   // cloture comptable : initialisation des reports financiers
-  transfer_to_next_balance_sheet() {
+  close_and_open_next_season() {
+    if (!this.can_close_season || this.balance_error || this.unbalanced_entries.length
+      || this.unpointed_transfer_settlements.length || this.closing_season) {
+      return;
+    }
 
-    let current_season = this.balance_board.current.season;
-    let next_season = this.systemDataService.next_season(current_season);
+    const current_season = this.balance_board.current.season;
+    const next_season = this.systemDataService.next_season(current_season);
+    let generated_entries = 0;
+    this.closing_season = true;
 
-    // Sauvegarde obligatoire du bilan N avant de générer les écritures N+1 :
-    // le compute_balance_board de N+1 lit previous_balance_sheet[N], qui doit être à jour.
-    this.financialService.save_balance_sheet(this.balance_board.current).subscribe(() => {
-      this.bookService.generate_next_season_entries(next_season)
-        .subscribe((nbr) => {
-          this.toastService.showSuccess('cloture saison', nbr + ' écritures de report générées pour la saison ' + next_season);
-          // finalisation  : passage à la nouvelle saison
-          this.systemDataService.change_to_new_season(next_season);
-        });
-    });
-  }
-
-  save_balance_sheet() {
-    this.financialService.save_balance_sheet(this.balance_board.current).subscribe((result) => {
-      this.toastService.showSuccess('sauvegarde bilan', 'sauvegarde du bilan effectuée avec succès');
+    this.financialService.save_balance_sheet(this.balance_board.current).pipe(
+      switchMap(() => this.bookService.generate_next_season_entries(next_season)),
+      switchMap((nbr) => {
+        generated_entries = nbr;
+        return from(this.systemDataService.change_to_new_season(next_season));
+      }),
+      finalize(() => this.closing_season = false)
+    ).subscribe({
+      next: () => this.toastService.showSuccess(
+        'clôture saison',
+        `${current_season} clôturée et ${next_season} ouverte (${generated_entries} écritures de report générées)`
+      ),
+      error: (error) => {
+        console.error('Unable to close accounting season', error);
+        this.toastService.showError('clôture saison', error?.message || 'La clôture a échoué');
+      },
     });
   }
 
