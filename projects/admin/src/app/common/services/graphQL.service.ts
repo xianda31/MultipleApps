@@ -1466,7 +1466,7 @@ export class DBhandler {
     try {
       const client = generateClient<Schema>({ authMode: authMode });
       let token: any = null;
-      let nbloops = 0;
+      // let nbloops = 0;
       do {
         const { data, nextToken, errors } = await client.models.BookEntry.list({
           filter: { season: { eq: _season } },
@@ -1482,7 +1482,7 @@ export class DBhandler {
         entries = [...entries, ...new_jsoned_entries.map((entry) => this.parsed_entry(entry))];
         token = nextToken;
 
-      } while (token !== null && nbloops++ < 10 && !failed)
+      } while (token !== null  && !failed)
 
 
       if (token !== null) {
