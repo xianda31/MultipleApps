@@ -1,21 +1,19 @@
 
 import { BACK_ROUTE_PATHS } from '../routes/back-route-paths';
-import { Group_priorities } from '../../common/authentification/group.interface';
 import { NavbarMenu } from './back-navbar.interface';
+import { getBackRouteMinimumLevel } from '../routes/back-route-access';
 
-export const STATIC_MENUS: NavbarMenu[] = [
+const MENU_DEFINITIONS: NavbarMenu[] = [
     {
         label: 'Tournois',
         key: 'boutique',
         icon: 'bi-card-checklist',
-        route: BACK_ROUTE_PATHS.FeesCollector,
-        minLevel: Group_priorities.Contributeur
+        route: BACK_ROUTE_PATHS.FeesCollector
     },
     {
         label: 'Boutique',
         key: 'boutique',
         icon: 'bi-cart',
-        minLevel: Group_priorities.Contributeur,
         subMenus: [
             { label: 'vente adhérent', route: BACK_ROUTE_PATHS.Shop },
             { label: 'billetterie', route: BACK_ROUTE_PATHS.Billetterie },
@@ -26,10 +24,9 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Adhérents',
         key: 'adherents',
         icon: 'bi-people',
-        minLevel: Group_priorities.Contributeur,
         subMenus: [
             { label: 'répertoire', route: BACK_ROUTE_PATHS.MembersDatabase },
-            { label: 'cartes admission', route: BACK_ROUTE_PATHS.GameCardsEditor, adminOnly: true },
+            { label: 'cartes admission', route: BACK_ROUTE_PATHS.GameCardsEditor },
             { label: 'contrôles', route: BACK_ROUTE_PATHS.MemberSales },
         ]
     },
@@ -37,7 +34,6 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Comptabilité',
         key: 'comptabilite',
         icon: 'bi-calculator',
-        minLevel: Group_priorities.Administrateur,
         subMenus: [
             { label: 'état de caisse', route: BACK_ROUTE_PATHS.CashBoxStatus },
             { label: 'chèques', route: BACK_ROUTE_PATHS.Cheques },
@@ -53,7 +49,6 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Stripe',
         key: 'stripe',
         icon: 'bi-credit-card',
-        minLevel: Group_priorities.Administrateur,
         subMenus: [
             { label: 'rapprochement', route: BACK_ROUTE_PATHS.StripeReconciliation },
             { label: 'remboursement', route: BACK_ROUTE_PATHS.StripeRefunds }
@@ -63,7 +58,6 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Outils',
         key: 'outils',
         icon: 'bi-database-fill-gear',
-        minLevel: Group_priorities.Systeme,
         subMenus: [
             { label: 'base de données', route: BACK_ROUTE_PATHS.BooksList },
             { label: 'droits d\'accès', route: BACK_ROUTE_PATHS.GroupsList },
@@ -76,7 +70,6 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Site web',
         key: 'site',
         icon: 'bi-globe2',
-        minLevel: Group_priorities.Editeur,
         subMenus: [
             { label: 'paramètres UI', route: BACK_ROUTE_PATHS.UiConf },
             { label: 'les menus', route: BACK_ROUTE_PATHS.MenusEditor },
@@ -90,7 +83,6 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Communication',
         key: 'communication',
         icon: 'bi-envelope-paper',
-        minLevel: Group_priorities.Editeur,
         subMenus: [
             { label: 'Assistance', route: BACK_ROUTE_PATHS.Assistance },
             { label: 'Mailing', route: BACK_ROUTE_PATHS.Mailing },
@@ -102,14 +94,12 @@ export const STATIC_MENUS: NavbarMenu[] = [
         label: 'Dashboard',
         key: 'dashboard',
         icon: 'bi-speedometer2',
-        route: BACK_ROUTE_PATHS.Dashboard,
-        minLevel: Group_priorities.Contributeur
+        route: BACK_ROUTE_PATHS.Dashboard
     },
     {
         label: 'DevTools',
         key: 'devtools',
         icon: 'bi-wrench',
-        minLevel: Group_priorities.Systeme,
         isDev: true,
         subMenus: [
             // { label: 'écritures', route: BACK_ROUTE_PATHS.BooksDebugger },
@@ -125,6 +115,25 @@ export const STATIC_MENUS: NavbarMenu[] = [
         key: 'documentation',
         icon: 'bi-question-circle',
         route: BACK_ROUTE_PATHS.OnlineHelp,
-        minLevel: Group_priorities.Membre,
     },
 ];
+
+function applyRouteAccess(menu: NavbarMenu): NavbarMenu {
+    const subMenus = menu.subMenus?.map(applyRouteAccess);
+    const routeLevel = menu.route ? getBackRouteMinimumLevel(menu.route) : undefined;
+    const childLevels = subMenus
+        ?.map((subMenu) => subMenu.minLevel)
+        .filter((level): level is number => level !== undefined) ?? [];
+    const minLevel = routeLevel ?? (childLevels.length > 0 ? Math.min(...childLevels) : undefined);
+
+    return {
+        ...menu,
+        minLevel,
+        subMenus: subMenus?.map((subMenu) => ({
+            ...subMenu,
+            minLevel: subMenu.minLevel ?? minLevel,
+        })),
+    };
+}
+
+export const STATIC_MENUS: NavbarMenu[] = MENU_DEFINITIONS.map(applyRouteAccess);

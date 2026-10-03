@@ -11,6 +11,10 @@ export class AccreditationGuard implements CanActivate {
 
   async canActivate(route: ActivatedRouteSnapshot): Promise<boolean | UrlTree> {
     const minimumLevel = route.data['minimumAccreditationLevel'];
+    if (typeof minimumLevel !== 'number') {
+      console.error('[AccreditationGuard] Missing minimum accreditation level', route.routeConfig?.path);
+      return this.router.createUrlTree(['/back/home']);
+    }
 
     try {
       const accreditation = await this.groupService.getUserAccreditation();

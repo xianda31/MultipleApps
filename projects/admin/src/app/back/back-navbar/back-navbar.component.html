@@ -118,7 +118,7 @@
               </a>
               <ul class="dropdown-menu" [attr.aria-labelledby]="'navbarDropdown' + menu.label">
                 <ng-container *ngFor="let sub of menu.subMenus">
-                  <li *ngIf="!sub.adminOnly || accreditation_level >= accreditation_levels.Administrateur">
+                  <li *ngIf="accreditation_level >= (sub.minLevel || 0)">
                     <a class="dropdown-item" [routerLink]="sub.route">{{sub.label}}</a>
                   </li>
                 </ng-container>
@@ -156,7 +156,7 @@
               <ul class="list-unstyled">
                 <ng-container *ngFor="let sub of menu.subMenus">
                   <li class="ms-4">
-                    <a class="nav-link" [routerLink]="sub.route" data-bs-dismiss="offcanvas" *ngIf="!sub.adminOnly || accreditation_level >= accreditation_levels.Administrateur">{{sub.label}}</a>
+                    <a class="nav-link" [routerLink]="sub.route" data-bs-dismiss="offcanvas" *ngIf="accreditation_level >= (sub.minLevel || 0)">{{sub.label}}</a>
                   </li>
                 </ng-container>
               </ul>

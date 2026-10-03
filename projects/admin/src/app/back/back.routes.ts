@@ -27,6 +27,7 @@ import { RootVolumeComponent } from './files/root-volume/root-volume';
 import { AuthGuard } from '../auth.guard';
 import { AccreditationGuard } from '../accreditation.guard';
 import { Group_priorities } from '../common/authentification/group.interface';
+import { BACK_ROUTE_ACCESS, getBackRouteAccess } from './routes/back-route-access';
 import { MenusEditorComponent } from './menus/menus-editor/menus-editor';
 import { UiConfComponent } from './ui-conf/ui-conf.component';
 import { CloneS3Component } from './maintenance/clone-S3/clone-s3.component';
@@ -46,12 +47,34 @@ import { BilletterieComponent } from './collecte/collecte-vente.component';
 import { ImageToolsComponent } from './image-tools/image-tools.component';
 import { ChequeExplorerComponent } from './books/cheque-explorer/cheque-explorer.component';
 
+function secureBackRoutes(childRoutes: Routes): Routes {
+  return childRoutes.map((route) => {
+    const access = route.path === '' || route.path === '**'
+      ? BACK_ROUTE_ACCESS.Home
+      : getBackRouteAccess(route.path ?? '');
+
+    if (!access) {
+      throw new Error(`Missing back-office access policy for route "${route.path}"`);
+    }
+
+    return {
+      ...route,
+      canActivate: [AuthGuard, AccreditationGuard],
+      data: {
+        ...route.data,
+        minimumAccreditationLevel: Group_priorities[access.minimumGroup],
+        helpTopicId: access.helpTopicId,
+      },
+    };
+  });
+}
+
 
 export const routes: Routes = [
   {
     path: '',
     component: AdminComponent,
-    children: [
+    children: secureBackRoutes([
 
       { path: BACK_ROUTE_PATHS.Shop + '/:member_id', component: ShopComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Shop, component: ShopComponent, data: { onlineMode: false }, canActivate: [AuthGuard] },
@@ -111,20 +134,18 @@ export const routes: Routes = [
       {
         path: BACK_ROUTE_PATHS.StripeReconciliation,
         component: StripeReconciliationComponent,
-        canActivate: [AuthGuard, AccreditationGuard],
-        data: { minimumAccreditationLevel: Group_priorities.Administrateur },
+        canActivate: [AuthGuard],
       },
       {
         path: BACK_ROUTE_PATHS.StripeRefunds,
         component: StripeRefundsComponent,
-        canActivate: [AuthGuard, AccreditationGuard],
-        data: { minimumAccreditationLevel: Group_priorities.Administrateur },
+        canActivate: [AuthGuard],
       },
 
 
       { path: '', component: BackPageComponent },
       { path: '**', component: PageNotFoundComponent },
       // { path: '', redirectTo: 'caisse/produits', pathMatch: 'full' },
-    ]
+    ])
   }
 ];

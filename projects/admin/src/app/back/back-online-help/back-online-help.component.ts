@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { HELP_CONTENT_VERSION, HELP_TOPICS, HelpTopic } from './back-online-help-content';
 import { Group_names, Group_priorities } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
+import { getBackRouteAccess } from '../routes/back-route-access';
 
 type GroupItem = {
   label: string;
@@ -46,13 +47,13 @@ export class BackOnlineHelpComponent implements OnInit {
   }
 
   isGroupChecked(group: Group_names): boolean {
-    const requiredGroup = this.selectedDetailTopic.nav.groupLevel as Group_names;
+    const requiredGroup = this.getRequiredGroup(this.selectedDetailTopic);
     return Group_priorities[group] >= Group_priorities[requiredGroup];
   }
 
   canAccessTopic(topic: HelpTopic): boolean {
     if (!this.currentUserGroup) return false;
-    const requiredGroup = topic.nav.groupLevel as Group_names;
+    const requiredGroup = this.getRequiredGroup(topic);
     return Group_priorities[this.currentUserGroup] >= Group_priorities[requiredGroup];
   }
 
@@ -67,6 +68,11 @@ export class BackOnlineHelpComponent implements OnInit {
 
   selectSubTopic(topic: HelpTopic): void {
     this.selectedDetailTopic = topic;
+  }
+
+  private getRequiredGroup(topic: HelpTopic): Group_names {
+    const routeAccess = topic.route ? getBackRouteAccess(topic.route) : undefined;
+    return routeAccess?.minimumGroup ?? topic.nav.groupLevel as Group_names;
   }
 
   private findTopicById(topicId: string): HelpTopic | undefined {

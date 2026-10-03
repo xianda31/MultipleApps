@@ -295,6 +295,26 @@ export const HELP_TOPICS: HelpTopic[] = [
         ],
       },
       {
+        id: 'compta-cheques',
+        title: 'cheques',
+        summary: 'Controle des cheques recus et de leur regroupement en bordereaux de depot.',
+        route: BACK_ROUTE_ABS_PATHS['Cheques'],
+        nav: {
+          menuTitle: 'Comptabilite',
+          subMenuTitle: 'cheques',
+          icon: 'bi-calculator',
+          groupLevel: 'Administrateur',
+        },
+        functionalities: [
+          'Consultation des cheques rattaches a chaque bordereau.',
+          'Detection des ecarts entre cheques et depot bancaire.',
+        ],
+        howTo: [
+          'Selectionner le bordereau a controler.',
+          'Comparer le total des cheques avec le montant du depot.',
+        ],
+      },
+      {
         id: 'compta-rapprochement',
         title: 'rapprochement bancaire',
         summary: 'Association des mouvements caisse et banque.',
@@ -642,6 +662,26 @@ export const HELP_TOPICS: HelpTopic[] = [
         howTo: [
           'Modifier le contenu cible.',
           'Verifier publication et navigation associee.',
+        ],
+      },
+      {
+        id: 'site-images',
+        title: 'utilitaires images',
+        summary: 'Maintenance des images utilisees par les contenus du site.',
+        route: BACK_ROUTE_ABS_PATHS['ImageMaintenance'],
+        nav: {
+          menuTitle: 'Site web',
+          subMenuTitle: 'utilitaires images',
+          icon: 'bi-globe2',
+          groupLevel: 'Editeur',
+        },
+        functionalities: [
+          'Controle et maintenance des medias du site.',
+          'Traitement des images utilisees dans les contenus.',
+        ],
+        howTo: [
+          'Identifier le media a traiter.',
+          'Appliquer la correction puis verifier son rendu sur le site.',
         ],
       },
       {
