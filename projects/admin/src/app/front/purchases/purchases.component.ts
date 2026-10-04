@@ -7,15 +7,14 @@ import { CommonModule } from '@angular/common';
 import { TitleService } from '../title/title.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { PurchaseStatementEntry } from '../../common/interfaces/accounting.interface';
-import { PurchaseStatementComponent } from '../../common/components/purchase-statement/purchase-statement.component';
-import { PurchaseSummaryComponent } from '../../common/components/purchase-summary/purchase-summary.component';
+import { PurchaseAccountViewComponent } from '../../common/components/purchase-account-view/purchase-account-view.component';
 
 
 
 @Component({
   selector: 'app-purchases',
   standalone: true,
-  imports: [CommonModule, PurchaseStatementComponent, PurchaseSummaryComponent],
+  imports: [CommonModule, PurchaseAccountViewComponent],
   templateUrl: './purchases.component.html',
   styleUrl: './purchases.component.scss'
 })
@@ -25,6 +24,7 @@ export class PurchasesComponent {
   purchase_entries: PurchaseStatementEntry[] = [];
   season!: string;
   avoirs: number = 0;
+  debt: number = 0;
   loading$!: Observable<boolean>;
 
   constructor(
@@ -60,6 +60,7 @@ export class PurchasesComponent {
             );
             this.purchase_entries = this.bookService.get_member_purchase_statement(full_name, productDescriptions);
             this.avoirs = this.bookService.find_assets(this.member_full_name);
+            this.debt = this.bookService.find_member_debt(this.member_full_name);
           })
         );
       }))

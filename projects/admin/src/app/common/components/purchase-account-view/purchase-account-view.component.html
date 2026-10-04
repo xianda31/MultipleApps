@@ -1,0 +1,17 @@
+<section class="purchase-account-section purchase-account-summary" aria-labelledby="purchase-account-summary-title">
+    <h2 id="purchase-account-summary-title">Synthèse</h2>
+    <app-purchase-summary
+        aria-label="Résumé du compte"
+        [entries]="entries"
+        [assets]="assets"
+        [debt]="debt">
+    </app-purchase-summary>
+</section>
+
+<section class="purchase-account-section purchase-account-details mt-3" aria-labelledby="purchase-account-details-title">
+    <h2 id="purchase-account-details-title">Détails</h2>
+    <app-purchase-statement
+        [entries]="entries"
+        [emptyMessage]="emptyMessage">
+    </app-purchase-statement>
+</section>

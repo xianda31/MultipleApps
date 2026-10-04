@@ -146,17 +146,18 @@
                 </div>
                 <div class="card-body">
                     @if (selected_member) {
-                    <app-purchase-summary
-                        class="mb-3 text-muted"
-                        aria-label="Résumé du compte"
+                    <app-purchase-account-view
                         [entries]="purchase_entries"
-                        [assets]="avoirs">
-                    </app-purchase-summary>
-                    }
+                        [assets]="avoirs"
+                        [debt]="debt"
+                        emptyMessage="Aucun achat enregistré pour cet adhérent.">
+                    </app-purchase-account-view>
+                    } @else {
                     <app-purchase-statement
                         [entries]="purchase_entries"
-                        [emptyMessage]="selected_member ? 'Aucun achat enregistré pour cet adhérent.' : 'Sélectionnez un adhérent pour afficher son relevé.'">
+                        emptyMessage="Sélectionnez un adhérent pour afficher son relevé.">
                     </app-purchase-statement>
+                    }
                 </div>
             </div>
         </div>

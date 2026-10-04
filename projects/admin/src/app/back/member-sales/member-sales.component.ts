@@ -12,14 +12,14 @@ import { Revenue_and_expense_definition } from '../../common/interfaces/system-c
 import { LicenseesService } from '../../common/services/licensees.service';
 import { MemberSyncService } from '../../common/services/member-sync.service';
 import { PurchaseStatementComponent } from '../../common/components/purchase-statement/purchase-statement.component';
-import { PurchaseSummaryComponent } from '../../common/components/purchase-summary/purchase-summary.component';
+import { PurchaseAccountViewComponent } from '../../common/components/purchase-account-view/purchase-account-view.component';
 
 interface Payment { [key: string]: number };
 
 @Component({
   selector: 'app-member-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputMemberComponent, PurchaseStatementComponent, PurchaseSummaryComponent],
+  imports: [CommonModule, FormsModule, InputMemberComponent, PurchaseStatementComponent, PurchaseAccountViewComponent],
   templateUrl: './member-sales.component.html',
   styleUrl: './member-sales.component.scss'
 })
@@ -30,6 +30,7 @@ export class MemberSalesComponent {
   revenues: Revenue[] = [];
   purchase_entries: PurchaseStatementEntry[] = [];
   avoirs: number = 0;
+  debt: number = 0;
   productDescriptions: ReadonlyMap<string, string> = new Map();
 
   accounts: Revenue_and_expense_definition[] = [];
@@ -149,6 +150,7 @@ export class MemberSalesComponent {
       let full_name = this.memberService.full_name(this.selected_member);
       this.purchase_entries = this.bookService.get_member_purchase_statement(full_name, this.productDescriptions);
       this.avoirs = this.bookService.find_assets(full_name);
+      this.debt = this.bookService.find_member_debt(full_name);
     }
   }
 
@@ -156,6 +158,7 @@ export class MemberSalesComponent {
     this.selected_member = null;
     this.purchase_entries = [];
     this.avoirs = 0;
+    this.debt = 0;
     this.revenues = [];
   }
 

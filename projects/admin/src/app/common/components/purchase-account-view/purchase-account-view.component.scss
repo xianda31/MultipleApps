@@ -1,0 +1,23 @@
+:host {
+	display: block;
+}
+
+.purchase-account-section {
+	padding-top: 0.9rem;
+}
+
+.purchase-account-section h2 {
+	margin: 0 0 0.65rem;
+	color: #6c757d;
+	font-size: 0.78rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.purchase-account-summary app-purchase-summary {
+	max-width: 720px;
+}
+
+.purchase-account-details {
+	padding-top: 1rem;
+}

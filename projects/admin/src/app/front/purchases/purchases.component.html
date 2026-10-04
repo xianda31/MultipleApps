@@ -1,15 +1,7 @@
 <main class="purchases-page">
     <header class="purchases-header">
-        <div>
-            <h1>Mes achats</h1>
-            <p>{{member_full_name}} · saison {{season}}</p>
-        </div>
-        <app-purchase-summary
-            class="purchases-summary"
-            aria-label="Résumé du compte"
-            [entries]="purchase_entries"
-            [assets]="avoirs">
-        </app-purchase-summary>
+        <h1>Mes achats</h1>
+        <p>{{member_full_name}} · saison {{season}}</p>
     </header>
 
     @if (loading$ | async) {
@@ -18,6 +10,10 @@
             Chargement de vos achats...
         </div>
     } @else {
-        <app-purchase-statement [entries]="purchase_entries"></app-purchase-statement>
+        <app-purchase-account-view
+            [entries]="purchase_entries"
+            [assets]="avoirs"
+            [debt]="debt">
+        </app-purchase-account-view>
     }
 </main>
