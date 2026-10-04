@@ -53,7 +53,7 @@ export class TodaysBooksComponent {
   payment_type(revenue: Revenue): string {
     let book_entry = this.today_book_entries.find((entry) => entry.id === revenue.book_entry_id);
     if (!book_entry) throw new Error('sale not found');
-    return this.transactionService.get_transaction(book_entry.transaction_id).label;
+    return this.transactionService.get_entry_label(book_entry);
   }
 
   sale_amount(revenue: Revenue): number {
@@ -75,11 +75,10 @@ export class TodaysBooksComponent {
     const alignments: HorizontalAlignment[] = ['right', 'left', 'left', 'left'];
 
     const rows = book_entries.map((book_entry) => {
-      let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
       let amount = (book_entry.amounts?.['cashbox_in'] ?? 0) + (book_entry.amounts?.['bank_in'] ?? 0);
       return [
         amount.toFixed(2) + ' €',
-        transaction.label + (book_entry.cheque_ref ? ' (' + book_entry.cheque_ref + ')' : ''),
+        this.transactionService.get_entry_label(book_entry) + (book_entry.cheque_ref ? ' (' + book_entry.cheque_ref + ')' : ''),
         book_entry.operations.map(op => op.member).join('\n'),
         book_entry.operations.map(op => Object.entries(op.values).reduce((acc, [key, value]) => acc + (key + '[' + value + '] '), '')).join('\n')
       ]
