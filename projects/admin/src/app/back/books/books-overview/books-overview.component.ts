@@ -279,8 +279,8 @@ export class BooksOverviewComponent {
 
   // utilitaires pour visualisation des opérations
 
-  transaction_label(op_type: TRANSACTION_ID): string {
-    return this.transactionService.get_transaction(op_type).label;
+  transaction_label(bookEntry: BookEntry): string {
+    return this.transactionService.get_entry_label(bookEntry);
   }
 
   Round(value: number) {

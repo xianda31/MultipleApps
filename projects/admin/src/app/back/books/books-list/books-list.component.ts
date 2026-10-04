@@ -148,12 +148,7 @@ export class BooksListComponent {
 
 
   transaction_label(book_entry: BookEntry): string {
-    let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
-    if (transaction === undefined) {
-      console.log('oops , there is a problem', book_entry);
-      return '???';
-    }
-    return transaction.label;
+    return this.transactionService.get_entry_label(book_entry);
   }
 
   class_label(book_entry: BookEntry): string {

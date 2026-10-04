@@ -102,10 +102,10 @@
               [(ngModel)]="transfer_receipt_dates[transfer.id]">
           </td>
           <td class="mobile-entry-date">{{transfer_receipt_dates[transfer.id] | date:'dd/MM/yy'}}</td>
-          <td class="desktop-entry-operation">VIREMENT ANNONCÉ</td>
+          <td class="desktop-entry-operation">virement annoncé</td>
           <td class="desktop-entry-information">{{transfer_member(transfer)}}</td>
           <td class="mobile-entry-description" [title]="'Virement annoncé · ' + transfer_member(transfer)">
-            <strong>Virement annoncé</strong><span>{{transfer_member(transfer)}}</span>
+            <strong>virement annoncé</strong><span>{{transfer_member(transfer)}}</span>
           </td>
           <td class="desktop-entry-amount"></td>
           <td class="desktop-entry-amount text-end text-success fw-bolder">

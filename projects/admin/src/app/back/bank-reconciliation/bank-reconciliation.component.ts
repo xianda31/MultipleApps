@@ -122,12 +122,8 @@ highlight(book_entry: BookEntry) {
   }
 
   transaction_label(book_entry: BookEntry): string {
-    if (book_entry.transaction_id === TRANSACTION_ID.achat_adhérent_par_virement
-      && (book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0) > 0) {
-      return 'VIREMENT';
-    }
-    let transaction = this.transactionService.get_transaction(book_entry.transaction_id);
-    return transaction.label + (book_entry.cheque_ref ? ' - ' + book_entry.cheque_ref : '');
+    return this.transactionService.get_entry_label(book_entry)
+      + (book_entry.cheque_ref ? ' - ' + book_entry.cheque_ref : '');
   }
 
   book_label(book_entry: BookEntry): string {

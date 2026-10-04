@@ -141,7 +141,7 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
 
   // paiement par virement d'un adhérent
   [TRANSACTION_ID.achat_adhérent_par_virement]: {
-     label: 'VIREMENT ANNONCÉ',
+      label: 'virement annoncé',
      invoice_required: false,
     tooltip: 'virement annoncé par un adhérent, à confirmer au rapprochement bancaire',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,

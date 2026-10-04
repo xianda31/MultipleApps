@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ToastService } from '../../common/services/toast.service';
-import { TRANSACTION_ID } from '../../common/interfaces/accounting.interface';
+import { BookEntry, FINANCIAL_ACCOUNT, TRANSACTION_ID } from '../../common/interfaces/accounting.interface';
 import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY, Transaction } from '../../common/interfaces/transaction.definition';
 
 @Injectable({
@@ -54,6 +54,14 @@ get_transaction(id: TRANSACTION_ID): Transaction {
     this.toastService.showError('écriture comptable corrompue', `transaction " ${id} " inconnue`);
     throw new Error(`transaction ${id} not found`);
   }
+}
+
+get_entry_label(entry: BookEntry): string {
+  if (entry.transaction_id === TRANSACTION_ID.achat_adhérent_par_virement
+    && (entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0) > 0) {
+    return 'VIREMENT';
+  }
+  return this.get_transaction(entry.transaction_id).label;
 }
 
 }

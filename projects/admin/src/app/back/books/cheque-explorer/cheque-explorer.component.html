@@ -42,7 +42,7 @@
         <span class="deposit-reference">{{deposit.displayReference}}</span>
         <span>{{deposit.date ? (deposit.date | date:'dd/MM/yyyy') : '—'}}</span>
         <strong class="text-end">{{deposit.amount | number:'1.2-2':'fr'}} €</strong>
-        <span class="text-end" [title]="deposit.chequeCount === null ? 'Nombre de chèques non renseigné' : ''">
+        <span class="text-end me-3" [title]="deposit.chequeCount === null ? 'Nombre de chèques non renseigné' : ''">
           {{deposit.chequeCount === null ? '—' : deposit.chequeCount}}
         </span>
         <span>{{deposit.bankReport || '—'}}</span>
