@@ -61,7 +61,32 @@ get_entry_label(entry: BookEntry): string {
     && (entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0) > 0) {
     return 'VIREMENT';
   }
+  if (entry.transaction_id === TRANSACTION_ID.achat_adhérent_par_carte
+    || entry.transaction_id === TRANSACTION_ID.annulation_paiement_carte_adhérent) {
+    const paymentChannel = this.card_payment_channel(entry);
+    const isRefund = entry.transaction_id === TRANSACTION_ID.annulation_paiement_carte_adhérent;
+    if (isRefund) {
+      return paymentChannel === 'online'
+        ? 'remboursement paiement en ligne'
+        : 'remboursement paiement par carte';
+    }
+    if (paymentChannel === 'terminal') {
+      return 'paiement par carte';
+    }
+    if (paymentChannel === 'online') {
+      return 'paiement en ligne';
+    }
+    return 'paiement par carte';
+  }
   return this.get_transaction(entry.transaction_id).label;
+}
+
+private card_payment_channel(entry: BookEntry): 'online' | 'terminal' | null {
+  if (entry.stripeSessionId?.startsWith('pi_')) return 'terminal';
+  if (entry.stripeSessionId?.startsWith('cs_')) return 'online';
+  if (/^stripe:[A-Z0-9]{8}$/.test(entry.stripeTag ?? '')) return 'terminal';
+  if (/^stripe:.{12}$/.test(entry.stripeTag ?? '')) return 'online';
+  return null;
 }
 
 }

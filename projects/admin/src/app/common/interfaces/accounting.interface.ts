@@ -149,6 +149,7 @@ export interface BookEntry {
   date: string;
   tag?: string;
   stripeTag?: string;  // Tag Stripe court (stripe:XXXXX) pour traçabilité
+  stripeSessionId?: string; // cs_... pour Checkout en ligne, pi_... pour Stripe Terminal
   status?: 'pending' | 'confirmed' | 'cancelled';
   purchasedItems?: PurchasedItem[];
   transaction_id: TRANSACTION_ID;   // type d'opération bancaire

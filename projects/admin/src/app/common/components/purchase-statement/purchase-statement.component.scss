@@ -30,7 +30,7 @@
 }
 
 .purchase-heading > :nth-child(5) {
-  margin-left: 1rem;
+  margin-left: 1.75rem;
 }
 
 .purchase-list {
@@ -63,14 +63,14 @@
   grid-column: 5;
   display: grid;
   gap: 0.25rem;
-  margin-left: 1rem;
+  margin-left: 1.75rem;
   min-width: 0;
 }
 
 .purchase-item {
   display: grid;
-  grid-template-columns: 64px 72px minmax(0, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  gap: 0.4rem;
   align-items: baseline;
 }
 
@@ -188,8 +188,8 @@
   }
 
   .purchase-item {
-    grid-template-columns: 64px 72px minmax(0, 1fr);
-    gap: 0.5rem;
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    gap: 0.4rem;
   }
 
   .product-description {

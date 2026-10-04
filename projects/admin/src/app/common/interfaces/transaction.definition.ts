@@ -472,11 +472,11 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     cheque: 'none',
     stripe: 'none',
   },
-// annulation achat par carte
+// remboursement d'un paiement par carte
   [TRANSACTION_ID.annulation_paiement_carte_adhérent]: {
-     label: 'annulation paiement carte adhérent',
+     label: 'remboursement paiement par carte',
      invoice_required: false,
-    tooltip: 'annulation d\'un achat adhérent par carte',
+    tooltip: 'remboursement Stripe d\'un achat adhérent payé par carte',
     class: TRANSACTION_CLASS.REIMBURSEMENT,
     financial_accounts: financial_credits,
     optional_accounts: customer_asset_credit,

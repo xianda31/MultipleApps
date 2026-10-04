@@ -1432,7 +1432,7 @@ export class DBhandler {
     const client = generateClient<Schema>({ authMode: authMode });
     const { data, errors } = await client.models.BookEntry.get(
       { id: id },
-      { selectionSet: ['id', 'season', 'tag', 'stripeTag', 'status', 'purchasedItems.*', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report', 'invoice_ref'] }
+      { selectionSet: ['id', 'season', 'tag', 'stripeTag', 'stripeSessionId', 'status', 'purchasedItems.*', 'date', 'amounts', 'operations.*', 'transaction_id', 'cheque_ref', 'deposit_ref', 'bank_report', 'invoice_ref'] }
 
     );
     if (errors) throw errors;
