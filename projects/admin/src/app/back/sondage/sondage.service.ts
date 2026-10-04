@@ -63,7 +63,35 @@ export class SondageService {
   }
 
   async deleteSurvey(id: string): Promise<void> {
-    await this.m.Survey.delete({ id });
+    const models = this.m;
+    const [questions, responses, tokens] = await Promise.all([
+      this.listBySurvey(models.SurveyQuestion, id),
+      this.listBySurvey(models.SurveyResponse, id),
+      this.listBySurvey(models.SurveyToken, id),
+    ]);
+
+    await Promise.all([
+      ...questions.map(question => models.SurveyQuestion.delete({ id: question.id })),
+      ...responses.map(response => models.SurveyResponse.delete({ id: response.id })),
+      ...tokens.map(token => models.SurveyToken.delete({ token: token.token })),
+    ]);
+    await models.Survey.delete({ id });
+  }
+
+  private async listBySurvey(model: any, surveyId: string): Promise<any[]> {
+    const items: any[] = [];
+    let nextToken: string | null | undefined;
+
+    do {
+      const page = await model.list({
+        filter: { surveyId: { eq: surveyId } },
+        nextToken,
+      });
+      items.push(...(page.data ?? []));
+      nextToken = page.nextToken;
+    } while (nextToken);
+
+    return items.filter(item => item != null && item.surveyId === surveyId);
   }
 
   // ── Questions ──────────────────────────────────────────────────────────────

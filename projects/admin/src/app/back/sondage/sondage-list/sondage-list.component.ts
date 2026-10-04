@@ -1,8 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SondageService, SurveyItem } from '../sondage.service';
 import { Member } from '../../../common/interfaces/member.interface';
+import { GetConfirmationComponent } from '../../../common/modals/get-confirmation.component';
 
 type Survey = SurveyItem;
 
@@ -15,8 +17,11 @@ type Survey = SurveyItem;
 export class SondageListComponent implements OnInit {
   private router = inject(Router);
   private sondageService = inject(SondageService);
+  private modalService = inject(NgbModal);
   surveys: Survey[] = [];
   loading = true;
+  deletingSurveyId: string | null = null;
+  deleteError: string | null = null;
 
   sendTargetSurvey: Survey | null = null;
   sendRecipients: Member[] = [];
@@ -114,9 +119,26 @@ export class SondageListComponent implements OnInit {
   }
 
   async deleteSurvey(survey: Survey) {
-    if (!confirm(`Supprimer « ${survey.title} » ?`)) return;
-    await this.sondageService.deleteSurvey(survey.id);
-    this.surveys = this.surveys.filter(s => s.id !== survey.id);
+    if (!this.canDelete(survey) || this.deletingSurveyId) return;
+
+    const modal = this.modalService.open(GetConfirmationComponent, { centered: true });
+    modal.componentInstance.title = 'Supprimer le sondage';
+    modal.componentInstance.subtitle = `Le sondage « ${survey.title} », ses questions et tous les votes associés seront définitivement supprimés.`;
+
+    const confirmed = await modal.result.catch(() => false);
+    if (!confirmed) return;
+
+    this.deletingSurveyId = survey.id;
+    this.deleteError = null;
+    try {
+      await this.sondageService.deleteSurvey(survey.id);
+      this.surveys = this.surveys.filter(candidate => candidate.id !== survey.id);
+    } catch (err: any) {
+      console.error('[deleteSurvey] erreur suppression sondage', err);
+      this.deleteError = err?.errors?.[0]?.message ?? err?.message ?? 'Erreur lors de la suppression';
+    } finally {
+      this.deletingSurveyId = null;
+    }
   }
 
   effectiveStatus(survey: Survey): 'active' | 'closed' {
@@ -130,6 +152,10 @@ export class SondageListComponent implements OnInit {
 
   canReopen(survey: Survey): boolean {
     return survey.status === 'closed' && !this.isTimedOut(survey);
+  }
+
+  canDelete(survey: Survey): boolean {
+    return this.effectiveStatus(survey) === 'closed';
   }
 
   private isTimedOut(survey: Survey): boolean {
