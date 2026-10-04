@@ -1,4 +1,38 @@
-import { refundsForCharge, StripeRefundItem } from './stripe-reconciliation.component';
+import { paymentCartSummary, refundsForCharge, StripeRefundItem } from './stripe-reconciliation.component';
+import { BookEntry, TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
+
+describe('Stripe payment cart summary', () => {
+  it('summarizes a shared product without exposing technical operation labels', () => {
+    const bookEntry = {
+      id: 'shared-purchase',
+      season: '2026/2027',
+      date: '2026-09-25',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+      amounts: {},
+      operations: [
+        { label: 'vendu par en ligne', member: 'DAVOINE Brigitte', values: { CAR: 30 } },
+        { label: 'vendu par en ligne (co-acheteur)', member: 'AUTRE Jean', values: { CAR: 0 } },
+      ],
+    } satisfies BookEntry;
+
+    expect(paymentCartSummary(bookEntry)).toBe('achat en ligne — CAR · 2 bénéficiaires');
+  });
+
+  it('identifies a terminal purchase', () => {
+    const bookEntry = {
+      id: 'terminal-purchase',
+      season: '2026/2027',
+      date: '2026-09-25',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+      amounts: {},
+      operations: [
+        { label: 'vendu par TPE', member: 'TEST Jean', values: { CAR: 30 } },
+      ],
+    } satisfies BookEntry;
+
+    expect(paymentCartSummary(bookEntry, 'terminal')).toBe('achat par TPE — CAR');
+  });
+});
 
 describe('Stripe payout refund matching', () => {
   it('matches a refund by chargeId when its stripeTag is unavailable', () => {

@@ -9,7 +9,7 @@ import { ToastService } from '../../../common/services/toast.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { StripeService } from '../../../front/services/stripe.service';
 import { Member } from '../../../common/interfaces/member.interface';
-import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
+import { BookEntry, TRANSACTION_ID, FINANCIAL_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 import { environment } from '../../../../environments/environment';
 import { StripeReconciliationHealthService } from '../services/stripe-reconciliation-health.service';
 
@@ -18,10 +18,31 @@ interface PayoutLine {
   stripeTransaction: any | null;   // StripeTransaction enrichie
   buyerName: string;
   cartSummary: string;
+  stripeTag: string | null;
   grossCents: number;              // = bookEntry.amounts[stripe_in] * 100
   feesCents: number;               // depuis StripeTransaction.amountFeesCents ou payout lookup
   get netCents(): number;
   selected: boolean;
+}
+
+const CUSTOMER_ACCOUNT_LABELS: Partial<Record<CUSTOMER_ACCOUNT, string>> = {
+  [CUSTOMER_ACCOUNT.DEBT_debit]: 'achat à crédit',
+  [CUSTOMER_ACCOUNT.DEBT_credit]: 'créance remboursée',
+  [CUSTOMER_ACCOUNT.ASSET_debit]: 'avoir utilisé',
+  [CUSTOMER_ACCOUNT.ASSET_credit]: 'avoir attribué',
+};
+
+export function paymentCartSummary(bookEntry: BookEntry, source?: string | null): string {
+  const channel = source === 'terminal' ? 'achat par TPE' : 'achat en ligne';
+  const accounts = [...new Set(
+    bookEntry.operations.flatMap(operation => Object.keys(operation.values))
+  )].map(account => CUSTOMER_ACCOUNT_LABELS[account as CUSTOMER_ACCOUNT] || account);
+  const beneficiaryCount = new Set(
+    bookEntry.operations.map(operation => operation.member).filter(Boolean)
+  ).size;
+  const details = accounts.join(', ');
+  const summary = beneficiaryCount > 1 ? `${details} · ${beneficiaryCount} bénéficiaires` : details;
+  return `${channel}${summary ? ` — ${summary}` : ''}`;
 }
 
 interface StripePayout {
@@ -347,6 +368,23 @@ export class StripeReconciliationComponent {
     return !this.isDevMode && this.isPayoutBankReconciled(bookEntries);
   }
 
+  async copyPayoutId(payoutId: string): Promise<void> {
+    await this.copyStripeIdentifier(payoutId, 'Identifiant Stripe');
+  }
+
+  async copyStripeTag(stripeTag: string): Promise<void> {
+    await this.copyStripeIdentifier(stripeTag, 'Tag Stripe');
+  }
+
+  private async copyStripeIdentifier(value: string, title: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(value);
+      this.toastService.showSuccess(title, 'Identifiant copié dans le presse-papiers');
+    } catch {
+      this.toastService.showWarning(title, 'Impossible de copier l’identifiant');
+    }
+  }
+
   async loadLines(): Promise<void> {
     this.loadingLines = true;
     try {
@@ -403,25 +441,12 @@ export class StripeReconciliationComponent {
           ? member.lastname + ' ' + member.firstname
           : be.operations.find(op => op.member)?.member || be.tag || '(inconnu)';
 
-        const details = [...new Set(
-          be.operations
-            .filter(op => op.member)
-            .map(op => op.label.replace(/^vendu par\s+/i, '').trim())
-            .filter(Boolean)
-        )].join(', ') || this.formatAmount(grossCents);
-
-        const paymentChannel = st?.source === 'terminal' ? 'vente par TPE' : 'vente en ligne';
-        const normalizedDetails = st?.source === 'terminal' ? '' : details;
-        const isRedundantDetails =
-          (paymentChannel === 'vente en ligne' && normalizedDetails.toLowerCase() === 'en ligne') ||
-          (paymentChannel === 'vente par TPE' && normalizedDetails.toLowerCase() === 'tpe');
-        const cartSummary = `${paymentChannel}${normalizedDetails && !isRedundantDetails ? ' — ' + normalizedDetails : ''}`;
-
         const line: PayoutLine = {
           bookEntry: be,
           stripeTransaction: st,
           buyerName,
-          cartSummary,
+          cartSummary: paymentCartSummary(be, st?.source),
+          stripeTag: be.stripeTag || st?.stripeTag || null,
           grossCents,
           feesCents: st?.amountFeesCents || 0,
           get netCents() { return this.grossCents - this.feesCents; },
@@ -448,6 +473,7 @@ export class StripeReconciliationComponent {
           stripeTransaction: st,
           buyerName: st.stripeMeta?.memberName || '(inconnu)',
           cartSummary: `${cartSummary} — Abandonné le ${abandonedAtTime}`,
+          stripeTag: st.stripeTag || null,
           grossCents,
           feesCents: st?.amountFeesCents || 0,
           get netCents() { return this.grossCents - this.feesCents; },
