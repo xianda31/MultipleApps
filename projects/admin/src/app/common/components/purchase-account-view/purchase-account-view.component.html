@@ -1,15 +1,28 @@
-<section class="purchase-account-section purchase-account-summary" aria-labelledby="purchase-account-summary-title">
-    <h2 id="purchase-account-summary-title">Synthèse</h2>
+<section class="purchase-account-section purchase-account-situation" aria-labelledby="purchase-account-situation-title">
+    <h2 id="purchase-account-situation-title">Situation actuelle</h2>
+    <div class="purchase-account-balances">
+        @if (debt > 0) {
+        <span>Créance <strong>{{debt | currency:'EUR':'symbol':'1.2-2'}}</strong></span>
+        }
+        @if (assets > 0) {
+        <span class="assets"><i class="bi bi-wallet2" aria-hidden="true"></i> Avoir <strong>{{assets | currency:'EUR':'symbol':'1.2-2'}}</strong></span>
+        }
+        @if (debt <= 0 && assets <= 0) {
+        <span>Comptes à jour</span>
+        }
+    </div>
+</section>
+
+<section class="purchase-account-section purchase-account-movements mt-3" aria-labelledby="purchase-account-movements-title">
+    <h2 id="purchase-account-movements-title">Mouvements de la saison</h2>
     <app-purchase-summary
-        aria-label="Résumé du compte"
-        [entries]="entries"
-        [assets]="assets"
-        [debt]="debt">
+        aria-label="Mouvements de la saison"
+        [entries]="entries">
     </app-purchase-summary>
 </section>
 
 <section class="purchase-account-section purchase-account-details mt-3" aria-labelledby="purchase-account-details-title">
-    <h2 id="purchase-account-details-title">Détails</h2>
+    <h2 id="purchase-account-details-title">Détails des opérations</h2>
     <app-purchase-statement
         [entries]="entries"
         [emptyMessage]="emptyMessage">

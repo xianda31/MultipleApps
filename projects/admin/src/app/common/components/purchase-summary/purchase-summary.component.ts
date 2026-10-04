@@ -12,8 +12,6 @@ import { CUSTOMER_ACCOUNT, PurchaseStatementEntry } from '../../interfaces/accou
 })
 export class PurchaseSummaryComponent {
   @Input() entries: PurchaseStatementEntry[] = [];
-  @Input() assets = 0;
-  @Input() debt = 0;
 
   get totalSpent(): number {
     return this.entries.reduce((total, entry) => total + entry.spentAmount, 0);

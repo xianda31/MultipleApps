@@ -14,8 +14,22 @@
 	text-transform: uppercase;
 }
 
-.purchase-account-summary app-purchase-summary {
+.purchase-account-situation,
+.purchase-account-movements app-purchase-summary {
 	max-width: 720px;
+}
+
+.purchase-account-balances {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 1rem;
+	padding: 0 0.1rem;
+	color: #495057;
+	font-size: 0.86rem;
+}
+
+.purchase-account-balances strong {
+	color: var(--bs-body-color);
 }
 
 .purchase-account-details {

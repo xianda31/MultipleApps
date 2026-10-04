@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 
 import { PurchaseStatementEntry } from '../../interfaces/accounting.interface';
@@ -7,7 +8,7 @@ import { PurchaseSummaryComponent } from '../purchase-summary/purchase-summary.c
 @Component({
   selector: 'app-purchase-account-view',
   standalone: true,
-  imports: [PurchaseStatementComponent, PurchaseSummaryComponent],
+  imports: [CommonModule, PurchaseStatementComponent, PurchaseSummaryComponent],
   templateUrl: './purchase-account-view.component.html',
   styleUrl: './purchase-account-view.component.scss',
 })

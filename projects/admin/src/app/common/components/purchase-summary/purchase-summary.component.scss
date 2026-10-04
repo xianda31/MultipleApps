@@ -43,28 +43,6 @@ strong {
 	white-space: nowrap;
 }
 
-.summary-balances {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.35rem 1rem;
-	padding: 0.15rem 0.1rem;
-	color: #495057;
-}
-
-.summary-balances-title {
-	font-weight: 700;
-}
-
-.summary-table-title {
-	margin: 0 0.1rem;
-	font-size: inherit;
-	font-weight: 700;
-}
-
-.assets {
-	color: #495057;
-}
-
 @container (max-width: 400px) {
 	.summary-columns {
 		grid-template-columns: minmax(0, 1fr);
