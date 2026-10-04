@@ -1,0 +1,55 @@
+:host {
+	display: block;
+}
+
+.purchases-page {
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 1rem;
+}
+
+.purchases-header {
+	display: flex;
+	align-items: end;
+	justify-content: space-between;
+	gap: 1rem;
+	padding-bottom: 0.8rem;
+	border-bottom: 1px solid #ced4da;
+}
+
+.purchases-header h1 {
+	margin: 0;
+	font-size: 1.5rem;
+}
+
+.purchases-header p {
+	margin: 0.2rem 0 0;
+	color: #6c757d;
+}
+
+.purchases-summary {
+	justify-content: end;
+}
+
+.purchases-loading {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.6rem;
+	min-height: 12rem;
+	color: #6c757d;
+}
+@media (max-width: 900px) {
+	.purchases-page {
+		padding: 0.75rem;
+	}
+
+	.purchases-header {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.purchases-summary {
+		justify-content: start;
+	}
+}

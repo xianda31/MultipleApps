@@ -145,47 +145,18 @@
                     </div>
                 </div>
                 <div class="card-body">
-
-                    <div class="row mx-0">
-                        <div class="col px-0">
-                            <div class="table-responsive">
-                                <table class="table table-sm table-striped table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Achat</th>
-                                            <th>Remarque</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (achat_vente of achats_ventes; track $index) {
-                                        <tr>
-                                            <td>
-                                                {{ achat_vente.date | date:'EEEE d MMMM y':'':'fr-FR' }}
-                                            </td>
-                                            <td>
-                                                @for (item of achat_vente.items; track $index) {
-                                                @if (item.type === 'revenue') {
-                                                {{ item.description }} : {{ item.amount |
-                                                currency:'EUR':'symbol':'1.2-2' }}
-                                                }
-                                                }
-                                            </td>
-                                            <td>
-                                                @for (item of achat_vente.items; track $index) {
-                                                @if (item.type === 'bancaire') {
-                                                {{ item.description }} : {{ item.amount |
-                                                currency:'EUR':'symbol':'1.2-2' }}
-                                                }
-                                                }
-                                            </td>
-                                        </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                    @if (selected_member) {
+                    <app-purchase-summary
+                        class="mb-3 text-muted"
+                        aria-label="Résumé du compte"
+                        [entries]="purchase_entries"
+                        [assets]="avoirs">
+                    </app-purchase-summary>
+                    }
+                    <app-purchase-statement
+                        [entries]="purchase_entries"
+                        [emptyMessage]="selected_member ? 'Aucun achat enregistré pour cet adhérent.' : 'Sélectionnez un adhérent pour afficher son relevé.'">
+                    </app-purchase-statement>
                 </div>
             </div>
         </div>

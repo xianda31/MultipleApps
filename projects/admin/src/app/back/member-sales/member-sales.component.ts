@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { firstValueFrom, take } from 'rxjs';
-import { Expense, Formatted_purchase, Revenue } from '../../common/interfaces/accounting.interface';
+import { Expense, PurchaseStatementEntry, Revenue } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
 import { Member } from '../../common/interfaces/member.interface';
@@ -11,13 +11,15 @@ import { MembersService } from '../../common/services/members.service';
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
 import { LicenseesService } from '../../common/services/licensees.service';
 import { MemberSyncService } from '../../common/services/member-sync.service';
+import { PurchaseStatementComponent } from '../../common/components/purchase-statement/purchase-statement.component';
+import { PurchaseSummaryComponent } from '../../common/components/purchase-summary/purchase-summary.component';
 
 interface Payment { [key: string]: number };
 
 @Component({
   selector: 'app-member-sales',
   standalone: true,
-  imports: [CommonModule, FormsModule, InputMemberComponent],
+  imports: [CommonModule, FormsModule, InputMemberComponent, PurchaseStatementComponent, PurchaseSummaryComponent],
   templateUrl: './member-sales.component.html',
   styleUrl: './member-sales.component.scss'
 })
@@ -26,7 +28,9 @@ export class MemberSalesComponent {
   season: string = '';
   operations: (Revenue | Expense)[] = [];
   revenues: Revenue[] = [];
-  achats_ventes !: Formatted_purchase[];
+  purchase_entries: PurchaseStatementEntry[] = [];
+  avoirs: number = 0;
+  productDescriptions: ReadonlyMap<string, string> = new Map();
 
   accounts: Revenue_and_expense_definition[] = [];
   selected_account: Revenue_and_expense_definition | null = null;
@@ -67,6 +71,9 @@ export class MemberSalesComponent {
         this.selected_member = null;
         this.season = conf.season!;
         this.accounts = conf.revenue_and_expense_tree.revenues;
+        this.productDescriptions = new Map(
+          conf.revenue_and_expense_tree.revenues.map(product => [product.key, product.description] as const)
+        );
         this.ffbBaseReferences = this.memberService.buildFfbBaseReferences(licensees);
 
         await firstValueFrom(this.bookService.list_book_entries().pipe(take(1)));
@@ -140,12 +147,15 @@ export class MemberSalesComponent {
   memberSelected() {
     if (this.selected_member) {
       let full_name = this.memberService.full_name(this.selected_member);
-      this.achats_ventes = this.bookService.get_formated_buy_operations(full_name)
+      this.purchase_entries = this.bookService.get_member_purchase_statement(full_name, this.productDescriptions);
+      this.avoirs = this.bookService.find_assets(full_name);
     }
   }
 
   memberClear() {
     this.selected_member = null;
+    this.purchase_entries = [];
+    this.avoirs = 0;
     this.revenues = [];
   }
 

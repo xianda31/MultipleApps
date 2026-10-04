@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, Formatted_purchase, Item, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
+import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, PurchaseStatementEntry, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, filter, firstValueFrom, from, map, Observable, of, race, skipWhile, switchMap, tap, timer } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -320,49 +320,80 @@ export class BookService {
     );
   }
 
-  private format_data(revenues: Revenue[], expenses: Expense[]) : Formatted_purchase[] {
+  get_member_purchase_statement(
+    member_full_name: string,
+    productDescriptions: ReadonlyMap<string, string> = new Map(),
+  ): PurchaseStatementEntry[] {
+    if (!this._book_entries) return [];
 
-      let transform_key = (key: string): string => {    // solution provisoire
-        if (key === 'creance_in') {
-          return 'achat à crédit';
-        } else if (key === 'creance_out') {
-          return 'remboursement crédit';
-        } else if (key === 'avoir_in') {
-          return 'utilisation avoir';
-        } else if (key === 'avoir_out') {
-          return 'attribution avoir';
-        }
-        return key;
-      }
-  
-  
-      const achats = revenues.map((operation) => {
-        let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
-          let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'revenue';
-          return { type: type, description: (transform_key(key)), amount: value };
+    const statementClasses = [
+      TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
+      TRANSACTION_CLASS.REIMBURSEMENT,
+      TRANSACTION_CLASS.EXPENSE_FOR_MEMBER,
+    ];
+    const customerDetails: Record<CUSTOMER_ACCOUNT, { code: string, description: string, sign: 1 | -1 }> = {
+      [CUSTOMER_ACCOUNT.DEBT_debit]: { code: 'CRÉANCE', description: 'achat à crédit', sign: -1 },
+      [CUSTOMER_ACCOUNT.DEBT_credit]: { code: 'CRÉANCE', description: 'créance remboursée', sign: 1 },
+      [CUSTOMER_ACCOUNT.ASSET_debit]: { code: 'AVOIR', description: 'avoir utilisé', sign: -1 },
+      [CUSTOMER_ACCOUNT.ASSET_credit]: { code: 'AVOIR', description: 'avoir attribué', sign: 1 },
+    };
+
+    return this._book_entries
+      .filter(entry => statementClasses.includes(this.transactionService.transaction_class(entry.transaction_id)))
+      .sort((first, second) =>
+        first.date.localeCompare(second.date)
+        || (first.createdAt ?? '').localeCompare(second.createdAt ?? '')
+      )
+      .map(entry => {
+        const payerOperation = entry.operations.find(operation =>
+          (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0
+        ) ?? entry.operations[0];
+        const selectedMemberIsPayer = payerOperation?.member === member_full_name;
+        const relevantOperations = selectedMemberIsPayer
+          ? entry.operations
+          : entry.operations.filter(operation => operation.member === member_full_name);
+        const detailAmounts = relevantOperations
+          .flatMap(operation => Object.entries(operation.values).map(([key, amount]) => ({
+            key,
+            amount,
+            beneficiary: selectedMemberIsPayer && operation.member !== member_full_name
+              ? operation.member
+              : undefined,
+          })))
+          .reduce((amounts, detail) => {
+            const aggregationKey = `${detail.key}\u0000${detail.beneficiary ?? ''}`;
+            const current = amounts.get(aggregationKey);
+            amounts.set(aggregationKey, {
+              ...detail,
+              amount: (current?.amount ?? 0) + detail.amount,
+            });
+            return amounts;
+          }, new Map<string, { key: string, amount: number, beneficiary?: string }>());
+
+        const items = Array.from(detailAmounts.values(), ({ key, amount, beneficiary }) => {
+          const customerDetail = customerDetails[key as CUSTOMER_ACCOUNT];
+          return {
+            key,
+            code: customerDetail?.code ?? key,
+            description: customerDetail?.description ?? productDescriptions.get(key) ?? key,
+            amount: amount * (customerDetail?.sign ?? 1),
+            ...(beneficiary ? { beneficiary } : {}),
+          };
         });
-        return { date: operation.date, items: items };
-      });
-  
-  
-      const ventes = expenses.map((operation) => {
-        let items: Item[] = Object.entries(operation.values).map(([key, value]: [string, number]) => {
-          let type: Item["type"] = (key.startsWith('creance') || key.startsWith('avoir')) ? 'bancaire' : 'expense';
-          return { type: type, description: (transform_key(key)), amount: value };
-        });
-        return { date: operation.date, items: items };
-      });
-  
-      return [...achats, ...ventes].sort((b, a) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }
-    
+        const transactionAmount = this.get_total_amount(entry);
 
-  get_formated_buy_operations(member_full_name: string): Formatted_purchase[] {
-    let revenues = this.get_revenues_from_members().filter((revenue) => revenue.member === member_full_name);
-    let expenses = this.get_expenses_for_members().filter((expense) => expense.member === member_full_name);
-
-    return this.format_data(revenues,expenses)
-
+        return {
+          id: entry.id,
+          date: entry.date,
+          transaction: this.transactionService.get_entry_label(entry),
+          amount: transactionAmount === 0 ? 0 : transactionAmount,
+          spentAmount: items
+            .filter(item => !Object.values(CUSTOMER_ACCOUNT).includes(item.key as CUSTOMER_ACCOUNT))
+            .reduce((total, item) => total + item.amount, 0),
+          items,
+        };
+      })
+        .filter(entry => entry.items.length > 0);
   }
 
   private is_opening_entry(bookEntry: BookEntry): boolean {

@@ -1,0 +1,14 @@
+:host {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem 1.1rem;
+	font-size: 0.86rem;
+}
+
+strong {
+	color: var(--bs-body-color);
+}
+
+.assets {
+	color: #495057;
+}

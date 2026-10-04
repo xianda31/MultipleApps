@@ -162,17 +162,19 @@ export interface BookEntry {
 }
 
 
-// interface utilitaire de formatage des revenue - expenses d'un adhérent
-
-export interface Item {
-  type: 'revenue' | 'expense' | 'bancaire';
-  description: string;
-  amount: number;
-}
-
-export interface Formatted_purchase {
+export interface PurchaseStatementEntry {
+  id: string;
   date: string;
-  items: Item[];
+  transaction: string;
+  amount: number;
+  spentAmount: number;
+  items: Array<{
+    key: string;
+    code: string;
+    description: string;
+    amount: number;
+    beneficiary?: string;
+  }>;
 }
 
 

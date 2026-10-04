@@ -1,0 +1,8 @@
+<span><strong>{{entries.length}}</strong> opération(s)</span>
+<span>Dépensé <strong>{{totalSpent | currency:'EUR':'symbol':'1.2-2'}}</strong></span>
+@if (assets > 0) {
+<span class="assets">
+    <i class="bi bi-wallet2" aria-hidden="true"></i>
+    Avoir <strong>{{assets | currency:'EUR':'symbol':'1.2-2'}}</strong>
+</span>
+}

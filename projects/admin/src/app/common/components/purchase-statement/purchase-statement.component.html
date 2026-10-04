@@ -1,0 +1,54 @@
+@if (entries.length > 0) {
+  <div class="purchase-heading" aria-hidden="true">
+    <span>Date</span>
+    <span>Transaction</span>
+    <span>Débit</span>
+    <span>Crédit</span>
+    <span>Détail</span>
+  </div>
+  <section class="purchase-list" aria-label="Achats de la saison">
+    @for (entry of entries; track entry.id) {
+      <article class="purchase-row">
+        <time [attr.datetime]="entry.date" class="purchase-date">
+          {{entry.date | date:'dd/MM/yy':'':'fr-FR'}}
+        </time>
+        <div class="purchase-transaction" [title]="entry.transaction">{{entry.transaction}}</div>
+        <div class="purchase-total purchase-total--debit">
+          @if (entry.amount < 0) {
+            <span class="purchase-total-label">Débit</span>
+            {{-entry.amount | currency:'EUR':'symbol':'1.2-2'}}
+          }
+        </div>
+        <div class="purchase-total purchase-total--credit">
+          @if (entry.amount > 0) {
+            <span class="purchase-total-label">Crédit</span>
+            {{entry.amount | currency:'EUR':'symbol':'1.2-2'}}
+          }
+        </div>
+        <div class="purchase-items">
+          @for (item of entry.items; track item.key + ':' + (item.beneficiary ?? '')) {
+            <div class="purchase-item" [class.purchase-item--beneficiary]="item.beneficiary">
+              <strong class="product-code">{{item.code}}</strong>
+              <span class="product-amount">
+                {{item.amount | currency:'EUR':'symbol':'1.2-2'}}
+              </span>
+              <span class="product-description">
+                @if (item.description !== item.code) {
+                  {{item.description}}
+                }
+                @if (item.beneficiary) {
+                  <span class="product-beneficiary">· pour {{item.beneficiary}}</span>
+                }
+              </span>
+            </div>
+          }
+        </div>
+      </article>
+    }
+  </section>
+} @else {
+  <div class="purchases-empty">
+    <i class="bi bi-cart" aria-hidden="true"></i>
+    <span>{{emptyMessage}}</span>
+  </div>
+}

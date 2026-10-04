@@ -1,6 +1,7 @@
 import { firstValueFrom, of } from 'rxjs';
 
 import { BALANCE_ACCOUNT, BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
+import { TRANSACTION_CLASS } from '../../common/interfaces/transaction.definition';
 import { BookService } from './book.service';
 
 describe('BookService', () => {
@@ -13,7 +14,11 @@ describe('BookService', () => {
         assert_season_initialization_allowed: () => undefined,
       } as any,
       { showInfo: () => undefined } as any,
-      { get_transaction: () => ({ revenue_account_to_show: true, ...transactionOverrides }) } as any,
+      {
+        get_transaction: () => ({ revenue_account_to_show: true, ...transactionOverrides }),
+        get_entry_label: () => 'virement annoncé',
+        transaction_class: () => transactionOverrides['class'],
+      } as any,
       dbHandler as any,
       { logged_member$: of(null) } as any,
     );
@@ -111,6 +116,104 @@ describe('BookService', () => {
     expect(service.get_bank_movements_amount()).toBe(50);
     expect(service.get_clients_debts_value()).toBe(0);
     expect(service.get_unpointed_transfer_settlements()).toEqual([unpointedSettlement]);
+  });
+
+  it('builds a member purchase statement from source entries', () => {
+    const service = createService({ class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER });
+    const purchase: BookEntry = {
+      id: 'purchase-1',
+      season: '2026/2027',
+      date: '2026-10-03',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+      amounts: {},
+      operations: [
+        {
+          label: 'adhésion',
+          member: 'TEST Jean',
+          values: { ADH: 40, [CUSTOMER_ACCOUNT.DEBT_debit]: 40 },
+        },
+        {
+          label: 'complément',
+          member: 'TEST Jean',
+          values: { ADH: 10, CAR: 30 },
+        },
+        {
+          label: 'autre adhérent',
+          member: 'AUTRE Marie',
+          values: { ADH: 35 },
+        },
+      ],
+    };
+    (service as any)._book_entries = [purchase];
+
+    expect(service.get_member_purchase_statement('TEST Jean', new Map([['ADH', 'Adhésion au club']]))).toEqual([{
+      id: 'purchase-1',
+      date: '2026-10-03',
+      transaction: 'virement annoncé',
+      amount: 0,
+      spentAmount: 115,
+      items: [
+        { key: 'ADH', code: 'ADH', description: 'Adhésion au club', amount: 50 },
+        { key: CUSTOMER_ACCOUNT.DEBT_debit, code: 'CRÉANCE', description: 'achat à crédit', amount: -40 },
+        { key: 'CAR', code: 'CAR', description: 'CAR', amount: 30 },
+        { key: 'ADH', code: 'ADH', description: 'Adhésion au club', amount: 35, beneficiary: 'AUTRE Marie' },
+      ],
+    }]);
+  });
+
+  it('includes a customer-account-only settlement without counting it as spending', () => {
+    const service = createService({ class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER });
+    const settlement: BookEntry = {
+      id: 'settlement-1',
+      season: '2026/2027',
+      date: '2026-09-23',
+      transaction_id: TRANSACTION_ID.achat_adhérent_en_espèces,
+      amounts: { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 10 },
+      operations: [{
+        label: 'vendu par Christian',
+        member: 'LAUVERGNAT Michèle',
+        values: { [CUSTOMER_ACCOUNT.DEBT_credit]: 30, [CUSTOMER_ACCOUNT.ASSET_debit]: 20 },
+      }],
+    };
+    (service as any)._book_entries = [settlement];
+
+    expect(service.get_member_purchase_statement('LAUVERGNAT Michèle')).toEqual([{
+      id: 'settlement-1',
+      date: '2026-09-23',
+      transaction: 'virement annoncé',
+      amount: 10,
+      spentAmount: 0,
+      items: [
+        { key: CUSTOMER_ACCOUNT.DEBT_credit, code: 'CRÉANCE', description: 'créance remboursée', amount: 30 },
+        { key: CUSTOMER_ACCOUNT.ASSET_debit, code: 'AVOIR', description: 'avoir utilisé', amount: -20 },
+      ],
+    }]);
+  });
+
+  it('sorts same-day entries by creation time', () => {
+    const service = createService({ class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER });
+    const purchase: BookEntry = {
+      id: 'purchase',
+      season: '2026/2027',
+      date: '2026-08-02',
+      createdAt: '2026-08-02T09:48:59.269Z',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+      amounts: { [FINANCIAL_ACCOUNT.STRIPE_debit]: 30 },
+      operations: [{ label: 'achat', member: 'TEST Jean', values: { CAR: 30 } }],
+    };
+    const cancellation: BookEntry = {
+      id: 'cancellation',
+      season: '2026/2027',
+      date: '2026-08-02',
+      createdAt: '2026-08-02T14:47:30.848Z',
+      transaction_id: TRANSACTION_ID.annulation_paiement_carte_adhérent,
+      amounts: { [FINANCIAL_ACCOUNT.STRIPE_credit]: 30 },
+      operations: [{ label: 'annulation', member: 'TEST Jean', values: { CAR: -30 } }],
+    };
+    (service as any)._book_entries = [cancellation, purchase];
+
+    expect(service.get_member_purchase_statement('TEST Jean').map(entry => entry.id))
+      .toEqual(['purchase', 'cancellation']);
   });
 
   it('returns no unpointed transfer while entries are still loading', () => {
