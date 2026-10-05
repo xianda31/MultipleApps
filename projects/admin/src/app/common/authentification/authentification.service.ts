@@ -1,12 +1,13 @@
 
 import { Injectable } from '@angular/core';
-import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes, resendSignUpCode } from 'aws-amplify/auth';
+import { confirmSignUp, signIn, signUp, signOut, AuthError, SignInInput, getCurrentUser, SignUpOutput, resetPassword, confirmResetPassword, fetchUserAttributes, resendSignUpCode, fetchAuthSession } from 'aws-amplify/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuthEvent, Process_flow } from './authentification_interface';
 import { Member } from '../interfaces/member.interface';
 import { MembersService } from '../services/members.service';
 import { ToastService } from '../services/toast.service';
 import { AssistanceRequestService } from '../services/assistance-request.service';
+import { normalizeUniqueEmails } from './member-lookup-diagnostics';
 
 
 
@@ -61,14 +62,9 @@ export class AuthentificationService {
   }
 
   private async resolveMemberFromEmails(...emails: Array<string | undefined>): Promise<Member | null> {
-    const lookupFailures: Array<{ email: string; message: string }> = [];
+    const lookupFailures: Array<{ email: string; message: string; technicalDetails?: unknown }> = [];
 
-    for (const candidate of emails) {
-      const normalizedEmail = (candidate || '').trim().toLowerCase();
-      if (!normalizedEmail) {
-        continue;
-      }
-
+    for (const normalizedEmail of normalizeUniqueEmails(emails)) {
       try {
         const member = await this.memberService.searchMemberByEmail(normalizedEmail);
         if (member) {
@@ -78,6 +74,7 @@ export class AuthentificationService {
         lookupFailures.push({
           email: normalizedEmail,
           message: error?.message || 'unknown lookup error',
+          technicalDetails: error?.details,
         });
       }
     }
@@ -90,6 +87,41 @@ export class AuthentificationService {
     }
 
     return null;
+  }
+
+  private async memberLookupDiagnostics(error: any): Promise<{
+    details: string;
+    context: {
+      accountAuthenticated: boolean;
+      tokenGroups: string[];
+      authMode?: string;
+      errorCategory?: string;
+      memberLookupOutcome: string;
+    };
+  }> {
+    let tokenGroups: string[] = [];
+    try {
+      const session = await fetchAuthSession();
+      const rawGroups = session.tokens?.accessToken?.payload['cognito:groups'];
+      tokenGroups = Array.isArray(rawGroups)
+        ? rawGroups.map(String)
+        : typeof rawGroups === 'string' ? [rawGroups] : [];
+    } catch {
+      tokenGroups = [];
+    }
+
+    const lookups = Array.isArray(error?.details) ? error.details : [];
+    const firstTechnical = lookups.find((lookup: any) => lookup?.technicalDetails)?.technicalDetails;
+    return {
+      details: JSON.stringify({ lookupAttempts: lookups.length, lookups }),
+      context: {
+        accountAuthenticated: true,
+        tokenGroups,
+        authMode: firstTechnical?.authMode,
+        errorCategory: firstTechnical?.category,
+        memberLookupOutcome: 'indetermine - requete en echec',
+      },
+    };
   }
 
   async resendConfirmationCode(email: string): Promise<void> {
@@ -132,11 +164,13 @@ export class AuthentificationService {
         } catch (err: any) {
 
           if (err?.name === 'MemberLookupFailedException') {
-            this.assistanceRequestService.reportAuthError(
+            const diagnostic = await this.memberLookupDiagnostics(err);
+            await this.assistanceRequestService.reportAuthError(
               email,
               'Echec technique de recherche membre',
-              `lookupDetails=${JSON.stringify(err?.details || [])}`,
+              diagnostic.details,
               {
+                ...diagnostic.context,
                 stage: 'signIn/member-lookup-failed',
                 loginId: email,
                 recoveryAttempted: false,
@@ -203,11 +237,13 @@ export class AuthentificationService {
                 return;
               } catch (retryErr: any) {
                 if (retryErr?.name === 'MemberLookupFailedException') {
-                  this.assistanceRequestService.reportAuthError(
+                  const diagnostic = await this.memberLookupDiagnostics(retryErr);
+                  await this.assistanceRequestService.reportAuthError(
                     email,
                     'Echec technique de recherche membre apres recuperation de session',
-                    `recoveryLoginId=${recoveryLoginId || 'absent'}, lookupDetails=${JSON.stringify(retryErr?.details || [])}`,
+                    diagnostic.details,
                     {
+                      ...diagnostic.context,
                       stage: 'UserAlreadyAuthenticatedException/recovery/member-lookup-failed',
                       loginId: recoveryLoginId || email,
                       recoveryAttempted: true,

@@ -6,13 +6,27 @@ import { ToastService } from './toast.service';
 import { environment } from '../../../environments/environment';
 import type { BuildInfo } from '../../../environments/build-info.interface';
 
+export interface AuthReportContext {
+  stage?: string;
+  memberId?: string;
+  loginId?: string;
+  recoveryAttempted?: boolean;
+  retryAttempted?: boolean;
+  errorName?: string;
+  source?: string;
+  accountAuthenticated?: boolean;
+  tokenGroups?: string[];
+  authMode?: string;
+  errorCategory?: string;
+  memberLookupOutcome?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AssistanceRequestService {
   _requests !: AssistanceRequest[];
   _request$: BehaviorSubject<AssistanceRequest[]> = new BehaviorSubject(this._requests);
 
-  private readonly AUTH_REPORT_SCHEMA_VERSION = '2';
+  private readonly AUTH_REPORT_SCHEMA_VERSION = '3';
   private readonly AUTH_REPORT_DEDUP_WINDOW_MS = 30 * 60 * 1000;
   private readonly AUTH_REPORT_STORAGE_PREFIX = 'auth-assistance-report:';
   private readonly inFlightAuthReports = new Map<string, Promise<void>>();
@@ -29,15 +43,7 @@ export class AssistanceRequestService {
     email: string,
     summary: string,
     errorDetails: string,
-    context?: {
-      stage?: string;
-      memberId?: string;
-      loginId?: string;
-      recoveryAttempted?: boolean;
-      retryAttempted?: boolean;
-      errorName?: string;
-      source?: string;
-    }
+    context?: AuthReportContext
   ) {
     try {
       const nowIso = new Date().toISOString();
@@ -79,15 +85,7 @@ export class AssistanceRequestService {
     stage: string;
     fingerprint: string;
     nowIso: string;
-    context?: {
-      stage?: string;
-      memberId?: string;
-      loginId?: string;
-      recoveryAttempted?: boolean;
-      retryAttempted?: boolean;
-      errorName?: string;
-      source?: string;
-    };
+    context?: AuthReportContext;
   }): Promise<void> {
     const { safeEmail, summary, errorDetails, stage, fingerprint, nowIso, context } = params;
 
@@ -107,6 +105,11 @@ export class AssistanceRequestService {
       `loginId: ${context?.loginId || 'absent'}`,
       `Recovery tentee: ${context?.recoveryAttempted ? 'oui' : 'non'}`,
       `Retry tente: ${context?.retryAttempted ? 'oui' : 'non'}`,
+      `Compte Cognito authentifie: ${context?.accountAuthenticated ? 'oui' : 'non ou indetermine'}`,
+      `Groupes du jeton: ${context?.tokenGroups?.length ? context.tokenGroups.join(', ') : 'aucun ou indisponible'}`,
+      `Mode API: ${context?.authMode || 'indetermine'}`,
+      `Categorie: ${context?.errorCategory || 'indeterminee'}`,
+      `Resultat recherche membre: ${context?.memberLookupOutcome || 'indetermine'}`,
       `Nom erreur: ${context?.errorName || 'non fourni'}`,
       `Source: ${context?.source || 'authentification.service'}`,
       `Fingerprint: ${fingerprint}`,

@@ -13,6 +13,7 @@ import { Game, GameCheckIn, GameFeeConfiguration, Game_input } from '../../back/
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
 import { MailingList, MailingListInput } from '../../back/mailing/mailing-list.interface';
+import { classifyMemberLookupError, sanitizeGraphqlErrors } from '../authentification/member-lookup-diagnostics';
 
 @Injectable({
   providedIn: 'root'
@@ -365,15 +366,20 @@ export class DBhandler {
     
     let nextToken: string | null | undefined = undefined;
     do {
-      const page: any = await client.models.Member.list({
-        filter: { email: { eq: normalizedEmail } },
-        limit: 300,
-        nextToken: nextToken || undefined,
-      } as any);
+      let page: any;
+      try {
+        page = await client.models.Member.list({
+          filter: { email: { eq: normalizedEmail } },
+          limit: 300,
+          nextToken: nextToken || undefined,
+        } as any);
+      } catch (error) {
+        throw this.createMemberLookupError('MemberSearchByEmailQueryFailed', authMode, 'filtered', error);
+      }
 
       if (page.errors) {
         console.error(page.errors);
-        throw new Error('MemberSearchByEmailQueryFailed');
+        throw this.createMemberLookupError('MemberSearchByEmailQueryFailed', authMode, 'filtered', page.errors);
       }
 
       if (Array.isArray(page.data) && page.data.length > 0) {
@@ -386,14 +392,19 @@ export class DBhandler {
     // Fallback pour données héritage non-normalisées : recherche case-insensitive
     nextToken = undefined;
     do {
-      const page: any = await client.models.Member.list({
-        limit: 300,
-        nextToken: nextToken || undefined,
-      } as any);
+      let page: any;
+      try {
+        page = await client.models.Member.list({
+          limit: 300,
+          nextToken: nextToken || undefined,
+        } as any);
+      } catch (error) {
+        throw this.createMemberLookupError('MemberSearchByEmailFallbackFailed', authMode, 'case-insensitive-fallback', error);
+      }
 
       if (page.errors) {
         console.error(page.errors);
-        throw new Error('MemberSearchByEmailFallbackFailed');
+        throw this.createMemberLookupError('MemberSearchByEmailFallbackFailed', authMode, 'case-insensitive-fallback', page.errors);
       }
 
       const member = ((page.data as unknown as Member[]) || []).find((m) =>
@@ -412,6 +423,24 @@ export class DBhandler {
     } while (nextToken);
 
     return null;
+  }
+
+  private createMemberLookupError(
+    name: string,
+    authMode: 'userPool' | 'identityPool',
+    phase: string,
+    cause: unknown,
+  ): Error {
+    const error: any = new Error(name);
+    error.name = name;
+    error.details = {
+      operation: 'Member.list',
+      phase,
+      authMode,
+      category: classifyMemberLookupError(cause),
+      errors: sanitizeGraphqlErrors(cause),
+    };
+    return error;
   }
 
 
