@@ -49,6 +49,7 @@ export interface UserInGroup {
   Attributes: { Name:UserAttributes, Value: string }[];
   Username: string;
   UserStatus: string;
+  Enabled?: boolean;
 
   // add other properties if needed
 }

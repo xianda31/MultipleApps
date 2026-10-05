@@ -1,6 +1,8 @@
 // @ts-nocheck - amplify backend file, compiled inadvertently by Angular due to Schema import chain
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { addUserToGroup } from './add-user-to-group/resource';
+import { deleteUser } from './delete-user/resource';
+import { listUsers } from './list-users/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
 import { processBookEntryActions } from '../functions/process-book-entry-actions/resource';
@@ -45,6 +47,27 @@ const schema = a.schema({
       allow.group(Group_names.Admin),
     ])
     .handler(a.handler.function(removeUserFromGroup))
+    .returns(a.json()),
+
+  deleteUser: a
+    .mutation()
+    .arguments({
+      userId: a.string().required(),
+    })
+    .authorization((allow) => [
+      allow.group(Group_names.System),
+      allow.group(Group_names.Admin),
+    ])
+    .handler(a.handler.function(deleteUser))
+    .returns(a.boolean()),
+
+  listUsers: a
+    .query()
+    .authorization((allow) => [
+      allow.group(Group_names.System),
+      allow.group(Group_names.Admin),
+    ])
+    .handler(a.handler.function(listUsers))
     .returns(a.json()),
 
   listUsersInGroup: a
