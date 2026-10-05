@@ -15,61 +15,68 @@
       <div class="alert alert-danger py-2 small">{{ deleteError }}</div>
     }
     <div class="table-responsive">
-      <table class="table table-hover align-middle">
+      <table class="table table-hover align-middle survey-table">
         <thead class="table-light">
           <tr>
             <th>Titre</th>
             <!-- <th>Saison</th> -->
-            <th>Clôture</th>
+            <th>
+              <span class="d-sm-none">Fin</span>
+              <span class="d-none d-sm-inline">Clôture</span>
+            </th>
             <th>État</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
           @for (s of surveys; track s.id) {
-            <tr>
-              <td>{{ s.title }}</td>
-              <!-- <td>{{ s.season }}</td> -->
-              <td>{{ s.closingDate | date:'dd/MM/yyyy' }}</td>
-              <td>
+          <tr>
+            <td class="survey-title">{{ s.title }}</td>
+            <td class="text-nowrap">
+              <span class="d-sm-none">{{ s.closingDate | date:'dd/MM' }}</span>
+              <span class="d-none d-sm-inline">{{ s.closingDate | date:'dd/MM/yyyy' }}</span>
+            </td>
+            <td>
+              <div class="d-inline-flex align-items-center gap-1 flex-nowrap">
                 <span class="badge bg-{{ statusClass[effectiveStatus(s)] }}">
                   {{ statusLabel[effectiveStatus(s)] }}
                 </span>
-              </td>
-              <td class="text-end">
-                <div class="d-inline-flex align-items-center gap-4">
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" title="Éditer" (click)="goEdit(s.id)">
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-outline-info" title="Résultats" (click)="goResultats(s.id)">
-                      <i class="bi bi-table"></i>
-                    </button>
-                    @if (canClose(s)) {
-                      <button class="btn btn-outline-warning" title="Clôturer" (click)="close(s)">
-                        <i class="bi bi-lock"></i>
-                      </button>
-                    }
-                    @if (canReopen(s)) {
-                      <button class="btn btn-outline-success" title="Rouvrir" (click)="reopen(s)">
-                        <i class="bi bi-unlock"></i>
-                      </button>
-                    }
-                  </div>
-                  <button type="button" class="btn btn-sm btn-outline-danger"
+                @if (canDelete(s)) {
+                  <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1"
                     (click)="deleteSurvey(s)"
-                    [disabled]="!canDelete(s) || deletingSurveyId !== null"
-                    [title]="canDelete(s) ? 'Supprimer définitivement' : 'Clôturez le sondage avant de le supprimer'"
-                    [attr.aria-label]="canDelete(s) ? 'Supprimer le sondage ' + s.title : 'Suppression verrouillée : clôturez le sondage ' + s.title">
+                    [disabled]="deletingSurveyId !== null"
+                    title="Supprimer définitivement"
+                    [attr.aria-label]="'Supprimer le sondage ' + s.title">
                     @if (deletingSurveyId === s.id) {
                       <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                     } @else {
                       <i class="bi bi-trash" aria-hidden="true"></i>
                     }
                   </button>
-                </div>
-              </td>
-            </tr>
+                }
+              </div>
+            </td>
+            <td class="text-end">
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" title="Éditer" (click)="goEdit(s.id)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-info" title="Résultats" (click)="goResultats(s.id)">
+                  <i class="bi bi-table"></i>
+                </button>
+                @if (canClose(s)) {
+                  <button class="btn btn-outline-warning" title="Clôturer" (click)="close(s)">
+                    <i class="bi bi-lock"></i>
+                  </button>
+                }
+                @if (canReopen(s)) {
+                  <button class="btn btn-outline-success" title="Rouvrir" (click)="reopen(s)">
+                    <i class="bi bi-unlock"></i>
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
           }
         </tbody>
       </table>

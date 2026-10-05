@@ -40,7 +40,8 @@ export class SondageService {
   async listSurveys(): Promise<SurveyItem[]> {
     const { data } = await this.m.Survey.list({});
     return (data ?? []).sort((a: any, b: any) =>
-      (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
+      (b.closingDate ?? '').localeCompare(a.closingDate ?? '')
+      || (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
     );
   }
 

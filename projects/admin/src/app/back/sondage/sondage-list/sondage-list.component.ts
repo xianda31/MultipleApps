@@ -13,6 +13,19 @@ type Survey = SurveyItem;
   standalone: true,
   imports: [CommonModule],
   templateUrl: './sondage-list.component.html',
+  styles: [`
+    .survey-title {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 575.98px) {
+      .survey-table > :not(caption) > * > * {
+        padding-right: 0.25rem;
+        padding-left: 0.25rem;
+      }
+    }
+  `],
 })
 export class SondageListComponent implements OnInit {
   private router = inject(Router);
