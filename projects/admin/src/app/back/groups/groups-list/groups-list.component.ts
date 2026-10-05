@@ -133,6 +133,20 @@ export class GroupsListComponent implements OnInit {
       : 'Fiche membre introuvable';
   }
 
+  isUnconfirmed(user: UserInGroup): boolean {
+    return user.UserStatus === 'UNCONFIRMED';
+  }
+
+  accountStatusLabel(user: UserInGroup, withoutGroup = false): string {
+    if (this.isUnconfirmed(user)) {
+      return 'Confirmation en attente';
+    }
+    if (user.Enabled === false) {
+      return 'Désactivé';
+    }
+    return withoutGroup ? 'Confirmé sans groupe' : 'Confirmé';
+  }
+
   sortByEmail(): void {
     this.emailSortDirection = this.emailSortDirection === 'asc' ? 'desc' : 'asc';
     const direction = this.emailSortDirection === 'asc' ? 1 : -1;
@@ -146,7 +160,7 @@ export class GroupsListComponent implements OnInit {
   }
 
   async deleteOrphanAccount(user: Profil): Promise<void> {
-    if (user.member) {
+    if (user.member && !this.isUnconfirmed(user)) {
       return;
     }
 
@@ -165,6 +179,33 @@ export class GroupsListComponent implements OnInit {
       this.toastService.showSuccess('Gestion des accès', `Compte ${email} supprimé`);
     } catch (error) {
       this.toastService.showError('Gestion des accès', `Suppression refusée: ${error}`);
+    }
+  }
+
+  async confirmUnconfirmedAccount(user: Profil): Promise<void> {
+    if (!this.isUnconfirmed(user)) {
+      return;
+    }
+
+    const email = this.userEmail(user);
+    const confirmed = window.confirm(
+      `Confirmer administrativement le compte ${email} et lui attribuer le droit Membre ?\n\nCette action contourne la vérification du code reçu par e-mail.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await this._confirmUser(user.Username);
+      user.UserStatus = 'CONFIRMED';
+      user.highest_group = Group_names.Member;
+      user.prev_group = Group_names.Member;
+      this.usersWithoutGroup = this.usersWithoutGroup.filter(item => item.Username !== user.Username);
+      this.usersArray = [...this.usersArray, user];
+      this.sortNominalUsers();
+      this.toastService.showSuccess('Gestion des accès', `Compte ${email} confirmé et activé comme Membre`);
+    } catch (error) {
+      this.toastService.showError('Gestion des accès', `Confirmation refusée: ${error}`);
     }
   }
 
@@ -246,6 +287,14 @@ export class GroupsListComponent implements OnInit {
   async _deleteUser(userId: string): Promise<void> {
     const client = generateClient<Schema>();
     const { errors } = await client.mutations.deleteUser({ userId });
+    if (errors) {
+      this._error_handling(errors);
+    }
+  }
+
+  async _confirmUser(userId: string): Promise<void> {
+    const client = generateClient<Schema>();
+    const { errors } = await client.mutations.confirmUser({ userId });
     if (errors) {
       this._error_handling(errors);
     }

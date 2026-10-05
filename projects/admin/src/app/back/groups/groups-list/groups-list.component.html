@@ -12,7 +12,7 @@
     @if (usersWithoutGroup.length > 0) {
         <div class="card border-warning shadow-sm mb-3">
             <div class="card-header bg-warning-subtle">
-                <h5 class="mb-0">Comptes sans groupe <span class="badge text-bg-warning">{{ usersWithoutGroup.length
+                <h5 class="mb-0">Comptes à régulariser <span class="badge text-bg-warning">{{ usersWithoutGroup.length
                         }}</span></h5>
             </div>
             <div class="card-body">
@@ -21,6 +21,7 @@
                         <tr>
                             <th scope="col">Nom</th>
                             <th scope="col">E-mail</th>
+                            <th scope="col">Statut</th>
                             <th scope="col">Droits</th>
                             <th scope="col" class="text-center">Actions</th>
                         </tr>
@@ -28,10 +29,21 @@
                     <tbody>
                         <tr *ngFor="let user of usersWithoutGroup; let user_index = index"
                             [class.table-danger]="!user.member"
+                            [class.table-warning]="user.member && isUnconfirmed(user)"
                             [attr.title]="!user.member ? 'Compte Cognito sans fiche membre associée' : null">
                             <td>{{ profileName(user) }}</td>
                             <td>{{ userEmail(user) }}</td>
                             <td>
+                                <span class="badge" [class.text-bg-warning]="isUnconfirmed(user)"
+                                    [class.text-bg-danger]="!isUnconfirmed(user) && user.Enabled === false"
+                                    [class.text-bg-secondary]="!isUnconfirmed(user) && user.Enabled !== false">
+                                    {{ accountStatusLabel(user, true) }}
+                                </span>
+                            </td>
+                            <td>
+                                @if (isUnconfirmed(user)) {
+                                <span class="text-muted">—</span>
+                                } @else {
                                 <div *ngFor="let group of groups; let group_index = index"
                                     class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" [value]="group"
@@ -43,13 +55,22 @@
                                         {{ group }}
                                     </label>
                                 </div>
+                                }
                             </td>
-                            <td class="text-center">
-                                @if (!user.member) {
+                            <td class="text-center text-nowrap">
+                                @if (isUnconfirmed(user)) {
+                                <button type="button" class="btn btn-sm btn-outline-success me-1"
+                                    (click)="confirmUnconfirmedAccount(user)"
+                                    title="Confirmer et activer comme Membre"
+                                    aria-label="Confirmer et activer comme Membre">
+                                    <i class="bi bi-person-check"></i>
+                                </button>
+                                }
+                                @if (!user.member || isUnconfirmed(user)) {
                                 <button type="button" class="btn btn-sm btn-outline-danger"
                                     (click)="deleteOrphanAccount(user)"
-                                    title="Supprimer définitivement ce compte"
-                                    aria-label="Supprimer définitivement ce compte">
+                                    title="Supprimer ce compte pour permettre une nouvelle création"
+                                    aria-label="Supprimer ce compte pour permettre une nouvelle création">
                                     <i class="bi bi-trash"></i>
                                 </button>
                                 }
@@ -76,6 +97,7 @@
                                         [class.bi-chevron-up]="emailSortDirection === 'desc'"></i>
                                 </button>
                             </th>
+                            <th scope="col">Statut</th>
                             <th scope="col">
                                 Droits
                                 <button type="button" class="btn btn-sm btn-link link-body-emphasis p-0 ms-1"
@@ -92,6 +114,13 @@
                             [attr.title]="!user.member ? 'Compte Cognito sans fiche membre associée' : null">
                             <td>{{ profileName(user) }}</td>
                             <td>{{ userEmail(user) }}</td>
+                            <td>
+                                <span class="badge" [class.text-bg-success]="user.Enabled !== false && !isUnconfirmed(user)"
+                                    [class.text-bg-warning]="isUnconfirmed(user)"
+                                    [class.text-bg-danger]="user.Enabled === false">
+                                    {{ accountStatusLabel(user) }}
+                                </span>
+                            </td>
                             <td>
                                 <div *ngFor="let group of groups ; let group_index = index"
                                     class="form-check form-check-inline">

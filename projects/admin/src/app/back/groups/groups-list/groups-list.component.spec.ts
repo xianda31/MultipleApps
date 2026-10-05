@@ -20,6 +20,13 @@ describe('GroupsListComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('labels Cognito account statuses explicitly', () => {
+    expect(component.accountStatusLabel({ UserStatus: 'CONFIRMED', Enabled: true } as any)).toBe('Confirmé');
+    expect(component.accountStatusLabel({ UserStatus: 'UNCONFIRMED', Enabled: true } as any)).toBe('Confirmation en attente');
+    expect(component.accountStatusLabel({ UserStatus: 'CONFIRMED', Enabled: false } as any)).toBe('Désactivé');
+    expect(component.accountStatusLabel({ UserStatus: 'CONFIRMED', Enabled: true } as any, true)).toBe('Confirmé sans groupe');
+  });
+
   it('sorts nominal users by email in both directions', () => {
     component.usersArray = [
       { Username: '2', Attributes: [{ Name: 'email' as any, Value: 'zoe@example.fr' }] },
@@ -73,5 +80,28 @@ describe('GroupsListComponent', () => {
     expect(component.usersWithoutGroup).toEqual([]);
     expect(component.usersArray).toEqual([]);
     expect(component.openAccountsCount).toBe(0);
+  });
+
+  it('confirms an unconfirmed account and activates the Member group', async () => {
+    const pending = {
+      Username: 'pending-1',
+      Attributes: [{ Name: 'email' as any, Value: 'pending@example.fr' }],
+      member: { lastname: 'DUPONT', firstname: 'Anne' },
+      highest_group: null,
+      prev_group: null,
+      UserStatus: 'UNCONFIRMED',
+      Enabled: true,
+    } as any;
+    component.usersWithoutGroup = [pending];
+    spyOn(window, 'confirm').and.returnValue(true);
+    spyOn(component, '_confirmUser').and.resolveTo();
+
+    await component.confirmUnconfirmedAccount(pending);
+
+    expect(component._confirmUser).toHaveBeenCalledWith('pending-1');
+    expect(pending.UserStatus).toBe('CONFIRMED');
+    expect(pending.highest_group).toBe('Membre');
+    expect(component.usersWithoutGroup).toEqual([]);
+    expect(component.usersArray).toContain(pending);
   });
 });
