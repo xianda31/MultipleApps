@@ -1,4 +1,4 @@
-import { paymentCartSummary, refundsForCharge, StripeRefundItem } from './stripe-reconciliation.component';
+import { canReconcilePayoutStatus, paymentCartSummary, refundsForCharge, StripeRefundItem } from './stripe-reconciliation.component';
 import { BookEntry, TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
 
 describe('Stripe payment cart summary', () => {
@@ -73,5 +73,15 @@ describe('Stripe payout refund matching', () => {
       bookEntryId: 'charge-entry',
       grossCents: 3000,
     }, refunds)).toEqual([]);
+  });
+});
+
+describe('Stripe payout reconciliation status', () => {
+  it('allows only paid payouts to be reconciled', () => {
+    expect(canReconcilePayoutStatus('paid')).toBeTrue();
+    expect(canReconcilePayoutStatus('pending')).toBeFalse();
+    expect(canReconcilePayoutStatus('in_transit')).toBeFalse();
+    expect(canReconcilePayoutStatus('canceled')).toBeFalse();
+    expect(canReconcilePayoutStatus('failed')).toBeFalse();
   });
 });

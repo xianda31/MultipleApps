@@ -45,6 +45,10 @@ export function paymentCartSummary(bookEntry: BookEntry, source?: string | null)
   return `${channel}${summary ? ` — ${summary}` : ''}`;
 }
 
+export function canReconcilePayoutStatus(status: string): boolean {
+  return status === 'paid';
+}
+
 interface StripePayout {
   id: string;
   amountCents: number;
@@ -154,6 +158,14 @@ export class StripeReconciliationComponent {
 
   get filteredPayouts(): StripePayout[] {
     return this.availablePayouts.filter(p => !this.reconciledPayoutIds.has(p.id));
+  }
+
+  get paidPayouts(): StripePayout[] {
+    return this.filteredPayouts.filter(payout => canReconcilePayoutStatus(payout.status));
+  }
+
+  get otherPayouts(): StripePayout[] {
+    return this.filteredPayouts.filter(payout => !canReconcilePayoutStatus(payout.status));
   }
 
   get isProductionReadOnlyMode(): boolean {
@@ -289,6 +301,10 @@ export class StripeReconciliationComponent {
   }
 
   async selectPayout(payout: StripePayout): Promise<void> {
+    if (!canReconcilePayoutStatus(payout.status)) {
+      this.toastService.showWarning('Payout non rapprochable', 'Seul un payout viré peut être comptabilisé en banque.');
+      return;
+    }
     this.manualEntryMode = false;
     this.payoutId = payout.id;
     this.payoutDate = payout.arrivalDate;
@@ -357,6 +373,7 @@ export class StripeReconciliationComponent {
     if (status === 'in_transit') return 'En transit';
     if (status === 'pending') return 'En attente';
     if (status === 'canceled') return 'Annulé';
+    if (status === 'failed') return 'Échoué';
     return status;
   }
 
@@ -733,6 +750,10 @@ export class StripeReconciliationComponent {
     }
     if (!this.payoutId.trim()) {
       this.toastService.showWarning('Payout', 'Identifiant payout Stripe requis');
+      return;
+    }
+    if (!this.manualEntryMode && (!this.selectedPayout || !canReconcilePayoutStatus(this.selectedPayout.status))) {
+      this.toastService.showWarning('Payout non rapprochable', 'Seul un payout viré peut être comptabilisé en banque.');
       return;
     }
     if (this.selectedLines.length === 0) {

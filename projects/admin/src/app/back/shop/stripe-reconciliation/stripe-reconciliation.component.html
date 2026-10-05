@@ -166,16 +166,8 @@
 
   <!-- Section 1: Virements Stripe disponibles -->
   <div class="reconciliation-section mt-2 mb-3">
-    <div class="reconciliation-section-title d-flex justify-content-between align-items-center">
-      <span class="fw-semibold">Virements Stripe (30 derniers jours)</span>
-      <small class="text-muted ms-2 fw-normal fst-italic">Cliquez sur une ligne pour sélectionner les paiements</small>
-      <button class="btn btn-sm btn-outline-secondary" (click)="loadStripePayouts()" [disabled]="loadingPayouts">
-        @if (loadingPayouts) {
-          <span class="spinner-border spinner-border-sm"></span>
-        } @else {
-          <i class="bi bi-arrow-clockwise"></i>
-        }
-      </button>
+    <div class="reconciliation-section-title">
+      <span class="fw-semibold">Payouts virés à rapprocher (30 derniers jours)</span>
     </div>
     <div class="card-body p-0">
       @if (loadingPayouts) {
@@ -184,44 +176,46 @@
           <span class="text-muted small">Chargement des virements…</span>
         </div>
       } @else if (payoutsError) {
-        <div class="alert alert-warning m-2 mb-2 small">
-          <i class="bi bi-exclamation-triangle me-1"></i>{{ payoutsError }}
+        <div class="alert alert-warning m-2 mb-2 small d-flex align-items-center justify-content-between gap-2">
+          <span><i class="bi bi-exclamation-triangle me-1"></i>{{ payoutsError }}</span>
+          <button type="button" class="btn btn-sm btn-outline-warning flex-shrink-0" (click)="loadStripePayouts()">
+            Réessayer
+          </button>
         </div>
       } @else if (availablePayouts.length === 0) {
         <p class="text-muted small p-3 mb-0">Aucun virement Stripe dans les 30 derniers jours.</p>
-      } @else if (filteredPayouts.length === 0) {
+      } @else if (paidPayouts.length === 0) {
         <div class="alert alert-success m-2 mb-2 small">
-          <i class="bi bi-check-circle me-1"></i>Tous les virements des 30 derniers jours sont réconciliés.
+          <i class="bi bi-check-circle me-1"></i>Aucun payout viré à rapprocher.
         </div>
       } @else {
-        <table class="table table-sm table-hover mb-0">
+        <table class="table table-sm table-hover mb-0" style="table-layout:fixed">
+          <colgroup>
+            <col style="width:36px">
+            <col style="width:15%">
+            <col>
+            <col style="width:110px">
+          </colgroup>
           <thead class="table-light">
             <tr>
+              <th aria-hidden="true"></th>
               <th>Date virement</th>
-              <th class="text-end">Montant</th>
-              <th>Statut</th>
               <th>ID Stripe</th>
-              <th></th>
+              <th class="text-end ps-2">Montant</th>
             </tr>
           </thead>
           <tbody>
-            @for (p of filteredPayouts; track p.id) {
+            @for (p of paidPayouts; track p.id) {
               <tr [class.table-primary]="payoutId === p.id" style="cursor:pointer" (click)="selectPayout(p)">
+                <td aria-hidden="true"></td>
                 <td>{{ formatDate(p.arrivalDate) }}</td>
-                <td class="text-end fw-semibold">{{ formatAmount(p.amountCents) }}</td>
-                <td>
-                  <span class="badge" [class]="payoutStatusClass(p.status) === 'text-success' ? 'bg-success' : payoutStatusClass(p.status) === 'text-warning' ? 'bg-warning text-dark' : 'bg-secondary'">
-                    {{ payoutStatusLabel(p.status) }}
-                  </span>
-                </td>
-                <td><small class="font-monospace text-muted">{{ p.id }}</small></td>
-                <td>
+                <td class="text-nowrap">
+                  <small class="font-monospace text-muted">{{ p.id }}</small>
                   @if (payoutId === p.id && lookingUp) {
-                    <span class="spinner-border spinner-border-sm text-primary"></span>
-                  } @else {
-                    <i class="bi bi-arrow-right-circle text-primary"></i>
+                    <span class="spinner-border spinner-border-sm text-primary ms-2"></span>
                   }
                 </td>
+                <td class="text-end fw-semibold ps-2">{{ formatAmount(p.amountCents) }}</td>
               </tr>
             }
           </tbody>
@@ -230,15 +224,41 @@
     </div>
   </div>
 
-  @if (!payoutId && !manualEntryMode) {
-    <div class="border border-secondary-subtle py-3 px-3 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <div>
-        <div class="fw-semibold">Sélectionnez un virement Stripe à rapprocher</div>
-        <small class="text-muted">Ses paiements, frais et remboursements seront identifiés automatiquement.</small>
+  @if (!loadingPayouts && !payoutsError && otherPayouts.length > 0) {
+    <div class="reconciliation-section mb-3">
+      <div class="reconciliation-section-title">
+        <span class="fw-semibold">Autres payouts Stripe (30 derniers jours)</span>
       </div>
-      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="startManualReconciliation()">
-        Rapprochement manuel exceptionnel
-      </button>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date prévue</th>
+              <th class="text-end">Montant</th>
+              <th>Statut</th>
+              <th>ID Stripe</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of otherPayouts; track p.id) {
+              <tr>
+                <td>{{ formatDate(p.arrivalDate) }}</td>
+                <td class="text-end fw-semibold">{{ formatAmount(p.amountCents) }}</td>
+                <td>
+                  <span class="badge"
+                        [class.bg-warning]="p.status === 'pending' || p.status === 'in_transit'"
+                        [class.text-dark]="p.status === 'pending' || p.status === 'in_transit'"
+                        [class.bg-danger]="p.status === 'canceled' || p.status === 'failed'"
+                        [class.bg-secondary]="p.status !== 'pending' && p.status !== 'in_transit' && p.status !== 'canceled' && p.status !== 'failed'">
+                    {{ payoutStatusLabel(p.status) }}
+                  </span>
+                </td>
+                <td class="text-nowrap"><small class="font-monospace text-muted">{{ p.id }}</small></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   }
 
@@ -299,40 +319,6 @@
             </div>
           }
         }
-      </div>
-    </div>
-  }
-
-  @if (manualEntryMode) {
-    <div class="border border-warning p-3 mb-3">
-      <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
-        <div>
-          <div class="fw-semibold">Rapprochement manuel exceptionnel</div>
-          <small class="text-muted">À utiliser uniquement lorsqu’un payout ne peut pas être chargé depuis Stripe.</small>
-        </div>
-        <button type="button" class="btn-close" aria-label="Fermer" (click)="cancelManualReconciliation()"></button>
-      </div>
-      <div class="row g-2">
-        <div class="col-lg">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text">Payout</span>
-            <input type="text" class="form-control font-monospace" placeholder="po_…" [(ngModel)]="payoutId">
-            <button class="btn btn-outline-primary" (click)="lookupPayout()" [disabled]="lookingUp || !payoutId.trim()">
-              @if (lookingUp) { <span class="spinner-border spinner-border-sm"></span> }
-              @else { <i class="bi bi-search"></i> }
-            </button>
-          </div>
-        </div>
-        <div class="col-sm-auto">
-          <input type="date" class="form-control form-control-sm" [(ngModel)]="payoutDate" aria-label="Date du virement">
-        </div>
-        <div class="col-sm-4 col-lg-3">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text">Net</span>
-            <input type="number" class="form-control" step="0.01" min="0" [(ngModel)]="netBancaire">
-            <span class="input-group-text">€</span>
-          </div>
-        </div>
       </div>
     </div>
   }
@@ -426,9 +412,9 @@
       <div class="alert alert-info">
         <i class="bi bi-info-circle me-1"></i>Aucun paiement comptable en attente ne correspond à ce payout.
       </div>
-    } @else if (filteredPayouts.length === 0) {
+    } @else if (paidPayouts.length === 0) {
       <div class="alert alert-success">
-        <i class="bi bi-check-circle me-1"></i>Tous les virements et paiements Stripe sont rapprochés.
+        <i class="bi bi-check-circle me-1"></i>Aucun payout viré à rapprocher.
       </div>
     } @else {
       <div class="border border-secondary-subtle p-3 text-muted">
@@ -438,10 +424,17 @@
   }
 
   @if (!loadingLines && lines.length > 0) {
-    <table class="table table-sm table-hover align-middle mb-0">
+    <table class="table table-sm table-hover align-middle mb-0" style="table-layout:fixed">
+      <colgroup>
+        <col style="width:36px">
+        <col style="width:15%">
+        <col style="width:28%">
+        <col>
+        <col style="width:110px">
+      </colgroup>
       <thead class="table-light">
         <tr>
-          <th style="width:36px">
+          <th>
             <input type="checkbox" class="form-check-input"
                    [checked]="allSelected"
                    [disabled]="!payoutId"
@@ -470,7 +463,7 @@
             <td>{{ line.buyerName }}</td>
             <td>
               <small class="text-muted">{{ line.cartSummary }}</small>
-              @if (line.stripeTag) {
+              @if (manualEntryMode && line.stripeTag) {
                 <button type="button"
                         class="btn btn-sm btn-link text-secondary p-0 ms-1"
                         (click)="copyStripeTag(line.stripeTag)"
@@ -502,7 +495,6 @@
           <tr>
             <td colspan="4" class="text-end">{{ selectedLines.length }} sélectionné(s)</td>
             <td class="text-end">{{ formatAmount(selectedGrossCents) }}</td>
-            <td></td>
           </tr>
         </tfoot>
       }
@@ -584,6 +576,57 @@
           {{ isProductionReadOnlyMode ? 'Rapprochement désactivé en lecture seule' : 'Comptabiliser et rapprocher ' + selectedLines.length + ' paiement(s)' }}
           @if (netBancaire) { · {{ formatAmount((netBancaire * 100)) }} }
         </button>
+      </div>
+    </div>
+  }
+
+  <!-- Section 4: Procédure manuelle exceptionnelle -->
+  @if (!payoutId && !manualEntryMode) {
+    <details class="reconciliation-section mt-4 mb-3">
+      <summary class="reconciliation-section-title text-muted">
+        Rapprochement manuel exceptionnel
+      </summary>
+      <div class="p-3 border-top">
+        <div class="alert alert-warning py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          Procédure anormale à réserver au cas où un payout ne peut pas être chargé depuis Stripe.
+          La sélection des paiements et les montants devront être vérifiés manuellement.
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-warning" (click)="startManualReconciliation()">
+          <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Démarrer le rapprochement manuel
+        </button>
+      </div>
+    </details>
+  } @else if (manualEntryMode) {
+    <div class="reconciliation-section border border-warning p-3 mt-4 mb-3">
+      <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+        <div>
+          <div class="fw-semibold">Rapprochement manuel exceptionnel</div>
+          <small class="text-muted">Vérifiez chaque paiement et chaque montant avant validation.</small>
+        </div>
+        <button type="button" class="btn-close" aria-label="Fermer" (click)="cancelManualReconciliation()"></button>
+      </div>
+      <div class="row g-2">
+        <div class="col-lg">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Payout</span>
+            <input type="text" class="form-control font-monospace" placeholder="po_…" [(ngModel)]="payoutId">
+            <button class="btn btn-outline-primary" (click)="lookupPayout()" [disabled]="lookingUp || !payoutId.trim()">
+              @if (lookingUp) { <span class="spinner-border spinner-border-sm"></span> }
+              @else { <i class="bi bi-search"></i> }
+            </button>
+          </div>
+        </div>
+        <div class="col-sm-auto">
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="payoutDate" aria-label="Date du virement">
+        </div>
+        <div class="col-sm-4 col-lg-3">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Net</span>
+            <input type="number" class="form-control" step="0.01" min="0" [(ngModel)]="netBancaire">
+            <span class="input-group-text">€</span>
+          </div>
+        </div>
       </div>
     </div>
   }
