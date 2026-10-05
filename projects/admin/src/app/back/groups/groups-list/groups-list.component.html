@@ -15,7 +15,7 @@
                 <h5 class="mb-0">Comptes à régulariser <span class="badge text-bg-warning">{{ usersWithoutGroup.length
                         }}</span></h5>
             </div>
-            <div class="card-body">
+            <div class="card-body table-responsive">
                 <table class="table table-striped table-hover mb-0">
                     <thead>
                         <tr>
@@ -44,17 +44,13 @@
                                 @if (isUnconfirmed(user)) {
                                 <span class="text-muted">—</span>
                                 } @else {
-                                <div *ngFor="let group of groups; let group_index = index"
-                                    class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" [value]="group"
-                                        [(ngModel)]="user.highest_group" (ngModelChange)="updateUserGroup(user, group)"
-                                        [id]="'ungrouped-user' + user_index + '#' + group_index"
-                                        [name]="'ungrouped-group-radio-' + user_index">
-                                    <label class="form-check-label"
-                                        [for]="'ungrouped-user' + user_index + '#' + group_index">
-                                        {{ group }}
-                                    </label>
-                                </div>
+                                <select class="form-select form-select-sm rights-select"
+                                    [ngModel]="user.highest_group"
+                                    (ngModelChange)="updateUserGroup(user, $event)"
+                                    [attr.aria-label]="'Droits de ' + profileName(user)">
+                                    <option [ngValue]="null" disabled>Choisir…</option>
+                                    <option *ngFor="let group of groups" [ngValue]="group">{{ group }}</option>
+                                </select>
                                 }
                             </td>
                             <td class="text-center text-nowrap">
@@ -83,7 +79,7 @@
     }
 
         <div class="card shadow-sm mb-3">
-            <div class="card-body">
+            <div class="card-body table-responsive">
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
@@ -122,15 +118,12 @@
                                 </span>
                             </td>
                             <td>
-                                <div *ngFor="let group of groups ; let group_index = index"
-                                    class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" [value]="group"
-                                        [(ngModel)]="user.highest_group" (ngModelChange)="updateUserGroup(user,group)"
-                                        [id]="'user' + user_index +'#' + group_index"
-                                        [name]="'group-radio-' + user_index">
-                                    <label class="form-check-label" [for]="'user' + user_index +'#' + group_index">
-                                        {{group}}</label>
-                                </div>
+                                <select class="form-select form-select-sm rights-select"
+                                    [ngModel]="user.highest_group"
+                                    (ngModelChange)="updateUserGroup(user, $event)"
+                                    [attr.aria-label]="'Droits de ' + profileName(user)">
+                                    <option *ngFor="let group of groups" [ngValue]="group">{{ group }}</option>
+                                </select>
                             </td>
                             <td class="text-center">
                                 @if (!user.member) {
