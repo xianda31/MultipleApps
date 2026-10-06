@@ -2,7 +2,24 @@
   <div class="card">
     <div class="card-header">
       <div class="row justify-content-start align-items-center fs-5">
-        <div class="col-auto card-title me-4 d-flex align-items-center"> <span class="fw-bold">Répertoire Club</span>
+        <div class="col-auto card-title me-4 d-flex flex-wrap align-items-center">
+          <span class="fw-bold">Répertoire Club</span>
+          <span *ngIf="!loading" class="members-directory-summary">
+            <span class="members-directory-count members-directory-count-active">
+              <i class="bi bi-people-fill" aria-hidden="true"></i>
+              Actifs <strong>{{active_members_nbr}}</strong>
+            </span>
+            <span class="members-directory-count members-directory-count-archived">
+              <i class="bi bi-archive-fill" aria-hidden="true"></i>
+              Anciens <strong>{{archived_members_nbr}}</strong>
+            </span>
+            @if (banned_members_nbr > 0) {
+              <span class="members-directory-count members-directory-count-warning">
+                <i class="bi bi-person-fill-slash" aria-hidden="true"></i>
+                Bannis <strong>{{banned_members_nbr}}</strong>
+              </span>
+            }
+          </span>
           <ng-container *ngIf="loading">
             <div class="spinner-border text-primary ms-2 align-middle"
               style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
@@ -11,24 +28,126 @@
           </ng-container>
         </div>
         <ng-container *ngIf="!loading">
-          <div class="col-12 mt-1 members-stats-line">
-            <div class="d-flex flex-wrap gap-1">
-              <div class="card-title me-4">
-                <span class="small fw-bolder">Répertoire :</span>
-                {{active_members_nbr}} actifs · {{archived_members_nbr}} anciens
-                @if (banned_members_nbr > 0) {
-                  · {{banned_members_nbr}} bannis
-                }
-              </div>
-              <div class="card-title me-4">
-                <span class="small fw-bolder">FFB :</span>
-                {{ffb_adherents_nbr}} rattachés
-                ({{club_licensees_nbr}} licenciés · {{sympatisants_number}} sympathisants)
-              </div>
-              <div class="card-title me-4">
-                <span class="small fw-bolder">Adhésion au club :</span>
-                {{renewed_members_nbr}} payées · {{lost_members_nbr}} non payées
-              </div>
+          <div class="col-12 mt-2 members-stats-line">
+            <div class="members-stats-table-wrapper">
+              <table class="table table-sm table-bordered members-stats-table mb-1">
+                <colgroup>
+                  <col class="members-stats-label-column">
+                  <col class="members-stats-number-column">
+                  <col class="members-stats-number-column">
+                  <col class="members-stats-number-column">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col" class="members-stats-status-header">
+                      <span class="members-stats-active-title">Actifs</span>
+                    </th>
+                    <th scope="col" class="text-end">
+                      <span class="d-none d-sm-inline">Adhésion réglée</span>
+                      <span class="d-sm-none">Réglée</span>
+                    </th>
+                    <th scope="col" class="text-end">
+                      <span class="d-none d-sm-inline">Non renouvelée</span>
+                      <span class="d-sm-none">Non réglée</span>
+                    </th>
+                    <th scope="col" class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row" class="members-stats-child-row">Licenciés au club</th>
+                    <td class="text-end">
+                      @if (club_licensees_renewed_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-square" aria-hidden="true"></i>{{club_licensees_renewed_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end" [class.text-danger]="club_licensees_unrenewed_nbr > 0">
+                      @if (club_licensees_unrenewed_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-square" aria-hidden="true"></i>{{club_licensees_unrenewed_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end">
+                      @if (club_licensees_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-square" aria-hidden="true"></i>{{club_licensees_nbr}}</span>
+                      }
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row" class="members-stats-child-row">Sympathisants</th>
+                    <td class="text-end">
+                      @if (sympathisants_renewed_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-tencent-qq" aria-hidden="true"></i>{{sympathisants_renewed_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end" [class.text-danger]="sympathisants_unrenewed_nbr > 0">
+                      @if (sympathisants_unrenewed_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-tencent-qq" aria-hidden="true"></i>{{sympathisants_unrenewed_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end">
+                      @if (sympatisants_number > 0) {
+                      <span class="members-stat-value"><i class="bi bi-tencent-qq" aria-hidden="true"></i>{{sympatisants_number}}</span>
+                      }
+                    </td>
+                  </tr>
+                  <tr class="members-stats-subtotal">
+                    <th scope="row">Sous-total Licenciés</th>
+                    <td class="text-end">
+                      @if (ffb_renewed_members_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-check-fill" aria-hidden="true"></i>{{ffb_renewed_members_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end fw-semibold text-danger">
+                      @if (ffb_unrenewed_members_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-dash-fill" aria-hidden="true"></i>{{ffb_unrenewed_members_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end fw-semibold">
+                      @if (ffb_adherents_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-check-fill" aria-hidden="true"></i>{{ffb_adherents_nbr}}</span>
+                      }
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Non licenciés</th>
+                    <td class="text-end">
+                      @if (outside_ffb_renewed_members_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-heart" aria-hidden="true"></i>{{outside_ffb_renewed_members_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end">
+                      @if (outside_ffb_unrenewed_members_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-dash-fill" aria-hidden="true"></i>{{outside_ffb_unrenewed_members_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end">
+                      @if (active_members_nbr - ffb_adherents_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person" aria-hidden="true"></i>{{active_members_nbr - ffb_adherents_nbr}}</span>
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row">Total actifs</th>
+                    <td class="text-end fw-semibold">
+                      @if (renewed_members_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-heart" aria-hidden="true"></i>{{renewed_members_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end fw-semibold">
+                      @if (lost_members_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-person-dash-fill" aria-hidden="true"></i>{{lost_members_nbr}}</span>
+                      }
+                    </td>
+                    <td class="text-end fw-bold">
+                      @if (active_members_nbr > 0) {
+                      <span class="members-stat-value"><i class="bi bi-people-fill" aria-hidden="true"></i>{{active_members_nbr}}</span>
+                      }
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </div>
         </ng-container>

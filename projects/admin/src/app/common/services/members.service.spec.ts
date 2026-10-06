@@ -60,4 +60,18 @@ describe('MembersService', () => {
     expect(service.canLogin(banned)).toBeFalse();
     expect(service.canPurchase(banned)).toBeFalse();
   });
+
+  it('classifies a paid club member without an active license as unlicensed', () => {
+    const { service } = createService(new Subject<Member[]>());
+    spyOn(service, 'hasPaidMembership').and.returnValue(true);
+    const member = {
+      id: 'paid-unlicensed',
+      license_number: '00604521',
+      license_status: 'unregistered',
+      memberStatus: 'NON_ADHERENT',
+      person_id: 123,
+    } as Member;
+
+    expect(service.resolveMemberStatus(member)).toBe('NO_LICENSE');
+  });
 });

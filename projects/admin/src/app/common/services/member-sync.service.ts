@@ -206,7 +206,7 @@ export class MemberSyncService {
                     ...member,
                     license_status: LicenseStatus.UNREGISTERED,
                 };
-                updatedMember.memberStatus = this.membersService.resolveMemberStatus(updatedMember);
+                updatedMember.memberStatus = this.membersService.deriveMemberStatusFromData(updatedMember);
                 updates.push(
                     this.membersService.updateMember(updatedMember)
                 );

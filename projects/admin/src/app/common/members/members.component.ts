@@ -43,6 +43,14 @@ export class MembersComponent implements OnInit {
   lost_members_nbr: number = 0;
   active_members_nbr = 0;
   renewed_members_nbr = 0;
+  club_licensees_renewed_nbr = 0;
+  club_licensees_unrenewed_nbr = 0;
+  sympathisants_renewed_nbr = 0;
+  sympathisants_unrenewed_nbr = 0;
+  ffb_renewed_members_nbr = 0;
+  ffb_unrenewed_members_nbr = 0;
+  outside_ffb_renewed_members_nbr = 0;
+  outside_ffb_unrenewed_members_nbr = 0;
   archived_members_nbr = 0;
   banned_members_nbr = 0;
   new_player!: ClubMember;
@@ -64,8 +72,8 @@ export class MembersComponent implements OnInit {
     [MemberStatus.ADHERENT]: { label: 'vue FFB', iconClass: 'bi bi-person-check-fill' },
     [MemberStatus.CLUB_LICENSEE]: { label: 'adhérent licencié', iconClass: 'bi bi-person-square' },
     [MemberStatus.SYMPATHISANT]: { label: 'sympathisant', iconClass: 'bi bi-tencent-qq' },
-    [MemberStatus.NO_LICENSE]: { label: 'adhérent sans n° de licence', iconClass: 'bi bi-mortarboard-fill' },
-    [MemberStatus.NON_ADHERENT]: { label: 'adhésion non renouvelée', iconClass: 'bi bi-heartbreak-fill' },
+    [MemberStatus.NO_LICENSE]: { label: 'adhérent non licencié', iconClass: 'bi bi-person-heart' },
+    [MemberStatus.NON_ADHERENT]: { label: 'adhésion non renouvelée', iconClass: 'bi bi-person-dash-fill' },
   };
   selected_filter: DirectoryFilter = 'ACTIVE';
   statusLegend: MemberStatus[] = [
@@ -154,6 +162,25 @@ export class MembersComponent implements OnInit {
     this.active_members_nbr = this.members.filter((member) => this.membersService.isActive(member)).length;
     this.lost_members_nbr = this.members.filter((member) => this.membersService.isMembershipRenewalOverdue(member)).length;
     this.renewed_members_nbr = this.active_members_nbr - this.lost_members_nbr;
+    const activeClubLicensees = this.members.filter((member) =>
+      this.membersService.isActive(member)
+      && this.membersService.resolveMemberStatus(member) === MemberStatus.CLUB_LICENSEE
+    );
+    const activeSympathisants = this.members.filter((member) =>
+      this.membersService.isActive(member)
+      && this.membersService.resolveMemberStatus(member) === MemberStatus.SYMPATHISANT
+    );
+    this.club_licensees_renewed_nbr = activeClubLicensees.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.club_licensees_unrenewed_nbr = activeClubLicensees.length - this.club_licensees_renewed_nbr;
+    this.sympathisants_renewed_nbr = activeSympathisants.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.sympathisants_unrenewed_nbr = activeSympathisants.length - this.sympathisants_renewed_nbr;
+    const activeFfbMembers = this.members.filter((member) =>
+      this.membersService.isActive(member) && this.membersService.isFfbAttached(member)
+    );
+    this.ffb_renewed_members_nbr = activeFfbMembers.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.ffb_unrenewed_members_nbr = activeFfbMembers.length - this.ffb_renewed_members_nbr;
+    this.outside_ffb_renewed_members_nbr = this.renewed_members_nbr - this.ffb_renewed_members_nbr;
+    this.outside_ffb_unrenewed_members_nbr = this.lost_members_nbr - this.ffb_unrenewed_members_nbr;
     this.archived_members_nbr = this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'ARCHIVED').length;
     this.banned_members_nbr = this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'BANNED').length;
   }
@@ -261,10 +288,6 @@ export class MembersComponent implements OnInit {
     return str;
   }
 
-  private isAdherent(member: Member): boolean {
-    return this.getMemberStatus(member) !== MemberStatus.NON_ADHERENT;
-  }
-
   getMemberStatus(member: Member): MemberStatus {
     return this.membersService.resolveMemberStatus(member);
   }
@@ -284,7 +307,7 @@ export class MembersComponent implements OnInit {
     }
 
     if (filter === MemberStatus.ADHERENT) {
-      return this.isAdherent(member);
+      return this.membersService.isFfbAttached(member);
     }
 
     return this.getMemberStatus(member) === filter;
@@ -310,8 +333,7 @@ export class MembersComponent implements OnInit {
   }
 
   isStatusWarning(member: Member): boolean {
-    return member.license_status === LicenseStatus.UNREGISTERED
-      || (this.membersService.isLicensed(member) && !this.membersService.hasPaidMembership(member));
+    return !this.membersService.hasPaidMembership(member);
   }
 
   getMemberStatusTooltip(member: Member): string {
@@ -326,6 +348,10 @@ export class MembersComponent implements OnInit {
 
     if (status === MemberStatus.CLUB_LICENSEE && this.isStatusWarning(member)) {
       return 'Membre licencié au club. Paiement adhésion à régulariser.';
+    }
+
+    if (status === MemberStatus.NON_ADHERENT) {
+      return 'Ni l’adhésion ni la licence n’ont été renouvelées.';
     }
 
     return this.getStatusLabel(status);

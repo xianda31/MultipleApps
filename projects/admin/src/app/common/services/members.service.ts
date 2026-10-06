@@ -31,14 +31,6 @@ type MemberOperation = {
   values: { [key: string]: number };
 };
 
-const MEMBER_STATUS_VALUES: ReadonlySet<string> = new Set([
-  MemberStatus.ADHERENT,
-  MemberStatus.CLUB_LICENSEE,
-  MemberStatus.SYMPATHISANT,
-  MemberStatus.NO_LICENSE,
-  MemberStatus.NON_ADHERENT,
-]);
-
 @Injectable({
   providedIn: 'root'
 })
@@ -342,6 +334,11 @@ get_birthdays_this_month(): Observable<Member[]> {
     return this.isActive(member);
   }
 
+  isFfbAttached(member: Member): boolean {
+    const status = this.resolveMemberStatus(member);
+    return status === MemberStatus.CLUB_LICENSEE || status === MemberStatus.SYMPATHISANT;
+  }
+
   async setLifecycleStatus(
     member: Member,
     lifecycleStatus: MemberLifecycleStatus,
@@ -403,7 +400,7 @@ get_birthdays_this_month(): Observable<Member[]> {
       return MemberStatus.SYMPATHISANT;
     }
 
-    if (this.hasPaidMembership(member) && this.hasNoLicenseIdentifier(member)) {
+    if (this.hasPaidMembership(member)) {
       return MemberStatus.NO_LICENSE;
     }
 
@@ -420,7 +417,7 @@ get_birthdays_this_month(): Observable<Member[]> {
         : MemberStatus.SYMPATHISANT;
     }
 
-    if (this.hasPaidMembership(member) && this.hasNoLicenseIdentifier(member)) {
+    if (this.hasPaidMembership(member)) {
       return MemberStatus.NO_LICENSE;
     }
 
@@ -432,7 +429,7 @@ get_birthdays_this_month(): Observable<Member[]> {
    */
   resolveMemberStatus(member: Member): MemberStatus {
     const persisted = member.memberStatus;
-    if (persisted && MEMBER_STATUS_VALUES.has(persisted) && persisted !== MemberStatus.ADHERENT) {
+    if (persisted === MemberStatus.CLUB_LICENSEE || persisted === MemberStatus.SYMPATHISANT) {
       return persisted as MemberStatus;
     }
 
