@@ -40,7 +40,8 @@ export class BuyerContextService {
    */
   isValidBuyer(member: Member | null): boolean {
     if (!member) return false;
-    return !!(member.firstname || member.lastname || member.license_number);
+    return this.membersService.canPurchase(member)
+      && !!(member.firstname || member.lastname || member.license_number);
   }
 
   /**

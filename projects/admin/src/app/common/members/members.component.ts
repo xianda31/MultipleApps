@@ -7,7 +7,7 @@ import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-
 import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { ClubMember } from '../ffb/interface/club-member.interface';
-import { Member, LicenseStatus } from '../interfaces/member.interface';
+import { Member, LicenseStatus, MemberLifecycleStatus } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { PhonePipe } from '../pipes/phone.pipe';
 import { MemberSettingsService } from '../services/member-settings.service';
@@ -16,11 +16,14 @@ import { PersonV2 } from '../ffb/interface/person-v2.interface';
 import { normalizeGender } from '../utils/gender.util';
 import { MemberSyncService } from '../services/member-sync.service';
 import { SystemDataService } from '../services/system-data.service';
+import { AuthentificationService } from '../authentification/authentification.service';
 
 type MemberStatusConfig = {
   label: string;
   iconClass: string;
 };
+
+type DirectoryFilter = MemberStatus | MemberLifecycleStatus;
 
 @Component({
   selector: 'app-members',
@@ -38,23 +41,33 @@ export class MembersComponent implements OnInit {
   sympatisants_number: number = 0;
   no_license_nbr: number = 0;
   lost_members_nbr: number = 0;
+  active_members_nbr = 0;
+  renewed_members_nbr = 0;
+  archived_members_nbr = 0;
+  banned_members_nbr = 0;
   new_player!: ClubMember;
   STATUSES = MemberStatus;
-  filters: MemberStatus[] = [
+  filters: DirectoryFilter[] = [
+    'ACTIVE',
+    MemberStatus.NON_ADHERENT,
+    'ARCHIVED',
+    'BANNED',
     MemberStatus.ADHERENT,
     MemberStatus.CLUB_LICENSEE,
     MemberStatus.SYMPATHISANT,
     MemberStatus.NO_LICENSE,
-    MemberStatus.NON_ADHERENT,
   ];
-  statusConfig: Record<MemberStatus, MemberStatusConfig> = {
+  statusConfig: Record<DirectoryFilter, MemberStatusConfig> = {
+    ACTIVE: { label: 'tous les actifs', iconClass: 'bi bi-people-fill' },
+    ARCHIVED: { label: 'anciens membres', iconClass: 'bi bi-archive-fill' },
+    BANNED: { label: 'membres bannis', iconClass: 'bi bi-person-fill-slash' },
     [MemberStatus.ADHERENT]: { label: 'vue FFB', iconClass: 'bi bi-person-check-fill' },
     [MemberStatus.CLUB_LICENSEE]: { label: 'adhérent licencié', iconClass: 'bi bi-person-square' },
     [MemberStatus.SYMPATHISANT]: { label: 'sympathisant', iconClass: 'bi bi-tencent-qq' },
     [MemberStatus.NO_LICENSE]: { label: 'adhérent sans n° de licence', iconClass: 'bi bi-mortarboard-fill' },
     [MemberStatus.NON_ADHERENT]: { label: 'adhésion non renouvelée', iconClass: 'bi bi-heartbreak-fill' },
   };
-  selected_filter: MemberStatus = MemberStatus.ADHERENT;
+  selected_filter: DirectoryFilter = 'ACTIVE';
   statusLegend: MemberStatus[] = [
     MemberStatus.CLUB_LICENSEE,
     MemberStatus.SYMPATHISANT,
@@ -93,6 +106,7 @@ export class MembersComponent implements OnInit {
     private ffbService: FFB_proxyService,
     private memberSyncService: MemberSyncService,
     private systemDataService: SystemDataService,
+    private auth: AuthentificationService,
   ) {
   }
 
@@ -137,7 +151,11 @@ export class MembersComponent implements OnInit {
     this.sympatisants_number = counters.sympathisants;
     this.ffb_adherents_nbr = counters.ffbAdherents;
     this.no_license_nbr = counters.noLicense;
-    this.lost_members_nbr = counters.nonAdherents;
+    this.active_members_nbr = this.members.filter((member) => this.membersService.isActive(member)).length;
+    this.lost_members_nbr = this.members.filter((member) => this.membersService.isMembershipRenewalOverdue(member)).length;
+    this.renewed_members_nbr = this.active_members_nbr - this.lost_members_nbr;
+    this.archived_members_nbr = this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'ARCHIVED').length;
+    this.banned_members_nbr = this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'BANNED').length;
   }
 
   private applyMembers(members: Member[]): void {
@@ -251,7 +269,20 @@ export class MembersComponent implements OnInit {
     return this.membersService.resolveMemberStatus(member);
   }
 
-  private matchesFilter(member: Member, filter: MemberStatus): boolean {
+  private matchesFilter(member: Member, filter: DirectoryFilter): boolean {
+    const lifecycleStatus = this.membersService.getLifecycleStatus(member);
+    if (filter === 'ACTIVE' || filter === 'ARCHIVED' || filter === 'BANNED') {
+      return lifecycleStatus === filter;
+    }
+
+    if (lifecycleStatus !== 'ACTIVE') {
+      return false;
+    }
+
+    if (filter === MemberStatus.NON_ADHERENT) {
+      return this.membersService.isMembershipRenewalOverdue(member);
+    }
+
     if (filter === MemberStatus.ADHERENT) {
       return this.isAdherent(member);
     }
@@ -259,18 +290,18 @@ export class MembersComponent implements OnInit {
     return this.getMemberStatus(member) === filter;
   }
 
-  filterOnStatus(filter: MemberStatus) {
+  filterOnStatus(filter: DirectoryFilter) {
     this.selected_filter = filter;
     this.filteredMembers = this.members
       .filter((member: Member) => this.matchesFilter(member, filter))
       .sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
   }
 
-  getStatusLabel(status: MemberStatus): string {
+  getStatusLabel(status: DirectoryFilter): string {
     return this.statusConfig[status].label;
   }
 
-  getFilterIconClass(status: MemberStatus): string {
+  getFilterIconClass(status: DirectoryFilter): string {
     return this.statusConfig[status].iconClass;
   }
 
@@ -318,14 +349,44 @@ export class MembersComponent implements OnInit {
       membership_date: '',
       person_id: clubMember.id,
       memberStatus: clubMember.licence ? 'CLUB_LICENSEE' : 'SYMPATHISANT',
+      lifecycleStatus: 'ACTIVE',
       iv: undefined,
       iv_code: undefined,
     }
   }
-  deleteMember(member: Member) {
-    this.membersService.deleteMember(member).then(() => {
-      this.refreshMembers();
-    });
+  async archiveMember(member: Member): Promise<void> {
+    if (!window.confirm(`Archiver ${this.membersService.full_name(member)} ?`)) return;
+    await this.membersService.setLifecycleStatus(member, 'ARCHIVED', '', this.currentOperator());
+    await this.refreshMembersAsync();
+  }
+
+  async banMember(member: Member): Promise<void> {
+    const reason = window.prompt(`Motif du bannissement de ${this.membersService.full_name(member)} :`)?.trim();
+    if (!reason) return;
+    if (!window.confirm('Confirmer le bannissement ? La connexion et toute vente seront bloquées.')) return;
+    await this.membersService.setLifecycleStatus(member, 'BANNED', reason, this.currentOperator());
+    await this.refreshMembersAsync();
+  }
+
+  async restoreMember(member: Member): Promise<void> {
+    if (!window.confirm(`Restaurer ${this.membersService.full_name(member)} comme membre actif ?`)) return;
+    await this.membersService.setLifecycleStatus(member, 'ACTIVE', '', this.currentOperator());
+    await this.refreshMembersAsync();
+  }
+
+  async unbanMember(member: Member): Promise<void> {
+    if (!window.confirm(`Lever le bannissement de ${this.membersService.full_name(member)} ?`)) return;
+    await this.membersService.setLifecycleStatus(member, 'ACTIVE', 'Bannissement levé', this.currentOperator());
+    await this.refreshMembersAsync();
+  }
+
+  getLifecycleStatus(member: Member): MemberLifecycleStatus {
+    return this.membersService.getLifecycleStatus(member);
+  }
+
+  private currentOperator(): string {
+    const member = this.auth.currentMember;
+    return member ? this.membersService.full_name(member) : 'administration';
   }
 
   private refreshMembers(): void {

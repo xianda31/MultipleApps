@@ -33,11 +33,14 @@ describe('StripeCheckoutOrchestrator', () => {
     });
     stripeService.associateBookEntry.and.resolveTo();
     const toastService = jasmine.createSpyObj('ToastService', ['showError']);
+    const membersService = jasmine.createSpyObj('MembersService', ['canPurchase']);
+    membersService.canPurchase.and.returnValue(true);
     const orchestrator = new StripeCheckoutOrchestrator(
       cartService,
       stripeService,
       jasmine.createSpyObj('DBhandler', ['deleteBookEntry']),
       toastService,
+      membersService,
     );
 
     const result = await orchestrator.initiateCheckout(

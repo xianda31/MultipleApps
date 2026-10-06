@@ -89,4 +89,37 @@ describe('MemberSyncService', () => {
       .toBeRejectedWithError(/liste FFB est vide/i);
     expect(membersService.updateMember).not.toHaveBeenCalled();
   });
+
+  it('matches a FFB member by person_id before license number', async () => {
+    const { service, membersService } = createService();
+    const samePerson = {
+      ...member,
+      license_number: '',
+      lifecycleStatus: 'ARCHIVED',
+    } as Member;
+    const ffbWithoutLicense = { ...clubMember, license_number: '' } as ClubMember;
+
+    await (service as any).createOrUpdateMember([samePerson], ffbWithoutLicense);
+
+    expect(membersService.createMember).not.toHaveBeenCalled();
+    expect(membersService.updateMember).toHaveBeenCalledWith(jasmine.objectContaining({
+      id: samePerson.id,
+      lifecycleStatus: 'ARCHIVED',
+    }));
+  });
+
+  it('does not merge unrelated FFB members with an empty license number', async () => {
+    const { service, membersService } = createService();
+    const localWithoutLicense = {
+      ...member,
+      person_id: 999999,
+      license_number: '',
+    } as Member;
+    const ffbWithoutLicense = { ...clubMember, license_number: '' } as ClubMember;
+
+    await (service as any).createOrUpdateMember([localWithoutLicense], ffbWithoutLicense);
+
+    expect(membersService.updateMember).not.toHaveBeenCalled();
+    expect(membersService.createMember).toHaveBeenCalled();
+  });
 });

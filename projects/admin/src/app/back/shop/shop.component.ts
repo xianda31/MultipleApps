@@ -274,7 +274,8 @@ export class ShopComponent implements OnInit, OnDestroy {
       // FFB sync is reserved for back-office (offline) sessions.
       void (async () => {
         if (this.onlineMode) {
-          this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+          this.members = (await firstValueFrom(this.membersService.listMembers().pipe(take(1))))
+            .filter((member) => this.membersService.canPurchase(member));
           this.setupBuyerFromRoute();
           return;
         }
@@ -285,7 +286,8 @@ export class ShopComponent implements OnInit, OnDestroy {
           console.error('ShopComponent: failed to synchronize members before loading buyer list', error);
         }
 
-        this.members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+        this.members = (await firstValueFrom(this.membersService.listMembers().pipe(take(1))))
+          .filter((member) => this.membersService.canPurchase(member));
         this.setupBuyerFromRoute();
       })();
 
@@ -421,7 +423,7 @@ export class ShopComponent implements OnInit, OnDestroy {
 
   on_product_click(product: Product) {
 
-    if (!this.buyerForm.valid) {
+    if (!this.buyerForm.valid || !this.ensureBuyerCanPurchase(this.buyer)) {
       this.toastService.showWarning('saisie achat', 'selectionner un acheteur');
       return;
     }
@@ -439,6 +441,7 @@ export class ShopComponent implements OnInit, OnDestroy {
 
   on_paired_confirmed() {
     if (!this.pendingPairedProduct || !this.pairedSecondMember) return;
+    if (!this.ensureBuyerCanPurchase(this.buyer) || !this.ensureBuyerCanPurchase(this.pairedSecondMember)) return;
     const item = this.cartService.build_cart_item(
       this.pendingPairedProduct,
       this.buyer!,
@@ -457,6 +460,7 @@ export class ShopComponent implements OnInit, OnDestroy {
   }
 
   cart_confirmed(): void {
+    if (!this.ensureBuyerCanPurchase(this.buyer)) return;
     let full_name = this.membersService.first_then_last_name(this.buyer!);
     if (!this.validateMembershipGuardrailBeforeCheckout()) {
       return;
@@ -573,6 +577,12 @@ export class ShopComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.ensureBuyerCanPurchase(buyer)) {
+      this.buyerForm.patchValue({ buyer: null }, { emitEvent: false });
+      this.cartService.clearCart();
+      return;
+    }
+
     // Setup buyer context (dettes, avoirs)
     const state = await this.buyerContext.setupBuyer(buyer);
     this.debt_amount = state.debtAmount;
@@ -665,6 +675,10 @@ export class ShopComponent implements OnInit, OnDestroy {
     const member = this.onlineMode ? this.logged_member : this.buyer;
     const cartItems = this.cartService.getCartItems();
 
+    if (!this.ensureBuyerCanPurchase(member)) {
+      return;
+    }
+
     if (!this.validateMembershipGuardrailBeforeCheckout()) {
       return;
     }
@@ -751,11 +765,21 @@ export class ShopComponent implements OnInit, OnDestroy {
     * 3. Le TPE collecte et traite le paiement
     * 4. Le webhook confirme le BookEntry et exécute ses actions
    */
+  private ensureBuyerCanPurchase(member: Member | null): boolean {
+     if (member && this.membersService.canPurchase(member)) {
+       return true;
+     }
+
+     this.toastService.showError('Vente', 'Ce membre ne peut pas effectuer d’achat');
+     return false;
+  }
+
   async onPayByCard(): Promise<void> {
     if (!this.buyer) {
       this.toastService.showWarning('TPE', 'Sélectionner un acheteur');
       return;
     }
+    if (!this.ensureBuyerCanPurchase(this.buyer)) return;
 
     if (!this.validateMembershipGuardrailBeforeCheckout()) {
       return;

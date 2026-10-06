@@ -8,6 +8,7 @@ export interface Member_settings{
 }
 
 export type MemberGender = 'M' | 'F' | 'U';
+export type MemberLifecycleStatus = 'ACTIVE' | 'ARCHIVED' | 'BANNED';
 
 export interface Member extends Member_settings{
   id: string;
@@ -23,6 +24,10 @@ export interface Member extends Member_settings{
   register_date?: string;
   person_id?: number | null;    // index FFB_licencee
   memberStatus?: string;
+  lifecycleStatus?: MemberLifecycleStatus;
+  lifecycleChangedAt?: string;
+  lifecycleChangedBy?: string;
+  lifecycleReason?: string;
   iv?: number;
   iv_code?:string;
   createdAt?: string;

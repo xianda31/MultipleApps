@@ -262,6 +262,7 @@ const schema = a.schema({
   // Adhérents et personal data
 
   MemberGender: a.enum(['M', 'F', 'U']),
+  MemberLifecycleStatus: a.enum(['ACTIVE', 'ARCHIVED', 'BANNED']),
 
 
   Member: a.model({
@@ -282,6 +283,10 @@ const schema = a.schema({
     membership_date: a.string(),
     person_id: a.integer(),
     memberStatus: a.string(),
+    lifecycleStatus: a.ref('MemberLifecycleStatus'),
+    lifecycleChangedAt: a.string(),
+    lifecycleChangedBy: a.string(),
+    lifecycleReason: a.string(),
     iv: a.integer(),
     iv_code: a.string(),
 

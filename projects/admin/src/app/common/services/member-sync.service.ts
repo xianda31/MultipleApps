@@ -49,6 +49,7 @@ export class MemberSyncService {
         const nextMember: Member = {
             ...member,
             memberStatus: this.membersService.resolveMemberStatus(member),
+            lifecycleStatus: member.lifecycleStatus ?? 'ACTIVE',
         };
         await this.membersService.createMember(nextMember);
     }
@@ -100,7 +101,11 @@ export class MemberSyncService {
     }
 
     private async createOrUpdateMember(members: Member[], clubMember: ClubMember): Promise<void> {
-        const existingMember = members.find((m) => m.license_number === clubMember.license_number);
+        const licenseNumber = clubMember.license_number?.trim();
+        const existingMember = members.find((member) => member.person_id === clubMember.id)
+            ?? (licenseNumber
+                ? members.find((member) => member.license_number?.trim() === licenseNumber)
+                : undefined);
 
         if (existingMember) {
             const personV2 = existingMember.email?.trim()
@@ -136,6 +141,10 @@ export class MemberSyncService {
             membership_date: member.membership_date,
             person_id: clubMember.id,
             memberStatus: this.computeMemberStatusFromClubMember(clubMember),
+            lifecycleStatus: member.lifecycleStatus ?? 'ACTIVE',
+            lifecycleChangedAt: member.lifecycleChangedAt,
+            lifecycleChangedBy: member.lifecycleChangedBy,
+            lifecycleReason: member.lifecycleReason,
             iv: clubMember.season?.ranking?.iv,
             iv_code: member.iv_code,
             createdAt: member.createdAt,
@@ -172,6 +181,7 @@ export class MemberSyncService {
             membership_date: '',
             person_id: clubMember.id,
             memberStatus: this.computeMemberStatusFromClubMember(clubMember),
+            lifecycleStatus: 'ACTIVE',
             iv: undefined,
             iv_code: undefined,
         };
@@ -186,7 +196,11 @@ export class MemberSyncService {
         const updates: Promise<any>[] = [];
 
         for (const member of members) {
-            const existsInFFB = licensees.some((licensee) => licensee.id === member.person_id);
+            const memberLicense = member.license_number?.trim();
+            const existsInFFB = licensees.some((licensee) =>
+                licensee.id === member.person_id
+                || (!!memberLicense && licensee.license_number?.trim() === memberLicense)
+            );
             if (!existsInFFB && member.license_status !== LicenseStatus.UNREGISTERED) {
                 const updatedMember: Member = {
                     ...member,

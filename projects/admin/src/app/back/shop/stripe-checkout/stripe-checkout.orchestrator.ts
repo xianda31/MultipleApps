@@ -25,6 +25,7 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { getShortStripeTag } from '../../../common/utilities/stripe-utils';
 import { ToastService } from '../../../common/services/toast.service';
 import { CartItem, PaymentMode } from '../cart/cart.interface';
+import { MembersService } from '../../../common/services/members.service';
 
 @Injectable({
   providedIn: 'root'
@@ -56,6 +57,7 @@ export class StripeCheckoutOrchestrator {
     private stripeService: StripeService,
     private dbHandler: DBhandler,
     private toastService: ToastService,
+    private membersService: MembersService,
   ) {}
 
   /**
@@ -74,6 +76,9 @@ export class StripeCheckoutOrchestrator {
   async initiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string, discountAmountCents?: number): Promise<{ sessionUrl: string }> {
     if (!member) {
       throw new Error('Aucun acheteur sélectionné');
+    }
+    if (!this.membersService.canPurchase(member)) {
+      throw new Error('Ce membre ne peut pas effectuer d’achat');
     }
 
     // 1. Grouper les produits par ID

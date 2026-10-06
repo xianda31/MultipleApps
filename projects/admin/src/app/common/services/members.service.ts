@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, finalize, Observable, tap, switchMap, of, map, shareReplay } from 'rxjs';
-import { Member } from '../interfaces/member.interface';
+import { Member, MemberLifecycleStatus } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { ClubMember } from '../ffb/interface/club-member.interface';
@@ -23,6 +23,8 @@ export type MemberStatusCounters = {
 };
 
 export type FfbBaseReferences = ReadonlySet<number | string>;
+
+export const DEFAULT_MEMBER_LIFECYCLE_STATUS: MemberLifecycleStatus = 'ACTIVE';
 
 type MemberOperation = {
   member?: string;
@@ -320,6 +322,41 @@ get_birthdays_this_month(): Observable<Member[]> {
     return this.systemDataService.date_in_season(member.membership_date, currentSeason);
   }
 
+  getLifecycleStatus(member: Member): MemberLifecycleStatus {
+    return member.lifecycleStatus ?? DEFAULT_MEMBER_LIFECYCLE_STATUS;
+  }
+
+  isActive(member: Member): boolean {
+    return this.getLifecycleStatus(member) === 'ACTIVE';
+  }
+
+  isMembershipRenewalOverdue(member: Member): boolean {
+    return this.isActive(member) && !this.hasPaidMembership(member);
+  }
+
+  canLogin(member: Member): boolean {
+    return this.isActive(member);
+  }
+
+  canPurchase(member: Member): boolean {
+    return this.isActive(member);
+  }
+
+  async setLifecycleStatus(
+    member: Member,
+    lifecycleStatus: MemberLifecycleStatus,
+    reason: string,
+    changedBy: string,
+  ): Promise<void> {
+    await this.updateMember({
+      ...member,
+      lifecycleStatus,
+      lifecycleChangedAt: new Date().toISOString(),
+      lifecycleChangedBy: changedBy,
+      lifecycleReason: reason.trim(),
+    });
+  }
+
   isLicensed(member: Member): boolean {
     return this.LICENSED_STATUSES.includes(member.license_status);
   }
@@ -412,7 +449,7 @@ get_birthdays_this_month(): Observable<Member[]> {
     let noLicense = 0;
     let nonAdherents = 0;
 
-    members.forEach((member) => {
+    members.filter((member) => this.isActive(member)).forEach((member) => {
       const status = this.getMemberStatus(member, ffbBaseReferences);
       if (status === MemberStatus.CLUB_LICENSEE) {
         clubLicensees += 1;
@@ -463,7 +500,7 @@ get_birthdays_this_month(): Observable<Member[]> {
     let noLicense = 0;
     let nonAdherents = 0;
 
-    (this._members ?? []).forEach((member) => {
+    (this._members ?? []).filter((member) => this.isActive(member)).forEach((member) => {
       const status = this.resolveMemberStatus(member);
       if (status === MemberStatus.CLUB_LICENSEE) {
         clubLicensees += 1;

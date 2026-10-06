@@ -40,4 +40,24 @@ describe('MembersService', () => {
 
     await expectAsync(load).toBeRejectedWithError('Member database unavailable');
   });
+
+  it('treats members without a persisted lifecycle status as active', () => {
+    const { service } = createService(new Subject<Member[]>());
+    const member = { id: 'legacy-member' } as Member;
+
+    expect(service.getLifecycleStatus(member)).toBe('ACTIVE');
+    expect(service.canLogin(member)).toBeTrue();
+    expect(service.canPurchase(member)).toBeTrue();
+  });
+
+  it('blocks archived and banned members from login and purchases', () => {
+    const { service } = createService(new Subject<Member[]>());
+    const archived = { id: 'archived', lifecycleStatus: 'ARCHIVED' } as Member;
+    const banned = { id: 'banned', lifecycleStatus: 'BANNED' } as Member;
+
+    expect(service.canLogin(archived)).toBeFalse();
+    expect(service.canPurchase(archived)).toBeFalse();
+    expect(service.canLogin(banned)).toBeFalse();
+    expect(service.canPurchase(banned)).toBeFalse();
+  });
 });

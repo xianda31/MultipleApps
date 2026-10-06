@@ -11,12 +11,25 @@
           </ng-container>
         </div>
         <ng-container *ngIf="!loading">
-          <div class="col-12 d-flex flex-wrap align-items-center mt-1 members-stats-line">
-            <div class="card-title me-4"> 🛢<span class="small fw-bolder">FFB :</span> {{ffb_adherents_nbr}} adhérents
-              ( {{club_licensees_nbr}} licenciés + {{sympatisants_number}} sympathisants )
+          <div class="col-12 mt-1 members-stats-line">
+            <div class="d-flex flex-wrap gap-1">
+              <div class="card-title me-4">
+                <span class="small fw-bolder">Répertoire :</span>
+                {{active_members_nbr}} actifs · {{archived_members_nbr}} anciens
+                @if (banned_members_nbr > 0) {
+                  · {{banned_members_nbr}} bannis
+                }
+              </div>
+              <div class="card-title me-4">
+                <span class="small fw-bolder">FFB :</span>
+                {{ffb_adherents_nbr}} rattachés
+                ({{club_licensees_nbr}} licenciés · {{sympatisants_number}} sympathisants)
+              </div>
+              <div class="card-title me-4">
+                <span class="small fw-bolder">Adhésion au club :</span>
+                {{renewed_members_nbr}} payées · {{lost_members_nbr}} non payées
+              </div>
             </div>
-            <div class="card-title me-4"> 🛢<span class="small fw-bolder">Club :</span> {{lost_members_nbr}} adhésions non renouvelées</div>
-            <div class="card-title me-4"> et {{no_license_nbr}} débutant(s) non licencié(s)</div>
           </div>
         </ng-container>
       </div>
@@ -67,8 +80,7 @@
                 </ul>
               </th>
               <!-- <th class="d-none d-sm-table-cell text-center">iv</th> -->
-              <th class="d-none d-sm-table-cell text-center member-settings-column">préf.</th>
-              <th class="d-none d-sm-table-cell text-center">Actions</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -115,10 +127,31 @@
                 -
               }
             </td> -->
-                <td class="d-none d-sm-table-cell text-center member-settings-column"> <i (click)="accessSettings(member)"
-                  class="bi bi-gear-fill"></i> </td>
-              <td class="d-none d-sm-table-cell text-center">
-                <i class="bi bi-trash" (click)="deleteMember(member)"></i>
+              <td class="text-center text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                  title="Voir les préférences" (click)="accessSettings(member)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                @if (getLifecycleStatus(member) === 'ACTIVE') {
+                  <button type="button" class="btn btn-sm btn-outline-secondary me-1"
+                    title="Archiver" (click)="archiveMember(member)">
+                    <i class="bi bi-archive"></i>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger"
+                    title="Bannir" (click)="banMember(member)">
+                    <i class="bi bi-person-fill-slash"></i>
+                  </button>
+                } @else if (getLifecycleStatus(member) === 'ARCHIVED') {
+                  <button type="button" class="btn btn-sm btn-outline-success"
+                    title="Restaurer" (click)="restoreMember(member)">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                  </button>
+                } @else {
+                  <button type="button" class="btn btn-sm btn-outline-success"
+                    title="Lever le bannissement" (click)="unbanMember(member)">
+                    <i class="bi bi-person-check-fill"></i>
+                  </button>
+                }
               </td>
             </tr>
           </tbody>

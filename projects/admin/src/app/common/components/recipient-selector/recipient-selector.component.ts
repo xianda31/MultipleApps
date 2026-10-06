@@ -17,10 +17,18 @@ export class RecipientSelectorComponent implements OnInit {
   private membersService = inject(MembersService);
 
   readonly uniqueId = Math.random().toString(36).slice(2);
-  members: Member[] = [];
+  allMembers: Member[] = [];
   memberSelection = new Map<string, boolean>();
   filterText = '';
   showSelectedOnly = false;
+  audience: 'ACTIVE' | 'OVERDUE' = 'ACTIVE';
+
+  get members(): Member[] {
+    const activeMembers = this.allMembers.filter((member) => this.membersService.isActive(member));
+    return this.audience === 'OVERDUE'
+      ? activeMembers.filter((member) => this.membersService.isMembershipRenewalOverdue(member))
+      : activeMembers;
+  }
 
   get filteredMembers(): Member[] {
     const q = this.filterText.toLowerCase();
@@ -49,9 +57,19 @@ export class RecipientSelectorComponent implements OnInit {
 
   ngOnInit() {
     this.membersService.listMembers().subscribe(members => {
-      this.members = members;
+      this.allMembers = members;
+      this.removeUnavailableSelections();
       this.emit();
     });
+  }
+
+  selectAudience(audience: 'ACTIVE' | 'OVERDUE'): void {
+    this.audience = audience;
+    this.memberSelection.clear();
+    if (audience === 'OVERDUE') {
+      this.members.forEach((member) => this.memberSelection.set(member.id, true));
+    }
+    this.emit();
   }
 
   toggleMember(id: string) {
@@ -105,6 +123,15 @@ export class RecipientSelectorComponent implements OnInit {
 
   private selectedMembers(): Member[] {
     return this.members.filter(m => this.memberSelection.get(m.id));
+  }
+
+  private removeUnavailableSelections(): void {
+    const availableIds = new Set(this.members.map((member) => member.id));
+    for (const id of this.memberSelection.keys()) {
+      if (!availableIds.has(id)) {
+        this.memberSelection.delete(id);
+      }
+    }
   }
 
   private hasValidEmail(m: Member): boolean {

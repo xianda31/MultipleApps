@@ -89,6 +89,17 @@ export class AuthentificationService {
     return null;
   }
 
+  private async activateAuthenticatedMember(member: Member): Promise<string> {
+    if (!this.memberService.canLogin(member)) {
+      this._logged_member$.next(null);
+      await signOut({ global: false }).catch(() => undefined);
+      throw new Error('Votre accès n’est pas disponible. Veuillez contacter le club.');
+    }
+
+    this._logged_member$.next(member);
+    return member.id;
+  }
+
   private async memberLookupDiagnostics(error: any): Promise<{
     details: string;
     context: {
@@ -155,8 +166,7 @@ export class AuthentificationService {
           const memberByEmail = await this.resolveMemberFromEmails(attributes['email'], email);
 
           if (memberByEmail) {
-            this._logged_member$.next(memberByEmail);
-            resolve(memberByEmail.id);
+            resolve(await this.activateAuthenticatedMember(memberByEmail));
           } else {
             const normalizedEmail = (attributes['email'] || email || '').trim().toLowerCase();
             reject('Utilisateur authentifié mais non trouvé en base (email: ' + normalizedEmail + ')');
@@ -197,8 +207,7 @@ export class AuthentificationService {
               );
 
               if (recoveredMember) {
-                this._logged_member$.next(recoveredMember);
-                resolve(recoveredMember.id);
+                resolve(await this.activateAuthenticatedMember(recoveredMember));
                 return;
               }
 
@@ -216,8 +225,7 @@ export class AuthentificationService {
                 );
 
                 if (retriedMember) {
-                  this._logged_member$.next(retriedMember);
-                  resolve(retriedMember.id);
+                  resolve(await this.activateAuthenticatedMember(retriedMember));
                   return;
                 }
 
@@ -458,8 +466,7 @@ export class AuthentificationService {
       );
 
       if (memberByEmail) {
-        this._logged_member$.next(memberByEmail);
-        return memberByEmail.id;
+        return await this.activateAuthenticatedMember(memberByEmail);
       }
 
       return null;
