@@ -90,10 +90,12 @@
 
     <tbody class="fst-italic">
       <ng-container *ngIf="bank_report === null">
-        <tr *ngFor="let transfer of pending_transfer_entries">
+        <tr [class]="highlight_class(transfer)" *ngFor="let transfer of pending_transfer_entries">
           <td class="entry-report">
-            <select class="form-select form-select-sm" [(ngModel)]="transfer_reports[transfer.id]">
-              <option value="" disabled></option>
+            <select class="form-select form-select-sm" [(ngModel)]="transfer_reports[transfer.id]"
+              [disabled]="settling_transfer_ids.has(transfer.id)"
+              (ngModelChange)="update_transfer_report(transfer)">
+              <option hidden disabled value=""> </option>
               <option *ngFor="let report of bank_reports" [value]="report">{{report}}</option>
             </select>
           </td>
@@ -117,12 +119,9 @@
               title="Voir l'écriture" aria-label="Voir l'écriture du virement">
               <i class="bi bi-eye" aria-hidden="true"></i>
             </button>
-            <button type="button" class="btn btn-link btn-sm text-success"
-              [disabled]="settling_transfer_ids.has(transfer.id)"
-              [ngbTooltip]="'Confirmer la réception du virement'"
-              (click)="settle_transfer(transfer)">
-              <i class="bi bi-check-lg"></i>
-              <span class="visually-hidden">Confirmer le virement</span>
+            <button type="button" class="btn btn-sm btn-link" (click)="highlight(transfer)"
+              title="Surligner l'écriture" aria-label="Surligner l'écriture">
+              <i class="bi bi-highlighter" aria-hidden="true"></i>
             </button>
           </td>
         </tr>

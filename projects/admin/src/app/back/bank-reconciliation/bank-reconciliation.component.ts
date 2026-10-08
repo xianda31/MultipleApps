@@ -98,9 +98,7 @@ export class BankReconciliationComponent {
           .filter(entry => !settled_transfer_ids.has(entry.id));
         this.pending_transfer_entries.forEach(entry => {
           this.transfer_receipt_dates[entry.id] ??= entry.date;
-          this.transfer_reports[entry.id] ??= this.bank_reports.includes(entry.date.slice(2, 7))
-            ? entry.date.slice(2, 7)
-            : '';
+          this.transfer_reports[entry.id] ??= '';
         });
         this.db_loaded = true;
       });
@@ -158,15 +156,18 @@ highlight(book_entry: BookEntry) {
     const bank_report = this.transfer_reports[book_entry.id];
     if (!receipt_date || !bank_report) {
       this.ToastService.showWarning('virement', 'Renseignez la date bancaire et le relevé');
+      this.transfer_reports[book_entry.id] = '';
       return;
     }
     if (bank_report < receipt_date.slice(2, 7)) {
       this.ToastService.showWarning('virement', 'Le relevé ne peut pas être antérieur à la réception du virement');
+      this.transfer_reports[book_entry.id] = '';
       return;
     }
     const receipt_season = this.systemDataService.get_season(new Date(`${receipt_date}T12:00:00`));
     if (receipt_season !== this.current_season) {
       this.ToastService.showWarning('virement', `La date bancaire appartient à la saison ${receipt_season}`);
+      this.transfer_reports[book_entry.id] = '';
       return;
     }
 
@@ -191,9 +192,17 @@ highlight(book_entry: BookEntry) {
         deposit_ref: `${TRANSFER_PROMISE_REF_PREFIX}${book_entry.id}`,
       });
       this.ToastService.showSuccess('virement', 'Virement encaissé et créance soldée');
+    } catch (error) {
+      this.transfer_reports[book_entry.id] = '';
+      throw error;
     } finally {
       this.settling_transfer_ids.delete(book_entry.id);
     }
+  }
+
+  update_transfer_report(book_entry: BookEntry) {
+    if (!this.transfer_reports[book_entry.id]) return;
+    this.settle_transfer(book_entry);
   }
 
   set_bank_report(book_entry: BookEntry, report: string) {
