@@ -1,4 +1,4 @@
-import { firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, of, Subject } from 'rxjs';
 
 import { BALANCE_ACCOUNT, BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 import { TRANSACTION_CLASS } from '../../common/interfaces/transaction.definition';
@@ -376,5 +376,143 @@ describe('BookService', () => {
 
     await expectAsync(service.create_book_entry(entry)).toBeRejectedWithError(/montant invalide/);
     expect(createBookEntry).not.toHaveBeenCalled();
+  });
+});
+
+describe('BookService live synchronization', () => {
+  const season = '2026/2027';
+
+  function entry(id: string, amount: number = 10): BookEntry {
+    return {
+      id,
+      season,
+      date: '2026-10-08',
+      transaction_id: TRANSACTION_ID.vente_en_espèces,
+      amounts: { [FINANCIAL_ACCOUNT.CASHBOX_debit]: amount },
+      operations: [{ label: 'vente', values: { VENTES: amount } }],
+    };
+  }
+
+  function createLiveService(
+    queryBookEntries: (season: string) => Subject<BookEntry[]>,
+    dbOverrides: Record<string, unknown> = {},
+    configuration$ = new BehaviorSubject({ season }),
+  ) {
+    const toastService = jasmine.createSpyObj('ToastService', [
+      'showInfo',
+      'showWarning',
+      'showError',
+    ]);
+    const dbHandler = {
+      queryBookEntries: jasmine.createSpy('queryBookEntries').and.callFake(queryBookEntries),
+      ...dbOverrides,
+    };
+    const service = new BookService(
+      {
+        get_configuration: () => configuration$.asObservable(),
+        assert_accounting_write_allowed: () => undefined,
+        assert_season_initialization_allowed: () => undefined,
+      } as any,
+      toastService,
+      {
+        get_transaction: () => ({ revenue_account_to_show: true }),
+      } as any,
+      dbHandler as any,
+      { logged_member$: of({ id: 'admin-1' }) } as any,
+    );
+    return { service, dbHandler, toastService, configuration$ };
+  }
+
+  it('reflects remote create, update and delete snapshots on a second client', () => {
+    const snapshots$ = new Subject<BookEntry[]>();
+    const { service } = createLiveService(() => snapshots$);
+    const first = entry('entry-1');
+    const second = entry('entry-2');
+
+    snapshots$.next([first]);
+    expect(service.is_book_entries_loaded()).toBeTrue();
+
+    snapshots$.next([first, second]);
+    expect(service.get_book_entries().map(item => item.id)).toEqual(['entry-1', 'entry-2']);
+
+    const updatedSecond = { ...second, amounts: { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 20 } };
+    snapshots$.next([first, updatedSecond]);
+    expect(service.get_book_entries().find(item => item.id === second.id)?.amounts)
+      .toEqual({ [FINANCIAL_ACCOUNT.CASHBOX_debit]: 20 });
+
+    snapshots$.next([updatedSecond]);
+    expect(service.get_book_entries().map(item => item.id)).toEqual(['entry-2']);
+  });
+
+  it('does not duplicate an entry when the local mutation resolves before the live snapshot', async () => {
+    const snapshots$ = new Subject<BookEntry[]>();
+    const first = entry('entry-1');
+    const created = entry('entry-2');
+    const { service } = createLiveService(() => snapshots$, {
+      createBookEntry: jasmine.createSpy('createBookEntry').and.resolveTo(created),
+    });
+    snapshots$.next([first]);
+
+    await service.create_book_entry(created);
+    snapshots$.next([first, created]);
+
+    expect(service.get_book_entries().filter(item => item.id === created.id).length).toBe(1);
+  });
+
+  it('does not duplicate an entry when the live snapshot arrives before the local mutation resolves', async () => {
+    const snapshots$ = new Subject<BookEntry[]>();
+    const first = entry('entry-1');
+    const created = entry('entry-2');
+    let resolveCreate!: (value: BookEntry) => void;
+    const createPromise = new Promise<BookEntry>(resolve => {
+      resolveCreate = resolve;
+    });
+    const { service } = createLiveService(() => snapshots$, {
+      createBookEntry: jasmine.createSpy('createBookEntry').and.returnValue(createPromise),
+    });
+    snapshots$.next([first]);
+
+    const pendingCreation = service.create_book_entry(created);
+    snapshots$.next([first, created]);
+    resolveCreate(created);
+    await pendingCreation;
+
+    expect(service.get_book_entries().filter(item => item.id === created.id).length).toBe(1);
+  });
+
+  it('unsubscribes from the previous season before observing the next one', () => {
+    const firstSeason$ = new Subject<BookEntry[]>();
+    const nextSeason$ = new Subject<BookEntry[]>();
+    const nextSeason = '2027/2028';
+    const { service, configuration$ } = createLiveService(
+      selectedSeason => selectedSeason === season ? firstSeason$ : nextSeason$,
+    );
+    firstSeason$.next([entry('old-entry')]);
+
+    configuration$.next({ season: nextSeason });
+    expect(firstSeason$.observers.length).toBe(0);
+
+    firstSeason$.next([entry('late-old-entry')]);
+    nextSeason$.next([{
+      ...entry('new-entry'),
+      season: nextSeason,
+      date: '2027-10-08',
+    }]);
+
+    expect(service.get_book_entries().map(item => item.id)).toEqual(['new-entry']);
+  });
+
+  it('marks the cache unavailable and asks for a reload when synchronization fails', () => {
+    const snapshots$ = new Subject<BookEntry[]>();
+    const { service, toastService } = createLiveService(() => snapshots$);
+    snapshots$.next([entry('entry-1')]);
+
+    snapshots$.error(new Error('subscription lost'));
+
+    expect(service.is_book_entries_loaded()).toBeFalse();
+    expect(toastService.showError).toHaveBeenCalledWith(
+      'base comptabilité',
+      'La synchronisation comptable est interrompue. Rechargez l’application.',
+    );
   });
 });

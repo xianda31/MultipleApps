@@ -1537,6 +1537,22 @@ export class DBhandler {
     );
   }
 
+  queryBookEntries(season: string): Observable<BookEntry[]> {
+    return this._authMode().pipe(
+      switchMap((authMode) => {
+        const client = generateClient<Schema>({ authMode });
+        return client.models.BookEntry.observeQuery({
+          filter: { season: { eq: season } },
+        }).pipe(
+          filter(payload => payload.isSynced === true),
+          map(({ items }) =>
+            (items as unknown as BookEntry[]).map(entry => this.parsed_entry(entry))
+          ),
+        );
+      }),
+    );
+  }
+
   bulkDeleteBookEntries(season: string): Observable<number> {
     return this._authMode().pipe(
       switchMap((authMode) => {

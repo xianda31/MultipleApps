@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { GameCardService } from '../../services/game-card.service';
 import { CommonModule } from '@angular/common';
 import { GameCard } from '../game-card.interface';
@@ -8,6 +8,8 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { EditGameCardComponent } from '../edit-game-card/edit-game-card.component';
 import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
 import { GcardsExcelExportService } from '../gcards-excel-export.service';
+import { BookService } from '../../services/book.service';
+import { combineLatest, filter, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-game-cards-editor',
@@ -16,7 +18,7 @@ import { GcardsExcelExportService } from '../gcards-excel-export.service';
   templateUrl: './game-cards-editor.component.html',
   styleUrl: './game-cards-editor.component.scss'
 })
-export class GameCardsEditorComponent implements OnInit {
+export class GameCardsEditorComponent implements OnInit, OnDestroy {
 
   cards: GameCard[] = [];
   total_asset: number = 0;
@@ -25,27 +27,46 @@ export class GameCardsEditorComponent implements OnInit {
   non_null_cards_only: boolean = true;
   orphanIds = new Set<string>();
   orphanCheckDone = false;
+  private readonly subscriptions = new Subscription();
+  private orphanCheckVersion = 0;
 
   constructor(
     private gameCardService: GameCardService,
     private modalService: NgbModal,
-    private exportService : GcardsExcelExportService 
+    private exportService: GcardsExcelExportService,
+    private bookService: BookService,
   ) { }
 
 
   ngOnInit(): void {
 
-    this.gameCardService.gameCards.subscribe(cards => {
-      this.cards = cards.sort((a, b) => {
+    this.subscriptions.add(this.gameCardService.gameCards.subscribe(cards => {
+      this.cards = [...cards].sort((a, b) => {
         return a.owners[0].lastname.localeCompare(b.owners[0].lastname);
       });
       this.total_asset = cards.reduce((acc, card) => acc + card.initial_qty-card.stamps.length, 0);
       this.total_null_cards = cards.reduce((acc, card) => acc + ((card.initial_qty-card.stamps.length) === 0 ? 1 : 0), 0);
       this.loaded = true;
-      this.gameCardService.findOrphanCards(cards).then(ids => {
-        this.orphanIds = ids;
-        this.orphanCheckDone = true;
-      });
+    }));
+
+    this.subscriptions.add(combineLatest([
+      this.gameCardService.gameCards,
+      this.bookService.list_book_entries().pipe(
+        filter(() => this.bookService.is_book_entries_loaded()),
+      ),
+    ]).subscribe(() => this.refreshOrphanCards()));
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  private refreshOrphanCards(): void {
+    const version = ++this.orphanCheckVersion;
+    void this.gameCardService.findOrphanCards(this.cards).then(ids => {
+      if (version !== this.orphanCheckVersion) return;
+      this.orphanIds = ids;
+      this.orphanCheckDone = true;
     });
   }
 

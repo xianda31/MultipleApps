@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, PurchaseStatementEntry, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
-import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, filter, firstValueFrom, from, map, Observable, of, race, skipWhile, switchMap, tap, timer } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, filter, firstValueFrom, from, map, Observable, of, race, skipWhile, Subscription, switchMap, tap, timer } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { ToastService } from '../../common/services/toast.service';
 import { TRANSACTION_CLASS, TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
@@ -27,6 +27,8 @@ export class BookService {
   private _loading: boolean = false;
   private _loading$ = new BehaviorSubject<boolean>(false);
   get loading$(): Observable<boolean> { return this._loading$.asObservable(); }
+  private bookEntriesSubscription: Subscription | null = null;
+  private syncAvailable = false;
   private higlighting: { [key: string]: boolean } = {};
 
   // BookEntry.date is an Amplify date field and must be stored as YYYY-MM-DD.
@@ -89,11 +91,46 @@ export class BookService {
     ]).subscribe(([conf, member]) => {
       this.season = conf.season!;
       this.trace_mode = conf.trace_mode || false;
-      if (member !== null && (this.season_filter !== this.season || !this._book_entries)) {
+      if (member === null) {
+        this.stopBookEntriesSync();
+        this.syncAvailable = false;
+        return;
+      }
+      if (this.season_filter !== this.season || !this.bookEntriesSubscription) {
         this.season_filter = this.season;
         this._initiate_load(this.season);
       }
     });
+  }
+
+  private sortBookEntries(entries: BookEntry[]): BookEntry[] {
+    return [...entries].sort((a, b) =>
+      a.date.localeCompare(b.date) === 0
+        ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '')
+        : a.date.localeCompare(b.date)
+    );
+  }
+
+  private publishBookEntries(entries: BookEntry[]): void {
+    this._book_entries = this.sortBookEntries(entries);
+    this._book_entries$.next(this._book_entries);
+  }
+
+  private upsertBookEntry(entry: BookEntry): void {
+    const entries = this._book_entries ?? [];
+    this.publishBookEntries([
+      ...entries.filter(candidate => candidate.id !== entry.id),
+      entry,
+    ]);
+  }
+
+  private stopBookEntriesSync(): void {
+    this.bookEntriesSubscription?.unsubscribe();
+    this.bookEntriesSubscription = null;
+    if (this._loading) {
+      this._loading = false;
+      this._loading$.next(false);
+    }
   }
 
 
@@ -122,9 +159,11 @@ export class BookService {
 
     return from(Promise.all(promises)).pipe(
       map((created_entries) => {
-        this._book_entries = this._book_entries.concat(created_entries)
-          .sort((b, a) => { return a.date.localeCompare(b.date); });
-        this._book_entries$.next(this._book_entries);
+        const createdIds = new Set(created_entries.map(entry => entry.id));
+        this.publishBookEntries([
+          ...(this._book_entries ?? []).filter(entry => !createdIds.has(entry.id)),
+          ...created_entries,
+        ]);
         return created_entries.length;
       }),
       catchError((error) => {
@@ -144,10 +183,7 @@ export class BookService {
 
     try {
       let created_entry = await this.dbHandler.createBookEntry(book_entry);
-      this._book_entries.push(created_entry);
-      this._book_entries$.next(this._book_entries.sort((a, b) => {
-        return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-      }));
+      this.upsertBookEntry(created_entry);
       return (created_entry);
     } catch (error) {
       const parsed = this.parseGraphQLError(error);
@@ -206,10 +242,7 @@ export class BookService {
 
     try {
       let updated_entry = await this.dbHandler.updateBookEntry(book_entry);
-      this._book_entries = this._book_entries.map((entry) => entry.id === updated_entry.id ? updated_entry : entry);
-      this._book_entries$.next(this._book_entries.sort((a, b) => {
-        return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-      }));
+      this.upsertBookEntry(updated_entry);
       return updated_entry;
     } catch (error: any) {
       let errorType: string = '.. accès refusé ... êtes-vous bien connecté ?';
@@ -234,11 +267,9 @@ export class BookService {
     try {
       let done = await this.dbHandler.deleteBookEntry(book_entry.id);
       if (done) {
-        this._book_entries = this._book_entries.filter((entry) => entry.id !== book_entry.id);
-        this._book_entries$.next(this._book_entries);
-        // .sort((a, b) => {
-        //   return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-        // }));
+        this.publishBookEntries(
+          (this._book_entries ?? []).filter((entry) => entry.id !== book_entry.id)
+        );
       }
     } catch (error) {
       console.error('error', error);
@@ -251,26 +282,34 @@ export class BookService {
 
 
   private _initiate_load(season: string): void {
-    if (this._loading) return;
+    this.stopBookEntriesSync();
     this._loading = true;
+    this.syncAvailable = false;
     this._loading$.next(true);
-    this.dbHandler.listBookEntries(season).subscribe({
+    this.bookEntriesSubscription = this.dbHandler.queryBookEntries(season).subscribe({
       next: (entries) => {
-        this._loading = false;
-        this._loading$.next(false);
-        this._book_entries = entries.sort((a, b) => {
-          return a.date.localeCompare(b.date) === 0 ? (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') : a.date.localeCompare(b.date);
-        });
-        this._book_entries$.next(this._book_entries);
-        if (this.trace_mode) {
+        if (season !== this.season_filter) return;
+        const initialSync = !this.syncAvailable;
+        if (initialSync) {
+          this._loading = false;
+          this.syncAvailable = true;
+          this._loading$.next(false);
+        }
+        this.publishBookEntries(entries);
+        if (initialSync && this.trace_mode) {
           this.toastService.showInfo('comptabilité', `données saison ${season} chargées`);
         }
       },
       error: (error) => {
+        if (season !== this.season_filter) return;
         this._loading = false;
+        this.syncAvailable = false;
         this._loading$.next(false);
-        console.error('Error fetching book entries:', error);
-        this.toastService.showError('base comptabilité', 'Erreur de chargement de la base de données');
+        console.error('BookEntry synchronization failed:', error);
+        this.toastService.showError(
+          'base comptabilité',
+          'La synchronisation comptable est interrompue. Rechargez l’application.',
+        );
       }
     });
   }
@@ -300,7 +339,7 @@ export class BookService {
   }
 
   is_book_entries_loaded(): boolean {
-    return this._book_entries !== undefined && !this._loading;
+    return this._book_entries !== undefined && !this._loading && this.syncAvailable;
   }
 
   // Resolves once _book_entries is populated, or when loading ends (success or failure).
