@@ -7,6 +7,7 @@ import {
   getReachableQuestions,
   isSurveyPathComplete,
   sanitizeSurveyAnswers,
+  SURVEY_COMMENT_MAX_LENGTH,
   SurveyAnswers,
   SurveyQuestionDefinition,
 } from '../../common/survey/survey-flow';
@@ -26,6 +27,7 @@ export class SurveyRespondComponent implements OnInit {
   state: PageState = 'loading';
   errorMsg = '';
   token = '';
+  readonly commentMaxLength = SURVEY_COMMENT_MAX_LENGTH;
 
   data: SurveyRespondData | null = null;
   answers: SurveyAnswers = {};
@@ -88,6 +90,14 @@ export class SurveyRespondComponent implements OnInit {
     return detail ? `${option.label} : ${detail}` : option.label;
   }
 
+  getAnswerComment(question: SurveyRespondData['questions'][number]): string {
+    return this.answers[question.id]?.comment?.trim() ?? '';
+  }
+
+  commentLength(questionId: string): number {
+    return this.answers[questionId]?.comment?.length ?? 0;
+  }
+
   get allAnswered(): boolean {
     return isSurveyPathComplete(this.questions, this.answers);
   }
@@ -105,6 +115,13 @@ export class SurveyRespondComponent implements OnInit {
       ...this.answers,
       [questionId]: { ...current, detailValue },
     });
+  }
+
+  /** Conserve la saisie brute : la normalisation n'a lieu qu'à la soumission, sinon les espaces sont mangés en cours de frappe. */
+  setComment(questionId: string, comment: string) {
+    const current = this.answers[questionId];
+    if (!current) return;
+    this.answers = { ...this.answers, [questionId]: { ...current, comment } };
   }
 
   async ngOnInit() {

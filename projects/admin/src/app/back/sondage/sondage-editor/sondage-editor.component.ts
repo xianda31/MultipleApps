@@ -10,6 +10,7 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { MembersService, MemberStatus } from '../../../common/services/members.service';
 import {
   requiresSurveyReconfirmation,
+  SURVEY_COMMENT_MAX_LENGTH,
   SurveyAnswers,
   SurveyDetailOption,
   SurveyOptionDefinition,
@@ -22,6 +23,7 @@ interface QuestionForm {
   text: string;
   resultLabel: string;
   detailResultLabel: string;
+  commentResultLabel: string;
   options: SurveyOptionDefinition[];
 }
 
@@ -48,6 +50,7 @@ export class SondageEditorComponent implements OnInit {
 
   showPreview = false;
   @ViewChild('previewFrame') previewFrame!: ElementRef<HTMLIFrameElement>;
+  readonly commentMaxLength = SURVEY_COMMENT_MAX_LENGTH;
 
   isNew = true;
   surveyId = '';
@@ -128,6 +131,7 @@ export class SondageEditorComponent implements OnInit {
         text: q.text,
         resultLabel: q.resultLabel ?? '',
         detailResultLabel: q.detailResultLabel ?? '',
+        commentResultLabel: q.commentResultLabel ?? '',
         options: (q.options ?? []).map((option: any) => ({
           value: option.value,
           label: option.label,
@@ -137,6 +141,8 @@ export class SondageEditorComponent implements OnInit {
           detailPrompt: option.detailPrompt ?? '',
           detailOptions: option.detailOptions ?? [],
           detailOptionsOrigin: option.detailOptionsOrigin ?? 'manual',
+          commentEnabled: option.commentEnabled === true,
+          commentPrompt: option.commentPrompt ?? '',
         })),
       }));
       const responses = await this.sondageService.listResponsesForSurvey(this.surveyId);
@@ -160,6 +166,7 @@ export class SondageEditorComponent implements OnInit {
       text: '',
       resultLabel: '',
       detailResultLabel: '',
+      commentResultLabel: '',
       options: [this.createEmptyOption(), this.createEmptyOption()],
     });
   }
@@ -200,6 +207,17 @@ export class SondageEditorComponent implements OnInit {
     option.detailPrompt = undefined;
     option.detailOptions = [];
     option.detailOptionsOrigin = undefined;
+  }
+
+  addCommentBox(option: SurveyOptionDefinition) {
+    option.commentEnabled = true;
+    option.commentPrompt ||= 'Votre commentaire (facultatif)';
+  }
+
+  clearCommentBox(option: SurveyOptionDefinition) {
+    // Le commentaire étant facultatif, le retirer n'invalide aucun vote déjà enregistré.
+    option.commentEnabled = false;
+    option.commentPrompt = '';
   }
 
   setPayTag(option: SurveyOptionDefinition, enabled: boolean) {
@@ -279,6 +297,7 @@ export class SondageEditorComponent implements OnInit {
     return {
       label: '', keyword: '', value: this.createOptionValue(), nextAction: 'NEXT' as const, payTag: false,
       detailPrompt: '', detailOptions: [], detailOptionsOrigin: undefined,
+      commentEnabled: false, commentPrompt: '',
     };
   }
 
@@ -312,6 +331,8 @@ export class SondageEditorComponent implements OnInit {
               }))
             : undefined,
           detailOptionsOrigin: option.detailOptions?.length ? option.detailOptionsOrigin : undefined,
+          commentEnabled: option.commentEnabled === true ? true : undefined,
+          commentPrompt: option.commentEnabled === true ? option.commentPrompt?.trim() || undefined : undefined,
         }));
       return question.id && question.text.trim() && options.length >= 2
         ? [{
@@ -320,6 +341,7 @@ export class SondageEditorComponent implements OnInit {
             text: question.text.trim(),
             resultLabel: question.resultLabel.trim() || undefined,
             detailResultLabel: question.detailResultLabel.trim() || undefined,
+            commentResultLabel: question.commentResultLabel.trim() || undefined,
             options,
           }]
         : [];
@@ -387,6 +409,7 @@ export class SondageEditorComponent implements OnInit {
           text: q.text.trim(),
           resultLabel: q.resultLabel.trim() || undefined,
           detailResultLabel: q.detailResultLabel.trim() || undefined,
+          commentResultLabel: q.commentResultLabel.trim() || undefined,
           options: validOptions.map(option => ({
             value: option.value,
             label: option.label.trim(),
@@ -400,6 +423,8 @@ export class SondageEditorComponent implements OnInit {
                 }))
               : undefined,
             detailOptionsOrigin: option.detailOptions?.length ? option.detailOptionsOrigin : undefined,
+            commentEnabled: option.commentEnabled || undefined,
+            commentPrompt: option.commentEnabled ? option.commentPrompt?.trim() || undefined : undefined,
           })),
           order,
         };
@@ -473,6 +498,8 @@ export class SondageEditorComponent implements OnInit {
                 }))
               : undefined,
             detailOptionsOrigin: option.detailOptions?.length ? option.detailOptionsOrigin : undefined,
+            commentEnabled: option.commentEnabled || undefined,
+            commentPrompt: option.commentEnabled ? option.commentPrompt?.trim() || undefined : undefined,
           }));
         if (!question.text.trim() || options.length < 2) continue;
         await this.sondageService.createQuestion({
@@ -480,6 +507,7 @@ export class SondageEditorComponent implements OnInit {
           text: question.text.trim(),
           resultLabel: question.resultLabel.trim() || undefined,
           detailResultLabel: question.detailResultLabel.trim() || undefined,
+          commentResultLabel: question.commentResultLabel.trim() || undefined,
           options,
           order,
         });
@@ -517,7 +545,8 @@ export class SondageEditorComponent implements OnInit {
                 <option>${option.detailPrompt || 'Sélectionnez une valeur'}</option>
                 ${option.detailOptions.slice(0, 5).map(detail => `<option>${detail.label}</option>`).join('')}
               </select>` : ''}
-            </label>`)
+            </label>
+            ${option.commentEnabled ? `<textarea rows="2" placeholder="${option.commentPrompt || 'Votre commentaire (facultatif)'}" style="width:100%;margin:-2px 0 6px 38px;max-width:calc(100% - 38px);padding:6px 10px;border:1px solid #ced4da;border-radius:6px;color:#333"></textarea>` : ''}`)
           .join('');
         return `<div style="margin-bottom:24px">
           <p style="font-weight:bold;color:#333;margin:0 0 10px 0">${i + 1}. ${q.text}</p>

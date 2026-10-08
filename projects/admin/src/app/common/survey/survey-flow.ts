@@ -1,5 +1,8 @@
 export type SurveyNextAction = 'NEXT' | 'END';
 
+/** Longueur maximale d'un commentaire libre. Dupliquée dans amplify/functions/survey-respond/handler.ts. */
+export const SURVEY_COMMENT_MAX_LENGTH = 280;
+
 export interface SurveyDetailOption {
   value: string;
   label: string;
@@ -8,6 +11,7 @@ export interface SurveyDetailOption {
 export interface SurveyAnswer {
   optionValue: string;
   detailValue?: string;
+  comment?: string;
 }
 
 export interface SurveyOptionDefinition {
@@ -19,6 +23,8 @@ export interface SurveyOptionDefinition {
   detailPrompt?: string | null;
   detailOptions?: SurveyDetailOption[] | null;
   detailOptionsOrigin?: 'manual' | 'memberImport' | null;
+  commentEnabled?: boolean | null;
+  commentPrompt?: string | null;
 }
 
 export interface SurveyQuestionDefinition {
@@ -27,7 +33,18 @@ export interface SurveyQuestionDefinition {
   text: string;
   resultLabel?: string | null;
   detailResultLabel?: string | null;
+  commentResultLabel?: string | null;
   options: SurveyOptionDefinition[];
+}
+
+/** Ramène un commentaire à sa forme stockable, ou `undefined` s'il est vide. */
+export function normalizeSurveyComment(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  return raw.trim().slice(0, SURVEY_COMMENT_MAX_LENGTH).trim() || undefined;
+}
+
+export function acceptsComment(option: SurveyOptionDefinition | undefined): boolean {
+  return option?.commentEnabled === true;
 }
 
 export type SurveyAnswers = Record<string, SurveyAnswer>;
@@ -72,7 +89,17 @@ export function sanitizeSurveyAnswers(
 ): SurveyAnswers {
   const reachableIds = new Set(getReachableQuestions(questions, answers).map(question => question.id));
   return Object.fromEntries(
-    Object.entries(answers).filter(([questionId]) => reachableIds.has(questionId))
+    Object.entries(answers)
+      .filter(([questionId]) => reachableIds.has(questionId))
+      .map(([questionId, answer]) => {
+        const question = questions.find(candidate => candidate.id === questionId);
+        const option = question?.options.find(candidate => candidate.value === answer.optionValue);
+        const comment = acceptsComment(option) ? normalizeSurveyComment(answer.comment) : undefined;
+        const sanitized: SurveyAnswer = { optionValue: answer.optionValue };
+        if (answer.detailValue !== undefined) sanitized.detailValue = answer.detailValue;
+        if (comment) sanitized.comment = comment;
+        return [questionId, sanitized];
+      })
   );
 }
 

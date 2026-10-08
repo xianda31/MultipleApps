@@ -113,6 +113,17 @@
                   }
                 </select>
               }
+              @if (answers[q.id]?.optionValue === opt.value && opt.commentEnabled) {
+                <textarea class="form-control mt-2" rows="2" [name]="'comment_'+q.id"
+                  [attr.maxlength]="commentMaxLength"
+                  [placeholder]="opt.commentPrompt || 'Votre commentaire (facultatif)'"
+                  [ngModel]="answers[q.id]?.comment ?? ''"
+                  (click)="$event.stopPropagation()"
+                  (ngModelChange)="setComment(q.id, $event)"></textarea>
+                <small style="display:block;color:#888;font-size:12px;margin-top:4px">
+                  Facultatif — {{ commentLength(q.id) }}/{{ commentMaxLength }} caractères
+                </small>
+              }
             </span>
           </label>
         }
@@ -142,9 +153,12 @@
           @for (q of questions; track q.id) {
           <div style="margin-bottom:14px">
             <p >{{ q.text }}</p>
-            <p class="fw-semibold">
+            <p class="fw-semibold mb-1">
               {{ getAnswerLabel(q) }}
             </p>
+            @if (getAnswerComment(q)) {
+            <p class="fst-italic text-muted small mb-0">« {{ getAnswerComment(q) }} »</p>
+            }
           </div>
           }
         </div>

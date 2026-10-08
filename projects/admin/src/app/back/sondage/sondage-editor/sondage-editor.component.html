@@ -74,6 +74,12 @@
           <input class="form-control form-control-sm" [(ngModel)]="q.detailResultLabel" placeholder="Ex : Mandataire" />
         </div>
       </div>
+      <div class="row g-2 mb-3">
+        <div class="col-md-6">
+          <label class="form-label small text-muted">Titre du commentaire</label>
+          <input class="form-control form-control-sm" [(ngModel)]="q.commentResultLabel" placeholder="Ex : Précision" />
+        </div>
+      </div>
       <div class="mb-2">
         <label class="form-label text-muted small">Réponses — une seule sélection possible</label>
         @for (opt of q.options; track trackByIndex($index)) {
@@ -103,6 +109,12 @@
               <button type="button" class="btn btn-outline-primary" (click)="openMemberImport(opt)"
                 title="Ajouter une liste de membres à cette réponse">
                 <i class="bi bi-people"></i>
+              </button>
+              }
+              @if (!opt.commentEnabled) {
+              <button type="button" class="btn btn-outline-primary" (click)="addCommentBox(opt)"
+                title="Ajouter un commentaire libre à cette réponse">
+                <i class="bi bi-chat-left-text"></i>
               </button>
               }
               @if (tag) {
@@ -157,6 +169,21 @@
               <i class="bi bi-people me-1"></i>Remplacer par les membres
             </button>
             }
+          </div>
+          }
+          @if (opt.commentEnabled) {
+          <div class="border-top mt-2 pt-2">
+            <div class="d-flex align-items-center gap-2">
+              <input class="form-control form-control-sm" [(ngModel)]="opt.commentPrompt"
+                placeholder="Consigne du commentaire">
+              <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0" (click)="clearCommentBox(opt)"
+                title="Supprimer le commentaire">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            <div class="small text-muted mt-1">
+              <i class="bi bi-info-circle me-1"></i>Commentaire libre facultatif, {{ commentMaxLength }} caractères maximum.
+            </div>
           </div>
           }
         </div>

@@ -13,6 +13,7 @@ import {
   hasPaymentTag,
   isSurveyPathComplete,
   sanitizeSurveyAnswers,
+  SURVEY_COMMENT_MAX_LENGTH,
 } from '../../../common/survey/survey-flow';
 
 @Component({
@@ -23,6 +24,10 @@ import {
 })
 export class SondageResultatsComponent implements OnInit {
   static readonly RESULT_COLUMN_TITLE_MAX_LENGTH = 15;
+  static readonly COMMENT_PREVIEW_MAX_LENGTH = 40;
+  /** Préfixes interprétés comme formule par Excel/LibreOffice. */
+  private static readonly CSV_FORMULA_PREFIX = /^[=+\-@]/;
+  readonly commentMaxLength = SURVEY_COMMENT_MAX_LENGTH;
 
   constructor(
     private route: ActivatedRoute,
@@ -90,6 +95,13 @@ export class SondageResultatsComponent implements OnInit {
     });
   }
 
+  /** Saisie brute conservée pendant la frappe ; la normalisation a lieu à l'enregistrement. */
+  setManualComment(questionId: string, comment: string) {
+    const current = this.manualAnswers[questionId];
+    if (!current) return;
+    this.manualAnswers = { ...this.manualAnswers, [questionId]: { ...current, comment } };
+  }
+
   async ngOnInit() {
     this.surveyId = this.route.snapshot.paramMap.get('id') ?? '';
 
@@ -108,6 +120,7 @@ export class SondageResultatsComponent implements OnInit {
       text: q.text,
       resultLabel: q.resultLabel,
       detailResultLabel: q.detailResultLabel,
+      commentResultLabel: q.commentResultLabel,
       options: q.options ?? [],
     }));
 
@@ -155,6 +168,25 @@ export class SondageResultatsComponent implements OnInit {
 
   hasDetailList(question: QuestionResult): boolean {
     return question.options.some(option => !!option.detailOptions?.length);
+  }
+
+  hasCommentBox(question: QuestionResult): boolean {
+    return question.options.some(option => option.commentEnabled === true);
+  }
+
+  getAnswerComment(row: ResponseRow, questionId: string): string {
+    return row.answers[questionId]?.comment?.trim() || '';
+  }
+
+  getAnswerCommentPreview(row: ResponseRow, questionId: string): string {
+    const comment = this.getAnswerComment(row, questionId);
+    if (!comment) return '—';
+    const maxLength = SondageResultatsComponent.COMMENT_PREVIEW_MAX_LENGTH;
+    return comment.length <= maxLength ? comment : `${comment.slice(0, maxLength).trimEnd()}…`;
+  }
+
+  getCommentResultColumnTitle(question: QuestionResult): string {
+    return question.commentResultLabel?.trim() || 'Commentaire';
   }
 
   truncateColumnTitle(title: string): string {
@@ -323,20 +355,34 @@ export class SondageResultatsComponent implements OnInit {
     this.alreadyVotedIds = new Set(this.responses.map(r => r.memberId));
   }
 
+  /**
+   * Prépare une cellule CSV : aplatit les sauts de ligne, neutralise les formules
+   * (Excel/LibreOffice) et double les guillemets internes avant la mise entre quotes.
+   */
+  private toCsvCell(value: unknown): string {
+    const flattened = String(value ?? '').replace(/\s+/g, ' ').trim();
+    const guarded = SondageResultatsComponent.CSV_FORMULA_PREFIX.test(flattened) ? `'${flattened}` : flattened;
+    return `"${guarded.replace(/"/g, '""')}"`;
+  }
+
   exportCsv() {
     const headers = [
       'Nom',
       'Adhérent',
       'Date',
-      ...this.questions.flatMap(question => this.hasDetailList(question)
-        ? [this.getResultColumnTitle(question), this.getDetailResultColumnTitle(question)]
-        : [this.getResultColumnTitle(question)]),
+      ...this.questions.flatMap(question => [
+        this.getResultColumnTitle(question),
+        ...(this.hasDetailList(question) ? [this.getDetailResultColumnTitle(question)] : []),
+        ...(this.hasCommentBox(question) ? [this.getCommentResultColumnTitle(question)] : []),
+      ]),
     ];
     const rows = this.responses.map(r => {
       const isMember = r.memberId !== r.memberEmail ? 'Oui' : 'ext';
-      const answers = this.questions.flatMap(question => this.hasDetailList(question)
-        ? [this.getAnswer(r, question.id), this.getAnswerDetail(r, question.id)]
-        : [this.getAnswer(r, question.id)]);
+      const answers = this.questions.flatMap(question => [
+        this.getAnswer(r, question.id),
+        ...(this.hasDetailList(question) ? [this.getAnswerDetail(r, question.id)] : []),
+        ...(this.hasCommentBox(question) ? [this.getAnswerComment(r, question.id)] : []),
+      ]);
       return [
         this.getResponseFullName(r),
         isMember,
@@ -344,7 +390,7 @@ export class SondageResultatsComponent implements OnInit {
         ...answers,
       ];
     });
-    const csv = [headers, ...rows].map(row => row.map(c => `"${c}"`).join(';')).join('\n');
+    const csv = [headers, ...rows].map(row => row.map(cell => this.toCsvCell(cell)).join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

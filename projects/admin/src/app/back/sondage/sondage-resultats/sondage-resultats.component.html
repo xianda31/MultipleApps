@@ -77,6 +77,9 @@
                     @if (hasDetailList(q)) {
                     <th>{{ getDetailResultColumnTitle(q) }}</th>
                     }
+                    @if (hasCommentBox(q)) {
+                    <th>{{ getCommentResultColumnTitle(q) }}</th>
+                    }
                     }
                     <th class="text-center" style="width:60px"></th>
                 </tr>
@@ -116,6 +119,11 @@
                     <td class="text-start">{{ getAnswer(r, q.id) }}</td>
                     @if (hasDetailList(q)) {
                     <td class="text-start">{{ getAnswerDetail(r, q.id) }}</td>
+                    }
+                    @if (hasCommentBox(q)) {
+                    <td class="text-start fst-italic" [title]="getAnswerComment(r, q.id)">
+                        {{ getAnswerCommentPreview(r, q.id) }}
+                    </td>
                     }
                     }
                     <td class="text-center text-nowrap">
@@ -223,6 +231,13 @@
                                 <option [value]="detail.value">{{ detail.label }}</option>
                             }
                         </select>
+                    }
+                    @if (manualAnswers[q.id]?.optionValue === opt.value && opt.commentEnabled) {
+                        <textarea class="form-control form-control-sm mt-2" rows="2" [name]="'comment_' + q.id"
+                            [attr.maxlength]="commentMaxLength"
+                            [placeholder]="opt.commentPrompt || 'Commentaire (facultatif)'"
+                            [ngModel]="manualAnswers[q.id]?.comment ?? ''"
+                            (ngModelChange)="setManualComment(q.id, $event)"></textarea>
                     }
                 </div>
             }

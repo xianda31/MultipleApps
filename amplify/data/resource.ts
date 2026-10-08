@@ -592,6 +592,8 @@ const schema = a.schema({
     detailPrompt: a.string(),
     detailOptions: a.ref('SurveyDetailOption').array(),
     detailOptionsOrigin: a.enum(['manual', 'memberImport']),
+    commentEnabled: a.boolean(),
+    commentPrompt: a.string(),
   }),
 
   SurveyQuestion: a.model({
@@ -600,6 +602,7 @@ const schema = a.schema({
     text: a.string().required(),
     resultLabel: a.string(),
     detailResultLabel: a.string(),
+    commentResultLabel: a.string(),
     options: a.ref('SurveyQuestionOption').array().required(),
   })
     .authorization((allow) => [
@@ -616,7 +619,7 @@ const schema = a.schema({
     memberId: a.string().required(),     // license_number ou cognitoId
     memberEmail: a.string().required(),
     memberName: a.string(),              // prénom + nom pour le tableau admin
-    answers: a.json().required(),        // { [questionId]: { optionValue, detailValue? } }
+    answers: a.json().required(),        // { [questionId]: { optionValue, detailValue?, comment? } }
     paymentStatus: a.enum(['notApplicable', 'payable']),
     paymentProductId: a.string(),
     requiresReconfirmation: a.boolean(),

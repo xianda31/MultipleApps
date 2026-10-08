@@ -2,8 +2,10 @@ import {
   getReachableQuestions,
   hasPaymentTag,
   isSurveyPathComplete,
+  normalizeSurveyComment,
   requiresSurveyReconfirmation,
   sanitizeSurveyAnswers,
+  SURVEY_COMMENT_MAX_LENGTH,
   SurveyQuestionDefinition,
   validatePaymentTag,
 } from './survey-flow';
@@ -101,5 +103,59 @@ describe('survey flow', () => {
       meal: { optionValue: 'fish' },
     };
     expect(requiresSurveyReconfirmation(questions, updated, answers)).toBeTrue();
+  });
+
+  describe('commentaire libre facultatif', () => {
+    const commented: SurveyQuestionDefinition[] = [
+      {
+        id: 'taste', order: 0, text: 'Votre avis ?',
+        commentResultLabel: 'Précision',
+        options: [
+          { value: 'love', label: "J'aime trop", nextAction: 'END' },
+          {
+            value: 'mixed', label: "J'aime mais…", nextAction: 'END',
+            commentEnabled: true, commentPrompt: 'Dites-nous ce qui vous a gêné',
+          },
+        ],
+      },
+    ];
+
+    it('considers an answer complete without any comment', () => {
+      expect(isSurveyPathComplete(commented, { taste: { optionValue: 'mixed' } })).toBeTrue();
+    });
+
+    it('keeps and trims a comment on an option that accepts it', () => {
+      expect(sanitizeSurveyAnswers(commented, {
+        taste: { optionValue: 'mixed', comment: '  en violet, plus joli  ' },
+      })).toEqual({ taste: { optionValue: 'mixed', comment: 'en violet, plus joli' } });
+    });
+
+    it('drops a comment carried by an option that does not accept one', () => {
+      expect(sanitizeSurveyAnswers(commented, {
+        taste: { optionValue: 'love', comment: 'commentaire orphelin' },
+      })).toEqual({ taste: { optionValue: 'love' } });
+    });
+
+    it('drops a blank comment instead of storing an empty string', () => {
+      expect(sanitizeSurveyAnswers(commented, {
+        taste: { optionValue: 'mixed', comment: '   ' },
+      })).toEqual({ taste: { optionValue: 'mixed' } });
+    });
+
+    it('caps the stored comment length', () => {
+      const long = 'a'.repeat(SURVEY_COMMENT_MAX_LENGTH + 50);
+      expect(normalizeSurveyComment(long)?.length).toBe(SURVEY_COMMENT_MAX_LENGTH);
+      expect(normalizeSurveyComment('   ')).toBeUndefined();
+      expect(normalizeSurveyComment(undefined)).toBeUndefined();
+    });
+
+    it('does not ask respondents to reconfirm when a comment box is added or removed', () => {
+      const withoutComment = structuredClone(commented);
+      withoutComment[0].options[1].commentEnabled = false;
+      const answers = { taste: { optionValue: 'mixed', comment: 'en violet' } };
+
+      expect(requiresSurveyReconfirmation(commented, withoutComment, answers)).toBeFalse();
+      expect(requiresSurveyReconfirmation(withoutComment, commented, answers)).toBeFalse();
+    });
   });
 });

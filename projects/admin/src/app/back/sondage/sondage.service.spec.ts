@@ -21,6 +21,81 @@ describe('SondageService listing', () => {
   });
 });
 
+describe('SondageService mutations', () => {
+  it('returns the created survey when Amplify succeeds', async () => {
+    const service = new SondageService();
+    spyOnProperty(service as any, 'm', 'get').and.returnValue({
+      Survey: {
+        create: jasmine.createSpy('createSurvey').and.resolveTo({
+          data: { id: 'survey-1', title: 'Sondage' },
+        }),
+      },
+    });
+
+    const survey = await service.createSurvey({
+      title: 'Sondage',
+      closingDate: '2026-10-31',
+    });
+
+    expect(survey.id).toBe('survey-1');
+  });
+
+  it('surfaces the Amplify error instead of returning a null survey', async () => {
+    const service = new SondageService();
+    spyOnProperty(service as any, 'm', 'get').and.returnValue({
+      Survey: {
+        create: jasmine.createSpy('createSurvey').and.resolveTo({
+          data: null,
+          errors: [{ message: 'Not authorized to access createSurvey' }],
+        }),
+      },
+    });
+
+    await expectAsync(service.createSurvey({
+      title: 'Sondage',
+      closingDate: '2026-10-31',
+    })).toBeRejectedWithError(
+      'Création du sondage impossible : Not authorized to access createSurvey',
+    );
+  });
+
+  it('rejects a null mutation result even when Amplify provides no error details', async () => {
+    const service = new SondageService();
+    spyOnProperty(service as any, 'm', 'get').and.returnValue({
+      SurveyQuestion: {
+        create: jasmine.createSpy('createQuestion').and.resolveTo({ data: null }),
+      },
+    });
+
+    await expectAsync(service.createQuestion({
+      surveyId: 'survey-1',
+      text: 'Question',
+      options: [],
+      order: 0,
+    })).toBeRejectedWithError(
+      'Création de la question impossible : aucune donnée retournée par Amplify',
+    );
+  });
+
+  it('surfaces an Amplify update error', async () => {
+    const service = new SondageService();
+    spyOnProperty(service as any, 'm', 'get').and.returnValue({
+      SurveyQuestion: {
+        update: jasmine.createSpy('updateQuestion').and.resolveTo({
+          data: null,
+          errors: [{ message: 'Unknown field commentEnabled' }],
+        }),
+      },
+    });
+
+    await expectAsync(service.updateQuestion('question-1', {
+      options: [],
+    })).toBeRejectedWithError(
+      'Mise à jour de la question impossible : Unknown field commentEnabled',
+    );
+  });
+});
+
 describe('SondageService deletion', () => {
   it('deletes related questions, responses and tokens with the survey', async () => {
     const surveyId = 'survey-1';

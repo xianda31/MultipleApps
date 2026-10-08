@@ -34,6 +34,9 @@ const RESPONSE_TABLE = process.env.SURVEY_RESPONSE_TABLE_NAME!;
 const SURVEY_TABLE   = process.env.SURVEY_TABLE_NAME!;
 const QUESTION_TABLE = process.env.SURVEY_QUESTION_TABLE_NAME!;
 
+/** Doit rester aligné sur SURVEY_COMMENT_MAX_LENGTH (projects/admin/src/app/common/survey/survey-flow.ts). */
+const SURVEY_COMMENT_MAX_LENGTH = 280;
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 async function getToken(token: string) {
@@ -110,7 +113,7 @@ function computeAggregatedResults(
 }
 
 function resolveSubmission(questions: any[], answers: Record<string, unknown>) {
-  const sanitized: Record<string, { optionValue: string; detailValue?: string }> = {};
+  const sanitized: Record<string, { optionValue: string; detailValue?: string; comment?: string }> = {};
   let payable = false;
   let complete = false;
 
@@ -119,6 +122,7 @@ function resolveSubmission(questions: any[], answers: Record<string, unknown>) {
     if (!answer || typeof answer !== 'object') return { valid: false, reason: 'Réponse manquante' };
     const optionValue = (answer as any).optionValue;
     const detailValue = (answer as any).detailValue;
+    const comment = (answer as any).comment;
     if (typeof optionValue !== 'string') return { valid: false, reason: 'Réponse invalide' };
     const option = (question.options ?? []).find((candidate: any) => candidate.value === optionValue);
     if (!option) return { valid: false, reason: 'Choix invalide' };
@@ -131,9 +135,18 @@ function resolveSubmission(questions: any[], answers: Record<string, unknown>) {
       return { valid: false, reason: 'Détail inattendu' };
     }
 
+    // Le commentaire est facultatif : seule sa présence sur une option qui ne l'autorise pas est refusée.
+    let normalizedComment: string | undefined;
+    if (comment !== undefined && comment !== null) {
+      if (option.commentEnabled !== true) return { valid: false, reason: 'Commentaire inattendu' };
+      if (typeof comment !== 'string') return { valid: false, reason: 'Commentaire invalide' };
+      normalizedComment = comment.trim().slice(0, SURVEY_COMMENT_MAX_LENGTH).trim() || undefined;
+    }
+
     sanitized[question.id] = {
       optionValue,
       ...(detailOptions.length > 0 ? { detailValue } : {}),
+      ...(normalizedComment ? { comment: normalizedComment } : {}),
     };
     payable ||= option.payTag === true;
     if (option.nextAction === 'END') {

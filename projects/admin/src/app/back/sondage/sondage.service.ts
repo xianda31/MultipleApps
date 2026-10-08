@@ -25,6 +25,7 @@ export interface QuestionInput {
   text: string;
   resultLabel?: string;
   detailResultLabel?: string;
+  commentResultLabel?: string;
   options: SurveyOptionDefinition[];
   order: number;
 }
@@ -33,6 +34,32 @@ export interface QuestionInput {
 export class SondageService {
   private get m() {
     return generateClient<Schema>().models as any;
+  }
+
+  private mutationError(operation: string, errors: unknown): Error {
+    const messages = Array.isArray(errors)
+      ? errors
+          .map(error => typeof error === 'object' && error !== null && 'message' in error
+            ? String(error.message)
+            : String(error))
+          .filter(Boolean)
+      : [];
+    return new Error(messages.length
+      ? `${operation} : ${messages.join(' | ')}`
+      : `${operation} : aucune donnée retournée par Amplify`);
+  }
+
+  private requireMutationData<T>(
+    result: { data?: T | null; errors?: unknown },
+    operation: string,
+  ): T {
+    const hasErrors = Array.isArray(result.errors)
+      ? result.errors.length > 0
+      : result.errors != null;
+    if (hasErrors || result.data == null) {
+      throw this.mutationError(operation, result.errors);
+    }
+    return result.data;
   }
 
   // ── Survey ─────────────────────────────────────────────────────────────────
@@ -51,16 +78,18 @@ export class SondageService {
   }
 
   async createSurvey(input: SurveyInput): Promise<SurveyItem> {
-    const { data } = await this.m.Survey.create({ ...input, status: input.status ?? 'active' });
-    return data;
+    const result = await this.m.Survey.create({ ...input, status: input.status ?? 'active' });
+    return this.requireMutationData<SurveyItem>(result, 'Création du sondage impossible');
   }
 
   async updateSurvey(id: string, input: Partial<SurveyInput>): Promise<void> {
-    await this.m.Survey.update({ id, ...input });
+    const result = await this.m.Survey.update({ id, ...input });
+    this.requireMutationData(result, 'Mise à jour du sondage impossible');
   }
 
   async updateSurveyStatus(id: string, status: SurveyStatus): Promise<void> {
-    await this.m.Survey.update({ id, status });
+    const result = await this.m.Survey.update({ id, status });
+    this.requireMutationData(result, 'Mise à jour du statut impossible');
   }
 
   async deleteSurvey(id: string): Promise<void> {
@@ -105,12 +134,13 @@ export class SondageService {
   }
 
   async createQuestion(input: QuestionInput): Promise<SurveyQuestionItem> {
-    const { data } = await this.m.SurveyQuestion.create(input);
-    return data;
+    const result = await this.m.SurveyQuestion.create(input);
+    return this.requireMutationData<SurveyQuestionItem>(result, 'Création de la question impossible');
   }
 
   async updateQuestion(id: string, input: Partial<QuestionInput>): Promise<void> {
-    await this.m.SurveyQuestion.update({ id, ...input });
+    const result = await this.m.SurveyQuestion.update({ id, ...input });
+    this.requireMutationData(result, 'Mise à jour de la question impossible');
   }
 
   async deleteQuestion(id: string): Promise<void> {
