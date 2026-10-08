@@ -92,7 +92,11 @@
       <ng-container *ngIf="bank_report === null">
         <tr [class]="highlight_class(transfer)" *ngFor="let transfer of pending_transfer_entries">
           <td class="entry-report">
-            <select class="form-select form-select-sm" [(ngModel)]="transfer_reports[transfer.id]"
+            <select class="form-select form-select-sm"
+              [class.border-warning]="!transfer_reports[transfer.id]"
+              [class.border-2]="!transfer_reports[transfer.id]"
+              [class.bg-warning-subtle]="!transfer_reports[transfer.id]"
+              [(ngModel)]="transfer_reports[transfer.id]"
               [disabled]="settling_transfer_ids.has(transfer.id)"
               (ngModelChange)="update_transfer_report(transfer)">
               <option hidden disabled value=""> </option>
@@ -130,13 +134,18 @@
 
         <tr [class]="highlight_class(book_entry)" *ngIf="book_entry.bank_report === bank_report">
           <td class="entry-report">
-            <div *ngIf="bank_report !== null" class="form-check form-switch form-check-inline">
-              <input class="form-check-input" type="checkbox" role="switch"
-                [attr.aria-label]="'Retirer du relevé ' + bank_report"
-                [checked]="book_entry.bank_report !== null" (change)="set_bank_report(book_entry,bank_report)">
-            </div>
+            <button *ngIf="bank_report !== null" type="button" class="btn btn-sm btn-link text-warning p-0"
+              [ngbTooltip]="'Retirer du relevé ' + bank_report"
+              [attr.aria-label]="'Retirer du relevé ' + bank_report"
+              (click)="set_bank_report(book_entry,bank_report)">
+              <i class="bi bi-box-arrow-left" aria-hidden="true"></i>
+            </button>
             <div *ngIf="bank_report === null">
-              <select class="form-select form-select-sm" [(ngModel)]="book_entry.bank_report"
+              <select class="form-select form-select-sm"
+                [class.border-warning]="!book_entry.bank_report"
+                [class.border-2]="!book_entry.bank_report"
+                [class.bg-warning-subtle]="!book_entry.bank_report"
+                [(ngModel)]="book_entry.bank_report"
                 (ngModelChange)="update_bank_report(book_entry)">
                 <option hidden disabled> </option>
                 <option *ngFor="let report of bank_reports" [value]="report">{{report}}</option>
