@@ -87,7 +87,7 @@ export class BatchService {
       return from(fetchAll()).pipe(
         catchError((error) => {
           console.error('Error scanning table (paginated):', error);
-          return of([]);
+          return throwError(() => error);
         })
       );
     } else {
@@ -103,7 +103,7 @@ export class BatchService {
         }),
         catchError((error) => {
           console.error('Error scanning table:', error);
-          return of([]);
+          return throwError(() => error);
         })
       );
     }
@@ -149,35 +149,33 @@ export class BatchService {
         let attempt = 0;
         const maxAttempts = 6;
         let response: BatchWriteItemCommandOutput | null = null;
-        do {
+        while (attempt < maxAttempts) {
+          attempt++;
           try {
             response = await this.client.send(new BatchWriteItemCommand(request));
           } catch (err) {
-            console.error(`Batch write #${batch_nbr + 1} attempt ${attempt + 1} failed:`, err);
-            response = null;
-          }
-          const unprocessed = response?.UnprocessedItems?.[tableName] || [];
-          if (unprocessed.length > 0) {
-            // retry only unprocessed
-            request = { RequestItems: { [tableName]: unprocessed } } as any;
-            attempt++;
+            console.error(`Batch write #${batch_nbr + 1} attempt ${attempt} failed:`, err);
+            if (attempt === maxAttempts) throw err;
             const delay = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.floor(Math.random() * 200);
             await sleep(delay);
-          } else {
-            break;
+            continue;
           }
-        } while (attempt < 6);
-        if (response) {
-          console.log('Batch write n° %s complete (attempts: %s)', batch_nbr + 1, attempt + 1);
+          const unprocessed = response?.UnprocessedItems?.[tableName] || [];
+          if (unprocessed.length === 0) {
+            console.log('Batch write n° %s complete (attempts: %s)', batch_nbr + 1, attempt);
+            return response;
+          }
+
+          request = { RequestItems: { [tableName]: unprocessed } } as any;
+          if (attempt < maxAttempts) {
+            const delay = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.floor(Math.random() * 200);
+            await sleep(delay);
+          }
         }
-        return response;
+        const remaining = response?.UnprocessedItems?.[tableName]?.length ?? request.RequestItems[tableName].length;
+        throw new Error(`Batch write #${batch_nbr + 1} incomplete: ${remaining} item(s) non traité(s)`);
       };
-      return from(run()).pipe(
-        catchError((error) => {
-          console.error('Batch write n° %s failed:', batch_nbr + 1, error);
-          return of(null);
-        })
-      );
+      return from(run());
     };
 
     // Split items into chunks of 25
@@ -215,35 +213,35 @@ export class BatchService {
               }
             } as any;
             let attempt = 0;
+            const maxAttempts = 6;
             let response: BatchWriteItemCommandOutput | null = null;
-            do {
+            while (attempt < maxAttempts) {
+              attempt++;
               try {
                 response = await this.client.send(new BatchWriteItemCommand(request));
               } catch (err) {
-                console.error(`Batch delete #${batch_nbr + 1} attempt ${attempt + 1} failed:`, err);
-                response = null;
-              }
-              const unprocessed = response?.UnprocessedItems?.[tableName] || [];
-              if (unprocessed.length > 0) {
-                request = { RequestItems: { [tableName]: unprocessed } } as any;
-                attempt++;
+                console.error(`Batch delete #${batch_nbr + 1} attempt ${attempt} failed:`, err);
+                if (attempt === maxAttempts) throw err;
                 const delay = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.floor(Math.random() * 200);
                 await sleep(delay);
-              } else {
-                break;
+                continue;
               }
-            } while (attempt < 6);
-            if (response) {
-              console.log('Batch delete n° %s complete (attempts: %s)', batch_nbr + 1, attempt + 1);
+              const unprocessed = response?.UnprocessedItems?.[tableName] || [];
+              if (unprocessed.length === 0) {
+                console.log('Batch delete n° %s complete (attempts: %s)', batch_nbr + 1, attempt);
+                return response;
+              }
+
+              request = { RequestItems: { [tableName]: unprocessed } } as any;
+              if (attempt < maxAttempts) {
+                const delay = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.floor(Math.random() * 200);
+                await sleep(delay);
+              }
             }
-            return response;
+            const remaining = response?.UnprocessedItems?.[tableName]?.length ?? request.RequestItems[tableName].length;
+            throw new Error(`Batch delete #${batch_nbr + 1} incomplete: ${remaining} item(s) non traité(s)`);
           };
-          return from(run()).pipe(
-            catchError((error) => {
-              console.error('Batch delete n° %s failed:', batch_nbr + 1, error);
-              return of(null);
-            })
-          );
+          return from(run());
         };
 
         // Split items into chunks of 25
