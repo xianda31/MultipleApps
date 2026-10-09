@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 
-import { CUSTOMER_ACCOUNT, PurchaseStatementEntry } from '../../interfaces/accounting.interface';
+import { CUSTOMER_ACCOUNT, PurchaseStatementEntry, TRANSACTION_ID } from '../../interfaces/accounting.interface';
 
 @Component({
   selector: 'app-purchase-summary',
@@ -44,6 +44,15 @@ export class PurchaseSummaryComponent {
 
   get totalDebtRepaid(): number {
     return this.entries
+      .filter(entry => entry.transactionId !== TRANSACTION_ID.annulation_dette_adhérent)
+      .flatMap(entry => entry.items)
+      .filter(item => item.key === CUSTOMER_ACCOUNT.DEBT_credit)
+      .reduce((total, item) => total + item.amount, 0);
+  }
+
+  get totalDebtCancelled(): number {
+    return this.entries
+      .filter(entry => entry.transactionId === TRANSACTION_ID.annulation_dette_adhérent)
       .flatMap(entry => entry.items)
       .filter(item => item.key === CUSTOMER_ACCOUNT.DEBT_credit)
       .reduce((total, item) => total + item.amount, 0);

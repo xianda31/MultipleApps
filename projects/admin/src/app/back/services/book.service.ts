@@ -384,6 +384,7 @@ export class BookService {
         || (first.createdAt ?? '').localeCompare(second.createdAt ?? '')
       )
       .map(entry => {
+        const transactionClass = this.transactionService.transaction_class(entry.transaction_id);
         const payerOperation = entry.operations.find(operation =>
           (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0
         ) ?? entry.operations[0];
@@ -424,11 +425,14 @@ export class BookService {
         return {
           id: entry.id,
           date: entry.date,
+          transactionId: entry.transaction_id,
           transaction: this.transactionService.get_entry_label(entry),
           amount: transactionAmount === 0 ? 0 : transactionAmount,
-          spentAmount: items
-            .filter(item => !Object.values(CUSTOMER_ACCOUNT).includes(item.key as CUSTOMER_ACCOUNT))
-            .reduce((total, item) => total + item.amount, 0),
+          spentAmount: transactionClass === TRANSACTION_CLASS.EXPENSE_FOR_MEMBER
+            ? 0
+            : items
+              .filter(item => !Object.values(CUSTOMER_ACCOUNT).includes(item.key as CUSTOMER_ACCOUNT))
+              .reduce((total, item) => total + item.amount, 0),
           items,
         };
       })

@@ -10,6 +10,12 @@
             <strong>{{totalDebtRepaid | currency:'EUR':'symbol':'1.2-2'}}</strong>
         </span>
         }
+        @if (totalDebtCancelled > 0) {
+        <span class="summary-line">
+            <span>Dette annulée</span>
+            <strong>{{totalDebtCancelled | currency:'EUR':'symbol':'1.2-2'}}</strong>
+        </span>
+        }
         @if (totalAssetsGranted > 0) {
         <span class="summary-line">
             <span>Avoir attribué</span>

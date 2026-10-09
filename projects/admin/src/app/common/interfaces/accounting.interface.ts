@@ -166,6 +166,7 @@ export interface BookEntry {
 export interface PurchaseStatementEntry {
   id: string;
   date: string;
+  transactionId: TRANSACTION_ID;
   transaction: string;
   amount: number;
   spentAmount: number;
@@ -177,5 +178,4 @@ export interface PurchaseStatementEntry {
     beneficiary?: string;
   }>;
 }
-
 

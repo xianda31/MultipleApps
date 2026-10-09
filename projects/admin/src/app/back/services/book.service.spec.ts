@@ -149,6 +149,7 @@ describe('BookService', () => {
     expect(service.get_member_purchase_statement('TEST Jean', new Map([['ADH', 'Adhésion au club']]))).toEqual([{
       id: 'purchase-1',
       date: '2026-10-03',
+      transactionId: TRANSACTION_ID.achat_adhérent_par_virement,
       transaction: 'virement annoncé',
       amount: 0,
       spentAmount: 115,
@@ -180,6 +181,7 @@ describe('BookService', () => {
     expect(service.get_member_purchase_statement('LAUVERGNAT Michèle')).toEqual([{
       id: 'settlement-1',
       date: '2026-09-23',
+      transactionId: TRANSACTION_ID.achat_adhérent_en_espèces,
       transaction: 'virement annoncé',
       amount: 10,
       spentAmount: 0,
@@ -188,6 +190,31 @@ describe('BookService', () => {
         { key: CUSTOMER_ACCOUNT.ASSET_debit, code: 'AVOIR', description: 'avoir utilisé', amount: -20 },
       ],
     }]);
+  });
+
+  it('does not count an asset grant expense as member spending', () => {
+    const service = createService({ class: TRANSACTION_CLASS.EXPENSE_FOR_MEMBER });
+    const assetGrant: BookEntry = {
+      id: 'asset-grant-1',
+      season: '2026/2027',
+      date: '2026-10-09',
+      transaction_id: TRANSACTION_ID.attribution_avoir,
+      amounts: {},
+      operations: [{
+        label: 'avoir attribué',
+        member: 'RENOUX Test',
+        values: { BNV: 30, [CUSTOMER_ACCOUNT.ASSET_credit]: 30 },
+      }],
+    };
+    (service as any)._book_entries = [assetGrant];
+
+    const [statement] = service.get_member_purchase_statement('RENOUX Test');
+
+    expect(statement.spentAmount).toBe(0);
+    expect(statement.items).toEqual([
+      { key: 'BNV', code: 'BNV', description: 'BNV', amount: 30 },
+      { key: CUSTOMER_ACCOUNT.ASSET_credit, code: 'AVOIR', description: 'avoir attribué', amount: 30 },
+    ]);
   });
 
   it('sorts same-day entries by creation time', () => {
