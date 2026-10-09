@@ -53,7 +53,16 @@
         
         <div class="mb-3">
           <label for="email" class="form-label">Email:</label>
-          <input type="email" class="form-control form-control-sm" id="email" formControlName="email" placeholder="votre email">
+          <div class="input-group input-group-sm">
+            <input type="email" class="form-control" id="email" formControlName="email" placeholder="votre email">
+            <button type="button" class="btn btn-outline-secondary" (click)="copyEmail()"
+              [disabled]="!preferenceForm.get('email')?.value"
+              [title]="emailCopied ? 'Adresse copiée' : 'Copier l’adresse email'"
+              [attr.aria-label]="emailCopied ? 'Adresse email copiée' : 'Copier l’adresse email'">
+              <i class="bi" [class.bi-copy]="!emailCopied" [class.bi-clipboard-check]="emailCopied"
+                aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
 
         <div class="mb-3">

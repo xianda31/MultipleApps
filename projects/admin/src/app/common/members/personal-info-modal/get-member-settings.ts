@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { Member, Member_settings } from '../../interfaces/member.interface';
@@ -18,13 +18,15 @@ import { MemberSettingsService } from '../../services/member-settings.service';
   templateUrl: './get-member-settings.html',
   styleUrls: ['./get-member-settings.scss']
 })
-export class GetMemberSettingsComponent {
+export class GetMemberSettingsComponent implements OnDestroy {
   @Input() readonly member!: Member;
   preferenceForm !: FormGroup;
   preference!: Member_settings;
   base64_ico: string = '';
   full_name: string = '';
   avatarFileExists = false;
+  emailCopied = false;
+  private copyConfirmationTimeout?: ReturnType<typeof setTimeout>;
   // Sauvegarder les valeurs initiales pour la comparaison
   initialSettings!: Member_settings;
 
@@ -81,6 +83,30 @@ export class GetMemberSettingsComponent {
 
   get ico_url$() {
     return this.preferenceForm.get('ico_url$')?.value;
+  }
+
+  async copyEmail(): Promise<void> {
+    const email = this.preferenceForm.get('email')?.value?.trim();
+    if (!email) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(email);
+      this.emailCopied = true;
+      clearTimeout(this.copyConfirmationTimeout);
+      this.copyConfirmationTimeout = setTimeout(() => {
+        this.emailCopied = false;
+      }, 2000);
+      this.toastService.showSuccess('Email', 'Adresse copiée dans le presse-papiers');
+    } catch (error) {
+      console.error('[Member settings] Unable to copy email', error);
+      this.toastService.showWarning('Email', 'Impossible de copier l’adresse');
+    }
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.copyConfirmationTimeout);
   }
 
   save() {
