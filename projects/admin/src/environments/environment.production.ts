@@ -10,13 +10,12 @@ export const environment = {
     region: 'eu-west-3',
     aws_access_key_id: '',
     aws_secret_access_key: '',
-    sandbox_apid: 'efrr2pns5vha5evtg7bifwxv2i',
+    sandbox_apid: '373cu6s3mrdyvne3k6rvkrjoha',
     production_apid: 'sgykdji3wvd2nkrffu62facucq',
     s3_prod_bucket: '',
     s3_sandbox_bucket: '',
     back_guard: true,
     low_game_card_message: true,
-    ffbProxyPathPrefix: '/v1',
     ffbProxyPathOverrides: {}
 
 };

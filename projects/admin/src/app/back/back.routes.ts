@@ -49,7 +49,11 @@ import { ChequeExplorerComponent } from './books/cheque-explorer/cheque-explorer
 
 function secureBackRoutes(childRoutes: Routes): Routes {
   return childRoutes.map((route) => {
-    const access = route.path === '' || route.path === '**'
+    if (route.path === '' || route.path === BACK_ROUTE_PATHS.Home || route.path === BACK_ROUTE_PATHS.SignOut) {
+      return route;
+    }
+
+    const access = route.path === '**'
       ? BACK_ROUTE_ACCESS.Home
       : getBackRouteAccess(route.path ?? '');
 

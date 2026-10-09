@@ -11,6 +11,7 @@ export const routes: Routes = [
         .then(c => c.SurveyRespondComponent),
   },
   { path: 'front', loadChildren: () => import('./front.module').then(m => m.FrontModule) },
+  { path: 'admin', redirectTo: 'back', pathMatch: 'prefix' },
   { path: 'back', loadChildren: () => import('./back/back.routes').then(m => m.routes) },
   { path: '**', redirectTo: 'front' },
 ];

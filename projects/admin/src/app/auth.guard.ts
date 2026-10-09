@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router, UrlTree } from '@angular/router';
-import { Observable, timeout, firstValueFrom } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { firstValueFrom, timeout } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import { AuthentificationService } from './common/authentification/authentification.service';
+import { AUTHENTICATION_CONFIG } from './common/authentification/authentification.config';
 import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -15,17 +16,18 @@ export class AuthGuard implements CanActivate {
     }
 
     try {
-      // Attendre la première émission non-null de logged_member$ (max 5s)
-      // Utile après un rechargement complet (ex: retour Stripe)
       await firstValueFrom(
-        this.auth.logged_member$.pipe(
-          filter(member => member !== null),
-          timeout(5000)
+        this.auth.isRestoringSession$.pipe(
+          filter(isRestoring => !isRestoring),
+          take(1),
+          timeout(AUTHENTICATION_CONFIG.sessionRestoreTimeoutMs)
         )
       );
-      return true;
-    } catch (err) {
-      // Timeout ou erreur → rediriger vers /front
+      return this.auth.currentMember !== null
+        ? true
+        : this.router.createUrlTree(['/front']);
+    } catch (error) {
+      console.error('[AuthGuard] Session restoration failed or timed out', error);
       return this.router.createUrlTree(['/front']);
     }
   }
