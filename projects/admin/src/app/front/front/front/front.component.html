@@ -226,3 +226,8 @@
       </div> -->
     </div>
   </ng-template>
+
+  <button *ngIf="showBackToTop" type="button" class="back-to-top"
+    aria-label="Retour en haut de la page" title="Retour en haut" (click)="scrollToTop()">
+    <i class="bi bi-caret-up-square-fill" aria-hidden="true"></i>
+  </button>

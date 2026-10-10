@@ -57,6 +57,7 @@ export class FrontComponent implements AfterViewInit {
   private labelCache = new Map<string, Promise<string>>();
   isPortrait = true;
   isMobileLandscape = false;
+  showBackToTop = false;
   buildInfo: BuildInfo = environment.buildInfo;
   readonly ffbAvailability$: FfbAvailabilityService['snapshot$'];
 
@@ -345,6 +346,8 @@ export class FrontComponent implements AfterViewInit {
 
   @HostListener('window:scroll')
   onScroll() {
+    this.showBackToTop = window.scrollY >= 400;
+
     if (this.isLaptopMode) {
       const scrollY = window.scrollY;
       const bannerRow = document.querySelector('.laptop-banner-row') as HTMLElement;
@@ -397,6 +400,13 @@ export class FrontComponent implements AfterViewInit {
         }
       }
     }
+  }
+
+  scrollToTop(): void {
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    });
   }
 
 }
