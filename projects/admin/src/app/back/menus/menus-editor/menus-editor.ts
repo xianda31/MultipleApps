@@ -554,7 +554,9 @@ export class MenusEditorComponent implements AfterViewInit {
     const segCtrl = this.navItemForm.get('slug');
 
     labelCtrl?.valueChanges.subscribe(() => {
-      if (!this.slugManuallyEdited) {
+      const preserveExistingInternalLink = !!this.selectedNavitem?.id
+        && typeCtrl.value === NAVITEM_TYPE.INTERNAL_LINK;
+      if (!this.slugManuallyEdited && !preserveExistingInternalLink) {
         const auto = charsanitize(labelCtrl.value || '');
         this.lastAutoSlug = auto;
         segCtrl?.setValue(auto, { emitEvent: false });

@@ -26,6 +26,7 @@ export const minimal_routes: Routes = [
 
       // System routes (redirects and fallbacks)
       { path: 'back_office', redirectTo: '/back', pathMatch: 'full' },
+      { path: 'espace_gestion', redirectTo: '/back', pathMatch: 'full' },
       { path: '404', component: PageNotFoundComponent },
       { path: '**', component: PageNotFoundComponent }, // catch-all route to handle custom routing
     ]
