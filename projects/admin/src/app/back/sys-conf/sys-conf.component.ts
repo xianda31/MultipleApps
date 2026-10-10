@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { SystemConfiguration } from '../../common/interfaces/system-conf.interface';
@@ -41,6 +41,7 @@ export class SysConfComponent {
       include_system_visits: [false],
       club_bank_key: [''],
       assistance_request_retention_days: [90],
+      remembered_auth_session_days: [30, [Validators.required, Validators.min(1), Validators.max(30)]],
       online_payment_active: [false],
       tpe_payment_active: [false],
       CB_fees_account: [''],
@@ -128,6 +129,11 @@ export class SysConfComponent {
   // }
 
   save_configuration() {
+    if (this.systemFormGroup.invalid) {
+      this.systemFormGroup.markAllAsTouched();
+      this.toastService.showWarning('Configuration', 'Corrigez les paramètres invalides avant de sauvegarder');
+      return;
+    }
     const new_configuration: SystemConfiguration = this.systemFormGroup.value;
     console.log('nouvelle configuration', new_configuration);
     this.systemDataService.save_configuration(new_configuration);

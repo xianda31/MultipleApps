@@ -41,6 +41,7 @@ export interface SystemConfiguration {
     club_bank_key: string;
 
     assistance_request_retention_days?: number;
+    remembered_auth_session_days?: number;
 
     online_payment_active: boolean;
     tpe_payment_active: boolean;
@@ -53,5 +54,4 @@ export interface SystemConfiguration {
     revenue_and_expense_tree: Revenue_and_expense_tree;
     banks: Bank[];
 }
-
 

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { catchError, filter, from, map, Observable, of, switchMap, take } from 'rxjs';
+import { catchError, filter, firstValueFrom, from, map, Observable, of, switchMap, take } from 'rxjs';
 import { ToastService } from '../../services/toast.service';
 import { Process_flow } from '../authentification_interface';
 import { AuthentificationService } from '../authentification.service';
@@ -11,8 +11,13 @@ import { MembersService } from '../../services/members.service';
 import { Group_icons } from '../group.interface';
 import { TitleService } from '../../../front/title/title.service';
 import { InputCodeComponent } from '../../components/input-code/input-code.component';
-import { persistAuthSessionPolicy } from '../auth-session-persistence';
+import {
+  DEFAULT_REMEMBERED_AUTH_SESSION_DAYS,
+  normalizeRememberedSessionDays,
+  persistAuthSessionPolicy,
+} from '../auth-session-persistence';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { SystemDataService } from '../../services/system-data.service';
 
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
@@ -44,6 +49,7 @@ export class ConnexionComponent implements AfterViewInit {
   currentMode?: Process_flow;
   isSubmitting = false;
   isRestoringSession = true;
+  rememberedSessionDays = DEFAULT_REMEMBERED_AUTH_SESSION_DAYS;
 
   // Labels sécurisés pour éviter les problèmes de cache/build
   readonly labels = {
@@ -77,7 +83,8 @@ export class ConnexionComponent implements AfterViewInit {
     private fb: FormBuilder,
     private router: Router,
     private location: Location,
-    private titleService: TitleService
+    private titleService: TitleService,
+    private systemDataService: SystemDataService,
   ) {
     this.loggerForm = this.fb.group({
       email: ['', { validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)] }],
@@ -149,9 +156,10 @@ export class ConnexionComponent implements AfterViewInit {
 
   async signIn() {
     await this.auth.signIn(this.email!.value, this.password!.value)
-      .then((member_id) => {
+      .then(async (member_id) => {
         if (!member_id) { console.warn('sign in', 'erreur imprévue'); }
-        persistAuthSessionPolicy(this.rememberMe.value === true);
+        await this.loadRememberedSessionDays();
+        persistAuthSessionPolicy(this.rememberMe.value === true, this.rememberedSessionDays);
         this.logging_msg = '';
       })
       .catch(async (err) => {
@@ -176,6 +184,20 @@ export class ConnexionComponent implements AfterViewInit {
           this.logging_msg = err?.message || 'Connexion impossible';
         }
       });
+  }
+
+  private async loadRememberedSessionDays(): Promise<void> {
+    try {
+      const configuration = await firstValueFrom(
+        this.systemDataService.get_configuration().pipe(take(1))
+      );
+      this.rememberedSessionDays = normalizeRememberedSessionDays(
+        configuration.remembered_auth_session_days
+      );
+    } catch (error) {
+      console.error('[Auth] Unable to load remembered session duration; using 30 days', error);
+      this.rememberedSessionDays = DEFAULT_REMEMBERED_AUTH_SESSION_DAYS;
+    }
   }
 
   async onSubmit() {

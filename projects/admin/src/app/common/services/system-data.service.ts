@@ -5,6 +5,7 @@ import { BehaviorSubject, from, Observable, switchMap, tap, catchError, of, comb
 import { FileService } from './files.service';
 import { ToastService } from './toast.service';
 import { normalizeBreakpoints } from '../utils/ui-utils';
+import { DEFAULT_REMEMBERED_AUTH_SESSION_DAYS, normalizeRememberedSessionDays } from '../authentification/auth-session-persistence';
 
 export type AccountingSeasonStatus = 'open' | 'closure_required' | 'preopened';
 
@@ -42,6 +43,9 @@ export class SystemDataService {
       season: this._active_season,
       include_system_visits: conf.include_system_visits ?? false,
       assistance_request_retention_days: conf.assistance_request_retention_days ?? 90,
+      remembered_auth_session_days: normalizeRememberedSessionDays(
+        conf.remembered_auth_session_days ?? DEFAULT_REMEMBERED_AUTH_SESSION_DAYS
+      ),
       online_payment_active: conf.online_payment_active ?? false,
       tpe_payment_active: conf.tpe_payment_active ?? false,
       minimum_cb_amount: conf.minimum_cb_amount ?? 0,
@@ -69,6 +73,7 @@ export class SystemDataService {
         const missing: string[] = [];
         if (conf.include_system_visits == null) missing.push('include_system_visits');
         if (conf.assistance_request_retention_days == null) missing.push('assistance_request_retention_days');
+        if (conf.remembered_auth_session_days == null) missing.push('remembered_auth_session_days');
         if (conf.online_payment_active == null) missing.push('online_payment_active');
         if (conf.tpe_payment_active == null) missing.push('tpe_payment_active');
         if (conf.minimum_cb_amount == null) missing.push('minimum_cb_amount');
