@@ -5,9 +5,13 @@ import { registerLocaleData } from '@angular/common';
 import * as fr from '@angular/common/locales/fr';
 import { Amplify } from 'aws-amplify';
 import outputs from '../../../amplify_outputs.json';
-import { fetchAuthSession } from 'aws-amplify/auth'
+import { fetchAuthSession, signOut } from 'aws-amplify/auth'
 import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
-import { sessionStorage } from 'aws-amplify/utils';
+import { defaultStorage } from 'aws-amplify/utils';
+import {
+  clearAuthSessionPolicy,
+  hasValidPersistedAuthSession,
+} from './app/common/authentification/auth-session-persistence';
 
 
 
@@ -50,8 +54,15 @@ Amplify.configure(
   }
 );
 
-// Set the session storage for Cognito User Pools token provider
-cognitoUserPoolsTokenProvider.setKeyValueStorage(sessionStorage);
+cognitoUserPoolsTokenProvider.setKeyValueStorage(defaultStorage);
 
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
+async function startApplication(): Promise<void> {
+  if (!hasValidPersistedAuthSession()) {
+    await signOut();
+    clearAuthSessionPolicy();
+  }
+
+  await bootstrapApplication(AppComponent, appConfig);
+}
+
+startApplication().catch((err) => console.error(err));

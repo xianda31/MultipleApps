@@ -8,6 +8,7 @@ import { MembersService } from '../services/members.service';
 import { ToastService } from '../services/toast.service';
 import { AssistanceRequestService } from '../services/assistance-request.service';
 import { normalizeUniqueEmails } from './member-lookup-diagnostics';
+import { clearAuthSessionPolicy } from './auth-session-persistence';
 
 
 
@@ -392,7 +393,11 @@ export class AuthentificationService {
 
   async signOut(): Promise<void> {
     this._logged_member$.next(null);
-    return signOut({ global: true });
+    try {
+      await signOut({ global: true });
+    } finally {
+      clearAuthSessionPolicy();
+    }
   }
 
   async resetPassword(email: string): Promise<any> {

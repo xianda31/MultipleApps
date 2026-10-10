@@ -11,6 +11,8 @@ import { MembersService } from '../../services/members.service';
 import { Group_icons } from '../group.interface';
 import { TitleService } from '../../../front/title/title.service';
 import { InputCodeComponent } from '../../components/input-code/input-code.component';
+import { persistAuthSessionPolicy } from '../auth-session-persistence';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 const EMAIL_PATTERN = "^[_A-Za-z0-9-\+]+(\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\.[A-Za-z0-9]+)*(\.[A-Za-z]{2,})$";
 const PSW_PATTERN = '^(?!\\s+)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[\\^$*.[\\]{}()?"!@#%&/\\\\,><\': ;| _~`=+-]).{8,256}(?<!\\s)$';
@@ -21,7 +23,7 @@ const GROUP_ICONS = Group_icons;
   standalone: true,
   templateUrl: './connexion.component.html',
   styleUrl: './connexion.component.scss',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputCodeComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, InputCodeComponent, NgbTooltipModule],
 })
 export class ConnexionComponent implements AfterViewInit {
   readonly confirmationCodeLength = 6;
@@ -65,6 +67,7 @@ export class ConnexionComponent implements AfterViewInit {
   get email() { return this.loggerForm.get('email')!; }
   get password() { return this.loggerForm.get('password')!; }
   get code() { return this.loggerForm.get('code')!; }
+  get rememberMe() { return this.loggerForm.get('rememberMe')!; }
 
   constructor(
     private membersService: MembersService,
@@ -79,6 +82,7 @@ export class ConnexionComponent implements AfterViewInit {
     this.loggerForm = this.fb.group({
       email: ['', { validators: [Validators.required, Validators.pattern(EMAIL_PATTERN)] }],
       password: ['', [Validators.required]],
+      rememberMe: [false],
       // new password is only used in RESET PASSWORD flows; validators applied dynamically when needed
       new_password: [''],
       code: [''],
@@ -147,6 +151,7 @@ export class ConnexionComponent implements AfterViewInit {
     await this.auth.signIn(this.email!.value, this.password!.value)
       .then((member_id) => {
         if (!member_id) { console.warn('sign in', 'erreur imprévue'); }
+        persistAuthSessionPolicy(this.rememberMe.value === true);
         this.logging_msg = '';
       })
       .catch(async (err) => {
