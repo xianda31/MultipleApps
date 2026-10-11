@@ -120,7 +120,7 @@
         [ngClass]="isMobile ? 'dropdown-item ps-0' + (isLastTop ? ' fw-bold' : '') : 'nav-link main-nav-link'"
         [href]="menu.navitem.extra_parameter" target="_blank" rel="noopener"
         [attr.data-bs-dismiss]="isMobile ? 'offcanvas' : null"
-        (click)="dropdown?.close()">
+        (click)="openExternalRedirect(menu.navitem.extra_parameter, $event, dropdown)">
         <ng-container *ngTemplateOutlet="menuLabelTemplate; context: { $implicit: menu }"></ng-container>
       </a>
       <a *ngIf="menu.navitem.type === NAVITEM_TYPE.INTERNAL_LINK"

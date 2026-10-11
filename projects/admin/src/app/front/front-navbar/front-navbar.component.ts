@@ -36,4 +36,20 @@ export class FrontNavbarComponent {
   NAVITEM_POSITION = NAVITEM_POSITION;
   NAVITEM_TYPE = NAVITEM_TYPE;
   NAVITEM_LOGGING_CRITERIA = NAVITEM_LOGGING_CRITERIA;
+
+  openExternalRedirect(
+    url: string | undefined,
+    event: MouseEvent,
+    dropdown?: { close(): void },
+  ): void {
+    event.preventDefault();
+    dropdown?.close();
+
+    if (!url) {
+      console.error('URL absente pour la redirection externe');
+      return;
+    }
+
+    window.open(url, '_blank', 'noopener');
+  }
 }
