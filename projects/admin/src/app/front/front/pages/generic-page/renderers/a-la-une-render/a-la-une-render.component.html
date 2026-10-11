@@ -5,15 +5,15 @@
       <div class="card-body">
         <div class="text-primary text-center fw-bolder fs-5 mb-2">{{snippet.subtitle}} </div>
 
-        <div class="row ">
-          <div class="d-flex align-items-center mb-2">
-            <div>
-              <div class="inline-image-frame me-2">
+        <div class="row g-0">
+          <div class="snippet-heading d-flex align-items-center mb-2">
+            <div class="snippet-media">
+              <div class="inline-image-frame">
                 <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top">
               </div>
               <sub class="text-muted">{{snippet.publishedAt| date:'shortDate'}} </sub>
             </div>
-            <h5 class="text-success fw-bolder mb-0 flex-grow-1 text-center">{{snippet.title}}</h5>
+            <h5 class="snippet-title text-success fw-bolder mb-0 flex-grow-1 text-center">{{snippet.title}}</h5>
           </div>
           <div class="card-text  col-12">
             <div #clampContainer class="clamp-container">
