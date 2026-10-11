@@ -28,6 +28,10 @@ export class FeesCollectorService {
   private tournament: club_tournament_extended | null = null;
   private checkInSubscription: Subscription | null = null;
   private feeConfigurationSubscription: Subscription | null = null;
+  private readonly viewPreferencesByTournament = new Map<string, {
+    alphabeticSort: boolean;
+    hideValidated: boolean;
+  }>();
 
   game: Game = {} as Game;
   _game$: BehaviorSubject<Game> = new BehaviorSubject<Game>(this.game);
@@ -390,13 +394,27 @@ export class FeesCollectorService {
   }
 
   toggle_sort() {
-    this.game.alphabetic_sort = !this.game.alphabetic_sort;
-    if (this.game.alphabetic_sort) {
-      this.game.gamers = this.game.gamers.sort((a, b) => a.lastname.localeCompare(b.lastname));
-    } else {
-      this.game.gamers = this.game.gamers.sort((a, b) => a.index - b.index);
-    }
+    const preferences = this.getOrCreateViewPreferences();
+    preferences.alphabeticSort = !preferences.alphabeticSort;
+    this.game.alphabetic_sort = preferences.alphabeticSort;
+    this.sortGamers();
     this._game$.next(this.game)
+  }
+
+  toggle_hide_validated(): boolean {
+    const preferences = this.getOrCreateViewPreferences();
+    return this.set_hide_validated(!preferences.hideValidated);
+  }
+
+  set_hide_validated(hidden: boolean): boolean {
+    const preferences = this.getOrCreateViewPreferences();
+    preferences.hideValidated = hidden;
+    return hidden;
+  }
+
+  get_view_preferences(): { alphabeticSort: boolean; hideValidated: boolean } {
+    const preferences = this.getOrCreateViewPreferences();
+    return { ...preferences };
   }
 
   async log_game_state() {
@@ -474,6 +492,8 @@ export class FeesCollectorService {
   clear_tournament() {
     this.stopCheckInSync();
     this.stopFeeConfigurationSync();
+    const key = this.currentTournamentKey();
+    if (key) this.viewPreferencesByTournament.delete(key);
     this.tournament = null;
   }
 
@@ -509,12 +529,14 @@ export class FeesCollectorService {
       if (already_charged) {
         this.tournament.status = Game_status.COMPLETED;
         this.game = game; // restore previous game state
+        this.restoreViewPreferences(tournament.id, game.alphabetic_sort);
         this.generate_member_images();
         this._game$.next(this.game);
         this.startSharedSync();
       } else {
         this.tournament.status = Game_status.RECOVERED;
         this.game = game; // restore previous game state
+        this.restoreViewPreferences(tournament.id, game.alphabetic_sort);
         this.generate_member_images();
         this.update_members_debts();
         this.update_members_credits();
@@ -584,6 +606,7 @@ export class FeesCollectorService {
     let game = await this.DBhandler.readGame(season, this.tournament.id);
     if (game) {
       this.game = game;
+      this.restoreViewPreferences(this.tournament.id, game.alphabetic_sort);
       this.update_members_assets();
       this.update_members_debts();
       this.update_members_credits();
@@ -594,10 +617,44 @@ export class FeesCollectorService {
     }
   }
 
+  private restoreViewPreferences(tournamentId: string | number, persistedSort: boolean): void {
+    const preferences = this.getOrCreateViewPreferences(tournamentId, persistedSort);
+    this.game.alphabetic_sort = preferences.alphabeticSort;
+    this.sortGamers();
+  }
+
+  private getOrCreateViewPreferences(
+    tournamentId?: string | number,
+    alphabeticSortFallback: boolean = this.game?.alphabetic_sort ?? false,
+  ): { alphabeticSort: boolean; hideValidated: boolean } {
+    const key = tournamentId === undefined ? this.currentTournamentKey() : String(tournamentId);
+    if (!key) {
+      return { alphabeticSort: alphabeticSortFallback, hideValidated: false };
+    }
+
+    let preferences = this.viewPreferencesByTournament.get(key);
+    if (!preferences) {
+      preferences = { alphabeticSort: alphabeticSortFallback, hideValidated: false };
+      this.viewPreferencesByTournament.set(key, preferences);
+    }
+    return preferences;
+  }
+
+  private currentTournamentKey(): string | null {
+    const tournamentId = this.tournament?.id ?? this.game?.tournament?.id;
+    return tournamentId === undefined || tournamentId === null ? null : String(tournamentId);
+  }
+
+  private sortGamers(): void {
+    if (!this.game.gamers) return;
+    this.game.gamers.sort(this.game.alphabetic_sort
+      ? (a, b) => a.lastname.localeCompare(b.lastname)
+      : (a, b) => a.index - b.index);
+  }
 
   set_game(tournament: club_tournament_extended) {
     this.game.season = this.sys_conf.season!;
-    this.game.alphabetic_sort = false;
+    this.game.alphabetic_sort = this.getOrCreateViewPreferences(tournament.id, false).alphabeticSort;
     const descriptionLower = (tournament.title ?? '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
