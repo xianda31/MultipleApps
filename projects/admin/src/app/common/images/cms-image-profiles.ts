@@ -9,6 +9,10 @@ export type CmsImageProfile =
   | 'portrait-card-padded'
   | 'booklet'
   | 'booklet-padded'
+  | 'club-banner-desktop'
+  | 'club-banner-mobile'
+  | 'club-banner-mobile-landscape'
+  | 'club-logo'
   | 'tournament-thumbnail'
   | 'tournament-thumbnail-padded';
 
@@ -18,7 +22,7 @@ export interface CmsImageProfileDefinition {
   fit: 'contain' | 'cover';
   aspectRatio: string | null;
   label: string;
-  orientation: 'landscape' | 'portrait';
+  orientation: 'landscape' | 'portrait' | 'square';
   recommendation: string;
   transparentPadding?: boolean;
 }
@@ -97,6 +101,43 @@ export const CMS_IMAGE_PROFILES: Record<CmsImageProfile, CmsImageProfileDefiniti
     label: 'Livret paysage 3:2 sans rognage',
     orientation: 'landscape',
     recommendation: 'L’image entière sera centrée et complétée par des marges transparentes.',
+    transparentPadding: true,
+  },
+  'club-banner-desktop': {
+    width: 1600,
+    height: 360,
+    fit: 'cover',
+    aspectRatio: '40 / 9',
+    label: 'Bannière du club · ordinateur',
+    orientation: 'landscape',
+    recommendation: 'Le sujet principal doit rester proche du centre pour les écrans larges.',
+  },
+  'club-banner-mobile': {
+    width: 720,
+    height: 240,
+    fit: 'cover',
+    aspectRatio: '3 / 1',
+    label: 'Bannière du club · mobile',
+    orientation: 'landscape',
+    recommendation: 'Vérifiez que le sujet reste visible dans ce cadrage mobile plus resserré.',
+  },
+  'club-banner-mobile-landscape': {
+    width: 1440,
+    height: 240,
+    fit: 'cover',
+    aspectRatio: '6 / 1',
+    label: 'Bannière du club · mobile paysage',
+    orientation: 'landscape',
+    recommendation: 'Ce cadrage très large est utilisé lorsque le téléphone est en mode paysage.',
+  },
+  'club-logo': {
+    width: 256,
+    height: 256,
+    fit: 'contain',
+    aspectRatio: '1 / 1',
+    label: 'Logo du club',
+    orientation: 'square',
+    recommendation: 'Le logo entier est conservé sur un fond transparent.',
     transparentPadding: true,
   },
   'tournament-thumbnail': {

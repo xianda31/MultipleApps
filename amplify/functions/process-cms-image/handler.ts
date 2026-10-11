@@ -21,10 +21,19 @@ type CmsImageProfile =
   | 'portrait-card-padded'
   | 'booklet'
   | 'booklet-padded'
+  | 'club-banner-desktop'
+  | 'club-banner-mobile'
+  | 'club-banner-mobile-landscape'
+  | 'club-logo'
   | 'tournament-thumbnail'
   | 'tournament-thumbnail-padded';
 
-const profiles: Record<CmsImageProfile, { width?: number; height: number; fit: 'contain' | 'cover' }> = {
+const profiles: Record<CmsImageProfile, {
+  width?: number;
+  height: number;
+  fit: 'contain' | 'cover';
+  maxBytes?: number;
+}> = {
   inline: { width: 400, height: 300, fit: 'contain' },
   'publication-landscape': { height: 300, fit: 'contain' },
   'landscape-card': { width: 800, height: 533, fit: 'cover' },
@@ -33,6 +42,10 @@ const profiles: Record<CmsImageProfile, { width?: number; height: number; fit: '
   'portrait-card-padded': { width: 600, height: 800, fit: 'contain' },
   booklet: { width: 960, height: 640, fit: 'cover' },
   'booklet-padded': { width: 960, height: 640, fit: 'contain' },
+  'club-banner-desktop': { width: 1600, height: 360, fit: 'cover', maxBytes: 180 * 1024 },
+  'club-banner-mobile': { width: 720, height: 240, fit: 'cover', maxBytes: 80 * 1024 },
+  'club-banner-mobile-landscape': { width: 1440, height: 240, fit: 'cover', maxBytes: 120 * 1024 },
+  'club-logo': { width: 256, height: 256, fit: 'contain', maxBytes: 40 * 1024 },
   'tournament-thumbnail': { width: 300, height: 200, fit: 'cover' },
   'tournament-thumbnail-padded': { width: 300, height: 200, fit: 'contain' },
 };
@@ -46,6 +59,22 @@ export function cmsResizeForProfile(profile: CmsImageProfile) {
     withoutEnlargement: true,
     background: { r: 0, g: 0, b: 0, alpha: 0 },
   };
+}
+
+export async function encodeCmsImage(input: Buffer, profile: CmsImageProfile): Promise<Buffer> {
+  const maxBytes = profiles[profile].maxBytes;
+  const qualities = maxBytes ? [82, 76, 70, 64, 58, 52] : [82];
+
+  for (const quality of qualities) {
+    const output = await sharp(input)
+      .rotate()
+      .resize(cmsResizeForProfile(profile))
+      .webp({ quality, effort: 4 })
+      .toBuffer();
+    if (!maxBytes || output.length <= maxBytes) return output;
+  }
+
+  throw new Error(`Generated ${profile} image exceeds ${maxBytes} bytes`);
 }
 
 const s3 = new S3Client({});
@@ -133,11 +162,9 @@ async function processRecord(record: S3Record): Promise<void> {
   const resize = gallerySource
     ? galleryResizeForDimensions(sourceWidth ?? 0, sourceHeight ?? 0)
     : cmsResizeForProfile(cmsSource!.profile);
-  const output = await sharp(input)
-    .rotate()
-    .resize(resize)
-    .webp({ quality: 82, effort: 4 })
-    .toBuffer();
+  const output = gallerySource
+    ? await sharp(input).rotate().resize(resize).webp({ quality: 82, effort: 4 }).toBuffer()
+    : await encodeCmsImage(input, cmsSource!.profile);
 
   await s3.send(new PutObjectCommand({
     Bucket: bucket,

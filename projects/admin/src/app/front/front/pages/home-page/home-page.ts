@@ -13,6 +13,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { FileService } from '../../../../common/services/files.service';
 import { ALaUneRenderComponent } from '../generic-page/renderers/a-la-une-render/a-la-une-render.component';
 import { HomeHighlightsService } from '../../../../common/services/home-highlights.service';
+import { VisualIdentityService } from '../../../../common/services/visual-identity.service';
 
 @Component({
   selector: 'app-home-page',
@@ -40,6 +41,7 @@ export class HomePage {
   // readonly FADE_IN_MS = 1500;       // sequential fade-in duration
   private rotationSub?: Subscription;
   private countersSub?: Subscription;
+  private identitySub?: Subscription;
   transitioning = false; // legacy flag (unused in sequential fade)
   opacity = 1;           // controls sequential fade opacity
   tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
@@ -48,7 +50,10 @@ export class HomePage {
   tournamentsColClass: string = 'col-12 col-md-8';
   newsColClass: string = 'col-12 col-md-4';
   logoPreview: string | null = null;
+  logoClubUrl: string | null = null;
   imageClubUrl: string | null = null;
+  imageClubMobileUrl: string | null = null;
+  imageClubMobileLandscapeUrl: string | null = null;
 
   constructor(
     private titleService: TitleService,
@@ -58,6 +63,7 @@ export class HomePage {
     private breakpointObserver: BreakpointObserver,
     private fileService: FileService,
     private homeHighlightsService: HomeHighlightsService,
+    private visualIdentityService: VisualIdentityService,
   ) {
     this.breakpointObserver.observe([Breakpoints.Medium, Breakpoints.Large, Breakpoints.XLarge])
       .subscribe(result => {
@@ -69,6 +75,12 @@ export class HomePage {
     this.getNextBirthdays();
     this.logged_member$ = this.auth.logged_member$;
     this.highlights$ = this.homeHighlightsService.listHighlights();
+    this.identitySub = this.visualIdentityService.identity$.subscribe(identity => {
+      this.logoClubUrl = identity.logo;
+      this.imageClubUrl = identity.bannerDesktop;
+      this.imageClubMobileUrl = identity.bannerMobile;
+      this.imageClubMobileLandscapeUrl = identity.bannerMobileLandscape;
+    });
 
     this.titleService.setTitle('Les actualités et les prochains tournois de régularité');
 
@@ -134,13 +146,6 @@ export class HomePage {
     // Read UI settings from dedicated UI settings file to control homepage and layout
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const conf: UIConfiguration = ui || {} as UIConfiguration;
-      const imagePath = conf?.template?.club?.image ?? (conf as any)?.template?.image;
-      if (imagePath) {
-        this.fileService.getPresignedUrl$(imagePath).subscribe({
-          next: (url) => this.imageClubUrl = url,
-          error: () => this.imageClubUrl = null,
-        });
-      }
       // breakpoints stored under `homepage` by contract; use defaults when missing
       this.tournaments_row_cols = (conf && conf.homepage && conf.homepage.tournaments_row_cols) ? conf.homepage.tournaments_row_cols : this.tournaments_row_cols;
       this.news_row_cols = (conf && conf.homepage && conf.homepage.news_row_cols) ? conf.homepage.news_row_cols : this.news_row_cols;
@@ -179,6 +184,7 @@ export class HomePage {
   ngOnDestroy(): void {
     this.rotationSub?.unsubscribe();
     this.countersSub?.unsubscribe();
+    this.identitySub?.unsubscribe();
   }
 
   next_birthdays: { day: string; members: Member[]; }[] = [];

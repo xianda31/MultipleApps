@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import {
   GALLERY_IMAGE_PROFILE,
   cmsResizeForProfile,
+  encodeCmsImage,
   galleryResizeForDimensions,
   parseCmsImageSource,
   parseGalleryImageSource,
@@ -47,6 +48,57 @@ describe('process-cms-image path contract', () => {
       parseCmsImageSource('images/cms/sources/snippet-1/booklet-padded/booklet.jpg')?.variantKey,
       'images/cms/snippets/snippet-1/variants/booklet-padded/booklet.webp',
     );
+  });
+
+  it('maps visual identity sources to generated variants', () => {
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/visual-identity/club-banner-desktop/banner.png')?.variantKey,
+      'images/cms/snippets/visual-identity/variants/club-banner-desktop/banner.webp',
+    );
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/visual-identity/club-banner-mobile/banner.png')?.variantKey,
+      'images/cms/snippets/visual-identity/variants/club-banner-mobile/banner.webp',
+    );
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/visual-identity/club-banner-mobile-landscape/banner.png')?.variantKey,
+      'images/cms/snippets/visual-identity/variants/club-banner-mobile-landscape/banner.webp',
+    );
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/visual-identity/club-logo/logo.png')?.variantKey,
+      'images/cms/snippets/visual-identity/variants/club-logo/logo.webp',
+    );
+  });
+
+  it('generates visual identity variants within their dimensions and budgets', async () => {
+    const source = await sharp({
+      create: {
+        width: 1800,
+        height: 1000,
+        channels: 4,
+        background: { r: 20, g: 120, b: 60, alpha: 0.8 },
+      },
+    }).png().toBuffer();
+
+    const desktop = await encodeCmsImage(source, 'club-banner-desktop');
+    const mobile = await encodeCmsImage(source, 'club-banner-mobile');
+    const mobileLandscape = await encodeCmsImage(source, 'club-banner-mobile-landscape');
+    const logo = await encodeCmsImage(source, 'club-logo');
+    const [desktopMetadata, mobileMetadata, mobileLandscapeMetadata, logoMetadata] = await Promise.all([
+      sharp(desktop).metadata(),
+      sharp(mobile).metadata(),
+      sharp(mobileLandscape).metadata(),
+      sharp(logo).metadata(),
+    ]);
+
+    assert.deepEqual([desktopMetadata.width, desktopMetadata.height], [1600, 360]);
+    assert.deepEqual([mobileMetadata.width, mobileMetadata.height], [720, 240]);
+    assert.deepEqual([mobileLandscapeMetadata.width, mobileLandscapeMetadata.height], [1440, 240]);
+    assert.deepEqual([logoMetadata.width, logoMetadata.height], [256, 256]);
+    assert.equal(logoMetadata.hasAlpha, true);
+    assert.ok(desktop.length <= 180 * 1024);
+    assert.ok(mobile.length <= 80 * 1024);
+    assert.ok(mobileLandscape.length <= 120 * 1024);
+    assert.ok(logo.length <= 40 * 1024);
   });
 
   it('maps a tournament thumbnail source to the reserved variants namespace', () => {

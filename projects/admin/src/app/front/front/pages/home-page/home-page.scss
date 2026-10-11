@@ -6,10 +6,14 @@
 	background: var(--content-bg, #fff);
 }
 
+.home-club-image picture,
 .home-club-image img {
 	display: block;
 	width: 100%;
 	height: 100%;
+}
+
+.home-club-image img {
 	object-fit: cover;
 	object-position: center;
 }
@@ -20,6 +24,12 @@
 }
 
 @media (max-width: 767.98px) {
+	.home-club-image {
+		height: 120px;
+	}
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
 	.home-club-image {
 		height: 120px;
 	}

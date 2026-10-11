@@ -15,15 +15,18 @@ import { FileService, S3_ROOT_FOLDERS } from '../../common/services/files.servic
 import { map, Observable, first, firstValueFrom, catchError, of, Subscription } from 'rxjs';
 import { CompetitionsUIConfig } from '../../common/interfaces/ui-conf.interface';
 import { COMPETITION_DIVISION_LABELS, COMPETITION_DIVISIONS } from '../competitions/competitions.interface';
+import { RouterLink } from '@angular/router';
+import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
 
 @Component({
   selector: 'app-ui-conf',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   templateUrl: './ui-conf.component.html',
   styleUrls: ['./ui-conf.component.scss']
 })
 export class UiConfComponent implements OnInit, OnDestroy {
+  readonly imageToolsRoute = BACK_ROUTE_ABS_PATHS['ImageMaintenance'];
   private readonly defaultHomepageIntro = '<p>Son école de Bridge vous permettra de consolider votre technique, selon votre niveau.</p>';
   private homepageIntroEditor?: EditorJS;
   private homepageIntroEditorTimer?: ReturnType<typeof setTimeout>;
@@ -52,10 +55,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
   uiForm!: FormGroup;
   loaded = false;
   export_file_url: any;
-  logoPreviewUrl: string | null = null;
-  imageClubPreviewUrl: string | null = null;
-  // inline SVG data URI used as a local placeholder to avoid external network requests
-  placeholderImageUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect fill='%23e0e0e0' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='10' fill='%23666'>No%20image</text></svg>";
   thumbnails$ !: Observable<string[]>;
   // cache of presigned preview URLs for tournaments_type entries keyed by the mapping key 
   previewMap: { [key: string]: string | null } = {};
@@ -93,7 +92,9 @@ export class UiConfComponent implements OnInit, OnDestroy {
           font: ['Roboto, serif'],
           name: [''],
           logo: [''],
-          image: ['']
+          image: [''],
+          imageMobile: [''],
+          imageMobileLandscape: ['']
         }),
         card_thumbnails: this.fb.array([]),
         album_thumbnail: this.fb.group({
@@ -294,18 +295,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
       next: (ui) => {
         this.loadDataInForm(ui || {});
         this.export_file_url = this.fileService.json_to_blob(ui || {});
-        const logoPath = ui?.template?.club?.logo ?? (ui as any)?.template?.logo ?? (ui as any)?.template?.logo_club_path ?? (ui as any)?.template?.logo_path;
-        if (logoPath) {
-          this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
-        } else {
-          this.logoPreviewUrl = null;
-        }
-        const imagePath = ui?.template?.club?.image ?? (ui as any)?.template?.image ?? (ui as any)?.template?.image_club_path ?? '';
-        if (imagePath) {
-          this.fileService.getPresignedUrl$(imagePath).subscribe({ next: (url) => this.imageClubPreviewUrl = url, error: () => this.imageClubPreviewUrl = null });
-        } else {
-          this.imageClubPreviewUrl = null;
-        }
         this.loaded = true;
         this.scheduleHomepageIntroEditor();
         // Appliquer le thème seulement après chargement effectif
@@ -457,7 +446,9 @@ export class UiConfComponent implements OnInit, OnDestroy {
           font: template.club?.font ?? template.site_font ?? template.navbar_font ?? template.content_font ?? template.banner_font ?? ui?.main_font ?? 'Amarante, serif',
           name: template.club?.name ?? template.site?.name ?? ui?.site_name ?? '',
           logo: template.club?.logo ?? (template as any).logo_club_path ?? (template as any).logo_path ?? (template as any).logo ?? '',
-          image: template.club?.image ?? (template as any).image_club_path ?? (template as any).image ?? ''
+          image: template.club?.image ?? (template as any).image_club_path ?? (template as any).image ?? '',
+          imageMobile: template.club?.imageMobile ?? '',
+          imageMobileLandscape: template.club?.imageMobileLandscape ?? ''
         }
       },
       tournaments_row_cols: {
@@ -515,10 +506,14 @@ export class UiConfComponent implements OnInit, OnDestroy {
         const clubName = template?.club?.name ?? template?.site?.name ?? ui?.site_name ?? '';
         const clubLogo = template?.club?.logo ?? (template as any).logo_club_path ?? (template as any).logo_path ?? (template as any).logo ?? '';
         const clubImage = template?.club?.image ?? (template as any).image_club_path ?? (template as any).image ?? '';
+        const clubImageMobile = template?.club?.imageMobile ?? '';
+        const clubImageMobileLandscape = template?.club?.imageMobileLandscape ?? '';
         clubGroup.get('font')?.setValue(clubFont, { emitEvent: false });
         clubGroup.get('name')?.setValue(clubName, { emitEvent: false });
         clubGroup.get('logo')?.setValue(clubLogo, { emitEvent: false });
         clubGroup.get('image')?.setValue(clubImage, { emitEvent: false });
+        clubGroup.get('imageMobile')?.setValue(clubImageMobile, { emitEvent: false });
+        clubGroup.get('imageMobileLandscape')?.setValue(clubImageMobileLandscape, { emitEvent: false });
       }
     } catch (e) {
       // non-fatal — keep going
@@ -570,41 +565,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
     if (initialDefault) this.loadPreviewForKey('defaut', initialDefault);
   }
 
-  async onLogoFileSelected(event: any) {
-    const file: File = event.target.files?.[0];
-    if (!file) return;
-    // Use a stable filename so uploads replace the existing S3 object (no timestamp)
-    const filenameOnly = `logo.jpg`;
-    const path = `${S3_ROOT_FOLDERS.SYSTEM}/${filenameOnly}`;
-    try {
-      // Create a new File instance with the chosen stable name so upload_file uses it
-      const fileToUpload = new File([file], filenameOnly, { type: 'image/jpeg' });
-      await this.fileService.upload_file(fileToUpload, S3_ROOT_FOLDERS.SYSTEM + '/');
-      this.uiForm.get('template.club.logo')?.setValue(path);
-      this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.logoPreviewUrl = url, error: () => this.logoPreviewUrl = null });
-      this.toastService.showSuccess('UI settings', 'Logo uploaded');
-    } catch (e: any) {
-      this.toastService.showError('UI settings', 'Erreur upload du logo');
-    }
-  }
-
-  async onImageFileSelected(event: any) {
-    const file: File = event.target.files?.[0];
-    if (!file) return;
-    // Use a stable filename so uploads replace the existing S3 object (no timestamp)
-    const filenameOnly = `image_club.jpg`;
-    const path = `${S3_ROOT_FOLDERS.SYSTEM}/${filenameOnly}`;
-    try {
-      const fileToUpload = new File([file], filenameOnly, { type: 'image/jpeg' });
-      await this.fileService.upload_file(fileToUpload, S3_ROOT_FOLDERS.SYSTEM + '/');
-      this.uiForm.get('template.club.image')?.setValue(path);
-      this.fileService.getPresignedUrl$(path).subscribe({ next: (url) => this.imageClubPreviewUrl = url, error: () => this.imageClubPreviewUrl = null });
-      this.toastService.showSuccess('UI settings', 'Image club uploaded');
-    } catch (e: any) {
-      this.toastService.showError('UI settings', 'Erreur upload de l\'image club');
-    }
-  }
-
   async onImportFile(event: any) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -647,7 +607,9 @@ export class UiConfComponent implements OnInit, OnDestroy {
             font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
             name: formVal.template?.club?.name || '',
             logo: formVal.template?.club?.logo || formVal.template?.logo_club_path || '',
-            image: formVal.template?.club?.image || formVal.template?.image_club_path || ''
+            image: formVal.template?.club?.image || formVal.template?.image_club_path || '',
+            imageMobile: formVal.template?.club?.imageMobile || '',
+            imageMobileLandscape: formVal.template?.club?.imageMobileLandscape || ''
           },
           // backward-compatible aliases used by other parts of the app
           site_font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
@@ -743,7 +705,9 @@ export class UiConfComponent implements OnInit, OnDestroy {
             font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
             name: formVal.template?.club?.name || '',
             logo: formVal.template?.club?.logo || formVal.template?.logo_club_path || '',
-            image: formVal.template?.club?.image || formVal.template?.image_club_path || ''
+            image: formVal.template?.club?.image || formVal.template?.image_club_path || '',
+            imageMobile: formVal.template?.club?.imageMobile || '',
+            imageMobileLandscape: formVal.template?.club?.imageMobileLandscape || ''
           },
           // backward-compatible aliases
           site_font: formVal.template?.club?.font || formVal.template?.site_font || 'Amarante, serif',
@@ -891,5 +855,3 @@ export class UiConfComponent implements OnInit, OnDestroy {
     return obj;
   }
 }
-
-

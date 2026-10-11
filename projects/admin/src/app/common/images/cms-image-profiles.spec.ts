@@ -87,4 +87,28 @@ describe('CMS image profiles', () => {
     });
     expect(cmsImageFramingProfiles('inline')).toBeNull();
   });
+
+  it('defines responsive visual identity profiles', () => {
+    expect(CMS_IMAGE_PROFILES['club-banner-desktop']).toEqual(jasmine.objectContaining({
+      width: 1600,
+      height: 360,
+      fit: 'cover',
+    }));
+    expect(CMS_IMAGE_PROFILES['club-banner-mobile']).toEqual(jasmine.objectContaining({
+      width: 720,
+      height: 240,
+      fit: 'cover',
+    }));
+    expect(CMS_IMAGE_PROFILES['club-banner-mobile-landscape']).toEqual(jasmine.objectContaining({
+      width: 1440,
+      height: 240,
+      fit: 'cover',
+    }));
+    expect(CMS_IMAGE_PROFILES['club-logo']).toEqual(jasmine.objectContaining({
+      width: 256,
+      height: 256,
+      fit: 'contain',
+      transparentPadding: true,
+    }));
+  });
 });

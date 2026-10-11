@@ -678,10 +678,12 @@ export const HELP_TOPICS: HelpTopic[] = [
         functionalities: [
           'Controle et maintenance des medias du site.',
           'Traitement des images utilisees dans les contenus.',
+          'Optimisation des bannieres ordinateur, mobile portrait, mobile paysage et du logo du club.',
         ],
         howTo: [
-          'Identifier le media a traiter.',
-          'Appliquer la correction puis verifier son rendu sur le site.',
+          'Choisir l\'onglet correspondant au media a traiter.',
+          'Pour l\'identite visuelle, controler les apercus et les poids avant publication.',
+          'Appliquer la correction puis verifier son rendu sur le site, notamment sur mobile.',
         ],
       },
       {

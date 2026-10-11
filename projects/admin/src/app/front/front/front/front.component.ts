@@ -8,7 +8,7 @@ import { TitleComponent } from '../../title/title.component';
 import { SiteLayoutService } from '../../../common/services/site-layout.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { UIConfiguration } from '../../../common/interfaces/ui-conf.interface';
-import { FileService } from '../../../common/services/files.service';
+import { VisualIdentityService } from '../../../common/services/visual-identity.service';
 import { MenuStructure, NavItem, NAVITEM_LOGGING_CRITERIA, NAVITEM_POSITION, NAVITEM_TYPE } from '../../../common/interfaces/navitem.interface';
 import { SandboxService } from '../../../common/services/sandbox.service';
 import { NavItemsService } from '../../../common/services/navitem.service';
@@ -101,7 +101,7 @@ export class FrontComponent implements AfterViewInit {
     private navitemService: NavItemsService,
     private localStorageService: LocalStorageService,
     private systemDataService: SystemDataService,
-    private fileService: FileService,
+    private visualIdentityService: VisualIdentityService,
     private auth: AuthentificationService,
     private authRedirectService: AuthentificationRedirectService,
     private groupService: GroupService,
@@ -141,10 +141,7 @@ export class FrontComponent implements AfterViewInit {
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const u: UIConfiguration = ui || {};
       this.uiSettings = u;
-      const logoPath = u?.template?.club.logo ?? (u as any)?.template?.logo;
-      if (logoPath) this.fileService.getPresignedUrl$(logoPath).subscribe({ next: (u2) => this.logoUrl = u2, error: () => this.logoUrl = null });
-      const imagePath = u?.template?.club.image ?? (u as any)?.template?.image;
-      if (imagePath) this.fileService.getPresignedUrl$(imagePath).subscribe({ next: (u2) => this.imageClubUrl = u2, error: () => this.imageClubUrl = null });
+      void this.visualIdentityService.load(u);
       
       // Récupérer le nom du club depuis la configuration UI (plusieurs emplacements possibles)
       const clubName = u?.template?.club?.name ?? (u as any)?.template?.club_name ?? (u as any)?.template?.club?.club_name;
@@ -152,6 +149,10 @@ export class FrontComponent implements AfterViewInit {
 
       // Appliquer les couleurs du front via CSS variables
       applyUiThemeFromConfig(u);
+    });
+    this.visualIdentityService.identity$.subscribe(identity => {
+      this.logoUrl = identity.logo;
+      this.imageClubUrl = identity.bannerDesktop;
     });
 
     // --- FrontNavbar fusion ---

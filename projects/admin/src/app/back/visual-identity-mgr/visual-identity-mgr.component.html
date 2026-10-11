@@ -1,0 +1,143 @@
+<section class="visual-identity p-4" aria-labelledby="visual-identity-title">
+  <header>
+    <h5 id="visual-identity-title" class="mb-1">Identité visuelle du club</h5>
+    <p class="text-muted mb-0">Les images sont redimensionnées en WebP et contrôlées avant leur publication.</p>
+  </header>
+
+  @if (loading) {
+    <div class="visual-identity__loading" role="status">
+      <span class="spinner-border text-success" aria-hidden="true"></span>
+      Chargement des médias…
+    </div>
+  } @else {
+    <article class="identity-card">
+      <div class="identity-card__heading">
+        <div>
+          <h6>Bannière du club</h6>
+          <p>Une source produit une version ordinateur, une version mobile portrait et une version mobile paysage.</p>
+        </div>
+        <div class="identity-card__actions">
+          @if (desktop && (!isOptimized(desktop, desktopProfile) || !mobile || !mobileLandscape)) {
+            <button type="button" class="btn btn-outline-secondary btn-sm"
+              (click)="prepareCurrent('banner')">Optimiser l’image actuelle</button>
+          }
+          <label class="btn btn-outline-success btn-sm mb-0">
+            <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>Choisir une image
+            <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden
+              (change)="selectFile($event, 'banner')">
+          </label>
+        </div>
+      </div>
+
+      <div class="identity-assets">
+        <section>
+          <strong>Ordinateur · 1600 × 360</strong>
+          @if (desktop) {
+            <img [src]="desktop.url" alt="Bannière actuelle pour ordinateur">
+            <small>{{ desktop.width }} × {{ desktop.height }} px · {{ formatSize(desktop.size) }}</small>
+          } @else {
+            <div class="identity-assets__empty">Aucune variante optimisée</div>
+          }
+        </section>
+        <section>
+          <strong>Mobile portrait · 720 × 240</strong>
+          @if (mobile) {
+            <img [src]="mobile.url" alt="Bannière actuelle pour mobile">
+            <small>{{ mobile.width }} × {{ mobile.height }} px · {{ formatSize(mobile.size) }}</small>
+          } @else {
+            <div class="identity-assets__empty">La version ordinateur sera utilisée</div>
+          }
+        </section>
+        <section>
+          <strong>Mobile paysage · 1440 × 240</strong>
+          @if (mobileLandscape) {
+            <img [src]="mobileLandscape.url" alt="Bannière actuelle pour mobile en paysage">
+            <small>{{ mobileLandscape.width }} × {{ mobileLandscape.height }} px · {{ formatSize(mobileLandscape.size) }}</small>
+          } @else {
+            <div class="identity-assets__empty">La version ordinateur sera utilisée</div>
+          }
+        </section>
+      </div>
+
+      @if (pending?.kind === 'banner') {
+        <div class="identity-review">
+          <app-cms-image-review [profile]="desktopProfile" [sourceUrl]="pending!.previewUrl"
+            [sourceWidth]="pending!.width" [sourceHeight]="pending!.height" [sourceSize]="pending!.file.size"
+            targetLabel="Version ordinateur">
+          </app-cms-image-review>
+          <app-cms-image-review [profile]="mobileProfile" [sourceUrl]="pending!.previewUrl"
+            [sourceWidth]="pending!.width" [sourceHeight]="pending!.height" [sourceSize]="pending!.file.size"
+            targetLabel="Version mobile portrait">
+          </app-cms-image-review>
+          <app-cms-image-review [profile]="mobileLandscapeProfile" [sourceUrl]="pending!.previewUrl"
+            [sourceWidth]="pending!.width" [sourceHeight]="pending!.height" [sourceSize]="pending!.file.size"
+            targetLabel="Version mobile paysage">
+          </app-cms-image-review>
+          <div class="identity-review__actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="uploading"
+              (click)="clearPending()">Annuler</button>
+            <button type="button" class="btn btn-success btn-sm" [disabled]="uploading"
+              (click)="uploadPending()">
+              @if (uploading) {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Traitement…
+              } @else {
+                Générer et publier les trois variantes
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </article>
+
+    <article class="identity-card">
+      <div class="identity-card__heading">
+        <div>
+          <h6>Logo du club</h6>
+          <p>Le logo entier et sa transparence sont conservés dans un cadre 256 × 256.</p>
+        </div>
+        <div class="identity-card__actions">
+          @if (logo && !isOptimized(logo, logoProfile)) {
+            <button type="button" class="btn btn-outline-secondary btn-sm"
+              (click)="prepareCurrent('logo')">Optimiser le logo actuel</button>
+          }
+          <label class="btn btn-outline-success btn-sm mb-0">
+            <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>Choisir un logo
+            <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden
+              (change)="selectFile($event, 'logo')">
+          </label>
+        </div>
+      </div>
+
+      <div class="identity-logo">
+        @if (logo) {
+          <div class="identity-logo__preview">
+            <img [src]="logo.url" alt="Logo actuel du club">
+          </div>
+          <small>{{ logo.width }} × {{ logo.height }} px · {{ formatSize(logo.size) }}</small>
+        } @else {
+          <div class="identity-assets__empty">Aucun logo optimisé</div>
+        }
+      </div>
+
+      @if (pending?.kind === 'logo') {
+        <div class="identity-review">
+          <app-cms-image-review [profile]="logoProfile" [sourceUrl]="pending!.previewUrl"
+            [sourceWidth]="pending!.width" [sourceHeight]="pending!.height" [sourceSize]="pending!.file.size">
+          </app-cms-image-review>
+          <div class="identity-review__actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="uploading"
+              (click)="clearPending()">Annuler</button>
+            <button type="button" class="btn btn-success btn-sm" [disabled]="uploading"
+              (click)="uploadPending()">
+              @if (uploading) {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Traitement…
+              } @else {
+                Générer et publier le logo
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </article>
+  }
+</section>

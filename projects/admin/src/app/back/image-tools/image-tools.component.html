@@ -18,6 +18,12 @@
       <i class="bi bi-card-image" aria-hidden="true"></i>
       <span>Vignettes tournois</span>
     </button>
+    <button type="button" class="image-tool-tab" [class.active]="activeTool === 'visual-identity'"
+      [attr.aria-current]="activeTool === 'visual-identity' ? 'page' : null"
+      (click)="selectTool('visual-identity')">
+      <i class="bi bi-palette" aria-hidden="true"></i>
+      <span>Identité visuelle</span>
+    </button>
     <button type="button" class="image-tool-tab" disabled title="Fonction à venir">
       <i class="bi bi-trash3" aria-hidden="true"></i>
       <span>Nettoyage</span>
@@ -37,6 +43,9 @@
       }
       @case ('tournament-thumbnails') {
         <app-tournament-thumbnails-mgr></app-tournament-thumbnails-mgr>
+      }
+      @case ('visual-identity') {
+        <app-visual-identity-mgr></app-visual-identity-mgr>
       }
     }
   </section>

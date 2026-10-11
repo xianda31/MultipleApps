@@ -8,7 +8,7 @@
           <div class="card-body" formGroupName="template">
 
 
-            <div class="fw-bold fs-6 mt-2">Nom, logo et banière</div>
+            <div class="fw-bold fs-6 mt-2">Nom et police du site</div>
             <div class="d-flex align-items-center gap-2 mb-2"  formGroupName="club">
               <input type="text" class="form-control form-control-sm ms-2 mt-1" formControlName="name" placeholder="Nom du site" style="max-width:18rem;" [style.font-family]="uiForm.get(['template','club','font'])?.value" />
               <label class="fs-6 mb-1 text-nowrap ms-auto">Police</label>
@@ -17,32 +17,10 @@
                 <option *ngFor="let font of googleFontsSubset" [value]="font.css">{{ font.label }}</option>
               </select>
             </div>
-            <div class="row">
-              <div class="col align-items-center gap-2 ">
-                <label class="form-label small mb-1">Logo</label>
-                <div class="d-flex gap-2 align-items-center">
-                  <input type="file" accept="image/*" #logoFileInput style="display:none"
-                    (change)="onLogoFileSelected($event)" />
-                  <div class="preview ms-2">
-                    <img [src]="logoPreviewUrl || placeholderImageUrl" alt="logo" />
-                  </div>
-                  <button type="button" class="btn btn-outline-secondary btn-sm"
-                    (click)="logoFileInput.click()">Modifier</button>
-                </div>
-              </div>
-              <div class="col align-items-center gap-2 ">
-                <label class="form-label small mb-1">Image</label>
-                <div class="d-flex gap-2 align-items-center">
-                  <input type="file" accept="image/*" #imageFileInput style="display:none"
-                    (change)="onImageFileSelected($event)" />
-                  <div class="preview ms-2">
-                    <img [src]="imageClubPreviewUrl || placeholderImageUrl" alt="club" />
-                  </div>
-                  <button type="button" class="btn btn-outline-secondary btn-sm"
-                    (click)="imageFileInput.click()">Modifier</button>
-                </div>
-              </div>
-            </div>
+            <a class="btn btn-outline-success btn-sm my-2" [routerLink]="imageToolsRoute"
+              [queryParams]="{ tool: 'visual-identity' }">
+              <i class="bi bi-images me-1" aria-hidden="true"></i>Gérer dans Image Tools
+            </a>
 
             <div class="fw-bold fs-6">Couleurs des fond et police par zone</div>
             <div class="table-sm table-responsive">

@@ -35,6 +35,8 @@ export interface SiteDef {
   name: string;
   logo: string;
   image: string;
+  imageMobile?: string;
+  imageMobileLandscape?: string;
   font: string; // police globale du front
 }
 
@@ -86,4 +88,3 @@ export interface UIConfiguration {
   // Configuration des compétitions (préférences affichage, filtres, etc)
   competitions: CompetitionsUIConfig;
 }
-

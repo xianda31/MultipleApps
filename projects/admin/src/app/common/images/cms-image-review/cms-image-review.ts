@@ -23,6 +23,7 @@ export class CmsImageReview {
   @Input() sourceWidth: number | null = null;
   @Input() sourceHeight: number | null = null;
   @Input() sourceSize: number | null = null;
+  @Input() targetLabel = 'Version utilisée';
   @Input() allowFramingChoice = false;
   @Output() profileChange = new EventEmitter<CmsImageProfile>();
 
