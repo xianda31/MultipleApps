@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { GALLERY_IMAGE_PROFILE, galleryResizeForDimensions, parseCmsImageSource, parseGalleryImageSource } from './handler';
+import sharp from 'sharp';
+import {
+  GALLERY_IMAGE_PROFILE,
+  cmsResizeForProfile,
+  galleryResizeForDimensions,
+  parseCmsImageSource,
+  parseGalleryImageSource,
+} from './handler';
 
 describe('process-cms-image path contract', () => {
   it('maps a valid source to its deterministic WebP variant', () => {
@@ -27,6 +34,21 @@ describe('process-cms-image path contract', () => {
     );
   });
 
+  it('maps transparent card and booklet variants to distinct paths', () => {
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/snippet-1/landscape-card-padded/banner.jpg')?.variantKey,
+      'images/cms/snippets/snippet-1/variants/landscape-card-padded/banner.webp',
+    );
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/snippet-1/portrait-card-padded/portrait.jpg')?.variantKey,
+      'images/cms/snippets/snippet-1/variants/portrait-card-padded/portrait.webp',
+    );
+    assert.equal(
+      parseCmsImageSource('images/cms/sources/snippet-1/booklet-padded/booklet.jpg')?.variantKey,
+      'images/cms/snippets/snippet-1/variants/booklet-padded/booklet.webp',
+    );
+  });
+
   it('maps a tournament thumbnail source to the reserved variants namespace', () => {
     assert.deepEqual(
       parseCmsImageSource('images/cms/sources/tournament-thumbnails/tournament-thumbnail/asset-456.png'),
@@ -37,6 +59,40 @@ describe('process-cms-image path contract', () => {
         variantKey: 'images/cms/snippets/tournament-thumbnails/variants/tournament-thumbnail/asset-456.webp',
       },
     );
+    assert.deepEqual(
+      parseCmsImageSource('images/cms/sources/tournament-thumbnails/tournament-thumbnail-padded/asset-789.png'),
+      {
+        snippetId: 'tournament-thumbnails',
+        profile: 'tournament-thumbnail-padded',
+        assetId: 'asset-789',
+        variantKey: 'images/cms/snippets/tournament-thumbnails/variants/tournament-thumbnail-padded/asset-789.webp',
+      },
+    );
+  });
+
+  it('centres the complete thumbnail on a transparent 300 by 200 canvas', async () => {
+    const source = await sharp({
+      create: {
+        width: 100,
+        height: 200,
+        channels: 3,
+        background: { r: 20, g: 120, b: 60 },
+      },
+    }).png().toBuffer();
+
+    const { data, info } = await sharp(source)
+      .resize(cmsResizeForProfile('tournament-thumbnail-padded'))
+      .webp()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const alphaAt = (x: number, y: number) => data[((y * info.width + x) * info.channels) + 3];
+
+    assert.equal(info.width, 300);
+    assert.equal(info.height, 200);
+    assert.equal(info.channels, 4);
+    assert.equal(alphaAt(0, 100), 0);
+    assert.equal(alphaAt(150, 100), 255);
+    assert.equal(alphaAt(299, 100), 0);
   });
 
   it('maps a homepage source to the legacy public gallery', () => {

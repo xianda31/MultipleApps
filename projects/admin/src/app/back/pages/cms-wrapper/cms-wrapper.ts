@@ -18,7 +18,14 @@ import { SnippetEditor } from '../snippet-editor/snippet-editor';
 import { NavItemsService } from '../../../common/services/navitem.service';
 import { FileService } from '../../../common/services/files.service';
 import { snippetMissingFields } from '../snippet-editor/snippet-template-rules';
-import { CmsImageProfile, cmsImageSourcePrefix, cmsImageTargetDescription, cmsImageVariantPath, imageProfileForTemplate } from '../../../common/images/cms-image-profiles';
+import {
+  CmsImageProfile,
+  cmsImageFramingProfiles,
+  cmsImageSourcePrefix,
+  cmsImageTargetDescription,
+  cmsImageVariantPath,
+  imageProfileForTemplate,
+} from '../../../common/images/cms-image-profiles';
 import { CMS_IMAGE_PROFILES } from '../../../common/images/cms-image-profiles';
 import { CmsImageReview } from '../../../common/images/cms-image-review/cms-image-review';
 
@@ -349,6 +356,8 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
     const currentRoot = this.fileManager.getCurrentRoot();
     const fullPath = selection.path.startsWith(currentRoot) ? selection.path : currentRoot + selection.path;
+    const framingProfiles = cmsImageFramingProfiles(this.mediaImageProfile);
+    if (framingProfiles) this.mediaImageProfile = framingProfiles.crop;
     this.clearMediaPreview();
     this.mediaPreviewLoading = true;
 
@@ -379,6 +388,10 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
   cancelMediaPreview(): void {
     this.clearMediaPreview();
+  }
+
+  selectMediaImageProfile(profile: CmsImageProfile): void {
+    if (!this.mediaImporting) this.mediaImageProfile = profile;
   }
 
   private async applyFileSelectionToSnippet(selection: MediaSelection, sourceBlob?: Blob, alreadyProcessed = false): Promise<void> {
@@ -609,6 +622,10 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
   get mediaImageTargetDescription(): string {
     return this.mediaImageProfile ? cmsImageTargetDescription(this.mediaImageProfile) : '';
+  }
+
+  get allowsMediaFramingChoice(): boolean {
+    return !!this.mediaImageProfile && !!cmsImageFramingProfiles(this.mediaImageProfile);
   }
 
   isPageLinked(page: Page): boolean {

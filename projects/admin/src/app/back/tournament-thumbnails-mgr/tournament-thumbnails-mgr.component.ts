@@ -7,6 +7,7 @@ import { CmsImageReview } from '../../common/images/cms-image-review/cms-image-r
 import {
   CmsImageProfile,
   TOURNAMENT_THUMBNAIL_OWNER_ID,
+  TOURNAMENT_THUMBNAIL_PADDED_PROFILE,
   TOURNAMENT_THUMBNAIL_PROFILE,
   cmsImageSourcePrefix,
   cmsImageVariantPath,
@@ -25,6 +26,8 @@ interface PendingThumbnail {
   height: number;
 }
 
+type ThumbnailFramingMode = 'crop' | 'pad';
+
 @Component({
   selector: 'app-tournament-thumbnails-mgr',
   standalone: true,
@@ -35,14 +38,15 @@ interface PendingThumbnail {
 export class TournamentThumbnailsMgrComponent implements OnInit, OnDestroy {
   @ViewChild('importReview') private importReview?: ElementRef<HTMLElement>;
 
-  readonly thumbnailProfile: CmsImageProfile = TOURNAMENT_THUMBNAIL_PROFILE;
-  readonly thumbnailSourcePrefix = cmsImageSourcePrefix(TOURNAMENT_THUMBNAIL_OWNER_ID, this.thumbnailProfile);
+  readonly croppedThumbnailProfile: CmsImageProfile = TOURNAMENT_THUMBNAIL_PROFILE;
+  readonly paddedThumbnailProfile: CmsImageProfile = TOURNAMENT_THUMBNAIL_PADDED_PROFILE;
   readonly form: FormGroup;
   readonly previewMap: Record<string, string | null> = {};
 
   loading = true;
   saving = false;
   uploading = false;
+  thumbnailFramingMode: ThumbnailFramingMode = 'crop';
   pendingThumbnail: PendingThumbnail | null = null;
   private settings: UIConfiguration | null = null;
 
@@ -61,6 +65,21 @@ export class TournamentThumbnailsMgrComponent implements OnInit, OnDestroy {
 
   get mappings(): FormArray {
     return this.form.get('mappings') as FormArray;
+  }
+
+  get thumbnailProfile(): CmsImageProfile {
+    return this.thumbnailFramingMode === 'pad'
+      ? this.paddedThumbnailProfile
+      : this.croppedThumbnailProfile;
+  }
+
+  get thumbnailSourcePrefix(): string {
+    return cmsImageSourcePrefix(TOURNAMENT_THUMBNAIL_OWNER_ID, this.thumbnailProfile);
+  }
+
+  selectThumbnailProfile(profile: CmsImageProfile): void {
+    if (this.uploading) return;
+    this.thumbnailFramingMode = profile === this.paddedThumbnailProfile ? 'pad' : 'crop';
   }
 
   async ngOnInit(): Promise<void> {
@@ -124,6 +143,7 @@ export class TournamentThumbnailsMgrComponent implements OnInit, OnDestroy {
     try {
       const dimensions = await this.imgService.imageDimensions(file);
       this.clearPendingThumbnail();
+      this.thumbnailFramingMode = 'crop';
       this.pendingThumbnail = {
         target,
         file,
@@ -145,16 +165,17 @@ export class TournamentThumbnailsMgrComponent implements OnInit, OnDestroy {
 
     this.uploading = true;
     try {
+      const sourcePrefix = this.thumbnailSourcePrefix;
       const extension = pending.file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const sourceFile = new File(
         [pending.file],
         `${globalThis.crypto.randomUUID()}.${extension}`,
         { type: pending.file.type, lastModified: pending.file.lastModified },
       );
-      const sourcePath = `${this.thumbnailSourcePrefix}${sourceFile.name}`;
+      const sourcePath = `${sourcePrefix}${sourceFile.name}`;
       const variantPath = cmsImageVariantPath(sourcePath);
 
-      await this.fileService.upload_file(sourceFile, this.thumbnailSourcePrefix);
+      await this.fileService.upload_file(sourceFile, sourcePrefix);
       await this.waitForVariant(variantPath);
 
       if (pending.target === 'default') {
@@ -249,4 +270,5 @@ export class TournamentThumbnailsMgrComponent implements OnInit, OnDestroy {
     }
     throw new Error(`Tournament thumbnail processing timed out: ${path}`);
   }
+
 }

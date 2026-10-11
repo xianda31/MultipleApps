@@ -12,16 +12,41 @@ interface S3Event {
   Records: S3Record[];
 }
 
-type CmsImageProfile = 'inline' | 'publication-landscape' | 'landscape-card' | 'portrait-card' | 'booklet' | 'tournament-thumbnail';
+type CmsImageProfile =
+  | 'inline'
+  | 'publication-landscape'
+  | 'landscape-card'
+  | 'landscape-card-padded'
+  | 'portrait-card'
+  | 'portrait-card-padded'
+  | 'booklet'
+  | 'booklet-padded'
+  | 'tournament-thumbnail'
+  | 'tournament-thumbnail-padded';
 
 const profiles: Record<CmsImageProfile, { width?: number; height: number; fit: 'contain' | 'cover' }> = {
   inline: { width: 400, height: 300, fit: 'contain' },
   'publication-landscape': { height: 300, fit: 'contain' },
   'landscape-card': { width: 800, height: 533, fit: 'cover' },
+  'landscape-card-padded': { width: 800, height: 533, fit: 'contain' },
   'portrait-card': { width: 600, height: 800, fit: 'cover' },
+  'portrait-card-padded': { width: 600, height: 800, fit: 'contain' },
   booklet: { width: 960, height: 640, fit: 'cover' },
+  'booklet-padded': { width: 960, height: 640, fit: 'contain' },
   'tournament-thumbnail': { width: 300, height: 200, fit: 'cover' },
+  'tournament-thumbnail-padded': { width: 300, height: 200, fit: 'contain' },
 };
+
+export function cmsResizeForProfile(profile: CmsImageProfile) {
+  return {
+    width: profiles[profile].width,
+    height: profiles[profile].height,
+    fit: profiles[profile].fit,
+    position: 'centre' as const,
+    withoutEnlargement: true,
+    background: { r: 0, g: 0, b: 0, alpha: 0 },
+  };
+}
 
 const s3 = new S3Client({});
 
@@ -107,14 +132,7 @@ async function processRecord(record: S3Record): Promise<void> {
   const sourceHeight = orientation >= 5 && orientation <= 8 ? metadata?.width : metadata?.height;
   const resize = gallerySource
     ? galleryResizeForDimensions(sourceWidth ?? 0, sourceHeight ?? 0)
-    : {
-        width: profiles[cmsSource!.profile].width,
-        height: profiles[cmsSource!.profile].height,
-        fit: profiles[cmsSource!.profile].fit,
-        position: 'centre' as const,
-        withoutEnlargement: true,
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-      };
+    : cmsResizeForProfile(cmsSource!.profile);
   const output = await sharp(input)
     .rotate()
     .resize(resize)

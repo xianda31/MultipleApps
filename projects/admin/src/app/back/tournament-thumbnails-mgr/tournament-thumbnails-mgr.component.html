@@ -50,7 +50,8 @@
               <section #importReview class="thumbnail-import-review" aria-label="Vérification de la vignette avant import">
                 <app-cms-image-review [profile]="thumbnailProfile" [sourceUrl]="pendingThumbnail!.previewUrl"
                   [sourceWidth]="pendingThumbnail!.width" [sourceHeight]="pendingThumbnail!.height"
-                  [sourceSize]="pendingThumbnail!.file.size">
+                  [sourceSize]="pendingThumbnail!.file.size" [allowFramingChoice]="true"
+                  (profileChange)="selectThumbnailProfile($event)">
                 </app-cms-image-review>
                 <div class="d-flex justify-content-end gap-2">
                   <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearPendingThumbnail()"
@@ -99,7 +100,8 @@
           <section #importReview class="thumbnail-import-review" aria-label="Vérification de la vignette avant import">
             <app-cms-image-review [profile]="thumbnailProfile" [sourceUrl]="pendingThumbnail!.previewUrl"
               [sourceWidth]="pendingThumbnail!.width" [sourceHeight]="pendingThumbnail!.height"
-              [sourceSize]="pendingThumbnail!.file.size">
+              [sourceSize]="pendingThumbnail!.file.size" [allowFramingChoice]="true"
+              (profileChange)="selectThumbnailProfile($event)">
             </app-cms-image-review>
             <div class="d-flex justify-content-end gap-2">
               <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearPendingThumbnail()"

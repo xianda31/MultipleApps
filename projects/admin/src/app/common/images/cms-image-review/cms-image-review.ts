@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import {
   CMS_IMAGE_PROFILES,
   CmsImageProfile,
+  cmsImageFramingPercentages,
+  cmsImageFramingProfiles,
   cmsImageOrientationMismatch,
   cmsImageSourceOrientation,
 } from '../cms-image-profiles';
@@ -21,6 +23,8 @@ export class CmsImageReview {
   @Input() sourceWidth: number | null = null;
   @Input() sourceHeight: number | null = null;
   @Input() sourceSize: number | null = null;
+  @Input() allowFramingChoice = false;
+  @Output() profileChange = new EventEmitter<CmsImageProfile>();
 
   get definition() {
     return CMS_IMAGE_PROFILES[this.profile];
@@ -38,6 +42,10 @@ export class CmsImageReview {
     return this.definition.aspectRatio ?? this.sourceAspectRatio;
   }
 
+  get framingProfiles() {
+    return this.allowFramingChoice ? cmsImageFramingProfiles(this.profile) : null;
+  }
+
   get hasSourceDimensions(): boolean {
     return !!this.sourceWidth && !!this.sourceHeight;
   }
@@ -47,7 +55,7 @@ export class CmsImageReview {
   }
 
   get orientationMismatch(): boolean {
-    return this.hasSourceDimensions
+    return this.definition.fit === 'cover' && this.hasSourceDimensions
       ? cmsImageOrientationMismatch(this.profile, this.sourceWidth!, this.sourceHeight!)
       : false;
   }
@@ -69,21 +77,22 @@ export class CmsImageReview {
   get cropDescription(): string | null {
     if (!this.hasSourceDimensions) return null;
 
-    let widthCrop = 0;
-    let heightCrop = 0;
-    if (this.definition.fit === 'cover') {
-      if (this.definition.width === null) return null;
-      const sourceRatio = this.sourceWidth! / this.sourceHeight!;
-      const targetRatio = this.definition.width / this.definition.height;
+    const adjustment = cmsImageFramingPercentages(this.profile, this.sourceWidth!, this.sourceHeight!);
+    const label = this.definition.transparentPadding ? 'Extension' : 'Rognage';
+    return `${label} : L ${this.formatPercent(adjustment.width)} · H ${this.formatPercent(adjustment.height)}`;
+  }
 
-      if (sourceRatio > targetRatio) {
-        widthCrop = (1 - targetRatio / sourceRatio) * 100;
-      } else if (sourceRatio < targetRatio) {
-        heightCrop = (1 - sourceRatio / targetRatio) * 100;
-      }
+  framingDescription(profile: CmsImageProfile): string {
+    if (!this.hasSourceDimensions) {
+      return CMS_IMAGE_PROFILES[profile].transparentPadding ? 'Extension' : 'Rognage';
     }
+    const adjustment = cmsImageFramingPercentages(profile, this.sourceWidth!, this.sourceHeight!);
+    const label = CMS_IMAGE_PROFILES[profile].transparentPadding ? 'Extension' : 'Rognage';
+    return `${label} : L ${this.formatPercent(adjustment.width)} · H ${this.formatPercent(adjustment.height)}`;
+  }
 
-    return `Rognage : L ${this.formatPercent(widthCrop)} · H ${this.formatPercent(heightCrop)}`;
+  selectProfile(profile: CmsImageProfile): void {
+    if (profile !== this.profile) this.profileChange.emit(profile);
   }
 
   get sourceOrientationLabel(): string {

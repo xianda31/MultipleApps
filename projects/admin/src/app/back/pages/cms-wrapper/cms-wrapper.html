@@ -212,7 +212,8 @@
         <section class="media-review" aria-label="Validation du cadrage">
             <app-cms-image-review [profile]="mediaImageProfile!" [sourceUrl]="mediaPreviewUrl"
                 [sourceWidth]="mediaSourceWidth" [sourceHeight]="mediaSourceHeight"
-                [sourceSize]="mediaSourceSize">
+                [sourceSize]="mediaSourceSize" [allowFramingChoice]="allowsMediaFramingChoice"
+                (profileChange)="selectMediaImageProfile($event)">
             </app-cms-image-review>
             <div class="media-review__actions">
                 <button type="button" class="btn btn-outline-secondary" (click)="cancelMediaPreview()"

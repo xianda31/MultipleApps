@@ -81,4 +81,22 @@ describe('FileUploader', () => {
     expect(variantLookup).toHaveBeenCalledOnceWith(variantPath, true, true);
     expect(emitted).toHaveBeenCalledOnceWith([variantPath]);
   });
+
+  it('uploads the source under the selected transparent profile', async () => {
+    component.imageProfile = 'landscape-card';
+    component.selectedImageProfile = 'landscape-card-padded';
+    component.targetPathOverride = 'images/cms/sources/snippet-1/landscape-card/';
+    const source = new File(['image'], 'photo.jpg', { type: 'image/jpeg' });
+    (component as any).selectedOriginals.add(source);
+
+    spyOn(component.fileManager, 'addFilesToUpload');
+    spyOn(component.fileManager, 'uploadFiles').and.resolveTo();
+    spyOn((component as any).fileService, 'getPresignedUrl$')
+      .and.returnValue(of('https://example.test/variant.webp'));
+
+    await component.uploadFiles();
+
+    const upload = (component.fileManager.addFilesToUpload as jasmine.Spy).calls.mostRecent();
+    expect(upload.args[0]).toBe('images/cms/sources/snippet-1/landscape-card-padded/');
+  });
 });

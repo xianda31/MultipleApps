@@ -35,12 +35,14 @@
     <h6 *ngIf="!imageProfile && !isAlbumMode" class="small">Fichiers ({{ selectedFiles.length }})</h6>
 
     <div *ngIf="imageProfileDefinition as profile" class="cms-image-review mb-3">
-    <app-cms-image-review *ngIf="imageProfile && getFileThumbnail(selectedFiles[0]) as previewUrl"
-      [profile]="imageProfile"
+    <app-cms-image-review *ngIf="activeImageProfile && getFileThumbnail(selectedFiles[0]) as previewUrl"
+      [profile]="activeImageProfile"
       [sourceUrl]="previewUrl"
       [sourceWidth]="cmsSourceWidth"
       [sourceHeight]="cmsSourceHeight"
-      [sourceSize]="selectedFiles[0].size">
+      [sourceSize]="selectedFiles[0].size"
+      [allowFramingChoice]="allowsImageFramingChoice"
+      (profileChange)="selectImageProfile($event)">
     </app-cms-image-review>
     </div>
     

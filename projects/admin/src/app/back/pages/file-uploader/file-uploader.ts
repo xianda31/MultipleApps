@@ -5,7 +5,13 @@ import { firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { FileManager, FileUploadProgress } from '../../../services/file-manager';
 import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.service';
 import { FileBrowser } from '../file-browser/file-browser';
-import { CMS_IMAGE_PROFILES, CmsImageProfile, cmsImageTargetDescription, cmsImageVariantPath } from '../../../common/images/cms-image-profiles';
+import {
+  CMS_IMAGE_PROFILES,
+  CmsImageProfile,
+  cmsImageFramingProfiles,
+  cmsImageTargetDescription,
+  cmsImageVariantPath,
+} from '../../../common/images/cms-image-profiles';
 import { CmsImageReview } from '../../../common/images/cms-image-review/cms-image-review';
 import { replaceImageExtensionWithWebp } from '../../../common/images/album-thumbnail-path';
 
@@ -33,6 +39,7 @@ export class FileUploader implements OnInit, OnDestroy {
   targetPath: string = '';
   cmsSourceWidth: number | null = null;
   cmsSourceHeight: number | null = null;
+  selectedImageProfile: CmsImageProfile | null = null;
   
   // Cache for file thumbnails and selections
   private fileThumbnails = new Map<File, string>();
@@ -74,11 +81,23 @@ export class FileUploader implements OnInit, OnDestroy {
   }
 
   get imageProfileDefinition() {
-    return this.imageProfile ? CMS_IMAGE_PROFILES[this.imageProfile] : null;
+    return this.activeImageProfile ? CMS_IMAGE_PROFILES[this.activeImageProfile] : null;
   }
 
   get imageProfileTargetDescription(): string {
-    return this.imageProfile ? cmsImageTargetDescription(this.imageProfile) : '';
+    return this.activeImageProfile ? cmsImageTargetDescription(this.activeImageProfile) : '';
+  }
+
+  get activeImageProfile(): CmsImageProfile | null {
+    return this.selectedImageProfile ?? this.imageProfile;
+  }
+
+  get allowsImageFramingChoice(): boolean {
+    return !!this.activeImageProfile && !!cmsImageFramingProfiles(this.activeImageProfile);
+  }
+
+  selectImageProfile(profile: CmsImageProfile): void {
+    if (!this.isUploading) this.selectedImageProfile = profile;
   }
 
   get uploadProgress$() {
@@ -146,6 +165,7 @@ export class FileUploader implements OnInit, OnDestroy {
       this.fileToThumbnail.clear();
       this.cmsSourceWidth = null;
       this.cmsSourceHeight = null;
+      this.selectedImageProfile = this.imageProfile;
       // Mark all files as candidates for upload by default
       this.selectedFiles.forEach(file => this.selectedOriginals.add(file));
       // Generate thumbnails for image files
@@ -221,7 +241,7 @@ export class FileUploader implements OnInit, OnDestroy {
     if (originals.length === 0) throw new Error('Aucune image valide à importer');
 
     const sourceFiles = originals.map(file => this.asImmutableCmsSource(file));
-    const sourcePath = this.getFullTargetPath();
+    const sourcePath = this.getCmsSourcePath();
     this.fileManager.addFilesToUpload(sourcePath, sourceFiles);
     await this.fileManager.uploadFiles(sourcePath);
 
@@ -318,6 +338,7 @@ export class FileUploader implements OnInit, OnDestroy {
     this.fileToThumbnail.clear();
     this.cmsSourceWidth = null;
     this.cmsSourceHeight = null;
+    this.selectedImageProfile = null;
     this.clearThumbnails();
     if (this.fileInput) {
       this.fileInput.nativeElement.value = '';
@@ -361,6 +382,16 @@ export class FileUploader implements OnInit, OnDestroy {
       }
     }
     return fullPath;
+  }
+
+  private getCmsSourcePath(): string {
+    const sourcePath = this.getFullTargetPath();
+    const profile = this.activeImageProfile;
+    if (!profile) return sourcePath;
+
+    const match = sourcePath.match(/^(images\/cms\/sources\/[^/]+\/)[^/]+\/$/);
+    if (!match) throw new Error(`Invalid CMS image source path: ${sourcePath}`);
+    return `${match[1]}${profile}/`;
   }
 
   getAlbumThumbnailPath(): string {
