@@ -42,6 +42,7 @@ export class MembersComponent implements OnInit {
   no_license_nbr: number = 0;
   lost_members_nbr: number = 0;
   active_members_nbr = 0;
+  selected_members_nbr = 0;
   renewed_members_nbr = 0;
   club_licensees_renewed_nbr = 0;
   club_licensees_unrenewed_nbr = 0;
@@ -55,33 +56,24 @@ export class MembersComponent implements OnInit {
   banned_members_nbr = 0;
   new_player!: ClubMember;
   STATUSES = MemberStatus;
-  filters: DirectoryFilter[] = [
-    'ACTIVE',
-    MemberStatus.NON_ADHERENT,
-    'ARCHIVED',
-    'BANNED',
-    MemberStatus.ADHERENT,
+  filters: MemberStatus[] = [
     MemberStatus.CLUB_LICENSEE,
     MemberStatus.SYMPATHISANT,
+    MemberStatus.ADHERENT,
     MemberStatus.NO_LICENSE,
   ];
   statusConfig: Record<DirectoryFilter, MemberStatusConfig> = {
     ACTIVE: { label: 'tous les actifs', iconClass: 'bi bi-people-fill' },
     ARCHIVED: { label: 'anciens membres', iconClass: 'bi bi-archive-fill' },
     BANNED: { label: 'membres bannis', iconClass: 'bi bi-person-fill-slash' },
-    [MemberStatus.ADHERENT]: { label: 'vue FFB', iconClass: 'bi bi-person-check-fill' },
-    [MemberStatus.CLUB_LICENSEE]: { label: 'adhérent licencié', iconClass: 'bi bi-person-square' },
+    [MemberStatus.ADHERENT]: { label: 'sous-total licenciés', iconClass: 'bi bi-ffb-fill' },
+    [MemberStatus.CLUB_LICENSEE]: { label: 'licencié rattaché au club', iconClass: 'bi bi-person-square' },
     [MemberStatus.SYMPATHISANT]: { label: 'sympathisant', iconClass: 'bi bi-tencent-qq' },
-    [MemberStatus.NO_LICENSE]: { label: 'adhérent non licencié', iconClass: 'bi bi-person-heart' },
-    [MemberStatus.NON_ADHERENT]: { label: 'adhésion non renouvelée', iconClass: 'bi bi-person-dash-fill' },
+    [MemberStatus.NO_LICENSE]: { label: 'non licencié', iconClass: 'bi bi-person-bounding-box' },
+    [MemberStatus.NON_ADHERENT]: { label: 'pas d\'adhésion', iconClass: 'bi bi-people-fill text-danger' },
   };
-  selected_filter: DirectoryFilter = 'ACTIVE';
-  statusLegend: MemberStatus[] = [
-    MemberStatus.CLUB_LICENSEE,
-    MemberStatus.SYMPATHISANT,
-    MemberStatus.NO_LICENSE,
-    MemberStatus.NON_ADHERENT,
-  ];
+  selectedLifecycleFilter: MemberLifecycleStatus = 'ACTIVE';
+  selectedStatusFilter: MemberStatus | null = null;
   loading: boolean = true;
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
@@ -133,7 +125,7 @@ export class MembersComponent implements OnInit {
       takeUntil(this.destroy$),
     ).subscribe(() => {
       this.avatar_urls$ = this.collect_avatars(this.members);
-      this.filterOnStatus(this.selected_filter);
+      this.applyFilters();
     });
 
     void this.loadMembersWithSynchronization(true);
@@ -154,42 +146,47 @@ export class MembersComponent implements OnInit {
   }
 
   private applyStatusCounters(): void {
-    const counters = this.membersService.computeStatusCountersFromMembers();
-    this.club_licensees_nbr = counters.clubLicensees;
-    this.sympatisants_number = counters.sympathisants;
-    this.ffb_adherents_nbr = counters.ffbAdherents;
-    this.no_license_nbr = counters.noLicense;
-    this.active_members_nbr = this.members.filter((member) => this.membersService.isActive(member)).length;
-    this.lost_members_nbr = this.members.filter((member) => this.membersService.isMembershipRenewalOverdue(member)).length;
-    this.renewed_members_nbr = this.active_members_nbr - this.lost_members_nbr;
-    const activeClubLicensees = this.members.filter((member) =>
-      this.membersService.isActive(member)
-      && this.membersService.resolveMemberStatus(member) === MemberStatus.CLUB_LICENSEE
+    const membersByLifecycle = {
+      ACTIVE: this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'ACTIVE'),
+      ARCHIVED: this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'ARCHIVED'),
+      BANNED: this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'BANNED'),
+    };
+    this.active_members_nbr = membersByLifecycle.ACTIVE.length;
+    this.archived_members_nbr = membersByLifecycle.ARCHIVED.length;
+    this.banned_members_nbr = membersByLifecycle.BANNED.length;
+
+    const selectedMembers = membersByLifecycle[this.selectedLifecycleFilter];
+    const clubLicensees = selectedMembers.filter((member) =>
+      this.membersService.resolveMemberStatus(member) === MemberStatus.CLUB_LICENSEE
     );
-    const activeSympathisants = this.members.filter((member) =>
-      this.membersService.isActive(member)
-      && this.membersService.resolveMemberStatus(member) === MemberStatus.SYMPATHISANT
+    const sympathisants = selectedMembers.filter((member) =>
+      this.membersService.resolveMemberStatus(member) === MemberStatus.SYMPATHISANT
     );
-    this.club_licensees_renewed_nbr = activeClubLicensees.filter((member) => this.membersService.hasPaidMembership(member)).length;
-    this.club_licensees_unrenewed_nbr = activeClubLicensees.length - this.club_licensees_renewed_nbr;
-    this.sympathisants_renewed_nbr = activeSympathisants.filter((member) => this.membersService.hasPaidMembership(member)).length;
-    this.sympathisants_unrenewed_nbr = activeSympathisants.length - this.sympathisants_renewed_nbr;
-    const activeFfbMembers = this.members.filter((member) =>
-      this.membersService.isActive(member) && this.membersService.isFfbAttached(member)
-    );
-    this.ffb_renewed_members_nbr = activeFfbMembers.filter((member) => this.membersService.hasPaidMembership(member)).length;
-    this.ffb_unrenewed_members_nbr = activeFfbMembers.length - this.ffb_renewed_members_nbr;
-    this.outside_ffb_renewed_members_nbr = this.renewed_members_nbr - this.ffb_renewed_members_nbr;
-    this.outside_ffb_unrenewed_members_nbr = this.lost_members_nbr - this.ffb_unrenewed_members_nbr;
-    this.archived_members_nbr = this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'ARCHIVED').length;
-    this.banned_members_nbr = this.members.filter((member) => this.membersService.getLifecycleStatus(member) === 'BANNED').length;
+    const ffbMembers = selectedMembers.filter((member) => this.membersService.isFfbAttached(member));
+    const outsideFfbMembers = selectedMembers.filter((member) => !this.membersService.isFfbAttached(member));
+
+    this.selected_members_nbr = selectedMembers.length;
+    this.club_licensees_nbr = clubLicensees.length;
+    this.sympatisants_number = sympathisants.length;
+    this.ffb_adherents_nbr = ffbMembers.length;
+    this.no_license_nbr = outsideFfbMembers.length;
+    this.renewed_members_nbr = selectedMembers.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.lost_members_nbr = selectedMembers.length - this.renewed_members_nbr;
+    this.club_licensees_renewed_nbr = clubLicensees.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.club_licensees_unrenewed_nbr = clubLicensees.length - this.club_licensees_renewed_nbr;
+    this.sympathisants_renewed_nbr = sympathisants.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.sympathisants_unrenewed_nbr = sympathisants.length - this.sympathisants_renewed_nbr;
+    this.ffb_renewed_members_nbr = ffbMembers.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.ffb_unrenewed_members_nbr = ffbMembers.length - this.ffb_renewed_members_nbr;
+    this.outside_ffb_renewed_members_nbr = outsideFfbMembers.filter((member) => this.membersService.hasPaidMembership(member)).length;
+    this.outside_ffb_unrenewed_members_nbr = outsideFfbMembers.length - this.outside_ffb_renewed_members_nbr;
   }
 
   private applyMembers(members: Member[]): void {
     this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
     this.applyStatusCounters();
     this.avatar_urls$ = this.collect_avatars(this.members);
-    this.filterOnStatus(this.selected_filter);
+    this.applyFilters();
   }
 
   private async loadMembersWithSynchronization(forceSync: boolean): Promise<void> {
@@ -292,32 +289,50 @@ export class MembersComponent implements OnInit {
     return this.membersService.resolveMemberStatus(member);
   }
 
-  private matchesFilter(member: Member, filter: DirectoryFilter): boolean {
-    const lifecycleStatus = this.membersService.getLifecycleStatus(member);
-    if (filter === 'ACTIVE' || filter === 'ARCHIVED' || filter === 'BANNED') {
-      return lifecycleStatus === filter;
-    }
-
-    if (lifecycleStatus !== 'ACTIVE') {
-      return false;
-    }
-
+  private matchesStatusFilter(member: Member, filter: MemberStatus): boolean {
     if (filter === MemberStatus.NON_ADHERENT) {
-      return this.membersService.isMembershipRenewalOverdue(member);
+      return !this.membersService.hasPaidMembership(member);
     }
 
     if (filter === MemberStatus.ADHERENT) {
       return this.membersService.isFfbAttached(member);
     }
 
+    if (filter === MemberStatus.NO_LICENSE) {
+      return !this.membersService.isFfbAttached(member);
+    }
+
     return this.getMemberStatus(member) === filter;
   }
 
-  filterOnStatus(filter: DirectoryFilter) {
-    this.selected_filter = filter;
+  selectLifecycleFilter(filter: MemberLifecycleStatus): void {
+    this.selectedLifecycleFilter = filter;
+    this.selectedStatusFilter = null;
+    this.applyStatusCounters();
+    this.applyFilters();
+  }
+
+  filterOnStatus(filter: MemberStatus | null): void {
+    this.selectedStatusFilter = filter;
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
     this.filteredMembers = this.members
-      .filter((member: Member) => this.matchesFilter(member, filter))
+      .filter((member: Member) =>
+        this.membersService.getLifecycleStatus(member) === this.selectedLifecycleFilter
+        && (this.selectedStatusFilter === null || this.matchesStatusFilter(member, this.selectedStatusFilter))
+      )
       .sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+  }
+
+  getSelectedLifecycleLabel(): string {
+    const labels: Record<MemberLifecycleStatus, string> = {
+      ACTIVE: 'Actifs',
+      ARCHIVED: 'Anciens',
+      BANNED: 'Bannis',
+    };
+    return labels[this.selectedLifecycleFilter];
   }
 
   getStatusLabel(status: DirectoryFilter): string {
@@ -329,7 +344,8 @@ export class MembersComponent implements OnInit {
   }
 
   getMemberStatusIconClass(member: Member): string {
-    return this.getFilterIconClass(this.getMemberStatus(member));
+    const status = this.getMemberStatus(member);
+    return this.getFilterIconClass(status === MemberStatus.NON_ADHERENT ? MemberStatus.NO_LICENSE : status);
   }
 
   isStatusWarning(member: Member): boolean {
@@ -347,7 +363,7 @@ export class MembersComponent implements OnInit {
     }
 
     if (status === MemberStatus.CLUB_LICENSEE && this.isStatusWarning(member)) {
-      return 'Membre licencié au club. Paiement adhésion à régulariser.';
+      return 'Licencié rattaché au club. Paiement adhésion à régulariser.';
     }
 
     if (status === MemberStatus.NON_ADHERENT) {

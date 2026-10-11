@@ -39,6 +39,40 @@ table.table.table-sm tbody tr td {
   overflow-y: auto;
 }
 
+.members-table {
+  width: 100%;
+  table-layout: auto;
+}
+
+.member-avatar-column {
+  width: 5.5rem;
+  min-width: 5.5rem;
+  white-space: nowrap;
+}
+
+.member-name-column {
+  min-width: 8rem;
+}
+
+.member-player-column {
+  display: none;
+}
+
+.member-status-column {
+  width: 4rem;
+  min-width: 4rem;
+  white-space: nowrap;
+}
+
+.member-info-column {
+  min-width: 9rem;
+}
+
+.member-actions-column {
+  width: 8.5rem;
+  min-width: 8.5rem;
+}
+
 .members-stats-table-wrapper {
   max-width: 44rem;
   margin-inline: auto;
@@ -77,8 +111,20 @@ table.table.table-sm tbody tr td {
   gap: 0.25rem;
 }
 
+.members-stats-row-icon {
+  display: inline-block;
+  width: 1.5rem;
+  margin-right: 0.25rem;
+  text-align: center;
+}
+
 .members-stats-status-header {
   white-space: normal !important;
+}
+
+.members-stats-table-wrapper > .members-directory-summary {
+  margin-left: 0;
+  margin-bottom: 0.35rem;
 }
 
 .members-directory-summary {
@@ -99,32 +145,12 @@ table.table.table-sm tbody tr td {
   gap: 0.25rem;
   min-height: 1.6rem;
   padding: 0.22rem 0.45rem;
-  border: 1px solid var(--bs-border-color);
   border-radius: 0.35rem;
-  background-color: var(--bs-tertiary-bg);
   white-space: nowrap;
 }
 
 .members-directory-count strong {
   font-size: 0.85rem;
-}
-
-.members-directory-count-active {
-  border-color: var(--bs-success-border-subtle);
-  background-color: var(--bs-success-bg-subtle);
-  color: var(--bs-success-text-emphasis);
-}
-
-.members-directory-count-archived {
-  border-color: var(--bs-info-border-subtle);
-  background-color: var(--bs-info-bg-subtle);
-  color: var(--bs-info-text-emphasis);
-}
-
-.members-directory-count-warning {
-  border-color: var(--bs-danger-border-subtle);
-  background-color: var(--bs-danger-bg-subtle);
-  color: var(--bs-danger-text-emphasis);
 }
 
 .members-stats-active-title {
@@ -133,7 +159,6 @@ table.table.table-sm tbody tr td {
 }
 
 .members-stats-child-row {
-  padding-left: 1rem !important;
   font-weight: 500;
 }
 
@@ -186,10 +211,6 @@ table.table.table-sm tbody tr td {
 
 @media (max-width: 576px) and (orientation: portrait),
   (orientation: landscape) and (max-height: 576px) and (pointer: coarse) {
-  .member-index-column {
-    display: none;
-  }
-
   .members-stats-line {
     font-size: 0.8rem;
     line-height: 1.15;
@@ -205,6 +226,51 @@ table.table.table-sm tbody tr td {
     font-size: 0.8rem;
     line-height: 1.1;
     gap: 0.45rem !important;
+  }
+}
+
+@media (max-width: 767.98px) and (orientation: portrait) {
+  .members-table {
+    table-layout: fixed;
+  }
+
+  .member-avatar-column {
+    width: 3.5rem;
+    min-width: 3.5rem;
+    font-size: 0.72rem;
+  }
+
+  .member-name-column-desktop,
+  .member-info-column {
+    display: none !important;
+  }
+
+  .member-player-column {
+    display: table-cell;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 0.78rem;
+    line-height: 1.1;
+  }
+
+  .member-player-lastname {
+    display: block;
+    font-weight: 700;
+  }
+
+  .member-status-column {
+    width: 2.5rem;
+    min-width: 2.5rem;
+  }
+
+  .member-actions-column {
+    width: 6.5rem;
+    min-width: 6.5rem;
+  }
+
+  .member-actions-column .btn {
+    padding-right: 0.35rem;
+    padding-left: 0.35rem;
   }
 }
 

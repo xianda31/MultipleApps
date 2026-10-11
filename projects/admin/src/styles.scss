@@ -139,6 +139,19 @@ table.fit-cols td {
 
 /* You can add global styles to this file, et aussi importer d'autres fichiers de styles */
 @import "../public/scss/custom.scss";
+
+.bi.bi-ffb-fill::before {
+  content: "";
+  width: 0.85em;
+  height: 1em;
+  background-color: currentColor;
+  -webkit-mask: url("/ffbridge-symbol.svg") center / contain no-repeat;
+  mask: url("/ffbridge-symbol.svg") center / contain no-repeat;
+  transform: scale(1.15);
+  transform-origin: center;
+  vertical-align: -0.125em;
+}
+
 // nice_shadow_30 :
 .nice_shadow { 
   // box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;

@@ -4,22 +4,6 @@
       <div class="row justify-content-start align-items-center fs-5">
         <div class="col-auto card-title me-4 d-flex flex-wrap align-items-center">
           <span class="fw-bold">Répertoire Club</span>
-          <span *ngIf="!loading" class="members-directory-summary">
-            <span class="members-directory-count members-directory-count-active">
-              <i class="bi bi-people-fill" aria-hidden="true"></i>
-              Actifs <strong>{{active_members_nbr}}</strong>
-            </span>
-            <span class="members-directory-count members-directory-count-archived">
-              <i class="bi bi-archive-fill" aria-hidden="true"></i>
-              Anciens <strong>{{archived_members_nbr}}</strong>
-            </span>
-            @if (banned_members_nbr > 0) {
-              <span class="members-directory-count members-directory-count-warning">
-                <i class="bi bi-person-fill-slash" aria-hidden="true"></i>
-                Bannis <strong>{{banned_members_nbr}}</strong>
-              </span>
-            }
-          </span>
           <ng-container *ngIf="loading">
             <div class="spinner-border text-primary ms-2 align-middle"
               style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
@@ -30,6 +14,32 @@
         <ng-container *ngIf="!loading">
           <div class="col-12 mt-2 members-stats-line">
             <div class="members-stats-table-wrapper">
+              <div class="members-directory-summary">
+                <button type="button" class="btn btn-sm members-directory-count"
+                  [class.btn-primary]="selectedLifecycleFilter === 'ACTIVE'"
+                  [class.btn-outline-primary]="selectedLifecycleFilter !== 'ACTIVE'"
+                  [attr.aria-pressed]="selectedLifecycleFilter === 'ACTIVE'"
+                  (click)="selectLifecycleFilter('ACTIVE')">
+                  <i class="bi bi-people-fill" aria-hidden="true"></i>
+                  Actifs <strong>{{active_members_nbr}}</strong>
+                </button>
+                <button type="button" class="btn btn-sm members-directory-count"
+                  [class.btn-primary]="selectedLifecycleFilter === 'ARCHIVED'"
+                  [class.btn-outline-primary]="selectedLifecycleFilter !== 'ARCHIVED'"
+                  [attr.aria-pressed]="selectedLifecycleFilter === 'ARCHIVED'"
+                  (click)="selectLifecycleFilter('ARCHIVED')">
+                  <i class="bi bi-archive-fill" aria-hidden="true"></i>
+                  Anciens <strong>{{archived_members_nbr}}</strong>
+                </button>
+                <button type="button" class="btn btn-sm members-directory-count"
+                  [class.btn-primary]="selectedLifecycleFilter === 'BANNED'"
+                  [class.btn-outline-primary]="selectedLifecycleFilter !== 'BANNED'"
+                  [attr.aria-pressed]="selectedLifecycleFilter === 'BANNED'"
+                  (click)="selectLifecycleFilter('BANNED')">
+                  <i class="bi bi-person-fill-slash" aria-hidden="true"></i>
+                  Bannis <strong>{{banned_members_nbr}}</strong>
+                </button>
+              </div>
               <table class="table table-sm table-bordered members-stats-table mb-1">
                 <colgroup>
                   <col class="members-stats-label-column">
@@ -40,109 +50,118 @@
                 <thead>
                   <tr>
                     <th scope="col" class="members-stats-status-header">
-                      <span class="members-stats-active-title">Actifs</span>
+                      <span class="members-stats-active-title">{{ getSelectedLifecycleLabel() }}</span>
                     </th>
                     <th scope="col" class="text-end">
-                      <span class="d-none d-sm-inline">Adhésion réglée</span>
-                      <span class="d-sm-none">Réglée</span>
+                      Adhésion
                     </th>
-                    <th scope="col" class="text-end">
-                      <span class="d-none d-sm-inline">Non renouvelée</span>
-                      <span class="d-sm-none">Non réglée</span>
+                    <th scope="col" class="text-end text-danger">
+                      /Adhésion
                     </th>
                     <th scope="col" class="text-end">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <th scope="row" class="members-stats-child-row">Licenciés au club</th>
+                    <th scope="row" class="members-stats-child-row">
+                      <i class="bi bi-person-square members-stats-row-icon" aria-hidden="true"></i>Licenciés rattachés au club
+                    </th>
                     <td class="text-end">
                       @if (club_licensees_renewed_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-square" aria-hidden="true"></i>{{club_licensees_renewed_nbr}}</span>
+                      <span class="members-stat-value">{{club_licensees_renewed_nbr}}</span>
                       }
                     </td>
                     <td class="text-end" [class.text-danger]="club_licensees_unrenewed_nbr > 0">
                       @if (club_licensees_unrenewed_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-square" aria-hidden="true"></i>{{club_licensees_unrenewed_nbr}}</span>
+                      <span class="members-stat-value">{{club_licensees_unrenewed_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end">
+                    <td class="text-end" [class.table-primary]="selectedStatusFilter === STATUSES.CLUB_LICENSEE">
                       @if (club_licensees_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-square" aria-hidden="true"></i>{{club_licensees_nbr}}</span>
+                      <span class="members-stat-value">{{club_licensees_nbr}}</span>
                       }
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" class="members-stats-child-row">Sympathisants</th>
+                    <th scope="row" class="members-stats-child-row">
+                      <i class="bi bi-tencent-qq members-stats-row-icon" aria-hidden="true"></i>Sympathisants
+                    </th>
                     <td class="text-end">
                       @if (sympathisants_renewed_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-tencent-qq" aria-hidden="true"></i>{{sympathisants_renewed_nbr}}</span>
+                      <span class="members-stat-value">{{sympathisants_renewed_nbr}}</span>
                       }
                     </td>
                     <td class="text-end" [class.text-danger]="sympathisants_unrenewed_nbr > 0">
                       @if (sympathisants_unrenewed_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-tencent-qq" aria-hidden="true"></i>{{sympathisants_unrenewed_nbr}}</span>
+                      <span class="members-stat-value">{{sympathisants_unrenewed_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end">
+                    <td class="text-end" [class.table-primary]="selectedStatusFilter === STATUSES.SYMPATHISANT">
                       @if (sympatisants_number > 0) {
-                      <span class="members-stat-value"><i class="bi bi-tencent-qq" aria-hidden="true"></i>{{sympatisants_number}}</span>
+                      <span class="members-stat-value">{{sympatisants_number}}</span>
                       }
                     </td>
                   </tr>
                   <tr class="members-stats-subtotal">
-                    <th scope="row">Sous-total Licenciés</th>
+                    <th scope="row">
+                      <i class="bi bi-ffb-fill members-stats-row-icon" aria-hidden="true"></i>Sous-total Licenciés
+                    </th>
                     <td class="text-end">
                       @if (ffb_renewed_members_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-check-fill" aria-hidden="true"></i>{{ffb_renewed_members_nbr}}</span>
+                      <span class="members-stat-value">{{ffb_renewed_members_nbr}}</span>
                       }
                     </td>
                     <td class="text-end fw-semibold text-danger">
                       @if (ffb_unrenewed_members_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-dash-fill" aria-hidden="true"></i>{{ffb_unrenewed_members_nbr}}</span>
+                      <span class="members-stat-value">{{ffb_unrenewed_members_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end fw-semibold">
+                    <td class="text-end fw-semibold" [class.table-primary]="selectedStatusFilter === STATUSES.ADHERENT">
                       @if (ffb_adherents_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-check-fill" aria-hidden="true"></i>{{ffb_adherents_nbr}}</span>
+                      <span class="members-stat-value">{{ffb_adherents_nbr}}</span>
                       }
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row">Non licenciés</th>
+                    <th scope="row">
+                      <i class="bi bi-person-bounding-box members-stats-row-icon" aria-hidden="true"></i>Non licenciés
+                    </th>
                     <td class="text-end">
                       @if (outside_ffb_renewed_members_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-heart" aria-hidden="true"></i>{{outside_ffb_renewed_members_nbr}}</span>
+                      <span class="members-stat-value">{{outside_ffb_renewed_members_nbr}}</span>
                       }
                     </td>
                     <td class="text-end">
                       @if (outside_ffb_unrenewed_members_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-dash-fill" aria-hidden="true"></i>{{outside_ffb_unrenewed_members_nbr}}</span>
+                      <span class="members-stat-value">{{outside_ffb_unrenewed_members_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end">
-                      @if (active_members_nbr - ffb_adherents_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person" aria-hidden="true"></i>{{active_members_nbr - ffb_adherents_nbr}}</span>
+                    <td class="text-end" [class.table-primary]="selectedStatusFilter === STATUSES.NO_LICENSE">
+                      @if (selected_members_nbr - ffb_adherents_nbr > 0) {
+                      <span class="members-stat-value">{{selected_members_nbr - ffb_adherents_nbr}}</span>
                       }
                     </td>
                   </tr>
                 </tbody>
                 <tfoot>
                   <tr>
-                    <th scope="row">Total actifs</th>
+                    <th scope="row">
+                      <i class="bi bi-people-fill members-stats-row-icon" aria-hidden="true"></i>Total {{ getSelectedLifecycleLabel() | lowercase }}
+                    </th>
                     <td class="text-end fw-semibold">
                       @if (renewed_members_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-heart" aria-hidden="true"></i>{{renewed_members_nbr}}</span>
+                      <span class="members-stat-value">{{renewed_members_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end fw-semibold">
+                    <td class="text-end fw-semibold"
+                      [class.table-primary]="selectedStatusFilter === STATUSES.NON_ADHERENT">
                       @if (lost_members_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-person-dash-fill" aria-hidden="true"></i>{{lost_members_nbr}}</span>
+                      <span class="members-stat-value">{{lost_members_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end fw-bold">
-                      @if (active_members_nbr > 0) {
-                      <span class="members-stat-value"><i class="bi bi-people-fill" aria-hidden="true"></i>{{active_members_nbr}}</span>
+                    <td class="text-end fw-bold" [class.table-primary]="selectedStatusFilter === null">
+                      @if (selected_members_nbr > 0) {
+                      <span class="members-stat-value">{{selected_members_nbr}}</span>
                       }
                     </td>
                   </tr>
@@ -155,31 +174,39 @@
     </div>
 
     <div class="card-body">
-      <div *ngIf="!loading" class="small text-muted mb-2 d-flex flex-wrap gap-3 align-items-center members-legend-line">
-        <span class="fw-semibold">Légende :</span>
-        <span *ngFor="let status of statusLegend">
-          <i [class]="getFilterIconClass(status)"></i> {{ getStatusLabel(status) }}
-        </span>
-        <span><span class="text-danger">en rouge</span> : anomalie paiement</span>
-      </div>
-
       <div *ngIf="!loading" class="table-responsive members-table-scroll">
-        <table class="table table-striped table-sm table-bordered">
+        <table class="table table-striped table-sm table-bordered members-table">
           <thead class="sticky-top table-light">
             <tr>
-              <th class="text-center pe-3 member-index-column" style="width: 4%;">#</th>
-              <th class="text-center" style="width: 8%;"></th>
-              <th style="width: 18%;">Nom</th>
-              <th style="width: 18%;">Prénom</th>
-              <th class="text-center" style="width: 12%;">
-                {{filteredMembers.length}}
-                <i [class]="getFilterIconClass(selected_filter)"></i>
+              <th class="text-center member-avatar-column">
+                {{ getSelectedLifecycleLabel() }}
+              </th>
+              <th class="member-name-column member-name-column-desktop">Nom</th>
+              <th class="member-name-column member-name-column-desktop">Prénom</th>
+              <th class="member-player-column">Joueur</th>
+              <th class="text-center member-status-column">
+                @if (selectedStatusFilter) {
+                  <i [class]="getFilterIconClass(selectedStatusFilter)"></i>
+                } @else {
+                  <i class="bi bi-people-fill" aria-hidden="true"></i>
+                }
                 <div ngbDropdown class="btn-group">
                   <span class="dropdown-toggle dropdown-toggle-split" ngbDropdownToggle></span>
                   <ul ngbDropdownMenu class="dropdown-menu">
-                    <li *ngFor="let filter of filters ">
+                    <li *ngFor="let filter of filters">
                       <a class="dropdown-item" (click)="filterOnStatus(filter)">
                         <i [class]="getFilterIconClass(filter)"></i> {{ getStatusLabel(filter) }}
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" (click)="filterOnStatus(null)">
+                        <i class="bi bi-people-fill"></i> toutes catégories
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item" (click)="filterOnStatus(STATUSES.NON_ADHERENT)">
+                        <i [class]="getFilterIconClass(STATUSES.NON_ADHERENT)"></i>
+                        {{ getStatusLabel(STATUSES.NON_ADHERENT) }}
                       </a>
                     </li>
                   </ul>
@@ -187,7 +214,7 @@
               </th>
 
 
-              <th class="d-none d-sm-table-cell" ngbDropdown style="cursor:pointer;">
+              <th class="d-none d-sm-table-cell member-info-column" ngbDropdown style="cursor:pointer;">
                 <span ngbDropdownToggle style="font-weight: bold;">
                   {{ infoColumnLabels[selectedInfoColumn] }}
                   <!-- <i class="bi bi-caret-down-fill" style="font-size:0.8em;"></i> -->
@@ -199,26 +226,29 @@
                 </ul>
               </th>
               <!-- <th class="d-none d-sm-table-cell text-center">iv</th> -->
-              <th class="text-center">Actions</th>
+              <th class="text-center member-actions-column">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let member of filteredMembers; let i = index">
-              <td class="text-end pe-3 member-index-column">{{i + 1}}</td>
-              <td class="text-center align-middle">
+            <tr *ngFor="let member of filteredMembers">
+              <td class="text-center align-middle member-avatar-column">
                 <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
                   class="rounded-circle table-avatar">
               </td>
-              <td>{{member.lastname | uppercase}}</td>
-              <td>{{member.firstname}}</td>
-              <td class="text-center">
+              <td class="member-name-column member-name-column-desktop">{{member.lastname | uppercase}}</td>
+              <td class="member-name-column member-name-column-desktop">{{member.firstname}}</td>
+              <td class="member-player-column">
+                <span class="member-player-lastname">{{member.lastname | uppercase}}</span>
+                <span>{{member.firstname}}</span>
+              </td>
+              <td class="text-center member-status-column">
                 <span ngbTooltip="{{ getMemberStatusTooltip(member) }}" tooltipClass="my-custom-class"
                   placement="right">
                   <i [class.text-danger]="isStatusWarning(member)" [class]="getMemberStatusIconClass(member)"></i>
                 </span>
               </td>
 
-              <td class="d-none d-sm-table-cell">
+              <td class="d-none d-sm-table-cell member-info-column">
                 @if (selectedInfoColumn === 'license_number') {
                 {{ member.license_number }}
                 } @else if (selectedInfoColumn === 'membership_date') {
@@ -246,7 +276,7 @@
                 -
               }
             </td> -->
-              <td class="text-center text-nowrap">
+              <td class="text-center text-nowrap member-actions-column">
                 <button type="button" class="btn btn-sm btn-outline-primary me-1"
                   title="Voir les préférences" (click)="accessSettings(member)">
                   <i class="bi bi-eye"></i>
