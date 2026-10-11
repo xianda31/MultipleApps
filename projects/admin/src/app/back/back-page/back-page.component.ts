@@ -3,15 +3,16 @@ import { AuthentificationService } from '../../common/authentification/authentif
 import { Member } from '../../common/interfaces/member.interface';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
 import { ConnexionComponent } from '../../common/authentification/connexion/connexion.component';
+import { BackPageShortcutsComponent } from './back-page-shortcuts.component';
 
 @Component({
   selector: 'app-back-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, ConnexionComponent],
+  imports: [CommonModule, ConnexionComponent, BackPageShortcutsComponent],
   templateUrl: './back-page.component.html',
   styleUrl: './back-page.component.scss'
 })

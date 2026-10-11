@@ -1,0 +1,10 @@
+<section class="back-page-shortcuts" aria-labelledby="back-page-shortcuts-title">
+  <h3 id="back-page-shortcuts-title" class="h5 mb-3">Accès rapides</h3>
+  <nav class="back-page-shortcuts-grid" aria-label="Accès rapides">
+    <a *ngFor="let shortcut of shortcuts" [routerLink]="shortcut.route"
+      class="btn btn-outline-primary back-page-shortcut">
+      <i [class]="shortcut.iconClass" aria-hidden="true"></i>
+      <span>{{ shortcut.label }}</span>
+    </a>
+  </nav>
+</section>
