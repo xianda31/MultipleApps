@@ -297,7 +297,7 @@ export class BookService {
         }
         this.publishBookEntries(entries);
         if (initialSync && this.trace_mode) {
-          this.toastService.showInfo('comptabilité', `données saison ${season} chargées`);
+          console.info(`[BookService] Données comptables de la saison ${season} chargées`);
         }
       },
       error: (error) => {
