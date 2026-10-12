@@ -33,7 +33,7 @@ const CUSTOMER_ACCOUNT_LABELS: Partial<Record<CUSTOMER_ACCOUNT, string>> = {
 };
 
 export function paymentCartSummary(bookEntry: BookEntry, source?: string | null): string {
-  const channel = source === 'terminal' ? 'achat par TPE' : 'achat en ligne';
+  const channel = source === 'terminal' ? 'TPE' : 'ligne';
   const accounts = [...new Set(
     bookEntry.operations.flatMap(operation => Object.keys(operation.values))
   )].map(account => CUSTOMER_ACCOUNT_LABELS[account as CUSTOMER_ACCOUNT] || account);
@@ -925,4 +925,3 @@ export class StripeReconciliationComponent {
     }
   }
 }
-

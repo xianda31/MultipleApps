@@ -1,4 +1,4 @@
-<div class="container-fluid container-xl px-lg-3 mt-3">
+<div class="container-fluid container-xl px-lg-3 mt-3 stripe-reconciliation-page">
   <h4>Réconciliation Stripe — Virements bancaires</h4>
 
   @if (isDevMode) {
@@ -189,18 +189,18 @@
           <i class="bi bi-check-circle me-1"></i>Aucun payout viré à rapprocher.
         </div>
       } @else {
-        <table class="table table-sm table-hover mb-0" style="table-layout:fixed">
+        <table class="table table-sm table-hover mb-0 payout-table" style="table-layout:fixed">
           <colgroup>
-            <col style="width:36px">
-            <col style="width:15%">
-            <col>
+            <col class="selection-column" style="width:36px">
+            <col class="payout-date-column" style="width:15%">
+            <col class="stripe-id-column">
             <col style="width:110px">
           </colgroup>
           <thead class="table-light">
             <tr>
               <th aria-hidden="true"></th>
-              <th>Date virement</th>
-              <th>ID Stripe</th>
+              <th><span class="d-none d-sm-inline">Date virement</span><span class="d-sm-none">Date</span></th>
+              <th class="stripe-id-column">ID Stripe</th>
               <th class="text-end ps-2">Montant</th>
             </tr>
           </thead>
@@ -209,7 +209,7 @@
               <tr [class.table-primary]="payoutId === p.id" style="cursor:pointer" (click)="selectPayout(p)">
                 <td aria-hidden="true"></td>
                 <td>{{ formatDate(p.arrivalDate) }}</td>
-                <td class="text-nowrap">
+                <td class="text-nowrap stripe-id-column">
                   <small class="font-monospace text-muted">{{ p.id }}</small>
                   @if (payoutId === p.id && lookingUp) {
                     <span class="spinner-border spinner-border-sm text-primary ms-2"></span>
@@ -230,13 +230,13 @@
         <span class="fw-semibold">Autres payouts Stripe (30 derniers jours)</span>
       </div>
       <div class="table-responsive">
-        <table class="table table-sm mb-0">
+        <table class="table table-sm mb-0 payout-table">
           <thead class="table-light">
             <tr>
               <th>Date prévue</th>
               <th class="text-end">Montant</th>
               <th>Statut</th>
-              <th>ID Stripe</th>
+              <th class="stripe-id-column">ID Stripe</th>
             </tr>
           </thead>
           <tbody>
@@ -253,7 +253,7 @@
                     {{ payoutStatusLabel(p.status) }}
                   </span>
                 </td>
-                <td class="text-nowrap"><small class="font-monospace text-muted">{{ p.id }}</small></td>
+                <td class="text-nowrap stripe-id-column"><small class="font-monospace text-muted">{{ p.id }}</small></td>
               </tr>
             }
           </tbody>
@@ -424,13 +424,12 @@
   }
 
   @if (!loadingLines && lines.length > 0) {
-    <table class="table table-sm table-hover align-middle mb-0" style="table-layout:fixed">
+    <table class="table table-sm table-hover align-middle mb-0 payment-lines-table" style="table-layout:fixed">
       <colgroup>
-        <col style="width:36px">
-        <col style="width:15%">
-        <col style="width:28%">
-        <col>
-        <col style="width:110px">
+        <col class="selection-column" style="width:36px">
+        <col class="payment-holder-column" style="width:34%">
+        <col class="payment-cart-column">
+        <col class="payment-amount-column" style="width:110px">
       </colgroup>
       <thead class="table-light">
         <tr>
@@ -440,8 +439,7 @@
                    [disabled]="!payoutId"
                    (change)="toggleAll($any($event.target).checked)">
           </th>
-          <th>Date</th>
-          <th>Porteur carte</th>
+          <th>Porteur / date</th>
           <th>Panier</th>
           <th class="text-end ps-2">Montant</th>
         </tr>
@@ -453,15 +451,17 @@
             <td>
               <input type="checkbox" class="form-check-input" [(ngModel)]="line.selected" [disabled]="!payoutId">
             </td>
-            <td>
+            <td class="payment-holder">
+              <div>{{ line.buyerName }}</div>
+              <small class="text-muted">
               @if (line.bookEntry) {
                 {{ formatDate(line.bookEntry.date) }}
               } @else {
                 —
               }
+              </small>
             </td>
-            <td>{{ line.buyerName }}</td>
-            <td>
+            <td class="payment-cart">
               <small class="text-muted">{{ line.cartSummary }}</small>
               @if (manualEntryMode && line.stripeTag) {
                 <button type="button"
@@ -493,7 +493,7 @@
       @if (selectedLines.length > 0) {
         <tfoot class="table-secondary fw-bold">
           <tr>
-            <td colspan="4" class="text-end">{{ selectedLines.length }} sélectionné(s)</td>
+            <td colspan="3" class="text-end">{{ selectedLines.length }} sélectionné(s)</td>
             <td class="text-end">{{ formatAmount(selectedGrossCents) }}</td>
           </tr>
         </tfoot>

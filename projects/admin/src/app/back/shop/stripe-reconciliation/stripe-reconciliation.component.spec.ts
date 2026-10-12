@@ -15,7 +15,7 @@ describe('Stripe payment cart summary', () => {
       ],
     } satisfies BookEntry;
 
-    expect(paymentCartSummary(bookEntry)).toBe('achat en ligne — CAR · 2 bénéficiaires');
+    expect(paymentCartSummary(bookEntry)).toBe('ligne — CAR · 2 bénéficiaires');
   });
 
   it('identifies a terminal purchase', () => {
@@ -30,7 +30,7 @@ describe('Stripe payment cart summary', () => {
       ],
     } satisfies BookEntry;
 
-    expect(paymentCartSummary(bookEntry, 'terminal')).toBe('achat par TPE — CAR');
+    expect(paymentCartSummary(bookEntry, 'terminal')).toBe('TPE — CAR');
   });
 });
 
