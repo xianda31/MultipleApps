@@ -213,7 +213,7 @@ describe('CmsWrapper', () => {
     component.onFileSelectionRequested({ type: 'image', snippet, context: 'Illustration' });
 
     expect(component.fileMode).toBe('upload');
-    expect(component.mediaImageProfile).toBe('inline');
+    expect(component.mediaImageProfile).toBe('publication-landscape');
     expect(fileManager.activateSelectionMode).not.toHaveBeenCalled();
 
     component.onFileModeChange('browse');

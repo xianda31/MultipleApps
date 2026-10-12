@@ -271,7 +271,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
       } catch (error) {
         for (const snippet of parkedSnippets.reverse()) {
           try {
-            await this.snippetService.updateSnippet({ ...snippet, ownerPageId: snippet.ownerPageId ?? null });
+            await this.snippetService.updateSnippet({ ...snippet, ownerPageId: snippet.ownerPageId });
             await this.clipboardService.removeSnippet(snippet.id);
           } catch {
             // The ownership audit reports any compensation that still needs manual repair.

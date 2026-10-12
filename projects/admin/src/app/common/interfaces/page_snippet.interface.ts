@@ -12,7 +12,7 @@ export interface Snippet {
     featured: boolean;
     image_url?: string;
     pageId?: string;
-    ownerPageId?: string | null;
+    ownerPageId: string;
     createdAt?: string;
     updatedAt?: string;     // in ISO format
     publishedAt?: string;  // in YYYY-MM-DD format
@@ -61,5 +61,4 @@ export enum MENU_TITLES {
     AUTRES_RDV = 'autres rendez-vous',
 }
 export const CLIPBOARD_TITLE = '__CLIPBOARD__'
-
 

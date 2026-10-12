@@ -11,6 +11,7 @@ const completeSnippet: Snippet = {
   image: 'images/example.jpg',
   file: 'documents/example.pdf',
   folder: 'albums/example/',
+  ownerPageId: 'page-1',
 };
 
 describe('snippet template rules', () => {
