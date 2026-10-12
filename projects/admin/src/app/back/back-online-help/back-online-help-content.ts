@@ -626,12 +626,12 @@ export const HELP_TOPICS: HelpTopic[] = [
       },
       {
         id: 'site-menus',
-        title: 'les menus',
-        summary: 'Edition des menus et des routes dynamiques.',
+        title: 'barre de navigation',
+        summary: 'Edition de la barre de navigation et des routes dynamiques.',
         route: BACK_ROUTE_ABS_PATHS['MenusEditor'],
         nav: {
           menuTitle: 'Site web',
-          subMenuTitle: 'les menus',
+          subMenuTitle: 'barre de navigation',
           icon: 'bi-globe2',
           groupLevel: 'Editeur',
         },
@@ -646,12 +646,12 @@ export const HELP_TOPICS: HelpTopic[] = [
       },
       {
         id: 'site-pages-datas',
-        title: 'pages et datas',
-        summary: 'Edition des pages et donnees CMS.',
+        title: 'pages et articles',
+        summary: 'Edition des pages et articles CMS.',
         route: BACK_ROUTE_ABS_PATHS['CMSWrapper'],
         nav: {
           menuTitle: 'Site web',
-          subMenuTitle: 'pages et datas',
+          subMenuTitle: 'pages et articles',
           icon: 'bi-globe2',
           groupLevel: 'Editeur',
         },

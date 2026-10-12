@@ -72,8 +72,8 @@ const MENU_DEFINITIONS: NavbarMenu[] = [
         icon: 'bi-globe2',
         subMenus: [
             { label: 'paramètres UI', route: BACK_ROUTE_PATHS.UiConf },
-            { label: 'les menus', route: BACK_ROUTE_PATHS.MenusEditor },
-            { label: 'pages et datas', route: BACK_ROUTE_PATHS.CMSWrapper },
+            { label: 'barre de navigation', route: BACK_ROUTE_PATHS.MenusEditor },
+            { label: 'pages et articles', route: BACK_ROUTE_PATHS.CMSWrapper },
             { label: 'utilitaires images', route: BACK_ROUTE_PATHS.ImageMaintenance },
             { label: 'compétitions', route: BACK_ROUTE_PATHS.Competitions },
             { label: 'aller sur le site', route: '/front' }
