@@ -113,6 +113,24 @@ describe('CmsWrapper', () => {
     expect(component.filteredPages).toEqual([linkedPage, unlinkedPage]);
   });
 
+  it('distinguishes linked and unlinked pages and explains the colors', () => {
+    const linkedPage = { id: 'linked', title: 'Actualités', template: PAGE_TEMPLATES.PUBLICATION, snippet_ids: [] } as Page;
+    const unlinkedPage = { id: 'unlinked', title: 'À préparer', template: PAGE_TEMPLATES.PUBLICATION, snippet_ids: [] } as Page;
+    component.pages = [linkedPage, unlinkedPage];
+    component.pagePickerOpen = true;
+    (component as any).linkedPageIds = new Set(['linked']);
+
+    fixture.detectChanges();
+
+    const pageItems = fixture.nativeElement.querySelectorAll('.page-list-item:not(.page-list-create)');
+    expect(pageItems[0].classList).toContain('btn-outline-primary');
+    expect(pageItems[1].classList).toContain('btn-outline-info');
+    expect(fixture.nativeElement.querySelector('.page-link-legend').textContent)
+      .toContain('page présente dans la navigation');
+    expect(fixture.nativeElement.querySelector('.page-link-legend').textContent)
+      .toContain('page hors navigation');
+  });
+
   it('marks an album article without a folder as incomplete', () => {
     component.selectedPage = {
       id: 'albums',

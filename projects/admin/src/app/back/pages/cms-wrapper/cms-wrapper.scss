@@ -52,6 +52,29 @@
   border-bottom: 1px solid var(--cms-border);
 }
 
+.page-link-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-bottom: 0.55rem;
+  font-size: 0.78rem;
+  color: #52606d;
+}
+
+.page-link-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.page-link-legend-item.linked > i {
+  color: var(--bs-primary);
+}
+
+.page-link-legend-item.unlinked > i {
+  color: var(--bs-info);
+}
+
 .page-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
@@ -96,7 +119,31 @@
 }
 
 .page-list-item.active {
-  box-shadow: inset 3px 0 var(--cms-accent);
+  box-shadow: inset 4px 0 var(--page-status-color, var(--cms-accent));
+}
+
+.page-list-item.btn-outline-primary,
+.active-page-summary.btn-outline-primary {
+  --page-status-color: var(--bs-primary);
+  background: rgba(var(--bs-primary-rgb), 0.1);
+  border: 2px solid var(--bs-primary);
+}
+
+.page-list-item.btn-outline-info,
+.active-page-summary.btn-outline-info {
+  --page-status-color: var(--bs-info);
+  background: rgba(var(--bs-info-rgb), 0.16);
+  border: 2px solid var(--bs-info);
+}
+
+.page-list-item.btn-outline-primary > i,
+.active-page-summary.btn-outline-primary > i {
+  color: var(--bs-primary);
+}
+
+.page-list-item.btn-outline-info > i,
+.active-page-summary.btn-outline-info > i {
+  color: var(--bs-info);
 }
 
 .page-list-create {
