@@ -1,11 +1,5 @@
 <div class="member-recipient-selector">
     <div class="d-flex flex-wrap gap-3 align-items-center mb-2">
-      <select class="form-select form-select-sm" style="max-width:260px"
-        [ngModel]="audience" (ngModelChange)="selectAudience($event)"
-        aria-label="Population de membres">
-        <option value="ACTIVE">Membres actifs</option>
-        <option value="OVERDUE">Adhésion non renouvelée</option>
-      </select>
       <div class="form-check mb-0">
         <input class="form-check-input" type="checkbox" [id]="'all-members-' + uniqueId"
           [checked]="allSelected" [indeterminate]="selectionIndeterminate"
@@ -14,7 +8,7 @@
           title="Sélectionner ou désélectionner tous les membres">
       </div>
       <input class="form-control form-control-sm" [(ngModel)]="filterText"
-        placeholder="Filtrer…" style="max-width:200px">
+        [placeholder]="searchPlaceholder" style="max-width:200px">
       <div class="form-check form-switch mb-0">
         <input class="form-check-input" type="checkbox" role="switch"
           [id]="'selected-only-' + uniqueId" [(ngModel)]="showSelectedOnly">
@@ -53,6 +47,6 @@
 
     <div class="text-muted small">
       {{ selectedCount }} dans la liste · {{ resolve().length }} destinataire(s) envoyable(s)
-      sur {{ members.length }} membre(s) correspondant au filtre
+      sur {{ members.length }} membre(s) actif(s)
     </div>
 </div>

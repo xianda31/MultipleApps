@@ -17,11 +17,20 @@
 							<div class="col-12 d-flex flex-column flex-sm-row align-items-sm-center gap-1 gap-sm-2">
 								<label class="form-label small mb-0 flex-shrink-0" for="mailingListSelect">Diffusion :</label>
 								<select id="mailingListSelect" class="form-select form-select-sm"
-									[ngModel]="selectedMailingListId" name="mailingListId"
+									[ngModel]="selectedDistributionId" name="mailingListId"
 									(ngModelChange)="onMailingListSelect($event)">
 									<option value="">Liste libre</option>
-									@for (list of mailingLists; track list.id) {
-										<option [value]="list.id"> {{ list.title }} de {{ list.owner }} : {{ list.members.length }} membre(s)</option>
+									<optgroup label="Listes automatiques">
+										<option value="@active">Membres actifs</option>
+										<option value="@adherents">Adhérents</option>
+										<option value="@overdue">Adhésion non renouvelée</option>
+									</optgroup>
+									@if (mailingLists.length > 0) {
+										<optgroup label="Listes personnelles">
+											@for (list of mailingLists; track list.id) {
+												<option [value]="list.id">{{ list.title }} de {{ list.owner }} : {{ list.members.length }} membre(s)</option>
+											}
+										</optgroup>
 									}
 								</select>
 							</div>
@@ -33,12 +42,12 @@
 								<i class="bi bi-plus-lg me-1"></i>Nouvelle liste
 							</button>
 							<button type="button" class="btn btn-sm btn-outline-primary"
-								[disabled]="mailingListBusy || !selectedMailingListId || selectedListMembers.length === 0"
+								[disabled]="mailingListBusy || !selectedMailingList || selectedListMembers.length === 0"
 								(click)="updateSelectedMailingList()">
 								<i class="bi bi-floppy me-1"></i>Mettre à jour
 							</button>
 							<button type="button" class="btn btn-sm btn-outline-danger"
-								[disabled]="mailingListBusy || !selectedMailingListId"
+								[disabled]="mailingListBusy || !selectedMailingList"
 								(click)="deleteSelectedMailingList()" title="Supprimer la liste">
 								<i class="bi bi-trash me-1"></i>Supprimer
 							</button>
@@ -72,6 +81,7 @@
 						}
 							</div>
 							<app-recipient-selector
+								searchPlaceholder="Rechercher…"
 								(selectionChange)="onRecipientsChange($event)"
 								(membershipChange)="onMembershipChange($event)">
 							</app-recipient-selector>
@@ -250,4 +260,3 @@
 		</div>
 	</div>
 </div>
-

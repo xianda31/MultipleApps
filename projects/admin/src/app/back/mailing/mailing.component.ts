@@ -4,7 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MailingService, SendEmailParams } from './mailing.service';
 import { Member } from '../../common/interfaces/member.interface';
-import { RecipientSelectorComponent } from '../../common/components/recipient-selector/recipient-selector.component';
+import {
+  RecipientPreset,
+  RecipientSelectorComponent,
+} from '../../common/components/recipient-selector/recipient-selector.component';
 import { SondageService, SurveyItem } from '../sondage/sondage.service';
 import { filter, firstValueFrom, switchMap, take } from 'rxjs';
 import { DBhandler } from '../../common/services/graphQL.service';
@@ -31,7 +34,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   // Listes de diffusion membres
   mailingLists: MailingList[] = [];
-  selectedMailingListId = '';
+  selectedDistributionId = '';
   mailingListTitle = '';
   creatingMailingList = false;
   mailingListBusy = false;
@@ -62,7 +65,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   get totalRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
   get configuredCcEmail(): string { return this.mailingService.getConfiguredCcEmail(); }
   get selectedMailingList(): MailingList | null {
-    return this.mailingLists.find((list) => list.id === this.selectedMailingListId) ?? null;
+    return this.mailingLists.find((list) => list.id === this.selectedDistributionId) ?? null;
   }
 
   constructor(
@@ -139,19 +142,34 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   onMembershipChange(members: Member[]) {
     this.selectedListMembers = members;
-    if (this.selectedMailingListId && !this.applyingMailingList) {
+    if (this.selectedMailingList && !this.applyingMailingList) {
       this.mailingListDirty = true;
     }
   }
 
   onMailingListSelect(id: string): void {
-    this.selectedMailingListId = id;
+    this.selectedDistributionId = id;
     this.cancelMailingListCreation();
     this.mailingListDirty = false;
     this.clearMailingListFeedback();
+    if (!this.recipientSelector) return;
+
+    const preset = this.getRecipientPreset(id);
+    if (preset) {
+      this.applyingMailingList = true;
+      this.recipientSelector.applyPreset(preset);
+      this.applyingMailingList = false;
+      return;
+    }
+
     if (id) {
       this.loadSelectedMailingList();
+      return;
     }
+
+    this.applyingMailingList = true;
+    this.recipientSelector.clearSelection();
+    this.applyingMailingList = false;
   }
 
   startMailingListCreation(): void {
@@ -200,7 +218,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
         members: this.selectedMemberNames(),
       });
       await this.loadMailingLists();
-      this.selectedMailingListId = created.id;
+      this.selectedDistributionId = created.id;
       this.cancelMailingListCreation();
       this.mailingListDirty = false;
       this.mailingListMessage = `Liste « ${created.title} » créée.`;
@@ -227,7 +245,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
         members: this.selectedMemberNames(),
       });
       await this.loadMailingLists();
-      this.selectedMailingListId = updated.id;
+      this.selectedDistributionId = updated.id;
       this.mailingListDirty = false;
       this.mailingListMessage = `Liste « ${updated.title} » mise à jour.`;
     } catch (error) {
@@ -247,7 +265,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
     try {
       await this.dbHandler.deleteMailingList(mailingList.id);
       await this.loadMailingLists();
-      this.selectedMailingListId = '';
+      this.selectedDistributionId = '';
       this.cancelMailingListCreation();
       this.mailingListDirty = false;
       this.mailingListMessage = `Liste « ${mailingList.title} » supprimée.`;
@@ -270,6 +288,13 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   private selectedMemberNames(): string[] {
     return [...new Set(this.selectedListMembers.map((member) => this.membersService.full_name(member)))];
+  }
+
+  private getRecipientPreset(id: string): RecipientPreset | null {
+    if (id === '@active') return 'ACTIVE';
+    if (id === '@overdue') return 'OVERDUE';
+    if (id === '@adherents') return 'ADHERENTS';
+    return null;
   }
 
   private clearMailingListFeedback(): void {
@@ -367,7 +392,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.applyingMailingList = true;
     this.recipientSelector?.clearSelection();
     this.applyingMailingList = false;
-    this.selectedMailingListId = '';
+    this.selectedDistributionId = '';
     this.cancelMailingListCreation();
     this.mailingListDirty = false;
     if (this.editorDiv) {
@@ -449,4 +474,3 @@ export class MailingComponent implements OnInit, AfterViewInit {
       });
   }
 }
-

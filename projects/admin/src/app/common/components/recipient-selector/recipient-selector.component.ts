@@ -1,8 +1,10 @@
-import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MembersService } from '../../services/members.service';
 import { Member } from '../../interfaces/member.interface';
+
+export type RecipientPreset = 'ACTIVE' | 'OVERDUE' | 'ADHERENTS';
 
 @Component({
   selector: 'app-recipient-selector',
@@ -11,6 +13,7 @@ import { Member } from '../../interfaces/member.interface';
   templateUrl: './recipient-selector.component.html',
 })
 export class RecipientSelectorComponent implements OnInit {
+  @Input() searchPlaceholder = 'Filtrer…';
   @Output() selectionChange = new EventEmitter<Member[]>();
   @Output() membershipChange = new EventEmitter<Member[]>();
 
@@ -21,13 +24,9 @@ export class RecipientSelectorComponent implements OnInit {
   memberSelection = new Map<string, boolean>();
   filterText = '';
   showSelectedOnly = false;
-  audience: 'ACTIVE' | 'OVERDUE' = 'ACTIVE';
 
   get members(): Member[] {
-    const activeMembers = this.allMembers.filter((member) => this.membersService.isActive(member));
-    return this.audience === 'OVERDUE'
-      ? activeMembers.filter((member) => this.membersService.isMembershipRenewalOverdue(member))
-      : activeMembers;
+    return this.allMembers.filter((member) => this.membersService.isActive(member));
   }
 
   get filteredMembers(): Member[] {
@@ -63,12 +62,11 @@ export class RecipientSelectorComponent implements OnInit {
     });
   }
 
-  selectAudience(audience: 'ACTIVE' | 'OVERDUE'): void {
-    this.audience = audience;
+  applyPreset(preset: RecipientPreset): void {
     this.memberSelection.clear();
-    if (audience === 'OVERDUE') {
-      this.members.forEach((member) => this.memberSelection.set(member.id, true));
-    }
+    this.members
+      .filter((member) => this.matchesPreset(member, preset))
+      .forEach((member) => this.memberSelection.set(member.id, true));
     this.emit();
   }
 
@@ -132,6 +130,16 @@ export class RecipientSelectorComponent implements OnInit {
         this.memberSelection.delete(id);
       }
     }
+  }
+
+  private matchesPreset(member: Member, preset: RecipientPreset): boolean {
+    if (preset === 'OVERDUE') {
+      return this.membersService.isMembershipRenewalOverdue(member);
+    }
+    if (preset === 'ADHERENTS') {
+      return this.membersService.hasPaidMembership(member);
+    }
+    return true;
   }
 
   private hasValidEmail(m: Member): boolean {

@@ -29,6 +29,11 @@ export class MemberSyncService {
     ) { }
 
     async ensureMembersSynchronized(force = false): Promise<Member[]> {
+        const synchronizationSeason = this.systemDataService.get_local_season();
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.getSortedMembersSnapshot();
+        }
+
         if (this.syncInFlight) {
             return this.syncInFlight;
         }
@@ -38,7 +43,7 @@ export class MemberSyncService {
             return this.getMembersSnapshot();
         }
 
-        this.syncInFlight = this.runSynchronization().finally(() => {
+        this.syncInFlight = this.runSynchronization(synchronizationSeason).finally(() => {
             this.syncInFlight = null;
         });
 
@@ -54,11 +59,15 @@ export class MemberSyncService {
         await this.membersService.createMember(nextMember);
     }
 
-    private async runSynchronization(): Promise<Member[]> {
+    private async runSynchronization(synchronizationSeason: string): Promise<Member[]> {
         const [operations, licensees] = await Promise.all([
             this.loadOperations(),
             firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1))),
         ]);
+
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.getSortedMembersSnapshot();
+        }
 
         if (licensees.length === 0) {
             throw new Error('La FFB n’a retourné aucun adhérent ; synchronisation annulée');
@@ -67,17 +76,31 @@ export class MemberSyncService {
         let members = await this.getMembersSnapshot();
 
         for (const licensee of licensees) {
+            if (!this.canSynchronizeSeason(synchronizationSeason)) {
+                return this.getSortedMembersSnapshot();
+            }
             await this.createOrUpdateMember(members, licensee);
         }
 
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.getSortedMembersSnapshot();
+        }
         members = await this.commitPhase(() => this.resetObsoleteLicenses(members, licensees));
-        members = await this.commitPhase(() => this.syncMembershipDates(members, operations));
+
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.getSortedMembersSnapshot();
+        }
+        members = await this.commitPhase(() => this.syncMembershipDates(members, operations, synchronizationSeason));
+
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.getSortedMembersSnapshot();
+        }
         members = await this.commitPhase(() => this.ensureMemberStatuses(members));
 
         members = await this.getMembersSnapshot();
         this.lastSyncAt = Date.now();
 
-        return members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+        return this.sortMembers(members);
     }
 
     private async loadOperations(): Promise<Revenue[]> {
@@ -93,6 +116,19 @@ export class MemberSyncService {
     private async getMembersSnapshot(): Promise<Member[]> {
         const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
         return members ?? [];
+    }
+
+    private async getSortedMembersSnapshot(): Promise<Member[]> {
+        return this.sortMembers(await this.getMembersSnapshot());
+    }
+
+    private sortMembers(members: Member[]): Member[] {
+        return members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    }
+
+    private canSynchronizeSeason(season: string): boolean {
+        return this.systemDataService.get_local_season() === season
+            && this.systemDataService.get_accounting_season_state().initializedSeason === season;
     }
 
     private async commitPhase(phase: () => Promise<void>): Promise<Member[]> {
@@ -216,9 +252,12 @@ export class MemberSyncService {
         await Promise.all(updates);
     }
 
-    private async syncMembershipDates(members: Member[], operations: Revenue[]): Promise<void> {
+    private async syncMembershipDates(
+        members: Member[],
+        operations: Revenue[],
+        selectedSeason: string,
+    ): Promise<void> {
         const updates: Promise<any>[] = [];
-        const selectedSeason = this.systemDataService.get_local_season();
         const selectedSeasonStart = new Date(this.systemDataService.start_date(selectedSeason));
 
         for (const member of members) {
