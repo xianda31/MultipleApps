@@ -105,10 +105,11 @@ describe('CMS image profiles', () => {
       fit: 'cover',
     }));
     expect(CMS_IMAGE_PROFILES['club-logo']).toEqual(jasmine.objectContaining({
-      width: 256,
-      height: 256,
+      width: 320,
+      height: 120,
       fit: 'contain',
-      transparentPadding: true,
+      aspectRatio: null,
+      preserveAspectRatio: true,
     }));
   });
 });

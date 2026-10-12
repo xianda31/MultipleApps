@@ -130,7 +130,12 @@ export class VisualIdentityMgrComponent implements OnInit, OnDestroy {
   }
 
   isOptimized(asset: IdentityAssetInfo | null, profile: CmsImageProfile): boolean {
-    return !!asset?.path.includes(`/variants/${profile}/`);
+    if (!asset?.path.includes(`/variants/${profile}/`)) return false;
+    if (profile !== this.logoProfile) return true;
+    return asset.width !== null
+      && asset.height !== null
+      && asset.width <= 320
+      && asset.height <= 120;
   }
 
   clearPending(): void {

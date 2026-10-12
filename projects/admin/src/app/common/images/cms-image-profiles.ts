@@ -25,6 +25,7 @@ export interface CmsImageProfileDefinition {
   orientation: 'landscape' | 'portrait' | 'square';
   recommendation: string;
   transparentPadding?: boolean;
+  preserveAspectRatio?: boolean;
 }
 
 export const CMS_IMAGE_PROFILES: Record<CmsImageProfile, CmsImageProfileDefinition> = {
@@ -131,14 +132,14 @@ export const CMS_IMAGE_PROFILES: Record<CmsImageProfile, CmsImageProfileDefiniti
     recommendation: 'Ce cadrage très large est utilisé lorsque le téléphone est en mode paysage.',
   },
   'club-logo': {
-    width: 256,
-    height: 256,
+    width: 320,
+    height: 120,
     fit: 'contain',
-    aspectRatio: '1 / 1',
+    aspectRatio: null,
     label: 'Logo du club',
-    orientation: 'square',
-    recommendation: 'Le logo entier est conservé sur un fond transparent.',
-    transparentPadding: true,
+    orientation: 'landscape',
+    recommendation: 'Le logo entier et son ratio naturel sont conservés, sans marges ajoutées.',
+    preserveAspectRatio: true,
   },
   'tournament-thumbnail': {
     width: 300,
@@ -233,6 +234,9 @@ export function imageProfileForTemplate(template: PAGE_TEMPLATES): CmsImageProfi
 
 export function cmsImageTargetDescription(profile: CmsImageProfile): string {
   const definition = CMS_IMAGE_PROFILES[profile];
+  if (definition.preserveAspectRatio && definition.width !== null) {
+    return `maximum ${definition.width} × ${definition.height} px · ratio naturel · WebP · image entière sans recadrage`;
+  }
   if (definition.width === null || definition.aspectRatio === null) {
     return `hauteur ${definition.height} px · largeur proportionnelle · WebP · image entière sans recadrage`;
   }

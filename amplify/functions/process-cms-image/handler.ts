@@ -31,7 +31,7 @@ type CmsImageProfile =
 const profiles: Record<CmsImageProfile, {
   width?: number;
   height: number;
-  fit: 'contain' | 'cover';
+  fit: 'contain' | 'cover' | 'inside';
   maxBytes?: number;
 }> = {
   inline: { width: 400, height: 300, fit: 'contain' },
@@ -45,7 +45,7 @@ const profiles: Record<CmsImageProfile, {
   'club-banner-desktop': { width: 1600, height: 360, fit: 'cover', maxBytes: 180 * 1024 },
   'club-banner-mobile': { width: 720, height: 240, fit: 'cover', maxBytes: 80 * 1024 },
   'club-banner-mobile-landscape': { width: 1440, height: 240, fit: 'cover', maxBytes: 120 * 1024 },
-  'club-logo': { width: 256, height: 256, fit: 'contain', maxBytes: 40 * 1024 },
+  'club-logo': { width: 320, height: 120, fit: 'inside', maxBytes: 40 * 1024 },
   'tournament-thumbnail': { width: 300, height: 200, fit: 'cover' },
   'tournament-thumbnail-padded': { width: 300, height: 200, fit: 'contain' },
 };

@@ -115,9 +115,12 @@
   <!-- menu offcanvas -->
   <ng-template #tplOffcanvasMenu let-offcanvasId="offcanvasId" let-offcanvasLabel="offcanvasLabel">
     <div class="offcanvas offcanvas-start offcanvas-adapt-width" tabindex="-1" [id]="offcanvasId"
-      [attr.aria-labelledby]="offcanvasLabel">
+      aria-label="Navigation principale">
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title" [id]="offcanvasLabel">Menu</h5>
+        <a routerLink="contacts" class="mobile-menu-logo-link" data-bs-dismiss="offcanvas"
+          aria-label="Coordonnées du club">
+          <img [src]="logoUrl" alt="Logo du club" class="mobile-menu-logo" />
+        </a>
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
       </div>
       <div class="offcanvas-body p-0">

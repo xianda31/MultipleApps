@@ -93,7 +93,11 @@ describe('process-cms-image path contract', () => {
     assert.deepEqual([desktopMetadata.width, desktopMetadata.height], [1600, 360]);
     assert.deepEqual([mobileMetadata.width, mobileMetadata.height], [720, 240]);
     assert.deepEqual([mobileLandscapeMetadata.width, mobileLandscapeMetadata.height], [1440, 240]);
-    assert.deepEqual([logoMetadata.width, logoMetadata.height], [256, 256]);
+    assert.deepEqual([logoMetadata.width, logoMetadata.height], [216, 120]);
+    assert.equal(
+      (logoMetadata.width ?? 0) / (logoMetadata.height ?? 1),
+      1.8,
+    );
     assert.equal(logoMetadata.hasAlpha, true);
     assert.ok(desktop.length <= 180 * 1024);
     assert.ok(mobile.length <= 80 * 1024);

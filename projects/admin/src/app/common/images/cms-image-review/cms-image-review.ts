@@ -32,6 +32,9 @@ export class CmsImageReview {
   }
 
   get targetDimensionsDescription(): string {
+    if (this.definition.preserveAspectRatio && this.definition.width !== null) {
+      return `Maximum ${this.definition.width} × ${this.definition.height} px · ratio naturel`;
+    }
     if (this.definition.width === null || this.definition.aspectRatio === null) {
       return `Hauteur ${this.definition.height} px · largeur proportionnelle`;
     }
@@ -63,6 +66,7 @@ export class CmsImageReview {
 
   get resolutionInsufficient(): boolean {
     if (!this.hasSourceDimensions) return false;
+    if (this.definition.preserveAspectRatio) return false;
 
     const heightScale = this.definition.height / this.sourceHeight!;
     if (this.definition.width === null) return heightScale > 1;
