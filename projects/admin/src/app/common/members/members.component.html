@@ -11,6 +11,15 @@
             </div>
           </ng-container>
         </div>
+        <div class="col-auto ms-auto" *ngIf="!loading && selectedLifecycleFilter === 'ACTIVE'">
+          <button type="button" class="btn btn-sm btn-outline-primary"
+            title="Exporter les membres actifs au format CSV"
+            aria-label="Exporter les membres actifs au format CSV"
+            [disabled]="active_members_nbr === 0"
+            (click)="exportActiveMembersCsv()">
+            <i class="bi bi-download" aria-hidden="true"></i>
+          </button>
+        </div>
         <ng-container *ngIf="!loading">
           <div class="col-12 mt-2 members-stats-line">
             <div class="members-stats-table-wrapper">

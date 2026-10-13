@@ -17,6 +17,7 @@ import { normalizeGender } from '../utils/gender.util';
 import { MemberSyncService } from '../services/member-sync.service';
 import { SystemDataService } from '../services/system-data.service';
 import { AuthentificationService } from '../authentification/authentification.service';
+import { activeMembersCsvFileName, buildActiveMembersCsv } from './active-members-csv.util';
 
 type MemberStatusConfig = {
   label: string;
@@ -333,6 +334,17 @@ export class MembersComponent implements OnInit {
       BANNED: 'Bannis',
     };
     return labels[this.selectedLifecycleFilter];
+  }
+
+  exportActiveMembersCsv(): void {
+    const csv = buildActiveMembersCsv(this.members);
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = activeMembersCsvFileName();
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   getStatusLabel(status: DirectoryFilter): string {
