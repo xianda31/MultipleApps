@@ -86,8 +86,8 @@ export class HomePage {
 
     this.countersSub = this.membersService.listMembers().subscribe((members) => {
       const counters = this.membersService.computeStatusCountersFromMembers();
-      this.licensee_nbr = counters.ffbAdherents;
-      this.student_nbr = counters.noLicense;
+      this.licensee_nbr = counters.ffbClubAttached;
+      this.student_nbr = counters.outsideFfbClub;
     });
 
     this.fileService.list_files(this.home_folder + '/').pipe(

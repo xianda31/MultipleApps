@@ -36,10 +36,10 @@ type DirectoryFilter = MemberStatus | MemberLifecycleStatus;
 export class MembersComponent implements OnInit {
   members: Member[] = [];
   filteredMembers: Member[] = [];
-  ffb_adherents_nbr: number = 0;
+  ffb_club_attached_nbr: number = 0;
   club_licensees_nbr: number = 0;
   sympatisants_number: number = 0;
-  no_license_nbr: number = 0;
+  outside_ffb_nbr: number = 0;
   lost_members_nbr: number = 0;
   active_members_nbr = 0;
   selected_members_nbr = 0;
@@ -59,18 +59,18 @@ export class MembersComponent implements OnInit {
   filters: MemberStatus[] = [
     MemberStatus.CLUB_LICENSEE,
     MemberStatus.SYMPATHISANT,
-    MemberStatus.ADHERENT,
-    MemberStatus.NO_LICENSE,
+    MemberStatus.FFB_CLUB_ATTACHED,
+    MemberStatus.OUTSIDE_FFB_CLUB,
   ];
   statusConfig: Record<DirectoryFilter, MemberStatusConfig> = {
     ACTIVE: { label: 'tous les actifs', iconClass: 'bi bi-people-fill' },
     ARCHIVED: { label: 'anciens membres', iconClass: 'bi bi-archive-fill' },
     BANNED: { label: 'membres bannis', iconClass: 'bi bi-person-fill-slash' },
-    [MemberStatus.ADHERENT]: { label: 'sous-total licenciés', iconClass: 'bi bi-ffb-fill' },
-    [MemberStatus.CLUB_LICENSEE]: { label: 'licencié rattaché au club', iconClass: 'bi bi-person-square' },
+    [MemberStatus.FFB_CLUB_ATTACHED]: { label: 'présent dans la base FFB du club', iconClass: 'bi bi-ffb-fill' },
+    [MemberStatus.CLUB_LICENSEE]: { label: 'licence FFB au club', iconClass: 'bi bi-person-square' },
     [MemberStatus.SYMPATHISANT]: { label: 'sympathisant', iconClass: 'bi bi-tencent-qq' },
-    [MemberStatus.NO_LICENSE]: { label: 'non licencié', iconClass: 'bi bi-person-bounding-box' },
-    [MemberStatus.NON_ADHERENT]: { label: 'pas d\'adhésion', iconClass: 'bi bi-people-fill text-danger' },
+    [MemberStatus.OUTSIDE_FFB_CLUB]: { label: 'hors base FFB du club', iconClass: 'bi bi-person-dash' },
+    [MemberStatus.NON_ADHERENT]: { label: 'sans adhésion', iconClass: 'bi bi-people-fill text-danger' },
   };
   selectedLifecycleFilter: MemberLifecycleStatus = 'ACTIVE';
   selectedStatusFilter: MemberStatus | null = null;
@@ -168,8 +168,8 @@ export class MembersComponent implements OnInit {
     this.selected_members_nbr = selectedMembers.length;
     this.club_licensees_nbr = clubLicensees.length;
     this.sympatisants_number = sympathisants.length;
-    this.ffb_adherents_nbr = ffbMembers.length;
-    this.no_license_nbr = outsideFfbMembers.length;
+    this.ffb_club_attached_nbr = ffbMembers.length;
+    this.outside_ffb_nbr = outsideFfbMembers.length;
     this.renewed_members_nbr = selectedMembers.filter((member) => this.membersService.hasPaidMembership(member)).length;
     this.lost_members_nbr = selectedMembers.length - this.renewed_members_nbr;
     this.club_licensees_renewed_nbr = clubLicensees.filter((member) => this.membersService.hasPaidMembership(member)).length;
@@ -294,11 +294,11 @@ export class MembersComponent implements OnInit {
       return !this.membersService.hasPaidMembership(member);
     }
 
-    if (filter === MemberStatus.ADHERENT) {
+    if (filter === MemberStatus.FFB_CLUB_ATTACHED) {
       return this.membersService.isFfbAttached(member);
     }
 
-    if (filter === MemberStatus.NO_LICENSE) {
+    if (filter === MemberStatus.OUTSIDE_FFB_CLUB) {
       return !this.membersService.isFfbAttached(member);
     }
 
@@ -345,7 +345,7 @@ export class MembersComponent implements OnInit {
 
   getMemberStatusIconClass(member: Member): string {
     const status = this.getMemberStatus(member);
-    return this.getFilterIconClass(status === MemberStatus.NON_ADHERENT ? MemberStatus.NO_LICENSE : status);
+    return this.getFilterIconClass(status === MemberStatus.NON_ADHERENT ? MemberStatus.OUTSIDE_FFB_CLUB : status);
   }
 
   isStatusWarning(member: Member): boolean {
@@ -354,23 +354,33 @@ export class MembersComponent implements OnInit {
 
   getMemberStatusTooltip(member: Member): string {
     const status = this.getMemberStatus(member);
+    const membership = this.membersService.hasPaidMembership(member)
+      ? 'Adhésion réglée pour la saison.'
+      : 'Adhésion non enregistrée pour la saison.';
 
     if (status === MemberStatus.SYMPATHISANT) {
       if (!this.membersService.isLicensed(member)) {
-        return 'Sympathisant rattaché FFB, licence non encore prise.';
+        return `Sympathisant sans licence FFB active. ${membership}`;
       }
-      return `Sympathisant licencié au ${member.license_taken_at}`;
+      const licenseLocation = member.license_taken_at ? ` au ${member.license_taken_at}` : '';
+      const licenseDate = member.register_date ? ` le ${this.formatDate(member.register_date)}` : '';
+      return `Sympathisant licencié${licenseLocation}${licenseDate}. ${membership}`;
     }
 
-    if (status === MemberStatus.CLUB_LICENSEE && this.isStatusWarning(member)) {
-      return 'Licencié rattaché au club. Paiement adhésion à régulariser.';
+    if (status === MemberStatus.CLUB_LICENSEE) {
+      return `Licence FFB rattachée au club. ${membership}`;
     }
 
-    if (status === MemberStatus.NON_ADHERENT) {
-      return 'Ni l’adhésion ni la licence n’ont été renouvelées.';
+    if (status === MemberStatus.OUTSIDE_FFB_CLUB || status === MemberStatus.NON_ADHERENT) {
+      return `Absent de la base FFB du club. Sa situation de licence FFB ailleurs n’est pas connue. ${membership}`;
     }
 
     return this.getStatusLabel(status);
+  }
+
+  private formatDate(value: string): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
   }
 
   createNewMember(clubMember: ClubMember, personV2: PersonV2 | null): Member {

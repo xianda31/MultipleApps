@@ -101,9 +101,9 @@ export class MemberSalesComponent {
   }
 
   checkMembersNotDeclaredAtFFB() {
-    const noLicenseMembers = this.memberService.getNoLicenseMembers(this.members, this.ffbBaseReferences);
+    const membersOutsideFfbClub = this.memberService.getMembersOutsideFfbClub(this.members, this.ffbBaseReferences);
 
-    this.membersNotDeclaredAtFFB = noLicenseMembers
+    this.membersNotDeclaredAtFFB = membersOutsideFfbClub
       .map((member) => {
         const full_name = this.memberService.full_name(member);
         const showLicense = !this.memberService.hasNoLicenseIdentifier(member);

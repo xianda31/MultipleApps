@@ -52,11 +52,11 @@
                     <th scope="col" class="members-stats-status-header">
                       <span class="members-stats-active-title">{{ getSelectedLifecycleLabel() }}</span>
                     </th>
-                    <th scope="col" class="text-end">
-                      ADH
+                    <th scope="col" class="text-end" title="Adhésion réglée pour la saison">
+                      Avec ADH
                     </th>
-                    <th scope="col" class="text-end text-danger">
-                      /ADH
+                    <th scope="col" class="text-end text-danger" title="Adhésion non enregistrée pour la saison">
+                      Sans ADH
                     </th>
                     <th scope="col" class="text-end">Total</th>
                   </tr>
@@ -64,7 +64,7 @@
                 <tbody>
                   <tr>
                     <th scope="row" class="members-stats-child-row">
-                      <i class="bi bi-person-square members-stats-row-icon" aria-hidden="true"></i>Licenciés rattachés au club
+                      <i class="bi bi-person-square members-stats-row-icon" aria-hidden="true"></i>Licence FFB au club
                     </th>
                     <td class="text-end">
                       @if (club_licensees_renewed_nbr > 0) {
@@ -104,7 +104,7 @@
                   </tr>
                   <tr class="members-stats-subtotal">
                     <th scope="row">
-                      <i class="bi bi-ffb-fill members-stats-row-icon" aria-hidden="true"></i>Sous-total Licenciés
+                      <i class="bi bi-ffb-fill members-stats-row-icon" aria-hidden="true"></i>Base FFB du club
                     </th>
                     <td class="text-end">
                       @if (ffb_renewed_members_nbr > 0) {
@@ -116,15 +116,15 @@
                       <span class="members-stat-value">{{ffb_unrenewed_members_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end fw-semibold" [class.table-primary]="selectedStatusFilter === STATUSES.ADHERENT">
-                      @if (ffb_adherents_nbr > 0) {
-                      <span class="members-stat-value">{{ffb_adherents_nbr}}</span>
+                    <td class="text-end fw-semibold" [class.table-primary]="selectedStatusFilter === STATUSES.FFB_CLUB_ATTACHED">
+                      @if (ffb_club_attached_nbr > 0) {
+                      <span class="members-stat-value">{{ffb_club_attached_nbr}}</span>
                       }
                     </td>
                   </tr>
                   <tr>
                     <th scope="row">
-                      <i class="bi bi-person-bounding-box members-stats-row-icon" aria-hidden="true"></i>Non licenciés
+                      <i class="bi bi-person-dash members-stats-row-icon" aria-hidden="true"></i>Hors base FFB du club
                     </th>
                     <td class="text-end">
                       @if (outside_ffb_renewed_members_nbr > 0) {
@@ -136,9 +136,9 @@
                       <span class="members-stat-value">{{outside_ffb_unrenewed_members_nbr}}</span>
                       }
                     </td>
-                    <td class="text-end" [class.table-primary]="selectedStatusFilter === STATUSES.NO_LICENSE">
-                      @if (selected_members_nbr - ffb_adherents_nbr > 0) {
-                      <span class="members-stat-value">{{selected_members_nbr - ffb_adherents_nbr}}</span>
+                    <td class="text-end" [class.table-primary]="selectedStatusFilter === STATUSES.OUTSIDE_FFB_CLUB">
+                      @if (outside_ffb_nbr > 0) {
+                      <span class="members-stat-value">{{outside_ffb_nbr}}</span>
                       }
                     </td>
                   </tr>

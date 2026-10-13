@@ -61,7 +61,7 @@ describe('MembersService', () => {
     expect(service.canPurchase(banned)).toBeFalse();
   });
 
-  it('classifies a paid club member without an active license as unlicensed', () => {
+  it('classifies a paid club member absent from the club FFB base without assuming their license status', () => {
     const { service } = createService(new Subject<Member[]>());
     spyOn(service, 'hasPaidMembership').and.returnValue(true);
     const member = {
@@ -72,6 +72,6 @@ describe('MembersService', () => {
       person_id: 123,
     } as Member;
 
-    expect(service.resolveMemberStatus(member)).toBe('NO_LICENSE');
+    expect(service.resolveMemberStatus(member)).toBe('OUTSIDE_FFB_CLUB');
   });
 });

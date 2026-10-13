@@ -7,18 +7,18 @@ import { ClubMember } from '../ffb/interface/club-member.interface';
 import { SystemDataService } from './system-data.service';
 
 export enum MemberStatus {
-  ADHERENT = 'ADHERENT',
+  FFB_CLUB_ATTACHED = 'FFB_CLUB_ATTACHED',
   CLUB_LICENSEE = 'CLUB_LICENSEE',
   SYMPATHISANT = 'SYMPATHISANT',
-  NO_LICENSE = 'NO_LICENSE',
+  OUTSIDE_FFB_CLUB = 'OUTSIDE_FFB_CLUB',
   NON_ADHERENT = 'NON_ADHERENT',
 }
 
 export type MemberStatusCounters = {
   clubLicensees: number;
   sympathisants: number;
-  ffbAdherents: number;
-  noLicense: number;
+  ffbClubAttached: number;
+  outsideFfbClub: number;
   nonAdherents: number;
 };
 
@@ -401,7 +401,7 @@ get_birthdays_this_month(): Observable<Member[]> {
     }
 
     if (this.hasPaidMembership(member)) {
-      return MemberStatus.NO_LICENSE;
+      return MemberStatus.OUTSIDE_FFB_CLUB;
     }
 
     return MemberStatus.NON_ADHERENT;
@@ -418,7 +418,7 @@ get_birthdays_this_month(): Observable<Member[]> {
     }
 
     if (this.hasPaidMembership(member)) {
-      return MemberStatus.NO_LICENSE;
+      return MemberStatus.OUTSIDE_FFB_CLUB;
     }
 
     return MemberStatus.NON_ADHERENT;
@@ -436,14 +436,14 @@ get_birthdays_this_month(): Observable<Member[]> {
     return this.deriveMemberStatusFromData(member);
   }
 
-  getNoLicenseMembers(members: Member[], ffbBaseReferences: FfbBaseReferences): Member[] {
-    return members.filter((member) => this.getMemberStatus(member, ffbBaseReferences) === MemberStatus.NO_LICENSE);
+  getMembersOutsideFfbClub(members: Member[], ffbBaseReferences: FfbBaseReferences): Member[] {
+    return members.filter((member) => this.getMemberStatus(member, ffbBaseReferences) === MemberStatus.OUTSIDE_FFB_CLUB);
   }
 
   computeStatusCounters(members: Member[], ffbBaseReferences: FfbBaseReferences): MemberStatusCounters {
     let clubLicensees = 0;
     let sympathisants = 0;
-    let noLicense = 0;
+    let outsideFfbClub = 0;
     let nonAdherents = 0;
 
     members.filter((member) => this.isActive(member)).forEach((member) => {
@@ -452,8 +452,8 @@ get_birthdays_this_month(): Observable<Member[]> {
         clubLicensees += 1;
       } else if (status === MemberStatus.SYMPATHISANT) {
         sympathisants += 1;
-      } else if (status === MemberStatus.NO_LICENSE) {
-        noLicense += 1;
+      } else if (status === MemberStatus.OUTSIDE_FFB_CLUB) {
+        outsideFfbClub += 1;
       } else if (status === MemberStatus.NON_ADHERENT) {
         nonAdherents += 1;
       }
@@ -462,8 +462,8 @@ get_birthdays_this_month(): Observable<Member[]> {
     return {
       clubLicensees,
       sympathisants,
-      ffbAdherents: clubLicensees + sympathisants,
-      noLicense,
+      ffbClubAttached: clubLicensees + sympathisants,
+      outsideFfbClub,
       nonAdherents,
     };
   }
@@ -480,21 +480,20 @@ get_birthdays_this_month(): Observable<Member[]> {
    *    avec licence prise au club.
    * 2) SYMPATHISANT: membre provenant de la base FFB, avec licence prise hors club
    *    OU non encore prise.
-   * 3) NO_LICENSE: membre ayant payé son adhésion et sans identifiant licence FFB
-   *    (license_number commençant par '?' ou person_id non défini).
-   * 4) NON_ADHERENT: membre hors base FFB, non licencié et sans adhésion payée.
+   * 3) OUTSIDE_FFB_CLUB: membre ayant payé son adhésion et absent de la base FFB du club.
+   * 4) NON_ADHERENT: membre absent de la base FFB du club et sans adhésion payée.
    *
    * Formules des compteurs:
    * - club_licensees_nbr = nombre de CLUB_LICENSEE
    * - sympatisants_number = nombre de SYMPATHISANT
-   * - ffb_adherents_nbr = club_licensees_nbr + sympatisants_number
-   * - no_license_nbr = nombre de NO_LICENSE
+   * - ffb_club_attached_nbr = club_licensees_nbr + sympatisants_number
+   * - outside_ffb_nbr = nombre de OUTSIDE_FFB_CLUB
    * - lost_members_nbr = nombre de NON_ADHERENT
    */
   computeStatusCountersFromMembers(): MemberStatusCounters {
     let clubLicensees = 0;
     let sympathisants = 0;
-    let noLicense = 0;
+    let outsideFfbClub = 0;
     let nonAdherents = 0;
 
     (this._members ?? []).filter((member) => this.isActive(member)).forEach((member) => {
@@ -503,8 +502,8 @@ get_birthdays_this_month(): Observable<Member[]> {
         clubLicensees += 1;
       } else if (status === MemberStatus.SYMPATHISANT) {
         sympathisants += 1;
-      } else if (status === MemberStatus.NO_LICENSE) {
-        noLicense += 1;
+      } else if (status === MemberStatus.OUTSIDE_FFB_CLUB) {
+        outsideFfbClub += 1;
       } else if (status === MemberStatus.NON_ADHERENT) {
         nonAdherents += 1;
       }
@@ -513,8 +512,8 @@ get_birthdays_this_month(): Observable<Member[]> {
     return {
       clubLicensees,
       sympathisants,
-      ffbAdherents: clubLicensees + sympathisants,
-      noLicense,
+      ffbClubAttached: clubLicensees + sympathisants,
+      outsideFfbClub,
       nonAdherents,
     };
   }
