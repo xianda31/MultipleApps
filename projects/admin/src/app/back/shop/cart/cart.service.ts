@@ -109,6 +109,10 @@ export class CartService {
     this._cart.stripeTag = stripeTag;
   }
 
+  clearStripeTag(): void {
+    delete this._cart.stripeTag;
+  }
+
   getCartAmount(): number {
     // console.log('getCartAmount', this._cart.debt, this._cart.asset);
     let due = this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.take_debt ? (this._cart.debt?.amount  || 0) : 0);

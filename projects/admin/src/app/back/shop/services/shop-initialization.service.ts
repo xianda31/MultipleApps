@@ -69,11 +69,8 @@ export class ShopInitializationService implements OnDestroy {
    * Charge les opérations du journal
    */
   async loadOperations(): Promise<(Revenue | Expense)[]> {
-    return new Promise((resolve) => {
-      this.bookService.list_book_entries().subscribe(() => {
-        resolve(this.bookService.get_operations());
-      });
-    });
+    await this.bookService.whenBookEntriesLoaded();
+    return this.bookService.get_operations();
   }
 
   /**

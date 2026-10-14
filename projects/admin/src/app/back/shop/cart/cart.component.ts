@@ -29,6 +29,7 @@ export class CartComponent {
   @Input() tpePaymentActive = false;    // Flag système : TPE activé
   @Input() readerConnected = false;     // Reader Bluetooth connecté
   @Input() tpePaymentInProgress = false; // Paiement TPE en cours
+  @Input() checkoutInProgress = false;
   @Input() canEditPrice = false;  // Si false, modifier les prix est désactivé
   @Input() members: Member[] = [];  // Liste des membres pour la sélection du payee
   @Input() checkoutDisabled = false;  // Blocage métier (ex: adhésion déjà payée)
@@ -178,7 +179,7 @@ export class CartComponent {
 
   stripe_checkout_not_ready(): boolean {
     if (this.cart.items.length === 0 && this.debt_amount === 0) return true;
-    if (this.total_amount() <= 0) return true;  // Stripe rejette les sessions à 0€
+    if (Math.round(this.total_amount() * 100) < 0) return true;
     // All items must have a valid payee
     // Paired items (paired_with) are already atomic — the 2nd member is always present
     return this.cart.items.some(item => !item.payee);
@@ -213,7 +214,7 @@ export class CartComponent {
   }
 
   isZeroTotal(): boolean {
-    return this.total_amount() === 0;
+    return Math.round(this.total_amount() * 100) === 0;
   }
 
   validate_sale() {

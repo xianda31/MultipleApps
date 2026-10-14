@@ -127,7 +127,19 @@
 
     <div class="cart-total">
         @if (onlineMode) {
+        @if (checkoutInProgress) {
+        <p class="security-note">
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>Validation de votre achat en cours…
+        </p>
+        } @else {
+        @if (isZeroTotal() && cart.items.length > 0) {
+        <p class="security-note zero-total-note">
+            <i class="bi bi-check-circle me-1"></i>Votre achat est entièrement couvert : cliquez sur « Valider l’achat » pour le confirmer
+        </p>
+        } @else {
         <p class="security-note"><i class="bi bi-shield-check me-1"></i>Paiement sécurisé par Stripe</p>
+        }
+        }
         } @else {
         <div class="payment-buttons">
             <button type="button" class="btn-pay" [class.active]="selected_payment.mode === paymentMode.CASH"
@@ -178,7 +190,15 @@
         @if (onlineMode) {
         <button type="button" class="btn-checkout" [disabled]="stripe_checkout_not_ready() || checkoutDisabled"
             (click)="stripeCheckout.emit()">
+            @if (checkoutInProgress) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>Validation en cours…
+            } @else {
+            @if (isZeroTotal()) {
+            <i class="bi bi-check-circle me-2"></i>Valider l'achat
+            } @else {
             <i class="bi bi-credit-card me-2"></i>Payer par carte
+            }
+            }
         </button>
         } @else {
         <button type="button" class="btn-checkout"

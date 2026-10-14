@@ -699,6 +699,10 @@ export class ShopComponent implements OnInit, OnDestroy {
     }
 
     const cartTotal = this.cartService.getCartAmount();
+    if (Math.round(cartTotal * 100) === 0) {
+      await this.completeZeroTotalOnlineSale(member!);
+      return;
+    }
     if (this.minimumCbAmount === null) {
       this.toastService.showWarning('Paiement en ligne', 'Configuration non chargée — réessayez dans un instant');
       return;
@@ -723,6 +727,32 @@ export class ShopComponent implements OnInit, OnDestroy {
       window.location.href = result.sessionUrl;
     } catch (error: any) {
       console.error('Stripe checkout error:', error);
+    }
+  }
+
+  private async completeZeroTotalOnlineSale(member: Member): Promise<void> {
+    this.isSaving = true;
+    this.cartService.clearStripeTag();
+    this.cartService.payment = {
+      mode: PaymentMode.CASH,
+      amount: 0,
+      payer_id: member.id,
+      bank: '',
+      cheque_no: '',
+    };
+
+    try {
+      await this.cartService.save_sale(this.session, member, 'backend');
+      this.toastService.showSuccess(
+        'Achat confirmé',
+        'Votre achat était entièrement couvert : aucun paiement n’a été nécessaire.',
+      );
+    } catch (error) {
+      console.error('error saving zero-total online sale', error);
+      this.toastService.showError('Achat', 'Erreur lors de l’enregistrement de la vente');
+    } finally {
+      this.isSaving = false;
+      this.validateMembershipGuardrailBeforeCheckout();
     }
   }
 

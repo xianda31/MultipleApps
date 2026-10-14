@@ -1,5 +1,5 @@
 import { Member } from '../../../common/interfaces/member.interface';
-import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
+import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
 import { CartService } from './cart.service';
 import { PaymentMode } from './cart.interface';
 
@@ -112,6 +112,65 @@ describe('CartService', () => {
     expect(bookService.process_book_entry_actions).toHaveBeenCalledOnceWith(sale.id);
     expect(gameCardService.refreshCards).toHaveBeenCalledTimes(1);
     expect(gameCardService.createCard).not.toHaveBeenCalled();
+  });
+
+  it('records a zero-total online purchase as cash and processes its fulfillment', async () => {
+    const sale = { id: 'zero-total-sale', season: '2026/2027', date: '2026-10-14' };
+    const member = {
+      id: 'member-1',
+      firstname: 'Jean',
+      lastname: 'TEST',
+      license_number: '00000001',
+    } as Member;
+    const bookService = jasmine.createSpyObj('BookService', ['create_book_entry', 'process_book_entry_actions']);
+    bookService.create_book_entry.and.resolveTo(sale);
+    bookService.process_book_entry_actions.and.resolveTo({ completed: 1, failed: 0 });
+    const productService = jasmine.createSpyObj('ProductService', ['getProduct']);
+    productService.getProduct.and.returnValue({
+      productCode: 'CAR12',
+      fulfillmentAction: 'CREATE_PLAYBOOK',
+    });
+    const gameCardService = jasmine.createSpyObj('GameCardService', ['refreshCards']);
+    gameCardService.refreshCards.and.resolveTo();
+    const service = new CartService(bookService, productService, gameCardService);
+    service.setSeller('en ligne');
+    service.setStripeTag('stripe:obsolete');
+    service.clearStripeTag();
+    service.setAsset('TEST Jean', 30);
+    service.payment = {
+      mode: PaymentMode.CASH,
+      amount: 0,
+      payer_id: member.id,
+      bank: '',
+      cheque_no: '',
+    };
+    service.addToCart({
+      product_id: 'card-product',
+      product_account: 'CAR',
+      payee: member,
+      payee_name: 'TEST Jean',
+      paied: 30,
+    });
+
+    expect(service.getCartAmount()).toBe(0);
+    await service.save_sale({ season: sale.season, date: sale.date }, member, 'backend');
+
+    const createdEntry = bookService.create_book_entry.calls.mostRecent().args[0];
+    expect(createdEntry).toEqual(jasmine.objectContaining({
+      status: 'confirmed',
+      transaction_id: TRANSACTION_ID.achat_adhérent_en_espèces,
+      stripeTag: undefined,
+      purchasedItems: [{
+        productId: 'card-product',
+        beneficiaryMemberIds: ['member-1'],
+        quantity: 1,
+      }],
+    }));
+    expect(createdEntry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit]).toBe(0);
+    expect(createdEntry.operations[0].values['CAR']).toBe(30);
+    expect(createdEntry.operations[0].values[CUSTOMER_ACCOUNT.ASSET_debit]).toBe(30);
+    expect(bookService.process_book_entry_actions).toHaveBeenCalledOnceWith(sale.id);
+    expect(gameCardService.refreshCards).toHaveBeenCalledTimes(1);
   });
 
   it('records an announced bank transfer as a member debt until reconciliation', async () => {
