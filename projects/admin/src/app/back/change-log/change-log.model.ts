@@ -1,4 +1,4 @@
-export const CHANGE_LOG_AREAS = [
+export const BACK_OFFICE_CHANGE_LOG_AREAS = [
   { value: 'TOURNOIS', label: 'Tournois' },
   { value: 'BOUTIQUE', label: 'Boutique' },
   { value: 'ADHERENTS', label: 'Adhérents' },
@@ -8,6 +8,26 @@ export const CHANGE_LOG_AREAS = [
   { value: 'COMMUNICATION', label: 'Communication' },
   { value: 'GENERAL', label: 'Général' },
 ] as const;
+
+export const FRONT_CHANGE_LOG_AREAS = [
+  { value: 'ACCUEIL_ACTUALITES', label: 'Accueil & actualités' },
+  { value: 'TOURNOIS_COMPETITIONS', label: 'Tournois & compétitions' },
+  { value: 'BOUTIQUE', label: 'Boutique en ligne' },
+  { value: 'ESPACE_MEMBRE', label: 'Espace membre' },
+  { value: 'ALBUMS_MEDIAS', label: 'Albums & médias' },
+  { value: 'NAVIGATION_PAGES', label: 'Navigation & pages' },
+  { value: 'ASSISTANCE', label: 'Assistance' },
+  { value: 'GENERAL', label: 'Général' },
+] as const;
+
+export type ChangeLogArea =
+  | typeof BACK_OFFICE_CHANGE_LOG_AREAS[number]['value']
+  | typeof FRONT_CHANGE_LOG_AREAS[number]['value'];
+
+export const CHANGE_LOG_AREAS: readonly { value: ChangeLogArea; label: string }[] = [
+  ...BACK_OFFICE_CHANGE_LOG_AREAS,
+  ...FRONT_CHANGE_LOG_AREAS.filter((area) => area.value !== 'GENERAL'),
+];
 
 export const CHANGE_LOG_KINDS = [
   { value: 'NEW', label: 'Nouveauté', cssClass: 'bg-success text-white' },
@@ -20,7 +40,6 @@ export const CHANGE_LOG_SITES = [
   { value: 'FRONT', label: 'Front' },
 ] as const;
 
-export type ChangeLogArea = typeof CHANGE_LOG_AREAS[number]['value'];
 export type ChangeLogKind = typeof CHANGE_LOG_KINDS[number]['value'];
 export type ChangeLogSite = typeof CHANGE_LOG_SITES[number]['value'];
 
@@ -77,6 +96,9 @@ export function validateChangeLogEntries(value: unknown): ChangeLogEntry[] {
     if (!CHANGE_LOG_AREA_VALUES.has(area)) {
       throw new Error(`Rubrique invalide pour ${id} : ${area}`);
     }
+    if (!changeLogAreasForSite(site as ChangeLogSite).some((candidate) => candidate.value === area)) {
+      throw new Error(`Rubrique ${area} incompatible avec le site ${site} pour ${id}`);
+    }
     if (!CHANGE_LOG_KIND_VALUES.has(kind)) {
       throw new Error(`Nature invalide pour ${id} : ${kind}`);
     }
@@ -102,6 +124,10 @@ export function sortChangeLogEntries(entries: ChangeLogEntry[]): ChangeLogEntry[
   return [...entries].sort((left, right) =>
     right.publishedOn.localeCompare(left.publishedOn) || left.id.localeCompare(right.id)
   );
+}
+
+export function changeLogAreasForSite(site: ChangeLogSite) {
+  return site === 'FRONT' ? FRONT_CHANGE_LOG_AREAS : BACK_OFFICE_CHANGE_LOG_AREAS;
 }
 
 export function generateChangeLogId(

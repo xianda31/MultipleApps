@@ -9,7 +9,8 @@
       <div class="row g-2 align-items-end">
         <div class="col-12 col-sm-4 col-lg-3">
           <label for="change-log-site-filter" class="form-label small mb-1">Site</label>
-          <select id="change-log-site-filter" class="form-select form-select-sm" [(ngModel)]="selectedSite">
+          <select id="change-log-site-filter" class="form-select form-select-sm" [(ngModel)]="selectedSite"
+            (ngModelChange)="onSiteFilterChange()">
             <option value="">Tous les sites</option>
             @for (site of sites; track site.value) {
             <option [value]="site.value">{{ site.label }}</option>
@@ -20,7 +21,7 @@
           <label for="change-log-area-filter" class="form-label small mb-1">Rubrique</label>
           <select id="change-log-area-filter" class="form-select form-select-sm" [(ngModel)]="selectedArea">
             <option value="">Toutes les rubriques</option>
-            @for (area of areas; track area.value) {
+            @for (area of availableAreas; track area.value) {
             <option [value]="area.value">{{ area.label }}</option>
             }
           </select>

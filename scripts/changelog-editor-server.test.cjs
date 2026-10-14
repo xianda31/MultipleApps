@@ -62,3 +62,14 @@ test('defaults legacy entries without a site to the back office', () => {
 
   assert.equal(entry.site, 'BACK_OFFICE');
 });
+
+test('rejects an area that does not belong to the selected site', () => {
+  assert.throws(() => validateEntries([{
+    id: '2026-10-14-rubrique-incompatible',
+    publishedOn: '2026-10-14',
+    site: 'FRONT',
+    area: 'ADHERENTS',
+    kind: 'FIX',
+    summary: 'Cette rubrique ne correspond pas au site.',
+  }]), /incompatible avec le site FRONT/);
+});

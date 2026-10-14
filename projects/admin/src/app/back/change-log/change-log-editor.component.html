@@ -31,7 +31,7 @@
             <div class="row g-3 mb-3">
               <div class="col-md-4">
                 <label for="change-log-site" class="form-label">Site</label>
-                <select id="change-log-site" class="form-select" formControlName="site">
+                <select id="change-log-site" class="form-select" formControlName="site" (change)="onSiteChange()">
                   @for (site of sites; track site.value) {
                   <option [value]="site.value">{{ site.label }}</option>
                   }
@@ -40,7 +40,7 @@
               <div class="col-md-4">
                 <label for="change-log-area" class="form-label">Rubrique</label>
                 <select id="change-log-area" class="form-select" formControlName="area">
-                  @for (area of areas; track area.value) {
+                  @for (area of availableAreas; track area.value) {
                   <option [value]="area.value">{{ area.label }}</option>
                   }
                 </select>

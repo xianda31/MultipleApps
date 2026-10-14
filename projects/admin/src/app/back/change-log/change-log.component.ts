@@ -10,6 +10,7 @@ import {
   ChangeLogEntry,
   ChangeLogKind,
   ChangeLogSite,
+  changeLogAreasForSite,
 } from './change-log.model';
 
 @Component({
@@ -21,7 +22,6 @@ import {
 })
 export class ChangeLogComponent {
   readonly entries: ChangeLogEntry[];
-  readonly areas = CHANGE_LOG_AREAS;
   readonly kinds = CHANGE_LOG_KINDS;
   readonly sites = CHANGE_LOG_SITES;
   selectedSite: ChangeLogSite | '' = '';
@@ -38,6 +38,17 @@ export class ChangeLogComponent {
       && (!this.selectedArea || entry.area === this.selectedArea)
       && (!this.selectedKind || entry.kind === this.selectedKind)
     );
+  }
+
+  get availableAreas() {
+    if (!this.selectedSite) return CHANGE_LOG_AREAS;
+    return changeLogAreasForSite(this.selectedSite);
+  }
+
+  onSiteFilterChange(): void {
+    if (this.selectedArea && !this.availableAreas.some((area) => area.value === this.selectedArea)) {
+      this.selectedArea = '';
+    }
   }
 
   resetFilters(): void {

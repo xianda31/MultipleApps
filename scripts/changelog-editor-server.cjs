@@ -16,7 +16,7 @@ const DATA_PATH = path.resolve(
   'change-log',
   'change-log.data.json',
 );
-const AREAS = new Set([
+const BACK_OFFICE_AREAS = new Set([
   'TOURNOIS',
   'BOUTIQUE',
   'ADHERENTS',
@@ -26,6 +26,17 @@ const AREAS = new Set([
   'COMMUNICATION',
   'GENERAL',
 ]);
+const FRONT_AREAS = new Set([
+  'ACCUEIL_ACTUALITES',
+  'TOURNOIS_COMPETITIONS',
+  'BOUTIQUE',
+  'ESPACE_MEMBRE',
+  'ALBUMS_MEDIAS',
+  'NAVIGATION_PAGES',
+  'ASSISTANCE',
+  'GENERAL',
+]);
+const AREAS = new Set([...BACK_OFFICE_AREAS, ...FRONT_AREAS]);
 const KINDS = new Set(['NEW', 'IMPROVEMENT', 'FIX']);
 const SITES = new Set(['BACK_OFFICE', 'FRONT']);
 const ALLOWED_FIELDS = new Set(['id', 'publishedOn', 'site', 'area', 'kind', 'summary']);
@@ -68,6 +79,10 @@ function validateEntries(value) {
     }
     if (!AREAS.has(area)) {
       throw new Error(`Rubrique invalide pour ${id} : ${area}`);
+    }
+    const siteAreas = site === 'FRONT' ? FRONT_AREAS : BACK_OFFICE_AREAS;
+    if (!siteAreas.has(area)) {
+      throw new Error(`Rubrique ${area} incompatible avec le site ${site} pour ${id}`);
     }
     if (!KINDS.has(kind)) {
       throw new Error(`Nature invalide pour ${id} : ${kind}`);

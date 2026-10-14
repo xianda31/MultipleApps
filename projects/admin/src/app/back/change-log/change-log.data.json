@@ -8,6 +8,14 @@
     "summary": "Les achats entièrement couverts par un avoir peuvent maintenant être validés en ligne."
   },
   {
+    "id": "2026-10-14-amelioration-de-la-taille-et-positionnement-de",
+    "publishedOn": "2026-10-14",
+    "site": "FRONT",
+    "area": "ACCUEIL_ACTUALITES",
+    "kind": "IMPROVEMENT",
+    "summary": "amélioration de la taille et positionnement de l'image des news pour plus de lisibilité."
+  },
+  {
     "id": "2026-10-14-depuis-le-14-10-2026-les-evolutions",
     "publishedOn": "2026-10-14",
     "site": "BACK_OFFICE",

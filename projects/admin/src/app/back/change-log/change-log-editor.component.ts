@@ -5,13 +5,13 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { finalize } from 'rxjs';
 import { ChangeLogDataService } from './change-log-data.service';
 import {
-  CHANGE_LOG_AREAS,
   CHANGE_LOG_KINDS,
   CHANGE_LOG_SITES,
   ChangeLogArea,
   ChangeLogEntry,
   ChangeLogKind,
   ChangeLogSite,
+  changeLogAreasForSite,
   generateChangeLogId,
 } from './change-log.model';
 
@@ -23,7 +23,6 @@ import {
   styleUrl: './change-log-editor.component.scss',
 })
 export class ChangeLogEditorComponent implements OnInit {
-  readonly areas = CHANGE_LOG_AREAS;
   readonly kinds = CHANGE_LOG_KINDS;
   readonly sites = CHANGE_LOG_SITES;
   readonly form = new FormGroup({
@@ -66,6 +65,10 @@ export class ChangeLogEditorComponent implements OnInit {
     return this.form.controls.summary.value.length;
   }
 
+  get availableAreas() {
+    return changeLogAreasForSite(this.form.controls.site.value);
+  }
+
   get technicalTermsWarning(): string {
     const summary = this.form.controls.summary.value;
     const terms = ['API', 'BookEntry', 'Lambda', 'S3', 'backend', 'frontend', 'Stripe'];
@@ -76,7 +79,7 @@ export class ChangeLogEditorComponent implements OnInit {
   }
 
   get selectedAreaLabel(): string {
-    return this.areas.find((area) => area.value === this.form.controls.area.value)?.label ?? '';
+    return this.availableAreas.find((area) => area.value === this.form.controls.area.value)?.label ?? '';
   }
 
   get selectedSiteLabel(): string {
@@ -105,6 +108,13 @@ export class ChangeLogEditorComponent implements OnInit {
           );
         },
       });
+  }
+
+  onSiteChange(): void {
+    const currentArea = this.form.controls.area.value;
+    if (!this.availableAreas.some((area) => area.value === currentArea)) {
+      this.form.controls.area.setValue('GENERAL');
+    }
   }
 
   newEntry(): void {
@@ -172,7 +182,7 @@ export class ChangeLogEditorComponent implements OnInit {
   }
 
   areaLabel(entry: ChangeLogEntry): string {
-    return this.areas.find((area) => area.value === entry.area)?.label ?? entry.area;
+    return changeLogAreasForSite(entry.site).find((area) => area.value === entry.area)?.label ?? entry.area;
   }
 
   kindLabel(entry: ChangeLogEntry): string {

@@ -53,4 +53,15 @@ describe('ChangeLogComponent', () => {
     expect(component.selectedKind).toBe('');
     expect(component.filteredEntries).toEqual(entries);
   });
+
+  it('clears an area filter that does not belong to the selected site', () => {
+    const component = createComponent();
+    component.selectedArea = 'TOURNOIS';
+    component.selectedSite = 'FRONT';
+
+    component.onSiteFilterChange();
+
+    expect(component.selectedArea).toBe('');
+    expect(component.availableAreas.map((area) => area.value)).toContain('TOURNOIS_COMPETITIONS');
+  });
 });

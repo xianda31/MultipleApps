@@ -1,4 +1,5 @@
 import {
+  changeLogAreasForSite,
   generateChangeLogId,
   sortChangeLogEntries,
   validateChangeLogEntries,
@@ -72,5 +73,24 @@ describe('change log model', () => {
     }]);
 
     expect(entry.site).toBe('BACK_OFFICE');
+  });
+
+  it('exposes distinct areas for each site', () => {
+    expect(changeLogAreasForSite('FRONT').find((area) => area.value === 'BOUTIQUE')?.label)
+      .toBe('Boutique en ligne');
+    expect(changeLogAreasForSite('BACK_OFFICE').map((area) => area.value)).toContain('BOUTIQUE');
+    expect(changeLogAreasForSite('BACK_OFFICE').find((area) => area.value === 'BOUTIQUE')?.label)
+      .toBe('Boutique');
+  });
+
+  it('rejects an area that does not belong to the selected site', () => {
+    expect(() => validateChangeLogEntries([{
+      id: '2026-10-14-rubrique-incompatible',
+      publishedOn: '2026-10-14',
+      site: 'FRONT',
+      area: 'ADHERENTS',
+      kind: 'FIX',
+      summary: 'Cette rubrique ne correspond pas au site.',
+    }])).toThrowError(/incompatible avec le site FRONT/);
   });
 });
