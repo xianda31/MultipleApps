@@ -1,4 +1,4 @@
-import { canSelectGameCard, checkInState, gamerFeePrice, requiredGameCredits, tournamentUsesDoubledFees } from './fees-check-in.util';
+import { canSelectGameCard, checkInState, gamerFeePrice, membershipPaymentWarningActive, membershipPaymentWarningLevel, requiredGameCredits, tournamentUsesDoubledFees } from './fees-check-in.util';
 
 describe('fees check-in rules', () => {
   it('requires two credits when fees are doubled', () => {
@@ -17,6 +17,26 @@ describe('fees check-in rules', () => {
     expect(canSelectGameCard({ is_member: true, game_credits: 2 }, true)).toBeTrue();
     expect(canSelectGameCard({ is_member: true, game_credits: 1 }, true)).toBeFalse();
     expect(canSelectGameCard({ is_member: false, game_credits: 10 }, false)).toBeFalse();
+  });
+
+  it('activates the membership warning on the configured month within a July-to-June season', () => {
+    expect(membershipPaymentWarningActive(11, new Date(2026, 9, 31, 23, 59))).toBeFalse();
+    expect(membershipPaymentWarningActive(11, new Date(2026, 10, 1))).toBeTrue();
+    expect(membershipPaymentWarningActive(11, new Date(2027, 5, 30))).toBeTrue();
+    expect(membershipPaymentWarningActive(11, new Date(2027, 6, 1))).toBeFalse();
+  });
+
+  it('supports warning months in the calendar year following the season start', () => {
+    expect(membershipPaymentWarningActive(2, new Date(2027, 0, 31))).toBeFalse();
+    expect(membershipPaymentWarningActive(2, new Date(2027, 1, 1))).toBeTrue();
+  });
+
+  it('raises the membership warning from warning to danger after the 14th', () => {
+    expect(membershipPaymentWarningLevel(11, new Date(2026, 9, 31))).toBeNull();
+    expect(membershipPaymentWarningLevel(11, new Date(2026, 10, 1))).toBe('warning');
+    expect(membershipPaymentWarningLevel(11, new Date(2026, 10, 14, 23, 59))).toBe('warning');
+    expect(membershipPaymentWarningLevel(11, new Date(2026, 10, 15))).toBe('danger');
+    expect(membershipPaymentWarningLevel(11, new Date(2027, 5, 30))).toBe('danger');
   });
 
   it('maps each payment mode to the legacy gamer state', () => {

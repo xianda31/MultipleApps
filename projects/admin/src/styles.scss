@@ -140,6 +140,11 @@ table.fit-cols td {
 /* You can add global styles to this file, et aussi importer d'autres fichiers de styles */
 @import "../public/scss/custom.scss";
 
+:root {
+  --bs-warning: #ffc107;
+  --bs-warning-rgb: 255, 193, 7;
+}
+
 .bi.bi-ffb-fill::before {
   content: "";
   width: 0.85em;

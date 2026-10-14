@@ -36,6 +36,16 @@ describe('SystemDataService accounting season', () => {
     expect(service.can_write_accounting_season(calendarSeason)).toBeFalse();
   });
 
+  it('defaults the membership payment warning to November', async () => {
+    const fileService = jasmine.createSpyObj('FileService', ['download_json_file', 'upload_to_S3']);
+    const service = new SystemDataService(fileService, {} as any);
+    fileService.download_json_file.and.resolveTo(configuration(service.get_today_season()));
+
+    const loaded = await firstValueFrom(service.get_configuration());
+
+    expect(loaded.membership_payment_warning_month).toBe(11);
+  });
+
   it('blocks all writes when the next season is initialized before July', async () => {
     const fileService = jasmine.createSpyObj('FileService', ['download_json_file', 'upload_to_S3']);
     const service = new SystemDataService(fileService, {} as any);

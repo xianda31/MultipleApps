@@ -49,9 +49,9 @@ export interface SystemConfiguration {
     minimum_cb_amount: number;
 
     fee_rates: Fee_rate[];
+    membership_payment_warning_month?: number;
 
     profit_and_loss: Profit_and_loss;
     revenue_and_expense_tree: Revenue_and_expense_tree;
     banks: Bank[];
 }
-

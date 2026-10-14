@@ -29,8 +29,10 @@
       <div class="row g-3 mt-2">
         <div class="col-12 col-md-6">
           <div class="card h-100">
-            <h5 class="card-header">tarification des droits de table (€)</h5>
-            <div class="card-body p-0" formArrayName="fee_rates">
+            <h5 class="card-header">Pointage tournois</h5>
+            <div class="card-body p-0">
+              <div class="p-3 pb-2 fw-bold">Tarification des droits de table (€)</div>
+              <div formArrayName="fee_rates">
               <div class="table-responsive">
                 <table class="table table-bordered align-middle mb-0">
                   <thead class="table-light">
@@ -54,6 +56,19 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+              </div>
+              <div class="border-top p-3">
+                <div class="fw-bold mb-2">Signalement de l’adhésion</div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                  <label for="membershipPaymentWarningMonth">
+                    Non paiement d’adhésion affiché à partir du 1er
+                  </label>
+                  <select id="membershipPaymentWarningMonth" class="form-select form-select-sm w-auto"
+                    formControlName="membership_payment_warning_month">
+                    <option *ngFor="let month of seasonMonths" [ngValue]="month.value">{{month.label}}</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

@@ -24,6 +24,7 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { normalizeGender } from '../../../common/utils/gender.util';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
+import { membershipPaymentWarningActive, membershipPaymentWarningLevel } from './fees-check-in.util';
 
 
 
@@ -59,6 +60,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   CARD_PRICE !: number;
   members: Member[] = [];
   banks: Bank[] = [];
+  membershipPaymentWarningMonth = 11;
   @ViewChild('feesGamersScroll') feesGamersScroll?: ElementRef<HTMLDivElement>;
 
   constructor(
@@ -75,6 +77,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   ) {
     this.systemDataService.get_configuration().subscribe(conf => {
       this.banks = conf.banks || [];
+      this.membershipPaymentWarningMonth = conf.membership_payment_warning_month ?? 11;
     });
 
     this.membersService.listMembers().subscribe(members => {
@@ -467,6 +470,27 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
 
   gamer_solvent(gamer: Gamer): boolean {
     return !gamer.is_member || gamer.in_euro || (gamer.game_credits >= (this.game.fees_doubled ? 2 : 1));
+  }
+
+  showMembershipPaymentWarning(gamer: Gamer): boolean {
+    if (!gamer.is_member || !membershipPaymentWarningActive(this.membershipPaymentWarningMonth)) {
+      return false;
+    }
+
+    const normalizedLicense = gamer.license.padStart(8, '0');
+    const member = this.members.find(candidate =>
+      candidate.id === gamer.member_id
+      || candidate.license_number.padStart(8, '0') === normalizedLicense
+    );
+    if (!member) return false;
+
+    return !this.membersService.hasPaidMembership(member, this.systemDataService.get_today_season());
+  }
+
+  membershipPaymentWarningClass(): string {
+    return membershipPaymentWarningLevel(this.membershipPaymentWarningMonth) === 'danger'
+      ? 'text-danger'
+      : 'text-warning';
   }
 
   gamer_class(gamer: Gamer): string {

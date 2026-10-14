@@ -305,13 +305,12 @@ get_birthdays_this_month(): Observable<Member[]> {
     return licenseNumber.startsWith('?') || member.person_id === undefined || member.person_id === null;
   }
 
-  hasPaidMembership(member: Member): boolean {
+  hasPaidMembership(member: Member, season: string = this.systemDataService.get_local_season()): boolean {
     if (!member.membership_date) {
       return false;
     }
 
-    const currentSeason = this.systemDataService.get_local_season();
-    return this.systemDataService.date_in_season(member.membership_date, currentSeason);
+    return this.systemDataService.date_in_season(member.membership_date, season);
   }
 
   getLifecycleStatus(member: Member): MemberLifecycleStatus {

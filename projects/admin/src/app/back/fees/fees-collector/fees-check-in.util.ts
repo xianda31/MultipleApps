@@ -28,6 +28,30 @@ export function canSelectGameCard(
   return gamer.is_member && gamer.game_credits >= requiredGameCredits(feesDoubled);
 }
 
+export function membershipPaymentWarningActive(
+  warningMonth: number,
+  today: Date = new Date(),
+): boolean {
+  return membershipPaymentWarningLevel(warningMonth, today) !== null;
+}
+
+export function membershipPaymentWarningLevel(
+  warningMonth: number,
+  today: Date = new Date(),
+): 'warning' | 'danger' | null {
+  if (!Number.isInteger(warningMonth) || warningMonth < 1 || warningMonth > 12) return null;
+
+  const currentMonth = today.getMonth() + 1;
+  const seasonStartYear = currentMonth >= 7 ? today.getFullYear() : today.getFullYear() - 1;
+  const warningYear = warningMonth >= 7 ? seasonStartYear : seasonStartYear + 1;
+  const warningDate = new Date(warningYear, warningMonth - 1, 1);
+
+  if (today < warningDate) return null;
+
+  const dangerDate = new Date(warningYear, warningMonth - 1, 15);
+  return today >= dangerDate ? 'danger' : 'warning';
+}
+
 export function checkInState(mode: GameCheckInMode): {
   validated: true;
   enabled: boolean;

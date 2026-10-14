@@ -17,6 +17,20 @@ import { FileService } from '../../common/services/files.service';
   styleUrl: './sys-conf.component.scss'
 })
 export class SysConfComponent {
+  readonly seasonMonths = [
+    { value: 7, label: 'juillet' },
+    { value: 8, label: 'août' },
+    { value: 9, label: 'septembre' },
+    { value: 10, label: 'octobre' },
+    { value: 11, label: 'novembre' },
+    { value: 12, label: 'décembre' },
+    { value: 1, label: 'janvier' },
+    { value: 2, label: 'février' },
+    { value: 3, label: 'mars' },
+    { value: 4, label: 'avril' },
+    { value: 5, label: 'mai' },
+    { value: 6, label: 'juin' },
+  ];
 
   systemFormGroup!: FormGroup;
   loaded!: boolean;
@@ -46,6 +60,7 @@ export class SysConfComponent {
       tpe_payment_active: [false],
       CB_fees_account: [''],
       minimum_cb_amount: [0],
+      membership_payment_warning_month: [11, [Validators.required, Validators.min(1), Validators.max(12)]],
 
       fee_rates: this.fb.array([
         this.fb.group({
@@ -244,7 +259,10 @@ export class SysConfComponent {
 
   loadDataInFormGroup(configuration: SystemConfiguration) {
     this.isLoadingForm = true;
-    this.systemFormGroup.patchValue(configuration, { emitEvent: false });
+    this.systemFormGroup.patchValue({
+      ...configuration,
+      membership_payment_warning_month: configuration.membership_payment_warning_month ?? 11,
+    }, { emitEvent: false });
     // patchValue doest not work for FormArray ; work-around method : clear and re-populate
     this.sections.clear();
     this.expenses.clear();
