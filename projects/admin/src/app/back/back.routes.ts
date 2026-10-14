@@ -46,6 +46,7 @@ import { SondageResultatsComponent } from './sondage/sondage-resultats/sondage-r
 import { BilletterieComponent } from './collecte/collecte-vente.component';
 import { ImageToolsComponent } from './image-tools/image-tools.component';
 import { ChequeExplorerComponent } from './books/cheque-explorer/cheque-explorer.component';
+import { devOnlyGuard } from '../dev-only.guard';
 
 function secureBackRoutes(childRoutes: Routes): Routes {
   return childRoutes.map((route) => {
@@ -128,6 +129,18 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.Home, component: BackPageComponent },
       { path: BACK_ROUTE_PATHS.SignOut, component: BackPageComponent },
       { path: BACK_ROUTE_PATHS.OnlineHelp, component: BackOnlineHelpComponent, canActivate: [AuthGuard] },
+      {
+        path: BACK_ROUTE_PATHS.ChangeLog,
+        loadComponent: () => import('./change-log/change-log.component').then((module) => module.ChangeLogComponent),
+        canActivate: [AuthGuard],
+      },
+      {
+        path: BACK_ROUTE_PATHS.ChangeLogEditor,
+        loadComponent: () => import('./change-log/change-log-editor.component')
+          .then((module) => module.ChangeLogEditorComponent),
+        canMatch: [devOnlyGuard],
+        canActivate: [AuthGuard],
+      },
       { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BreakingNews, component: BreakingNewsDefineComponent, canActivate: [AuthGuard] },

@@ -45,6 +45,8 @@ export const BACK_ROUTE_PATHS = {
   Competitions: 'site/competitions',
   Home: 'home',
   OnlineHelp: 'communication/aide-en-ligne',
+  ChangeLog: 'documentation/change-log',
+  ChangeLogEditor: 'devtools/change-log',
   Assistance: 'communication/assistance',
   Mailing: 'communication/mailing',
   BreakingNews: 'communication/breaking-news',

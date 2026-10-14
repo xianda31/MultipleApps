@@ -45,6 +45,8 @@ export const BACK_ROUTE_ACCESS = {
   Competitions: { minimumGroup: Group_names.Editor, helpTopicId: 'site-competitions' },
   Home: { minimumGroup: Group_names.Member, helpTopicId: undefined },
   OnlineHelp: { minimumGroup: Group_names.Member, helpTopicId: 'documentation' },
+  ChangeLog: { minimumGroup: Group_names.Member, helpTopicId: 'documentation' },
+  ChangeLogEditor: { minimumGroup: Group_names.System, helpTopicId: undefined },
   Assistance: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-assistance' },
   Mailing: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-mailing' },
   BreakingNews: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-breaking-news' },

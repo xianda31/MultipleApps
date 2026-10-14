@@ -1,0 +1,26 @@
+[
+  {
+    "id": "2026-10-14-achats-entierement-couverts-par-un-avoir",
+    "publishedOn": "2026-10-14",
+    "site": "FRONT",
+    "area": "BOUTIQUE",
+    "kind": "IMPROVEMENT",
+    "summary": "Les achats entièrement couverts par un avoir peuvent maintenant être validés en ligne."
+  },
+  {
+    "id": "2026-10-14-depuis-le-14-10-2026-les-evolutions",
+    "publishedOn": "2026-10-14",
+    "site": "BACK_OFFICE",
+    "area": "GENERAL",
+    "kind": "NEW",
+    "summary": "Depuis le 14/10/2026, les évolutions importantes de l'application sont listées."
+  },
+  {
+    "id": "2026-10-14-selon-le-mois-limite-pour-regler-les",
+    "publishedOn": "2026-10-14",
+    "site": "BACK_OFFICE",
+    "area": "TOURNOIS",
+    "kind": "IMPROVEMENT",
+    "summary": "Selon le mois limite pour régler les adhésions, un warning apparait dans la fiche du joueur inscrit au tournoi"
+  }
+]

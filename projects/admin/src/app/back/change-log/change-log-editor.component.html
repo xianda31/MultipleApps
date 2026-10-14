@@ -1,0 +1,151 @@
+<div class="container-fluid px-lg-4 py-4 change-log-editor">
+  <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 mb-1"><i class="bi bi-journal-code me-2"></i>Éditeur du change log</h1>
+      <p class="text-muted mb-0">Les enregistrements modifient directement le fichier JSON versionné.</p>
+    </div>
+    <button type="button" class="btn btn-outline-secondary" (click)="reload()" [disabled]="loading || saving">
+      <i class="bi bi-arrow-clockwise me-1"></i>Recharger
+    </button>
+  </header>
+
+  @if (errorMessage) {
+  <div class="alert" [ngClass]="serviceAvailable ? 'alert-info' : 'alert-danger'" role="alert">
+    {{ errorMessage }}
+  </div>
+  }
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-5">
+      <section class="card border-0 shadow-sm">
+        <div class="card-header bg-body py-3">
+          <h2 class="h5 mb-0">{{ editingId ? 'Modifier l’entrée' : 'Nouvelle entrée' }}</h2>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="form" (ngSubmit)="saveEntry()">
+            <div class="mb-3">
+              <label for="change-log-date" class="form-label">Date de mise en production</label>
+              <input id="change-log-date" type="date" class="form-control" formControlName="publishedOn">
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label for="change-log-site" class="form-label">Site</label>
+                <select id="change-log-site" class="form-select" formControlName="site">
+                  @for (site of sites; track site.value) {
+                  <option [value]="site.value">{{ site.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="change-log-area" class="form-label">Rubrique</label>
+                <select id="change-log-area" class="form-select" formControlName="area">
+                  @for (area of areas; track area.value) {
+                  <option [value]="area.value">{{ area.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="change-log-kind" class="form-label">Nature</label>
+                <select id="change-log-kind" class="form-select" formControlName="kind">
+                  @for (kind of kinds; track kind.value) {
+                  <option [value]="kind.value">{{ kind.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label for="change-log-summary" class="form-label">Texte destiné aux utilisateurs</label>
+              <textarea id="change-log-summary" rows="4" maxlength="160" class="form-control"
+                formControlName="summary"
+                placeholder="Ex. Les achats entièrement couverts par un avoir peuvent maintenant être validés en ligne."></textarea>
+              <div class="d-flex justify-content-between mt-1 small"
+                [class.text-danger]="summaryLength > 160">
+                <span>Une phrase courte, sans détail d’implémentation.</span>
+                <span>{{ summaryLength }} / 160</span>
+              </div>
+            </div>
+
+            @if (technicalTermsWarning) {
+            <div class="alert alert-warning py-2 small">{{ technicalTermsWarning }}</div>
+            }
+
+            <div class="preview rounded border p-3 my-3">
+              <div class="small text-muted mb-2">Aperçu</div>
+              <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="badge text-bg-dark">{{ selectedSiteLabel }}</span>
+                <span class="badge text-bg-light border">
+                  {{ selectedAreaLabel }}
+                </span>
+                <span class="badge text-bg-secondary">
+                  {{ selectedKindLabel }}
+                </span>
+              </div>
+              <div>{{ form.controls.summary.value || 'Le texte apparaîtra ici.' }}</div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              @if (editingId) {
+              <button type="button" class="btn btn-outline-secondary" (click)="cancelEdit()">Annuler</button>
+              }
+              <button type="submit" class="btn btn-primary"
+                [disabled]="form.invalid || !serviceAvailable || saving">
+                @if (saving) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-7">
+      <section class="card border-0 shadow-sm">
+        <div class="card-header bg-body py-3 d-flex justify-content-between align-items-center">
+          <h2 class="h5 mb-0">Entrées versionnées</h2>
+          <span class="badge text-bg-secondary">{{ entries.length }}</span>
+        </div>
+        <div class="card-body p-0">
+          @if (loading) {
+          <div class="p-4 text-center">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>Chargement…
+          </div>
+          } @else if (entries.length === 0) {
+          <div class="p-4 text-muted text-center">Aucune entrée.</div>
+          } @else {
+          <div class="list-group list-group-flush">
+            @for (entry of entries; track entry.id) {
+            <article class="list-group-item p-3">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <strong>{{ entry.publishedOn + 'T12:00:00' | date:'dd/MM/yyyy':'':'fr-FR' }}</strong>
+                    <span class="badge text-bg-dark">{{ siteLabel(entry) }}</span>
+                    <span class="badge text-bg-light border">{{ areaLabel(entry) }}</span>
+                    <span class="badge text-bg-secondary">{{ kindLabel(entry) }}</span>
+                  </div>
+                  <p class="mb-0">{{ entry.summary }}</p>
+                </div>
+                <div class="d-flex align-items-start gap-1">
+                  <button type="button" class="btn btn-outline-primary btn-sm" title="Modifier"
+                    (click)="editEntry(entry)" [disabled]="saving">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" title="Supprimer"
+                    (click)="deleteEntry(entry)" [disabled]="saving">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </article>
+            }
+          </div>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

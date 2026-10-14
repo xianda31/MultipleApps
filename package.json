@@ -9,7 +9,9 @@
   "scripts": {
     "ng": "ng",
     "sandbox": "ampx sandbox --profile amplify-dev --identifier toto --exclude amplify/node_modules --exclude \"**/amplify_outputs.json\"",
-    "start": "ng serve",
+    "start": "node scripts/start-dev.cjs",
+    "changelog:server": "node scripts/changelog-editor-server.cjs",
+    "changelog:test": "node --test scripts/changelog-editor-server.test.cjs",
     "update-commit-hash": "node update-commit-hash.js",
     "prestart": "npm run update-commit-hash",
     "build": "ng build admin --configuration production",

@@ -107,6 +107,7 @@ const MENU_DEFINITIONS: NavbarMenu[] = [
             { label: 'import excel', route: BACK_ROUTE_PATHS.ImportExcel },
             { label: 'clone DB', route: BACK_ROUTE_PATHS.CloneDB },
             { label: 'clone S3', route: BACK_ROUTE_PATHS.CloneS3 },
+            { label: 'change log', route: BACK_ROUTE_PATHS.ChangeLogEditor },
             // { label: 'ComiteeBookletViewer', route: BACK_ROUTE_PATHS.ComiteeBooklet }
         ]
     },
@@ -114,7 +115,10 @@ const MENU_DEFINITIONS: NavbarMenu[] = [
         label: 'Documentation',
         key: 'documentation',
         icon: 'bi-question-circle',
-        route: BACK_ROUTE_PATHS.OnlineHelp,
+        subMenus: [
+            { label: 'aide en ligne', route: BACK_ROUTE_PATHS.OnlineHelp },
+            { label: 'change log', route: BACK_ROUTE_PATHS.ChangeLog },
+        ],
     },
 ];
 
