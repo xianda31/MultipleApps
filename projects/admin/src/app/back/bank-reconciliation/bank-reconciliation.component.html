@@ -4,11 +4,9 @@
       <h1>Rapprochement bancaire</h1>
       <p>Pointage des opérations et suivi des relevés · {{current_season}}</p>
     </div>
-    <div class="bank-summary" aria-label="Situation bancaire initiale">
+    <div class="bank-summary" aria-label="Synthèse du rapprochement bancaire">
       <span><strong>{{bank_reports.length}}</strong> relevés</span>
       <span><strong>{{unreconciledCount}}</strong> non pointées</span>
-      <span>Courant <strong>{{former_balance_sheet.bank | number:truncature:'fr'}} €</strong></span>
-      <span>Épargne <strong>{{former_balance_sheet.savings | number:truncature:'fr'}} €</strong></span>
     </div>
   </header>
 
@@ -19,7 +17,19 @@
     <span class="report-credit text-end">Crédit</span>
   </div>
 
-      <div ngbAccordion class="report-list">
+      <div class="report-list">
+        <div class="report-summary report-summary--initial"
+          [attr.aria-label]="'Soldes initiaux au relevé ' + initialBankReport">
+          <span class="report-identity">
+            <strong class="report-number">n° {{initialBankReport}}</strong>
+            <span class="report-savings">Épargne {{former_balance_sheet.savings | number:truncature:'fr'}} €</span>
+          </span>
+          <strong class="report-balance text-end">{{former_balance_sheet.bank | number:truncature:'fr'}} €</strong>
+          <span class="report-debit text-end text-muted">—</span>
+          <span class="report-credit text-end text-muted">—</span>
+        </div>
+
+        <div ngbAccordion>
         <div ngbAccordionItem [collapsed]="!last || always_collapsed"
           *ngFor="let bank_report of bank_reports ;  let last = last">
           <div ngbAccordionHeader>
@@ -38,7 +48,7 @@
               <ng-container *ngTemplateOutlet=" report; context:{bank_report: bank_report}"></ng-container>
             </div>
           </div>
-        </div>
+          </div>
 
         <div ngbAccordionItem [collapsed]="false">
           <h2 ngbAccordionHeader>
@@ -56,6 +66,7 @@
             <div ngbAccordionBody>
               <ng-container *ngTemplateOutlet="report; context:{bank_report: null}"></ng-container>
             </div>
+          </div>
           </div>
         </div>
       </div>

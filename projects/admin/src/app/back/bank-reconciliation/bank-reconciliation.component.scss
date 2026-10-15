@@ -75,6 +75,14 @@
     border-top: 1px solid #dee2e6;
 }
 
+.report-summary--initial {
+    min-height: 48px;
+    padding: 0.55rem 0.8rem 0.55rem 2rem;
+    background: #e9ecef;
+    border-bottom: 1px solid #ced4da;
+    color: #495057;
+}
+
 .bank-page .accordion-item {
     border: 0;
     border-bottom: 1px solid #dee2e6;
@@ -238,6 +246,10 @@
         column-gap: 0.5rem;
         row-gap: 0.15rem;
         padding: 0.55rem 0.8rem;
+    }
+
+    .bank-page .report-summary--initial {
+        grid-template-columns: minmax(0, 1fr) minmax(5.5rem, auto);
     }
 
     .bank-page .accordion-body {

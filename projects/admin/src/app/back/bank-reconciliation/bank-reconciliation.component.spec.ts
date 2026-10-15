@@ -22,6 +22,12 @@ describe('BankReconciliationComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('labels the initial balance with June of the season start year', () => {
+    component.current_season = '2026/2027';
+
+    expect(component.initialBankReport).toBe('26-06');
+  });
+
   it('settles an announced transfer into bank and clears the member debt', async () => {
     const promise = {
       id: 'promise-1',

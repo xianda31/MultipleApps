@@ -49,6 +49,11 @@ export class BankReconciliationComponent {
       + this.bank_book_entries.filter((entry) => entry.bank_report === null).length;
   }
 
+  get initialBankReport(): string {
+    const seasonStartYear = this.current_season?.match(/^(\d{4})/)?.[1];
+    return seasonStartYear ? `${seasonStartYear.slice(-2)}-06` : '';
+  }
+
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
