@@ -1,17 +1,19 @@
-<div class="offset-md-3 col-md-6">
+<div class="offset-md-2 col-md-6">
+  <div class="p-1">
 
-  @for (snippet of snippets; track snippet.id) {
-  <div id="{{snippet.title}}">
-    <h4 class="mt-2">
-      {{snippet.title}} : {{snippet.subtitle}}
-    </h4>
-    <div class="ms-2 snippet-float-box">
-      <div class="snippet-float-img text-center">
-        <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top">
+    @for (snippet of snippets; track snippet.id) {
+    <div id="{{snippet.title}}">
+      <h4 class="mt-2">
+        {{snippet.title}} : {{snippet.subtitle}}
+      </h4>
+      <div class=" snippet-float-box">
+        <div class="snippet-float-img text-center">
+          <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top">
+        </div>
+        <div class="snippet-float-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"></div>
       </div>
-      <div class="snippet-float-text tighter-html" [innerHTML]="stringToSafeHtml(snippet.content)"></div>
     </div>
-  </div>
-  }
+    }
 
+  </div>
 </div>
