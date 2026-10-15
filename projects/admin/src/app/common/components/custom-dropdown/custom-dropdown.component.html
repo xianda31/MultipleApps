@@ -16,6 +16,7 @@
   </span>
 
   <div *ngIf="invalid && invalidMessage" class="invalid-feedback-msg">{{ invalidMessage }}</div>
+  <div *ngIf="showSuggestions && resultsHint" class="small text-secondary mt-1">{{ resultsHint }}</div>
 
   <ul *ngIf="showSuggestions && getFilteredItems().length > 0"
     class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm">

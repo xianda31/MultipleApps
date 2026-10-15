@@ -6,6 +6,8 @@
   [itemDisplayFn]="displayPlayerOptionFn"
   [loading]="loading"
   [invalid]="showInvalidSelection"
+  [filterFn]="filterPlayerFn"
+  [resultsHint]="resultsHint"
   invalidMessage="Veuillez sélectionner un joueur dans la liste"
   (searchValueChange)="onSearchChange($event)"
   (blurred)="onInputBlur()"

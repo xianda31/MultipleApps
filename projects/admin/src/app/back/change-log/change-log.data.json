@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-15-amelioration-de-la-recherche-de-joueur-rapidite",
+    "publishedOn": "2026-10-15",
+    "site": "BACK_OFFICE",
+    "area": "TOURNOIS",
+    "kind": "FIX",
+    "summary": "Amélioration de la recherche de joueur (rapidité, exhaustivité)"
+  },
+  {
     "id": "2026-10-14-achats-entierement-couverts-par-un-avoir",
     "publishedOn": "2026-10-14",
     "site": "FRONT",

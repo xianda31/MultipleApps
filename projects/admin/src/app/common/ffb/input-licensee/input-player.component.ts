@@ -1,9 +1,10 @@
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { ClubMember } from '../interface/club-member.interface';
 import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 import { CustomDropdownComponent } from '../../components/custom-dropdown/custom-dropdown.component';
+import { matchesPlayerSearch, rankPlayerSearchResults } from './player-search.util';
 
 @Component({
     selector: 'app-input-player',
@@ -18,8 +19,9 @@ import { CustomDropdownComponent } from '../../components/custom-dropdown/custom
     templateUrl: './input-player.component.html',
     styleUrl: './input-player.component.scss'
 })
-export class InputPlayerComponent implements ControlValueAccessor {
+export class InputPlayerComponent implements ControlValueAccessor, OnDestroy {
   @Input() placeholder!: string;
+  @Input() groupSessionId?: number;
 
   str_player: string = '';
   players: ClubMember[] = [];
@@ -27,6 +29,8 @@ export class InputPlayerComponent implements ControlValueAccessor {
   private selectedPlayer: ClubMember | null = null;
   private hasBlurred = false;
   private searchRequestId = 0;
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  resultsHint = '';
 
   onChange: (value: ClubMember | null) => void = () => { };
   onTouch: () => void = () => { };
@@ -37,6 +41,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
     const club = player.club?.label || player.club?.name || player.club?.ffbCode;
     return `${player.lastName} ${player.firstName} (${player.license_number}${club ? ` — ${club}` : ''})`;
   };
+  filterPlayerFn = (player: ClubMember, searchValue: string) => matchesPlayerSearch(player, searchValue);
 
   constructor(
     private ffbService: FFB_proxyService
@@ -67,6 +72,10 @@ export class InputPlayerComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
+  ngOnDestroy(): void {
+    this.clearSearchTimer();
+  }
+
   get showInvalidSelection(): boolean {
     return this.hasBlurred && this.str_player.trim().length > 0 && !this.selectedPlayer;
   }
@@ -75,6 +84,8 @@ export class InputPlayerComponent implements ControlValueAccessor {
     const requestId = ++this.searchRequestId;
     this.onTouch();
     this.str_player = value;
+    this.clearSearchTimer();
+    this.resultsHint = '';
 
     // Toute saisie manuelle invalide la sélection tant que l'utilisateur n'a pas recliqué une suggestion.
     if (!this.selectedPlayer || value !== this.displayPlayerFn(this.selectedPlayer)) {
@@ -82,12 +93,17 @@ export class InputPlayerComponent implements ControlValueAccessor {
       this.onChange(null);
     }
 
-    if (value.length > 3) {
-      this.loading = true;
-      this.ffbService.searchPlayersSuchAs(value)
+    const normalizedValue = value.trim().replace(/\s+/g, ' ');
+    if (normalizedValue.length > 3) {
+      this.searchTimer = setTimeout(() => {
+        this.loading = true;
+        this.ffbService.searchPlayersSuchAs(normalizedValue, { groupSessionId: this.groupSessionId })
         .then((players) => {
           if (requestId === this.searchRequestId) {
-            this.players = players;
+            this.players = rankPlayerSearchResults(players.items, normalizedValue);
+            this.resultsHint = players.totalPages > 1
+              ? `${players.totalItems} joueurs trouvés. Précisez le nom et le prénom.`
+              : '';
           }
         })
         .catch((error) => {
@@ -101,6 +117,7 @@ export class InputPlayerComponent implements ControlValueAccessor {
             this.loading = false;
           }
         });
+      }, 300);
     } else {
       this.loading = false;
       this.players = [];
@@ -108,8 +125,10 @@ export class InputPlayerComponent implements ControlValueAccessor {
   }
 
   onPlayerSelected(player: ClubMember) {
+    this.clearSearchTimer();
     this.searchRequestId++;
     this.loading = false;
+    this.resultsHint = '';
     this.selectedPlayer = player;
     this.hasBlurred = false;
     this.str_player = `${player.lastName} ${player.firstName} (${player.license_number})`;
@@ -119,5 +138,11 @@ export class InputPlayerComponent implements ControlValueAccessor {
   onInputBlur() {
     this.hasBlurred = true;
   }
-}
 
+  private clearSearchTimer(): void {
+    if (this.searchTimer !== undefined) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = undefined;
+    }
+  }
+}

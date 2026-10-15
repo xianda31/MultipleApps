@@ -414,6 +414,7 @@
                                     <i class="bi bi-person-fill text-primary me-1"></i>Joueur 1
                                 </label>
                                 <app-input-player id="player1" listeId="new_guest_1" placeholder="Nom Prénom (sélection liste)"
+                                    [groupSessionId]="selected_tournament?.id"
                                     type="text" class="form-control form-control-sm" [(ngModel)]="new_pair_player1">
                                 </app-input-player>
                             </div>
@@ -422,6 +423,7 @@
                                     <i class="bi bi-person-fill text-primary me-1"></i>Joueur 2
                                 </label>
                                 <app-input-player id="player2" listeId="new_guest_2" placeholder="Nom Prénom (sélection liste)"
+                                    [groupSessionId]="selected_tournament?.id"
                                     type="text" class="form-control form-control-sm" [(ngModel)]="new_pair_player2">
                                 </app-input-player>
                             </div>

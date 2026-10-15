@@ -18,6 +18,8 @@ export class CustomDropdownComponent {
   @Input() loading = false;
   @Input() invalid = false;
   @Input() invalidMessage = '';
+  @Input() resultsHint = '';
+  @Input() filterFn?: (item: any, searchValue: string) => boolean;
 
   @Output() itemSelected = new EventEmitter<any>();
   @Output() searchValueChange = new EventEmitter<string>();
@@ -56,6 +58,9 @@ export class CustomDropdownComponent {
   getFilteredItems(): any[] {
     if (!this.searchValue || this.searchValue.length === 0) {
       return this.items;
+    }
+    if (this.filterFn) {
+      return this.items.filter(item => this.filterFn!(item, this.searchValue));
     }
     const searchLower = this.searchValue.toLowerCase();
     return this.items.filter(item => 

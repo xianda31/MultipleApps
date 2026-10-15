@@ -51,6 +51,19 @@ const FFB_ENDPOINTS = {
   isolatedPlayers: '/api/ffb/v2/entries/isolatedPlayers',
 } as const;
 
+export interface PlayerSearchOptions {
+  groupSessionId?: number;
+  currentPage?: number;
+  maxPerPage?: number;
+}
+
+export interface PlayerSearchResult {
+  items: ClubMember[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -89,6 +102,7 @@ export class FFB_proxyService {
       ...(options?.['headers'] || {}),
       ...this.getTraceHeaders(),
     };
+
     return {
       ...(options || {}),
       ['headers']: mergedHeaders,
@@ -163,68 +177,57 @@ export class FFB_proxyService {
     }
   }
 
-  private buildPlayerSearchQueryParams(hint: string, currentPage?: number, maxPerPage?: number): Record<string, string> {
+  private buildPlayerSearchQueryParams(hint: string, options: PlayerSearchOptions = {}): Record<string, string> {
     const queryParams: Record<string, string> = {
       name: hint,
-      sortField: 'lastName',
-      alive: '1',
     };
 
-    if (currentPage !== undefined) {
-      queryParams['currentPage'] = String(currentPage);
+    if (options.currentPage !== undefined) {
+      queryParams['currentPage'] = String(options.currentPage);
     }
 
-    if (maxPerPage !== undefined) {
-      queryParams['maxPerPage'] = String(maxPerPage);
+    if (options.maxPerPage !== undefined) {
+      queryParams['maxPerPage'] = String(options.maxPerPage);
+    }
+
+    if (options.groupSessionId !== undefined) {
+      queryParams['context[]'] = 'entry.validPlayer';
+      queryParams['context_data[]'] = `entry.validPlayer:groupSession-${options.groupSessionId}`;
     }
 
     return queryParams;
   }
 
-  async searchPlayersSuchAs(hint: string): Promise<ClubMember[]> {   // VALIDATED
+  async searchPlayersSuchAs(hint: string, options: PlayerSearchOptions = {}): Promise<PlayerSearchResult> {
     try {
       await this.ensureConfigReady();
-      const perPage = 80;
+      const currentPage = options.currentPage ?? 1;
+      const maxPerPage = options.maxPerPage ?? 40;
       const restOperation = get({
         apiName: this.API_NAME,
         path: this.buildPath(FFB_ENDPOINTS.personSearch),
         options: this.withTraceHeaders({
-          queryParams: this.buildPlayerSearchQueryParams(hint, 1, perPage)
+          queryParams: this.buildPlayerSearchQueryParams(hint, {
+            ...options,
+            currentPage,
+            maxPerPage,
+          })
         })
       });
       const { body } = await restOperation.response;
       const data = await body.json();
-
-      const firstPageItems = toClubMemberList(data);
       const pagination = (data as any)?.pagination;
+      const items = toClubMemberList(data);
 
-      if (!pagination || typeof pagination !== 'object') {
-        return firstPageItems;
-      }
-
-      const totalPages = pagination.total_pages || 1;
-      if (totalPages <= 1) {
-        return firstPageItems;
-      }
-
-      const allItems: ClubMember[] = [...firstPageItems];
-      for (let currentPage = 2; currentPage <= totalPages; currentPage++) {
-        const nextRestOperation = get({
-          apiName: this.API_NAME,
-          path: this.buildPath(FFB_ENDPOINTS.personSearch),
-          options: this.withTraceHeaders({
-            queryParams: this.buildPlayerSearchQueryParams(hint, currentPage, perPage)
-          })
-        });
-        const { body: nextBody } = await nextRestOperation.response;
-        const nextData = await nextBody.json();
-        allItems.push(...toClubMemberList(nextData));
-      }
-
-      return allItems;
+      return {
+        items,
+        totalItems: Number(pagination?.total_items) || items.length,
+        totalPages: Number(pagination?.total_pages) || 1,
+        currentPage: Number(pagination?.current_page) || currentPage,
+      };
     } catch (error) {
       console.error('[FFB Service] getClubMembers failed:', error);
-      return [];
+      throw error;
     }
   }
   _getTournaments(dateFrom?: Date, dateTo?: Date): Observable<Tournament[]> {  // VALIDATED - returns V2 native interface
