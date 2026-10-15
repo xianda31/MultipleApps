@@ -80,4 +80,23 @@ describe('RecipientSelectorComponent', () => {
     expect(component.selectedCount).toBe(2);
     expect(component.allSelected).toBeTrue();
   });
+
+  it('adds presets without replacing the existing selection', () => {
+    component.applyPreset('ADHERENTS');
+
+    const addedCount = component.addPreset('OVERDUE');
+
+    expect(addedCount).toBe(1);
+    expect(component.selectedCount).toBe(2);
+  });
+
+  it('excludes primary recipient emails from copy selections', () => {
+    component.excludedEmails = ['alice@example.fr'];
+
+    component.applyPreset('ACTIVE');
+
+    expect(component.isSelected('adherent')).toBeFalse();
+    expect(component.isSelected('overdue')).toBeTrue();
+    expect(component.resolve().map((member) => member.id)).toEqual(['overdue']);
+  });
 });

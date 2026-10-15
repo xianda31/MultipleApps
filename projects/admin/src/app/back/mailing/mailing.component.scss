@@ -4,6 +4,64 @@
   border-bottom: 1px solid #dee2e6;
 }
 
+.recipient-summary-card {
+  overflow: visible;
+}
+
+.recipient-summary-row {
+  display: flex;
+  width: 100%;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  border: 0;
+  border-bottom: 1px solid #dee2e6;
+  color: inherit;
+  text-align: left;
+}
+
+button.recipient-summary-row:hover {
+  background: #f8f9fa;
+}
+
+.recipient-summary-row:last-child {
+  border-bottom: 0;
+}
+
+.recipient-summary-row--static {
+  background: #f8f9fa;
+  border-bottom: 0;
+}
+
+.recipient-composer-modal {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.recipient-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
+@media (max-width: 575.98px) {
+  .recipient-composer-modal .modal-dialog {
+    min-height: 100%;
+    margin: 0;
+  }
+
+  .recipient-composer-modal .modal-content {
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
 [contenteditable] {
   &:empty:before {
     content: attr(data-placeholder);

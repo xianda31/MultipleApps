@@ -11,6 +11,8 @@ export class MailingApiService {
   async sendEmail(payload: {
     from: string;
     to: string[];
+    recipientDetails?: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
+    copyRecipients?: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
     cc?: string[];
     subject: string;
     bodyText?: string;
@@ -32,8 +34,10 @@ export class MailingApiService {
     emailTemplate: string;
     closingDate?: string;
     recipients: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
+    copyRecipients?: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
     from?: string;
     cc?: string[];
+    replyTo?: string;
     baseUrl?: string;
     attachments?: Array<{filename: string, content: string, contentType: string}>;
   }): Promise<any> {

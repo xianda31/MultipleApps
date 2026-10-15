@@ -10,8 +10,17 @@ export interface EmailAttachment {
     contentType: string;
 }
 
+export interface EmailRecipient {
+    email: string;
+    name: string;
+    memberId?: string;
+    isExternal?: boolean;
+}
+
 export interface SendEmailParams {
     to: string[];
+    recipientDetails?: EmailRecipient[];
+    copyRecipients?: EmailRecipient[];
     subject: string;
     bodyHtml: string;
     attachments?: EmailAttachment[];
@@ -87,6 +96,8 @@ export class MailingService {
         const emailRequest = {
             from: this.defaultFrom,
             to: params.to,
+            recipientDetails: params.recipientDetails,
+            copyRecipients: params.copyRecipients,
             cc: this.getCcRecipients(),
             subject: params.subject,
             bodyHtml: fullBodyHtml,
@@ -112,6 +123,7 @@ export class MailingService {
         surveyBodyHtml: string;   // corps sans template (markers [SURVEY_LINK] inclus)
         closingDate?: string;
         recipients: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
+        copyRecipients?: EmailRecipient[];
         attachments?: Array<{filename: string; content: string; contentType: string}>;
     }): Promise<any> {
         if (!params.recipients.length) throw new Error('Aucun destinataire');
@@ -123,8 +135,10 @@ export class MailingService {
                 emailTemplate,
                 closingDate: params.closingDate,
                 recipients: params.recipients,
+                copyRecipients: params.copyRecipients,
                 from: this.defaultFrom,
                 cc: this.getCcRecipients(),
+                replyTo: this.defaultReplyTo,
                 baseUrl: window.location.origin,
                 attachments: params.attachments?.length ? params.attachments : undefined,
             });

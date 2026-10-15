@@ -9,6 +9,77 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 const BATCH_CONCURRENCY = 10;
 
+interface MessageRecipient {
+  email: string;
+  name?: string;
+}
+
+function normalizeRecipients(values: unknown): MessageRecipient[] {
+  if (!Array.isArray(values)) return [];
+
+  const recipients = values
+    .map((value): MessageRecipient | null => {
+      if (typeof value === 'string') {
+        const email = value.trim().toLowerCase();
+        return email ? { email } : null;
+      }
+      if (value && typeof value === 'object') {
+        const record = value as Record<string, unknown>;
+        const email = typeof record.email === 'string' ? record.email.trim().toLowerCase() : '';
+        const name = typeof record.name === 'string' ? record.name.trim() : '';
+        return email ? { email, name } : null;
+      }
+      return null;
+    })
+    .filter((recipient): recipient is MessageRecipient => recipient !== null);
+
+  return [...new Map(recipients.map((recipient) => [recipient.email, recipient])).values()];
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function appendHtml(bodyHtml: string, addition: string): string {
+  return bodyHtml.includes('</body>')
+    ? bodyHtml.replace('</body>', `${addition}</body>`)
+    : `${bodyHtml}${addition}`;
+}
+
+function buildRecipientManifest(
+  recipients: MessageRecipient[],
+  sentEmails: Set<string>,
+  skippedEmails: Set<string>,
+  failedEmails: Set<string>,
+): string {
+  const rows = recipients.map((recipient) => {
+    const status = sentEmails.has(recipient.email)
+      ? 'Envoyé'
+      : skippedEmails.has(recipient.email)
+        ? 'Exclu — refus des mailings'
+        : failedEmails.has(recipient.email)
+          ? 'Échec'
+          : 'Non envoyé';
+    const identity = recipient.name
+      ? `${escapeHtml(recipient.name)} &lt;${escapeHtml(recipient.email)}&gt;`
+      : escapeHtml(recipient.email);
+    return `<tr><td style="padding:4px 8px;border-bottom:1px solid #ddd">${identity}</td><td style="padding:4px 8px;border-bottom:1px solid #ddd">${status}</td></tr>`;
+  }).join('');
+
+  return `<hr style="margin-top:30px;border:none;border-top:1px solid #cfd4da">
+    <h3 style="font-size:16px">Compte rendu des destinataires</h3>
+    <p>${sentEmails.size} envoyé(s) · ${skippedEmails.size} exclu(s) · ${failedEmails.size} échec(s)</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr><th style="padding:4px 8px;text-align:left;border-bottom:2px solid #aaa">Destinataire</th><th style="padding:4px 8px;text-align:left;border-bottom:2px solid #aaa">Statut</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -94,8 +165,10 @@ async function handleSurveySend(body: any, event: any) {
     emailTemplate,   // HTML complet avec [SURVEY_LINK] comme marqueur
     closingDate,
     recipients,      // Array<{ email, name, memberId?, isExternal? }>
+    copyRecipients,
     from,
     cc,
+    replyTo,
   } = body;
 
   if (!surveyId || !subject || !emailTemplate || !recipients?.length) {
@@ -167,59 +240,71 @@ async function handleSurveySend(body: any, event: any) {
 
   const sentCount = results.filter(r => r.status === 'sent').length;
   const errors = results.filter(r => r.status === 'error');
-  const ccRequested = !!(cc && cc.length > 0);
+  const primaryRecipients = normalizeRecipients(recipients);
+  const sentEmails = new Set(results.filter(result => result.status === 'sent').map(result => result.email.toLowerCase()));
+  const failedEmails = new Set(results.filter(result => result.status === 'error').map(result => result.email.toLowerCase()));
+  const manifest = buildRecipientManifest(primaryRecipients, sentEmails, new Set(), failedEmails);
+  const trackingRecipients = normalizeRecipients(cc);
+  const requestedCopyRecipients = normalizeRecipients(copyRecipients);
+  const primaryEmails = new Set(primaryRecipients.map(recipient => recipient.email));
+  const allCopyRecipients = normalizeRecipients([...trackingRecipients, ...requestedCopyRecipients])
+    .filter(recipient => !primaryEmails.has(recipient.email));
+  const ccRequested = trackingRecipients.length > 0;
+  const copyRequested = allCopyRecipients.length > 0;
+  const copyFailures: Array<{ email: string; error: string }> = [];
+  const copyMessageIds: string[] = [];
+  const ccHtml = appendHtml(
+    emailTemplate.replace(/\[SURVEY_LINK\]/g, '#'),
+    `<p style="font-size:12px;color:#777">Les liens de sondage envoyés aux destinataires sont individualisés et ne figurent pas dans cette copie.</p>${manifest}`,
+  );
 
-  // Copie globale unique de suivi (sans lien tokenise, qui est propre a chaque destinataire).
-  let ccSent = false;
-  let ccError: string | undefined;
-  let ccMessageId: string | undefined;
-  let ccRecipient: string | undefined;
-  if (ccRequested) {
-    console.log('[SES_TRACKING_COPY] send:start', {
-      mode: 'survey',
-      recipient: cc[0],
-      recipientCount: cc.length,
-    });
-    const trackingNote = `<hr style="margin-top:30px;border:none;border-top:1px solid #e0e0e0"><p style="text-align:center;font-size:12px;color:#999">Copie de suivi envoyee au club. Les liens de sondage dans les emails destinataires sont individualises.</p>`;
-    const ccHtml = emailTemplate
-      .replace(/\[SURVEY_LINK\]/g, '#')
-      .replace('</body>', trackingNote + '</body>');
-
+  for (const copyRecipient of allCopyRecipients) {
     try {
-      ccRecipient = cc[0];
-      const ccResult = await ses.send(new SendEmailCommand({
-        Source: fromAddress,
-        Destination: {
-          ToAddresses: cc,
-        },
-        Message: {
-          Subject: { Data: `[COPIE] ${subject}`, Charset: 'UTF-8' },
-          Body: { Html: { Data: ccHtml, Charset: 'UTF-8' } },
-        },
-      }));
-      ccSent = true;
-      ccMessageId = ccResult?.MessageId;
-      console.log('[SES_TRACKING_COPY] send:success', {
-        mode: 'survey',
-        recipient: ccRecipient,
-        messageId: ccMessageId,
-      });
+      let messageId: string | undefined;
+      if (body.attachments?.length) {
+        const rawEmail = createRawEmail(fromAddress, [copyRecipient.email], `[COPIE] ${subject}`, ccHtml, body.attachments, undefined, replyTo);
+        const result = await sendWithRetry(() => ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } })));
+        messageId = (result as any)?.MessageId;
+      } else {
+        const params: any = {
+          Source: fromAddress,
+          Destination: { ToAddresses: [copyRecipient.email] },
+          Message: {
+            Subject: { Data: `[COPIE] ${subject}`, Charset: 'UTF-8' },
+            Body: { Html: { Data: ccHtml, Charset: 'UTF-8' } },
+          },
+        };
+        if (replyTo) params.ReplyToAddresses = [replyTo];
+        const result = await sendWithRetry(() => ses.send(new SendEmailCommand(params)));
+        messageId = (result as any)?.MessageId;
+      }
+      if (messageId) copyMessageIds.push(messageId);
     } catch (error: any) {
-      ccError = error?.message || 'CC send failed';
-      console.error('[SES_TRACKING_COPY] send:error', {
-        mode: 'survey',
-        recipient: ccRecipient || cc[0],
-        errorName: error?.name || error?.Code || 'UnknownError',
-        errorMessage: ccError,
-        httpStatusCode: error?.$metadata?.httpStatusCode,
-        requestId: error?.$metadata?.requestId,
-      });
+      copyFailures.push({ email: copyRecipient.email, error: error?.message || 'Copy send failed' });
     }
   }
 
+  const ccRecipient = trackingRecipients[0]?.email;
+  const ccSent = !ccRequested || !ccRecipient || !copyFailures.some(failure => failure.email === ccRecipient);
+  const ccError = ccRecipient ? copyFailures.find(failure => failure.email === ccRecipient)?.error : undefined;
+  const ccMessageId = copyMessageIds[0];
+
   return {
     statusCode: 200,
-    body: JSON.stringify({ success: true, sentCount, errorCount: errors.length, errors, ccRequested, ccSent, ccError, ccMessageId, ccRecipient }),
+    body: JSON.stringify({
+      success: true,
+      sentCount,
+      errorCount: errors.length,
+      errors,
+      ccRequested,
+      ccSent,
+      ccError,
+      ccMessageId,
+      ccRecipient,
+      copyRequested,
+      copySentCount: allCopyRecipients.length - copyFailures.length,
+      copyFailures,
+    }),
   };
 }
 
@@ -274,7 +359,7 @@ export const handler = async (event: any) => {
     return handleSurveySend(parsedBody, event);
   }
 
-  const { from, to, cc, subject, bodyText, bodyHtml, attachments, replyTo } = parsedBody;
+  const { from, to, recipientDetails, copyRecipients, cc, subject, bodyText, bodyHtml, attachments, replyTo } = parsedBody;
   
   console.log('📧 Email request:', { 
     from, 
@@ -407,67 +492,60 @@ export const handler = async (event: any) => {
       });
     }
 
-    // Si un CC est defini, envoyer un email separe au CC (sans lien de desinscription personnalise)
-    const ccRequested = !!(cc && cc.length > 0);
-    let ccSent = false;
-    let ccError: string | undefined;
-    let ccMessageId: string | undefined;
-    let ccRecipient: string | undefined;
-    if (ccRequested) {
-      console.log('[SES_TRACKING_COPY] send:start', {
-        mode: 'mailing',
-        recipient: cc[0],
-        recipientCount: cc.length,
-        hasAttachments: !!(attachments && attachments.length > 0),
-      });
+    const detailsByEmail = new Map(normalizeRecipients(recipientDetails).map(recipient => [recipient.email, recipient]));
+    const primaryRecipients = normalizeRecipients(recipients).map(recipient => detailsByEmail.get(recipient.email) ?? recipient);
+    const failedEmails = new Set(failures.map(failure => failure.email.toLowerCase()));
+    const skippedEmails = new Set(skippedRecipients.map((email: string) => email.toLowerCase()));
+    const sentEmails = new Set(validRecipients
+      .map((email: string) => email.toLowerCase())
+      .filter((email: string) => !failedEmails.has(email)));
+    const manifest = buildRecipientManifest(primaryRecipients, sentEmails, skippedEmails, failedEmails);
+    const trackingRecipients = normalizeRecipients(cc);
+    const requestedCopyRecipients = normalizeRecipients(copyRecipients);
+    const primaryEmails = new Set(primaryRecipients.map(recipient => recipient.email));
+    const allCopyRecipients = normalizeRecipients([...trackingRecipients, ...requestedCopyRecipients])
+      .filter(recipient => !primaryEmails.has(recipient.email));
+    const ccRequested = trackingRecipients.length > 0;
+    const copyRequested = allCopyRecipients.length > 0;
+    const copyFailures: Array<{ email: string; error: string }> = [];
+    const copyResults: Array<{ email: string; messageId?: string }> = [];
+    const copyHtml = appendHtml(
+      bodyHtml || `<p>${bodyText || ''}</p>`,
+      `<p style="font-size:12px;color:#777">Copie de suivi : aucun lien de désinscription destinataire n’est inclus.</p>${manifest}`,
+    );
 
-      const ccUnsubscribeLink = `<hr style="margin-top: 30px; border: none; border-top: 1px solid #e0e0e0;"><p style="text-align: center; font-size: 12px; color: #999;">Email envoyé en copie pour suivi.</p>`;
-      const ccHtml = (bodyHtml || `<p>${bodyText || ''}</p>`) + ccUnsubscribeLink;
-
+    for (const copyRecipient of allCopyRecipients) {
       try {
-        ccRecipient = cc[0];
+        let messageId: string | undefined;
         if (attachments && attachments.length > 0) {
-          const rawEmail = createRawEmail(from, cc, `[COPIE] ${subject}`, ccHtml, attachments, undefined, replyTo);
-          const ccRawResult = await sendWithRetry(() => ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } })));
-          ccMessageId = (ccRawResult as any)?.MessageId;
+          const rawEmail = createRawEmail(from, [copyRecipient.email], `[COPIE] ${subject}`, copyHtml, attachments, undefined, replyTo);
+          const result = await sendWithRetry(() => ses.send(new SendRawEmailCommand({ RawMessage: { Data: Buffer.from(rawEmail) } })));
+          messageId = (result as any)?.MessageId;
         } else {
-          const ccParams: any = {
+          const params: any = {
             Source: from,
-            Destination: {
-              ToAddresses: cc,
-            },
+            Destination: { ToAddresses: [copyRecipient.email] },
             Message: {
               Subject: { Data: `[COPIE] ${subject}` },
-              Body: { Html: { Data: ccHtml } }
+              Body: { Html: { Data: copyHtml } },
             },
           };
-
-          if (replyTo) {
-            ccParams.ReplyToAddresses = [replyTo];
-          }
-
-          const ccResult = await sendWithRetry(() => ses.send(new SendEmailCommand(ccParams)));
-          ccMessageId = (ccResult as any)?.MessageId;
+          if (replyTo) params.ReplyToAddresses = [replyTo];
+          const result = await sendWithRetry(() => ses.send(new SendEmailCommand(params)));
+          messageId = (result as any)?.MessageId;
         }
-        ccSent = true;
-        console.log('[SES_TRACKING_COPY] send:success', {
-          mode: 'mailing',
-          recipient: ccRecipient,
-          messageId: ccMessageId,
-          hasAttachments: !!(attachments && attachments.length > 0),
-        });
+        copyResults.push({ email: copyRecipient.email, messageId });
       } catch (error: any) {
-        ccError = error?.message || 'CC send failed';
-        console.error('[SES_TRACKING_COPY] send:error', {
-          mode: 'mailing',
-          recipient: ccRecipient || cc[0],
-          errorName: error?.name || error?.Code || 'UnknownError',
-          errorMessage: ccError,
-          httpStatusCode: error?.$metadata?.httpStatusCode,
-          requestId: error?.$metadata?.requestId,
-        });
+        copyFailures.push({ email: copyRecipient.email, error: error?.message || 'Copy send failed' });
       }
     }
+
+    const ccRecipient = trackingRecipients[0]?.email;
+    const ccResult = ccRecipient ? copyResults.find(result => result.email === ccRecipient) : undefined;
+    const ccFailure = ccRecipient ? copyFailures.find(failure => failure.email === ccRecipient) : undefined;
+    const ccSent = !!ccResult;
+    const ccError = ccFailure?.error;
+    const ccMessageId = ccResult?.messageId;
 
     return { 
       statusCode: 200, 
@@ -484,6 +562,9 @@ export const handler = async (event: any) => {
         ccError,
         ccMessageId,
         ccRecipient,
+        copyRequested,
+        copySentCount: copyResults.length,
+        copyFailures,
       }) 
     };
   } catch (err: any) {

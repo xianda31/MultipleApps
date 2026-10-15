@@ -9,121 +9,245 @@
 				<!-- Destinataires -->
 				<div class="mb-3">
 					<label class="form-label">Destinataires</label>
-					<div class="card member-mailing-card mb-2">
-						<div class="card-body py-2">
-							<div class="small fw-semibold mb-2">Membres et listes de diffusion</div>
-							<div class="mailing-list-toolbar mb-2">
-						<div class="row g-2 align-items-end">
-							<div class="col-12 d-flex flex-column flex-sm-row align-items-sm-center gap-1 gap-sm-2">
-								<label class="form-label small mb-0 flex-shrink-0" for="mailingListSelect">Diffusion :</label>
-								<select id="mailingListSelect" class="form-select form-select-sm"
-									[ngModel]="selectedDistributionId" name="mailingListId"
-									(ngModelChange)="onMailingListSelect($event)">
-									<option value="">Liste libre</option>
-									<optgroup label="Listes automatiques">
-										<option value="@active">Membres actifs</option>
-										<option value="@adherents">Adhérents</option>
-										<option value="@overdue">Adhésion non renouvelée</option>
-									</optgroup>
-									@if (mailingLists.length > 0) {
-										<optgroup label="Listes personnelles">
-											@for (list of mailingLists; track list.id) {
-												<option [value]="list.id">{{ list.title }} de {{ list.owner }} : {{ list.members.length }} membre(s)</option>
-											}
-										</optgroup>
-									}
-								</select>
-							</div>
+					<div class="card recipient-summary-card">
+						<button type="button" class="recipient-summary-row" (click)="openRecipientComposer('to')">
+							<span>
+								<strong>À</strong>
+								<span class="d-block small text-muted">{{ totalRecipientCount }} destinataire(s)</span>
+							</span>
+							<span class="btn btn-sm btn-outline-primary">Modifier</span>
+						</button>
+						<button type="button" class="recipient-summary-row" (click)="openRecipientComposer('copy')">
+							<span>
+								<strong>Copies informées</strong>
+								<span class="d-block small text-muted">{{ totalCopyRecipientCount }} personne(s)</span>
+							</span>
+							<span class="btn btn-sm btn-outline-primary">Modifier</span>
+						</button>
+						<div class="recipient-summary-row recipient-summary-row--static">
+							<span>
+								<strong>Copie automatique du club</strong>
+								<span class="d-block small text-muted">{{ configuredCcEmail || 'Non configurée' }}</span>
+							</span>
 						</div>
-						<div class="d-flex flex-wrap gap-2 mt-2">
-							<button type="button" class="btn btn-sm btn-primary"
-								[disabled]="mailingListBusy || creatingMailingList || selectedListMembers.length === 0"
-								(click)="startMailingListCreation()">
-								<i class="bi bi-plus-lg me-1"></i>Nouvelle liste
-							</button>
-							<button type="button" class="btn btn-sm btn-outline-primary"
-								[disabled]="mailingListBusy || !selectedMailingList || selectedListMembers.length === 0"
-								(click)="updateSelectedMailingList()">
-								<i class="bi bi-floppy me-1"></i>Mettre à jour
-							</button>
-							<button type="button" class="btn btn-sm btn-outline-danger"
-								[disabled]="mailingListBusy || !selectedMailingList"
-								(click)="deleteSelectedMailingList()" title="Supprimer la liste">
-								<i class="bi bi-trash me-1"></i>Supprimer
-							</button>
-							@if (mailingListDirty) {
-								<span class="small text-warning align-self-center">Sélection modifiée, liste non enregistrée</span>
-							}
-						</div>
-						@if (creatingMailingList) {
-							<div class="row g-2 align-items-end mt-1">
-								<div class="col-sm-8">
-									<label class="form-label small mb-1" for="mailingListTitle">Titre de la nouvelle liste</label>
-									<input id="mailingListTitle" class="form-control form-control-sm"
-										[(ngModel)]="mailingListTitle" name="mailingListTitle" maxlength="100"
-										placeholder="Ex. Compétiteurs du jeudi">
-								</div>
-								<div class="col-sm-4 d-flex gap-2">
-									<button type="button" class="btn btn-sm btn-primary flex-grow-1"
-										[disabled]="mailingListBusy || !mailingListTitle.trim()"
-										(click)="createMailingList()">Créer</button>
-									<button type="button" class="btn btn-sm btn-outline-secondary"
-										[disabled]="mailingListBusy"
-										(click)="cancelMailingListCreation()">Annuler</button>
-								</div>
-							</div>
-						}
-						@if (mailingListMessage) {
-							<div class="small text-success mt-2">{{ mailingListMessage }}</div>
-						}
-						@if (mailingListError) {
-							<div class="small text-danger mt-2">{{ mailingListError }}</div>
-						}
-							</div>
-							<app-recipient-selector
-								searchPlaceholder="Rechercher…"
-								(selectionChange)="onRecipientsChange($event)"
-								(membershipChange)="onMembershipChange($event)">
-							</app-recipient-selector>
-						</div>
-					</div>
-					<div class="card mt-2">
-						<div class="card-body py-2">
-							<div class="small fw-semibold mb-2">Ajouter un destinataire externe (non-membre)</div>
-							<div class="row g-2 align-items-end">
-								<div class="col-md-5">
-									<label class="form-label small mb-1">Email externe</label>
-									<input class="form-control form-control-sm" [(ngModel)]="externalEmail" name="externalEmail"
-										placeholder="exemple@domaine.fr">
-								</div>
-								<div class="col-md-3">
-									<label class="form-label small mb-1">Prénom</label>
-									<input class="form-control form-control-sm" [(ngModel)]="externalFirstName" name="externalFirstName"
-										placeholder="Prénom">
-								</div>
-								<div class="col-md-2">
-									<label class="form-label small mb-1">Nom</label>
-									<input class="form-control form-control-sm" [(ngModel)]="externalLastName" name="externalLastName"
-										placeholder="Nom">
-								</div>
-								<div class="col-md-2 d-grid">
-									<button type="button" class="btn btn-sm btn-outline-primary" (click)="addExternalRecipient()">Ajouter</button>
-								</div>
-							</div>
-							@if (externalRecipientError) {
-								<div class="small text-danger mt-2">{{ externalRecipientError }}</div>
-							}
-							@if (externalRecipients.length > 0) {
-								<div class="mt-2 small">
-									<div class="text-muted mb-1">Destinataires externes ajoutés :</div>
-									@for (r of externalRecipients; track r.email; let i = $index) {
-										<div class="d-flex align-items-center justify-content-between border rounded px-2 py-1 mb-1">
-											<span>{{ r.email }} @if (r.name) { - {{ r.name }} }</span>
-											<button type="button" class="btn btn-sm btn-link text-danger p-0" (click)="removeExternalRecipient(i)">Retirer</button>
+
+						<div class="modal recipient-composer-modal" [class.d-block]="recipientComposerOpen"
+							[class.d-none]="!recipientComposerOpen" tabindex="-1" aria-modal="true" role="dialog">
+							<div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+								<div class="modal-content">
+									<div class="modal-header py-2">
+										<div>
+											<h5 class="modal-title mb-0">Gérer les destinataires</h5>
+											<div class="small text-muted">
+												{{ totalRecipientCount }} destinataire(s) · {{ totalCopyRecipientCount }} copie(s) informée(s)
+											</div>
 										</div>
-									}
+										<button type="button" class="btn-close" aria-label="Annuler" (click)="cancelRecipientComposer()"></button>
+									</div>
+
+									<div class="modal-body">
+										<ul class="nav nav-tabs mb-3">
+											<li class="nav-item">
+												<button type="button" class="nav-link" [class.active]="recipientComposerTab === 'to'"
+													(click)="recipientComposerTab = 'to'">
+													Destinataires <span class="badge text-bg-secondary ms-1">{{ totalRecipientCount }}</span>
+												</button>
+											</li>
+											<li class="nav-item">
+												<button type="button" class="nav-link" [class.active]="recipientComposerTab === 'copy'"
+													(click)="recipientComposerTab = 'copy'">
+													Copies informées <span class="badge text-bg-secondary ms-1">{{ totalCopyRecipientCount }}</span>
+												</button>
+											</li>
+										</ul>
+
+										<div [hidden]="recipientComposerTab !== 'to'">
+											<div class="alert alert-light border py-2 small">
+												Chaque destinataire reçoit un message individuel et ne voit pas les autres adresses.
+											</div>
+											<div class="row g-2 align-items-end mb-2">
+												<div class="col-md-9">
+													<label class="form-label small mb-1" for="toMailingListSelect">Ajouter depuis une liste</label>
+													<select id="toMailingListSelect" class="form-select form-select-sm"
+														[(ngModel)]="selectedDistributionId" name="toMailingListId">
+														<option value="">Sélectionner une liste…</option>
+														<optgroup label="Listes automatiques">
+															<option value="@active">Membres actifs</option>
+															<option value="@adherents">Adhérents</option>
+															<option value="@overdue">Adhésion non renouvelée</option>
+														</optgroup>
+														@if (mailingLists.length > 0) {
+															<optgroup label="Listes personnelles">
+																@for (list of mailingLists; track list.id) {
+																	<option [value]="list.id">{{ list.title }} de {{ list.owner }} · {{ list.members.length }}</option>
+																}
+															</optgroup>
+														}
+													</select>
+												</div>
+												<div class="col-md-3 d-grid">
+													<button type="button" class="btn btn-sm btn-primary"
+														[disabled]="!selectedDistributionId"
+														(click)="addSelectedMailingList('to')">Ajouter la liste</button>
+												</div>
+											</div>
+
+											<div class="d-flex flex-wrap gap-2 mb-2">
+												<button type="button" class="btn btn-sm btn-outline-primary"
+													[disabled]="mailingListBusy || creatingMailingList || selectedListMembers.length === 0"
+													(click)="startMailingListCreation()">Enregistrer comme nouvelle liste</button>
+												<button type="button" class="btn btn-sm btn-outline-secondary"
+													[disabled]="mailingListBusy || !selectedMailingList || selectedListMembers.length === 0"
+													(click)="updateSelectedMailingList()">Mettre à jour la liste choisie</button>
+												<button type="button" class="btn btn-sm btn-outline-danger"
+													[disabled]="mailingListBusy || !selectedMailingList"
+													(click)="deleteSelectedMailingList()">Supprimer la liste choisie</button>
+											</div>
+
+											@if (creatingMailingList) {
+												<div class="row g-2 align-items-end mb-2">
+													<div class="col-sm-9">
+														<label class="form-label small mb-1" for="mailingListTitle">Titre de la nouvelle liste</label>
+														<input id="mailingListTitle" class="form-control form-control-sm"
+															[(ngModel)]="mailingListTitle" name="mailingListTitle" maxlength="100">
+													</div>
+													<div class="col-sm-3 d-flex gap-2">
+														<button type="button" class="btn btn-sm btn-primary flex-grow-1"
+															[disabled]="mailingListBusy || !mailingListTitle.trim()"
+															(click)="createMailingList()">Créer</button>
+														<button type="button" class="btn btn-sm btn-outline-secondary"
+															(click)="cancelMailingListCreation()">Annuler</button>
+													</div>
+												</div>
+											}
+
+											<app-recipient-selector #recipientSelector
+												searchPlaceholder="Rechercher un membre…"
+												(selectionChange)="onRecipientsChange($event)"
+												(membershipChange)="onMembershipChange($event)">
+											</app-recipient-selector>
+
+											<div class="border rounded p-2 mt-3">
+												<div class="small fw-semibold mb-2">Ajouter un destinataire externe</div>
+												<div class="row g-2 align-items-end">
+													<div class="col-md-5">
+														<input class="form-control form-control-sm" [(ngModel)]="externalEmail"
+															name="externalEmail" placeholder="email@example.fr">
+													</div>
+													<div class="col-md-3">
+														<input class="form-control form-control-sm" [(ngModel)]="externalFirstName"
+															name="externalFirstName" placeholder="Prénom">
+													</div>
+													<div class="col-md-2">
+														<input class="form-control form-control-sm" [(ngModel)]="externalLastName"
+															name="externalLastName" placeholder="Nom">
+													</div>
+													<div class="col-md-2 d-grid">
+														<button type="button" class="btn btn-sm btn-outline-primary"
+															(click)="addExternalRecipient()">Ajouter</button>
+													</div>
+												</div>
+												@if (externalRecipientError) {
+													<div class="small text-danger mt-2">{{ externalRecipientError }}</div>
+												}
+												@for (recipient of externalRecipients; track recipient.email; let index = $index) {
+													<div class="recipient-chip mt-2">
+														<span>{{ recipient.name || recipient.email }} <small class="text-muted">{{ recipient.email }}</small></span>
+														<button type="button" class="btn btn-sm btn-link text-danger p-0"
+															(click)="removeExternalRecipient(index)">Retirer</button>
+													</div>
+												}
+											</div>
+										</div>
+
+										<div [hidden]="recipientComposerTab !== 'copy'">
+											<div class="alert alert-info py-2 small">
+												Les personnes en copie reçoivent un unique compte rendu avec le contenu du message et la liste
+												des destinataires. Les liens individuels de sondage n’y figurent pas.
+											</div>
+											<div class="row g-2 align-items-end mb-2">
+												<div class="col-md-9">
+													<label class="form-label small mb-1" for="copyMailingListSelect">Ajouter depuis une liste</label>
+													<select id="copyMailingListSelect" class="form-select form-select-sm"
+														[(ngModel)]="selectedCopyDistributionId" name="copyMailingListId">
+														<option value="">Sélectionner une liste…</option>
+														<optgroup label="Listes automatiques">
+															<option value="@active">Membres actifs</option>
+															<option value="@adherents">Adhérents</option>
+															<option value="@overdue">Adhésion non renouvelée</option>
+														</optgroup>
+														@if (mailingLists.length > 0) {
+															<optgroup label="Listes personnelles">
+																@for (list of mailingLists; track list.id) {
+																	<option [value]="list.id">{{ list.title }} de {{ list.owner }} · {{ list.members.length }}</option>
+																}
+															</optgroup>
+														}
+													</select>
+												</div>
+												<div class="col-md-3 d-grid">
+													<button type="button" class="btn btn-sm btn-primary"
+														[disabled]="!selectedCopyDistributionId"
+														(click)="addSelectedMailingList('copy')">Ajouter la liste</button>
+												</div>
+											</div>
+
+											<app-recipient-selector #copyRecipientSelector
+												searchPlaceholder="Rechercher une personne à informer…"
+												[excludedEmails]="primaryRecipientEmails"
+												(selectionChange)="onCopyRecipientsChange($event)">
+											</app-recipient-selector>
+
+											<div class="border rounded p-2 mt-3">
+												<div class="small fw-semibold mb-2">Ajouter une adresse externe en copie</div>
+												<div class="row g-2 align-items-end">
+													<div class="col-md-6">
+														<input class="form-control form-control-sm" [(ngModel)]="externalCopyEmail"
+															name="externalCopyEmail" placeholder="email@example.fr">
+													</div>
+													<div class="col-md-4">
+														<input class="form-control form-control-sm" [(ngModel)]="externalCopyName"
+															name="externalCopyName" placeholder="Nom (optionnel)">
+													</div>
+													<div class="col-md-2 d-grid">
+														<button type="button" class="btn btn-sm btn-outline-primary"
+															(click)="addExternalCopyRecipient()">Ajouter</button>
+													</div>
+												</div>
+												@if (externalCopyRecipientError) {
+													<div class="small text-danger mt-2">{{ externalCopyRecipientError }}</div>
+												}
+												@for (recipient of externalCopyRecipients; track recipient.email; let index = $index) {
+													<div class="recipient-chip mt-2">
+														<span>{{ recipient.name || recipient.email }} <small class="text-muted">{{ recipient.email }}</small></span>
+														<button type="button" class="btn btn-sm btn-link text-danger p-0"
+															(click)="removeExternalCopyRecipient(index)">Retirer</button>
+													</div>
+												}
+											</div>
+
+											<div class="small text-muted mt-3">
+												Copie automatique du club : <strong>{{ configuredCcEmail || 'non configurée' }}</strong>
+											</div>
+										</div>
+
+										@if (recipientSelectionMessage) {
+											<div class="alert alert-secondary py-2 small mt-3 mb-0">{{ recipientSelectionMessage }}</div>
+										}
+										@if (mailingListMessage) {
+											<div class="small text-success mt-2">{{ mailingListMessage }}</div>
+										}
+										@if (mailingListError) {
+											<div class="small text-danger mt-2">{{ mailingListError }}</div>
+										}
+									</div>
+
+									<div class="modal-footer py-2">
+										<button type="button" class="btn btn-outline-secondary" (click)="cancelRecipientComposer()">Annuler</button>
+										<button type="button" class="btn btn-primary" (click)="applyRecipientComposer()">Appliquer</button>
+									</div>
 								</div>
-							}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -244,6 +368,12 @@
 					</div>
 					<div class="mt-2 small text-warning" *ngIf="result.ccRequested && result.ccError">
 						⚠️ Copie club non envoyée : {{ result.ccError }}
+					</div>
+					<div class="mt-2 small" *ngIf="result.copyRequested">
+						📨 {{ result.copySentCount }} copie(s) de suivi envoyée(s).
+						<div class="text-warning" *ngIf="result.copyFailures?.length">
+							{{ result.copyFailures.length }} copie(s) en échec.
+						</div>
 					</div>
 					<div class="mt-2 small text-muted" *ngIf="!result.ccRequested">
 						ℹ️ Aucune adresse de copie club configurée (ccEmail).

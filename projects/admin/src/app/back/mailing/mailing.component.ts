@@ -24,7 +24,8 @@ import { MailingList } from './mailing-list.interface';
 })
 export class MailingComponent implements OnInit, AfterViewInit {
   @ViewChild('editorDiv') editorDiv!: ElementRef<HTMLDivElement>;
-  @ViewChild(RecipientSelectorComponent) recipientSelector?: RecipientSelectorComponent;
+  @ViewChild('recipientSelector') recipientSelector?: RecipientSelectorComponent;
+  @ViewChild('copyRecipientSelector') copyRecipientSelector?: RecipientSelectorComponent;
 
   // Sondage optionnel
   surveys: SurveyItem[] = [];
@@ -35,6 +36,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
   // Listes de diffusion membres
   mailingLists: MailingList[] = [];
   selectedDistributionId = '';
+  selectedCopyDistributionId = '';
   mailingListTitle = '';
   creatingMailingList = false;
   mailingListBusy = false;
@@ -45,12 +47,26 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   // Message
   recipients: Member[] = [];
+  copyRecipients: Member[] = [];
   selectedListMembers: Member[] = [];
   externalRecipients: Array<{ email: string; name: string }> = [];
+  externalCopyRecipients: Array<{ email: string; name: string }> = [];
   externalEmail = '';
   externalFirstName = '';
   externalLastName = '';
   externalRecipientError: string | null = null;
+  externalCopyEmail = '';
+  externalCopyName = '';
+  externalCopyRecipientError: string | null = null;
+  recipientComposerOpen = false;
+  recipientComposerTab: 'to' | 'copy' = 'to';
+  recipientSelectionMessage: string | null = null;
+  private recipientSnapshot?: {
+    recipientIds: string[];
+    copyRecipientIds: string[];
+    externalRecipients: Array<{ email: string; name: string }>;
+    externalCopyRecipients: Array<{ email: string; name: string }>;
+  };
   subject = '';
   bodyHtml = '';
   previewHtml: SafeHtml = '';
@@ -63,7 +79,14 @@ export class MailingComponent implements OnInit, AfterViewInit {
   get isSurveyMode(): boolean { return !!this.selectedSurveyId; }
   get surveyRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
   get totalRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
+  get totalCopyRecipientCount(): number { return this.copyRecipients.length + this.externalCopyRecipients.length; }
   get configuredCcEmail(): string { return this.mailingService.getConfiguredCcEmail(); }
+  get primaryRecipientEmails(): string[] {
+    return [
+      ...this.recipients.map((member) => member.email ?? ''),
+      ...this.externalRecipients.map((recipient) => recipient.email),
+    ].filter(Boolean);
+  }
   get selectedMailingList(): MailingList | null {
     return this.mailingLists.find((list) => list.id === this.selectedDistributionId) ?? null;
   }
@@ -138,6 +161,16 @@ export class MailingComponent implements OnInit, AfterViewInit {
   onRecipientsChange(members: Member[]) {
     this.recipients = members;
     this.externalRecipientError = null;
+    const primaryEmails = this.primaryRecipientEmails;
+    this.copyRecipientSelector?.removeEmails(primaryEmails);
+    const normalizedPrimaryEmails = new Set(primaryEmails.map((email) => email.trim().toLowerCase()));
+    this.externalCopyRecipients = this.externalCopyRecipients
+      .filter((recipient) => !normalizedPrimaryEmails.has(recipient.email));
+  }
+
+  onCopyRecipientsChange(members: Member[]) {
+    this.copyRecipients = members;
+    this.externalCopyRecipientError = null;
   }
 
   onMembershipChange(members: Member[]) {
@@ -147,29 +180,59 @@ export class MailingComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onMailingListSelect(id: string): void {
-    this.selectedDistributionId = id;
-    this.cancelMailingListCreation();
-    this.mailingListDirty = false;
-    this.clearMailingListFeedback();
-    if (!this.recipientSelector) return;
+  addSelectedMailingList(target: 'to' | 'copy'): void {
+    const id = target === 'to' ? this.selectedDistributionId : this.selectedCopyDistributionId;
+    const selector = target === 'to' ? this.recipientSelector : this.copyRecipientSelector;
+    if (!id || !selector) {
+      this.recipientSelectionMessage = 'Sélectionnez une liste à ajouter.';
+      return;
+    }
 
     const preset = this.getRecipientPreset(id);
     if (preset) {
-      this.applyingMailingList = true;
-      this.recipientSelector.applyPreset(preset);
-      this.applyingMailingList = false;
+      const addedCount = selector.addPreset(preset);
+      this.recipientSelectionMessage = `${addedCount} nouveau(x) membre(s) ajouté(s).`;
       return;
     }
 
-    if (id) {
-      this.loadSelectedMailingList();
+    const mailingList = this.mailingLists.find((list) => list.id === id);
+    if (!mailingList) {
+      this.recipientSelectionMessage = 'Liste de diffusion introuvable.';
       return;
     }
 
-    this.applyingMailingList = true;
-    this.recipientSelector.clearSelection();
-    this.applyingMailingList = false;
+    const result = selector.addMemberNames(mailingList.members);
+    this.recipientSelectionMessage = result.unavailableNames.length > 0
+      ? `${result.addedCount} ajouté(s), ${result.unavailableNames.length} non chargeable(s).`
+      : `${result.addedCount} nouveau(x) membre(s) ajouté(s) depuis « ${mailingList.title} ».`;
+  }
+
+  openRecipientComposer(tab: 'to' | 'copy' = 'to'): void {
+    this.recipientSnapshot = {
+      recipientIds: this.recipientSelector?.selectedMemberIds() ?? [],
+      copyRecipientIds: this.copyRecipientSelector?.selectedMemberIds() ?? [],
+      externalRecipients: this.externalRecipients.map((recipient) => ({ ...recipient })),
+      externalCopyRecipients: this.externalCopyRecipients.map((recipient) => ({ ...recipient })),
+    };
+    this.recipientComposerTab = tab;
+    this.recipientSelectionMessage = null;
+    this.recipientComposerOpen = true;
+  }
+
+  applyRecipientComposer(): void {
+    this.recipientSnapshot = undefined;
+    this.recipientComposerOpen = false;
+  }
+
+  cancelRecipientComposer(): void {
+    if (this.recipientSnapshot) {
+      this.recipientSelector?.setSelectedMemberIds(this.recipientSnapshot.recipientIds);
+      this.copyRecipientSelector?.setSelectedMemberIds(this.recipientSnapshot.copyRecipientIds);
+      this.externalRecipients = this.recipientSnapshot.externalRecipients.map((recipient) => ({ ...recipient }));
+      this.externalCopyRecipients = this.recipientSnapshot.externalCopyRecipients.map((recipient) => ({ ...recipient }));
+    }
+    this.recipientSnapshot = undefined;
+    this.recipientComposerOpen = false;
   }
 
   startMailingListCreation(): void {
@@ -333,6 +396,8 @@ export class MailingComponent implements OnInit, AfterViewInit {
     }
 
     this.externalRecipients.push({ email, name });
+    this.copyRecipientSelector?.removeEmails([email]);
+    this.externalCopyRecipients = this.externalCopyRecipients.filter((recipient) => recipient.email !== email);
     this.externalEmail = '';
     this.externalFirstName = '';
     this.externalLastName = '';
@@ -341,6 +406,41 @@ export class MailingComponent implements OnInit, AfterViewInit {
   removeExternalRecipient(index: number) {
     this.externalRecipients.splice(index, 1);
     this.externalRecipientError = null;
+  }
+
+  addExternalCopyRecipient(): void {
+    this.externalCopyRecipientError = null;
+    const email = this.externalCopyEmail.trim().toLowerCase();
+    const name = this.externalCopyName.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      this.externalCopyRecipientError = 'Adresse email invalide.';
+      return;
+    }
+    if (this.primaryRecipientEmails.some((recipientEmail) => recipientEmail.trim().toLowerCase() === email)) {
+      this.externalCopyRecipientError = 'Cette adresse est déjà destinataire principale.';
+      return;
+    }
+    if (this.configuredCcEmail.trim().toLowerCase() === email) {
+      this.externalCopyRecipientError = 'Cette adresse reçoit déjà la copie automatique du club.';
+      return;
+    }
+    const memberCopyExists = this.copyRecipients.some((member) => (member.email ?? '').trim().toLowerCase() === email);
+    const externalCopyExists = this.externalCopyRecipients.some((recipient) => recipient.email === email);
+    if (memberCopyExists || externalCopyExists) {
+      this.externalCopyRecipientError = 'Cette adresse est déjà en copie.';
+      return;
+    }
+
+    this.externalCopyRecipients.push({ email, name });
+    this.externalCopyEmail = '';
+    this.externalCopyName = '';
+  }
+
+  removeExternalCopyRecipient(index: number): void {
+    this.externalCopyRecipients.splice(index, 1);
+    this.externalCopyRecipientError = null;
   }
 
   onContentChange(event: Event): void {
@@ -382,15 +482,21 @@ export class MailingComponent implements OnInit, AfterViewInit {
     this.bodyHtml = '';
     this.attachments = [];
     this.recipients = [];
+    this.copyRecipients = [];
     this.externalRecipients = [];
+    this.externalCopyRecipients = [];
     this.externalEmail = '';
     this.externalFirstName = '';
     this.externalLastName = '';
     this.externalRecipientError = null;
+    this.externalCopyEmail = '';
+    this.externalCopyName = '';
+    this.externalCopyRecipientError = null;
     this.selectedSurveyId = '';
     this.selectedSurvey = null;
     this.applyingMailingList = true;
     this.recipientSelector?.clearSelection();
+    this.copyRecipientSelector?.clearSelection();
     this.applyingMailingList = false;
     this.selectedDistributionId = '';
     this.cancelMailingListCreation();
@@ -430,12 +536,26 @@ export class MailingComponent implements OnInit, AfterViewInit {
         isExternal: true,
       }));
       const recipientPayload = [...memberRecipientPayload, ...externalRecipientPayload];
+      const copyRecipientPayload = [
+        ...this.copyRecipients.map(m => ({
+          email: m.email!,
+          name: `${m.firstname ?? ''} ${m.lastname ?? ''}`.trim(),
+          memberId: m.id,
+          isExternal: false,
+        })),
+        ...this.externalCopyRecipients.map(r => ({
+          email: r.email,
+          name: r.name,
+          isExternal: true,
+        })),
+      ];
       this.mailingService.sendSurvey({
         surveyId: this.selectedSurvey.id,
         subject: this.subject,
         surveyBodyHtml: this.bodyHtml + this.surveyCtaHtml(),
         closingDate: (this.selectedSurvey as any).closingDate,
         recipients: recipientPayload,
+        copyRecipients: copyRecipientPayload,
         attachments: this.attachments.length > 0 ? this.attachments : undefined,
       }).then(res => {
         this.result = res;
@@ -457,6 +577,32 @@ export class MailingComponent implements OnInit, AfterViewInit {
     }
     const emailParams: SendEmailParams = {
       to: toArray,
+      recipientDetails: [
+        ...this.recipients.map(m => ({
+          email: (m.email ?? '').trim().toLowerCase(),
+          name: `${m.firstname ?? ''} ${m.lastname ?? ''}`.trim(),
+          memberId: m.id,
+          isExternal: false,
+        })),
+        ...this.externalRecipients.map(r => ({
+          email: r.email,
+          name: r.name,
+          isExternal: true,
+        })),
+      ],
+      copyRecipients: [
+        ...this.copyRecipients.map(m => ({
+          email: (m.email ?? '').trim().toLowerCase(),
+          name: `${m.firstname ?? ''} ${m.lastname ?? ''}`.trim(),
+          memberId: m.id,
+          isExternal: false,
+        })),
+        ...this.externalCopyRecipients.map(r => ({
+          email: r.email,
+          name: r.name,
+          isExternal: true,
+        })),
+      ],
       subject: this.subject,
       bodyHtml: this.bodyHtml,
       attachments: this.attachments.length > 0 ? this.attachments : undefined
