@@ -137,6 +137,11 @@ export class SondageListComponent implements OnInit {
     const modal = this.modalService.open(GetConfirmationComponent, { centered: true });
     modal.componentInstance.title = 'Supprimer le sondage';
     modal.componentInstance.subtitle = `Le sondage « ${survey.title} », ses questions et tous les votes associés seront définitivement supprimés.`;
+    modal.componentInstance.message = '';
+    modal.componentInstance.confirmLabel = 'Supprimer';
+    modal.componentInstance.cancelLabel = 'Annuler';
+    modal.componentInstance.confirmButtonClass = 'btn-danger';
+    modal.componentInstance.cancelButtonClass = 'btn-secondary';
 
     const confirmed = await modal.result.catch(() => false);
     if (!confirmed) return;

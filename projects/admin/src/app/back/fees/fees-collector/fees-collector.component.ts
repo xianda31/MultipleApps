@@ -12,7 +12,7 @@ import { ClubMember } from '../../../common/ffb/interface/club-member.interface'
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
 import { InputMemberComponent } from '../../input-member/input-member.component';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
+import { GetConfirmationComponent } from '../../../common/modals/get-confirmation.component';
 import { ToastService } from '../../../common/services/toast.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Router } from '@angular/router';
@@ -194,10 +194,15 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     this.selected_tournament = tournament;
     this.feesCollectorService.set_tournament(tournament);
     if (tournament.status === this.GAME_STATUS.RECOVERED) {
-      this.toastService.showInfo('Gestion tournoi', 'Une restauration d\'un pointage partiel a été effectuée.');
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
-      modalRef.componentInstance.title = 'Voulez-vous plutôt repartir d\'une feuille blanche ?';
-      modalRef.componentInstance.subtitle = `Oui : nouvelle feuille blanche  Non : la restauration sera utilisée. `;
+      modalRef.componentInstance.title = 'Pointage existant';
+      modalRef.componentInstance.subtitle = 'Un pointage partiel a été retrouvé pour ce tournoi.';
+      modalRef.componentInstance.message = 'Que souhaitez-vous faire ?';
+      modalRef.componentInstance.confirmLabel = 'Effacer et recommencer';
+      modalRef.componentInstance.cancelLabel = 'Reprendre le pointage';
+      modalRef.componentInstance.confirmButtonClass = 'btn-outline-danger';
+      modalRef.componentInstance.cancelButtonClass = 'btn-primary';
+      modalRef.componentInstance.confirmFirst = false;
       modalRef.result.then(async (answer: boolean) => {
         if (answer) {
           const reset = await this.feesCollectorService.reset_tournament_state(tournament);
@@ -207,6 +212,9 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
               t.status = Game_status.INITIAL;
             }
           });
+          this.toastService.showSuccess('Gestion tournoi', 'Le pointage a été effacé. Vous pouvez recommencer.');
+        } else {
+          this.toastService.showInfo('Gestion tournoi', 'Le pointage existant a été restauré.');
         }
       });
     }
@@ -249,8 +257,12 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   check_status() {
     if (this.selected_tournament && this.selected_tournament.status !== Game_status.COMPLETED && this.all_gamers_validated()) {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
-      modalRef.componentInstance.title = `Vous avez pointé tous les joueurs `;
-      modalRef.componentInstance.subtitle = `Vous allez maintenant valider tampons et droits de table`;
+      modalRef.componentInstance.title = 'Tous les joueurs sont pointés';
+      modalRef.componentInstance.subtitle = 'Cette opération débitera les cartes de parties et créera l’écriture comptable des droits de table.';
+      modalRef.componentInstance.message = '';
+      modalRef.componentInstance.confirmLabel = 'Valider les droits';
+      modalRef.componentInstance.cancelLabel = 'Continuer le pointage';
+      modalRef.componentInstance.cancelButtonClass = 'btn-outline-secondary';
       modalRef.result.then(async (answer: boolean) => {
         if (answer) {
           await this.validate_fees();

@@ -6,7 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GetGameCardsOwnersComponent } from '../get-game-cards-owners/get-game-cards-owners.component';
 import { Member } from '../../../common/interfaces/member.interface';
 import { EditGameCardComponent } from '../edit-game-card/edit-game-card.component';
-import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
+import { GetConfirmationComponent } from '../../../common/modals/get-confirmation.component';
 import { GcardsExcelExportService } from '../gcards-excel-export.service';
 import { BookService } from '../../services/book.service';
 import { combineLatest, filter, Subscription } from 'rxjs';
@@ -102,6 +102,11 @@ stamps_number(card: GameCard): number {
     const owners = card.owners.reduce((acc, owner) => acc + owner.firstname + ' ' + owner.lastname.toUpperCase() + ' ', '');
     modalRef.componentInstance.title = `Suppression d'une carte d'admission `;
     modalRef.componentInstance.subtitle = `détenteur(s) :${owners} `;
+    modalRef.componentInstance.message = '';
+    modalRef.componentInstance.confirmLabel = 'Supprimer';
+    modalRef.componentInstance.cancelLabel = 'Annuler';
+    modalRef.componentInstance.confirmButtonClass = 'btn-danger';
+    modalRef.componentInstance.cancelButtonClass = 'btn-secondary';
     modalRef.result.then((answer: boolean) => {
       if (answer) {
         this.gameCardService.deleteCard(card);
@@ -133,7 +138,12 @@ stamps_number(card: GameCard): number {
   deleteNulls() {
     const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
     modalRef.componentInstance.title = `Suppression de toutes les cartes terminées`;
-    modalRef.componentInstance.subtitle = `Êtes-vous sûr de vouloir effacer cette historique`;
+    modalRef.componentInstance.subtitle = `Toutes les cartes entièrement consommées seront définitivement supprimées. Cette action est irréversible.`;
+    modalRef.componentInstance.message = '';
+    modalRef.componentInstance.confirmLabel = 'Supprimer';
+    modalRef.componentInstance.cancelLabel = 'Annuler';
+    modalRef.componentInstance.confirmButtonClass = 'btn-danger';
+    modalRef.componentInstance.cancelButtonClass = 'btn-secondary';
     modalRef.result.then((answer: boolean) => {
       if (answer) {
         this.gameCardService.deleteNullCards();

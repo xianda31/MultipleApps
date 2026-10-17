@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { BooksExportExcelService } from '../books-export-excel.service';
 import { TransactionService } from '../../services/transaction.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { GetConfirmationComponent } from '../../modals/get-confirmation/get-confirmation.component';
+import { GetConfirmationComponent } from '../../../common/modals/get-confirmation.component';
 import { InvoiceSelectComponent } from '../invoice-select/invoice-select';
 import { InvoiceService } from '../../../common/services/invoice.service';
 import { ToastService } from '../../../common/services/toast.service';
@@ -170,6 +170,11 @@ export class BooksListComponent {
     const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
     modalRef.componentInstance.title = 'Confirmer la suppression';
     modalRef.componentInstance.subtitle = `Êtes-vous sûr de vouloir supprimer cette écriture comptable du ${book_entry.date} d'un montant de ${this.total_amount(book_entry).toFixed(2)} € ? Cette action est irréversible.`;
+    modalRef.componentInstance.message = '';
+    modalRef.componentInstance.confirmLabel = 'Supprimer';
+    modalRef.componentInstance.cancelLabel = 'Annuler';
+    modalRef.componentInstance.confirmButtonClass = 'btn-danger';
+    modalRef.componentInstance.cancelButtonClass = 'btn-secondary';
     modalRef.result.then(async (answer: boolean) => {
       if (answer) {
         await this.bookService.delete_book_entry(book_entry);

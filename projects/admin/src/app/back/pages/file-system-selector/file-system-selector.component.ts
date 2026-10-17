@@ -97,6 +97,13 @@ export class FileSystemSelectorComponent implements OnInit, OnChanges {
     if (!path) return;
     try {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
+      modalRef.componentInstance.title = 'Supprimer le dossier';
+      modalRef.componentInstance.subtitle = `Le dossier « ${path} » et tout son contenu seront définitivement supprimés.`;
+      modalRef.componentInstance.message = '';
+      modalRef.componentInstance.confirmLabel = 'Supprimer';
+      modalRef.componentInstance.cancelLabel = 'Annuler';
+      modalRef.componentInstance.confirmButtonClass = 'btn-danger';
+      modalRef.componentInstance.cancelButtonClass = 'btn-secondary';
       const confirmed = await modalRef.result;
       if (!confirmed) return;
       this.toastService.showInfo('Dossier', `Suppression du dossier : ${path}`);
