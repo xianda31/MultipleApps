@@ -162,6 +162,47 @@ describe('BookService', () => {
     }]);
   });
 
+  it('restricts an admin member statement to that member in a multi-member entry', () => {
+    const service = createService({ class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER });
+    const purchase: BookEntry = {
+      id: 'multi-member-purchase',
+      season: '2026/2027',
+      date: '2026-08-12',
+      transaction_id: TRANSACTION_ID.achat_adhérent_en_espèces,
+      amounts: { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 70 },
+      operations: [
+        {
+          label: 'achat à crédit',
+          member: 'AYRAL André',
+          values: { CAR: 30, [CUSTOMER_ACCOUNT.DEBT_debit]: 30 },
+        },
+        {
+          label: 'adhésion',
+          member: 'AUTRE Marie',
+          values: { ADH: 40 },
+        },
+      ],
+    };
+    (service as any)._book_entries = [purchase];
+
+    expect(service.get_member_purchase_statement(
+      'AYRAL André',
+      new Map(),
+      { memberOperationsOnly: true },
+    )).toEqual([{
+      id: 'multi-member-purchase',
+      date: '2026-08-12',
+      transactionId: TRANSACTION_ID.achat_adhérent_en_espèces,
+      transaction: 'virement annoncé',
+      amount: 0,
+      spentAmount: 30,
+      items: [
+        { key: 'CAR', code: 'CAR', description: 'CAR', amount: 30 },
+        { key: CUSTOMER_ACCOUNT.DEBT_debit, code: 'CRÉANCE', description: 'achat à crédit', amount: -30 },
+      ],
+    }]);
+  });
+
   it('includes a customer-account-only settlement without counting it as spending', () => {
     const service = createService({ class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER });
     const settlement: BookEntry = {

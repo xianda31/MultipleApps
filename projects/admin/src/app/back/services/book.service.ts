@@ -362,6 +362,7 @@ export class BookService {
   get_member_purchase_statement(
     member_full_name: string,
     productDescriptions: ReadonlyMap<string, string> = new Map(),
+    options: { memberOperationsOnly?: boolean } = {},
   ): PurchaseStatementEntry[] {
     if (!this._book_entries) return [];
 
@@ -389,7 +390,7 @@ export class BookService {
           (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0
         ) ?? entry.operations[0];
         const selectedMemberIsPayer = payerOperation?.member === member_full_name;
-        const relevantOperations = selectedMemberIsPayer
+        const relevantOperations = selectedMemberIsPayer && !options.memberOperationsOnly
           ? entry.operations
           : entry.operations.filter(operation => operation.member === member_full_name);
         const detailAmounts = relevantOperations
@@ -421,13 +422,21 @@ export class BookService {
           };
         });
         const transactionAmount = this.get_total_amount(entry);
+        const hasOtherMemberOperations = entry.operations.some(operation =>
+          !!operation.member && operation.member !== member_full_name
+        );
+        const memberTransactionAmount = options.memberOperationsOnly && hasOtherMemberOperations
+          ? transactionClass === TRANSACTION_CLASS.EXPENSE_FOR_MEMBER
+            ? 0
+            : items.reduce((total, item) => total + item.amount, 0)
+          : transactionAmount;
 
         return {
           id: entry.id,
           date: entry.date,
           transactionId: entry.transaction_id,
           transaction: this.transactionService.get_entry_label(entry),
-          amount: transactionAmount === 0 ? 0 : transactionAmount,
+          amount: memberTransactionAmount === 0 ? 0 : memberTransactionAmount,
           spentAmount: transactionClass === TRANSACTION_CLASS.EXPENSE_FOR_MEMBER
             ? 0
             : items

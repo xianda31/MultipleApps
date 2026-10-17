@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { SystemConfiguration } from '../../common/interfaces/system-conf.interface';
 import { ToastService } from '../../common/services/toast.service';
-import { FileService } from '../../common/services/files.service';
 
 
 
@@ -34,18 +33,14 @@ export class SysConfComponent {
 
   systemFormGroup!: FormGroup;
   loaded!: boolean;
-  export_file_url: any;
   newBankKey = '';
   newBankName = '';
   traceModeEnabled = false;
   bankOptionsList: { key: string; name: string }[] = [];
-  private isLoadingForm = false;
-  private lastExportSnapshot = '';
 
   constructor(
     private systemDataService: SystemDataService,
     private toastService: ToastService,
-    private fileService: FileService,
     private fb: FormBuilder
   ) {
 
@@ -113,8 +108,6 @@ export class SysConfComponent {
       .subscribe({
         next: (configuration) => {
           this.loadDataInFormGroup(configuration);
-          // console.log('configuration', configuration);
-          this.export_file_url = this.fileService.json_to_blob(configuration);
           this.loaded = true;
         },
         error: (error) => {
@@ -123,25 +116,10 @@ export class SysConfComponent {
         }
       });
 
-    // Met à jour le blob d'export à chaque modification du formulaire
-    this.systemFormGroup.valueChanges.subscribe(val => {
-      if (this.isLoadingForm) return;
-      const snapshot = JSON.stringify(val);
-      if (snapshot === this.lastExportSnapshot) return;
-      this.lastExportSnapshot = snapshot;
-      this.export_file_url = this.fileService.json_to_blob(val);
-    });
-
     this.systemFormGroup.get('trace_mode')?.valueChanges.subscribe((value) => {
       this.traceModeEnabled = !!value;
     });
   }
-
-  // updateExportFileUrl() {
-  //   const new_configuration : SystemConfiguration = this.systemFormGroup.value;
-  //   console.log('new_configuration', new_configuration);
-  //         this.export_file_url = this.fileService.json_to_blob(new_configuration);
-  // }
 
   save_configuration() {
     if (this.systemFormGroup.invalid) {
@@ -258,7 +236,6 @@ export class SysConfComponent {
   }
 
   loadDataInFormGroup(configuration: SystemConfiguration) {
-    this.isLoadingForm = true;
     this.systemFormGroup.patchValue({
       ...configuration,
       membership_payment_warning_month: configuration.membership_payment_warning_month ?? 11,
@@ -292,30 +269,7 @@ export class SysConfComponent {
 
     this.refreshBankOptions();
     this.traceModeEnabled = !!this.systemFormGroup.get('trace_mode')?.value;
-    this.lastExportSnapshot = JSON.stringify(this.systemFormGroup.value);
-    this.export_file_url = this.fileService.json_to_blob(this.systemFormGroup.value);
-    this.isLoadingForm = false;
 
-  }
-
-
-  async onInput(event: any) {
-    const file = event.target.files[0];
-    // console.log('file', file);
-    if (file) {
-      const text = await file.text();
-      console.log('text', text);
-      try {
-        let json = JSON.parse(text);
-        this.loadDataInFormGroup(json);
-        this.toastService.showSuccess('fichier de configuration chargé', 'les données sont prêtes à être enregistrées');
-      } catch (error) {
-        console.error('error', error);
-        this.toastService.showError('erreur chargement fichier de configuration', 'vérifiez la syntaxe');
-      }
-      // let json = JSON.parse(text);
-      // this.loadDataInFormGroup(JSON.parse(text));
-    }
   }
 
 }

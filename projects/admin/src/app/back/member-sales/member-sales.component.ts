@@ -148,7 +148,11 @@ export class MemberSalesComponent {
   memberSelected() {
     if (this.selected_member) {
       let full_name = this.memberService.full_name(this.selected_member);
-      this.purchase_entries = this.bookService.get_member_purchase_statement(full_name, this.productDescriptions);
+      this.purchase_entries = this.bookService.get_member_purchase_statement(
+        full_name,
+        this.productDescriptions,
+        { memberOperationsOnly: true },
+      );
       this.avoirs = this.bookService.find_assets(full_name);
       this.debt = this.bookService.find_member_debt(full_name);
     }
