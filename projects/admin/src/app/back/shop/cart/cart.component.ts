@@ -87,8 +87,8 @@ export class CartComponent {
       }
       this.total_amount.update(() => this.cartService.getCartAmount());
 
-      // Business rule: for a zero total, only CASH mode is allowed.
-      if (this.isZeroTotal()) {
+      // Business rule: for a non-empty zero-total checkout, only CASH mode is allowed.
+      if ((this.cart.items.length > 0 || this.debt_amount > 0) && this.isZeroTotal()) {
         this.selected_payment.mode = PaymentMode.CASH;
         this.payment_mode_change();
       }
