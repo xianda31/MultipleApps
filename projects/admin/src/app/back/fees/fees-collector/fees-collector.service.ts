@@ -584,17 +584,28 @@ export class FeesCollectorService {
     }
   }
 
-  async reset_tournament_state(tournament: club_tournament_extended) {
-    if (tournament.status !== Game_status.RECOVERED) return;
+  async reset_tournament_state(tournament: club_tournament_extended): Promise<boolean> {
+    if (tournament.status !== Game_status.RECOVERED) return false;
     const season = this.systemDataService.get_season(new Date());
     const gameId = this.DBhandler.create_custom_key(season, tournament.id);
+    const settlementStatus = await this.DBhandler.readGameSettlementStatus(gameId);
+    if (settlementStatus) {
+      this.toastService.showError(
+        'Remise à zéro impossible',
+        settlementStatus === 'completed'
+          ? 'Les droits de ce tournoi ont déjà été enregistrés.'
+          : 'Une clôture a déjà commencé et peut avoir débité des cartes. Une intervention est requise.',
+      );
+      return false;
+    }
+
     this.stopCheckInSync();
     this.stopFeeConfigurationSync();
     await this.DBhandler.deleteGameCheckIns(gameId);
     await this.DBhandler.deleteGameFeeConfiguration(gameId);
-    await this.DBhandler.deleteGameSettlement(gameId);
     await this.DBhandler.deleteGame(season, tournament.id);
     this.set_game(tournament);
+    return true;
   }
 
   async restore_game_state(): Promise<boolean> {

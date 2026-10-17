@@ -198,7 +198,8 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       modalRef.componentInstance.subtitle = `Oui : nouvelle feuille blanche  Non : la restauration sera utilisée. `;
       modalRef.result.then(async (answer: boolean) => {
         if (answer) {
-          await this.feesCollectorService.reset_tournament_state(tournament);
+          const reset = await this.feesCollectorService.reset_tournament_state(tournament);
+          if (!reset) return;
           this.next_tournaments.map(t => {
             if (t.id === this.selected_tournament?.id) {
               t.status = Game_status.INITIAL;
