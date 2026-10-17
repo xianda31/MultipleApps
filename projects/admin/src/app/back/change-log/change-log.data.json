@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-17-ameliorations-de-l-ui-pointage-tournoi-selecteurs",
+    "publishedOn": "2026-10-17",
+    "site": "BACK_OFFICE",
+    "area": "GENERAL",
+    "kind": "IMPROVEMENT",
+    "summary": "améliorations de l'UI pointage tournoi (sélecteurs plus visible et parlant , suppression de la tarification spécifique ACCession, joueurs du club en gras sur s)"
+  },
+  {
     "id": "2026-10-17-divers-correctifs-vente-tpe-double-tampons-releve",
     "publishedOn": "2026-10-17",
     "site": "BACK_OFFICE",
