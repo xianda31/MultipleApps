@@ -31,11 +31,9 @@ describe('FeesCollectorService game-card synchronization', () => {
     const dbHandler = jasmine.createSpyObj('DBhandler', ['queryPlayBooks']);
     dbHandler.queryPlayBooks.and.returnValue(playBooks$.asObservable());
     const bookService = jasmine.createSpyObj('BookService', [
-      'find_member_acc_operations',
       'get_customers_assets',
       'get_debts',
     ]);
-    bookService.find_member_acc_operations.and.returnValue([]);
     bookService.get_customers_assets.and.returnValue(new Map());
     bookService.get_debts.and.returnValue(new Map());
 

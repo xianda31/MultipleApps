@@ -32,7 +32,6 @@ export interface Game extends Fees_context {
 
 export enum FEE_RATE {
     STANDARD = 'standard',
-    ACCESSION = 'accession',
     HOLIDAYS = 'été'
 }
 
@@ -42,7 +41,6 @@ export interface Gamer {
     lastname: string;
     is_member: boolean;
     game_credits: number;
-    acc_credits: boolean;
     debt: number;
     credit: number;
     index: number;

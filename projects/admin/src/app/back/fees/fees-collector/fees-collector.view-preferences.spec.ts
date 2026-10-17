@@ -88,7 +88,6 @@ describe('FeesCollectorService view preferences', () => {
       lastname,
       is_member: true,
       game_credits: 0,
-      acc_credits: false,
       debt: 0,
       credit: 0,
       index,

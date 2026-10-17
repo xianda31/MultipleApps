@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-17-divers-correctifs-vente-tpe-double-tampons-releve",
+    "publishedOn": "2026-10-17",
+    "site": "BACK_OFFICE",
+    "area": "GENERAL",
+    "kind": "IMPROVEMENT",
+    "summary": "divers correctifs (vente TPE, double tampons, relevé)"
+  },
+  {
     "id": "2026-10-15-amelioration-de-la-recherche-de-joueur-rapidite",
     "publishedOn": "2026-10-15",
     "site": "BACK_OFFICE",

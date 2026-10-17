@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
-import { catchError, from, lastValueFrom, map, Observable, of, switchMap, tap, filter } from 'rxjs';
+import { catchError, from, lastValueFrom, map, merge, Observable, of, switchMap, tap, filter } from 'rxjs';
 import { safeGetCurrentUser$ } from '../authentification/safe-auth';
 import { Member, Member_input } from '../interfaces/member.interface';
 import { BookEntry } from '../interfaces/accounting.interface';
@@ -9,7 +9,7 @@ import { Product, Product_input } from '../../back/products/product.interface';
 import { StripeProduct, StripeProductInput } from '../../back/products/stripe-product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
 import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
-import { Game, GameCheckIn, GameFeeConfiguration, Game_input } from '../../back/fees/fees.interface';
+import { FEE_RATE, Game, GameCheckIn, GameFeeConfiguration, Game_input } from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
 import { MailingList, MailingListInput } from '../../back/mailing/mailing-list.interface';
@@ -1062,6 +1062,10 @@ export class DBhandler {
     return season + '_' + trn_id;
   }
 
+  private normalizeGameFeeRate(value: unknown): FEE_RATE {
+    return value === FEE_RATE.HOLIDAYS ? FEE_RATE.HOLIDAYS : FEE_RATE.STANDARD;
+  }
+
   // CREATE PROMISE   ! validated
   async createGame(game: Game): Promise<Game> {
     const game_id = this.create_custom_key(game.season, game.tournament!.id);
@@ -1088,7 +1092,7 @@ export class DBhandler {
         gamers: typeof game_output.gamers === 'string'
           ? JSON.parse(game_output.gamers)
           : game_output.gamers,
-        fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
+        fee_rate: this.normalizeGameFeeRate(game_output.fee_rate)
       }
       : null;
     if (!created_game) throw new Error('Game creation failed: game_output is null');
@@ -1109,7 +1113,7 @@ export class DBhandler {
         gamers: typeof game_output.gamers === 'string'
           ? JSON.parse(game_output.gamers)
           : game_output.gamers,
-        fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
+        fee_rate: this.normalizeGameFeeRate(game_output.fee_rate)
       }
       : null;
     return read_game as unknown as Game | null;
@@ -1139,7 +1143,7 @@ export class DBhandler {
         gamers: typeof game_output.gamers === 'string'
           ? JSON.parse(game_output.gamers)
           : game_output.gamers,
-        fee_rate: (game_output.fee_rate === null ? 'standard' : game_output.fee_rate) as Game['fee_rate']
+        fee_rate: this.normalizeGameFeeRate(game_output.fee_rate)
       }
       : null;
     if (!updated_game) throw new Error('Game update failed: game_output is null');
@@ -1181,10 +1185,10 @@ export class DBhandler {
   async listGameCheckIns(gameId: string): Promise<GameCheckIn[]> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.GameCheckIn.list({
-      filter: { gameId: { eq: gameId } },
-      limit: 300,
-    });
+    const { data, errors } = await client.models.GameCheckIn.gameCheckInsByGame(
+      { gameId },
+      { limit: 300 },
+    );
     if (errors) throw errors;
     return (data ?? []) as unknown as GameCheckIn[];
   }
@@ -1201,10 +1205,12 @@ export class DBhandler {
     return this._authMode().pipe(
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode });
-        return client.models.GameCheckIn.observeQuery({
-          filter: { gameId: { eq: gameId } },
-        }).pipe(
-          map(({ items }) => items as unknown as GameCheckIn[]),
+        const filter = { gameId: { eq: gameId } };
+        return merge(
+          client.models.GameCheckIn.onCreate({ filter }),
+          client.models.GameCheckIn.onUpdate({ filter }),
+        ).pipe(
+          map((checkIn) => [checkIn as unknown as GameCheckIn]),
         );
       }),
     );

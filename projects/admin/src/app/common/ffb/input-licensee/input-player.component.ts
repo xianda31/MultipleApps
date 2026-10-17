@@ -5,6 +5,8 @@ import { FFB_proxyService } from '../services/ffb.service';
 import { CommonModule } from '@angular/common';
 import { CustomDropdownComponent } from '../../components/custom-dropdown/custom-dropdown.component';
 import { matchesPlayerSearch, rankPlayerSearchResults } from './player-search.util';
+import { MembersService } from '../../services/members.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-input-player',
@@ -30,6 +32,8 @@ export class InputPlayerComponent implements ControlValueAccessor, OnDestroy {
   private hasBlurred = false;
   private searchRequestId = 0;
   private searchTimer?: ReturnType<typeof setTimeout>;
+  private membersSubscription: Subscription;
+  private clubMemberLicenses = new Set<string>();
   resultsHint = '';
 
   onChange: (value: ClubMember | null) => void = () => { };
@@ -41,11 +45,20 @@ export class InputPlayerComponent implements ControlValueAccessor, OnDestroy {
     const club = player.club?.label || player.club?.name || player.club?.ffbCode;
     return `${player.lastName} ${player.firstName} (${player.license_number}${club ? ` — ${club}` : ''})`;
   };
+  playerOptionClassFn = (player: Pick<ClubMember, 'license_number'>) =>
+    this.clubMemberLicenses.has(this.normalizeLicense(player.license_number)) ? 'fw-bold' : '';
   filterPlayerFn = (player: ClubMember, searchValue: string) => matchesPlayerSearch(player, searchValue);
 
   constructor(
-    private ffbService: FFB_proxyService
-  ) { }
+    private ffbService: FFB_proxyService,
+    membersService: MembersService,
+  ) {
+    this.membersSubscription = membersService.listMembers().subscribe((members) => {
+      this.clubMemberLicenses = new Set(
+        members.map((member) => this.normalizeLicense(member.license_number)),
+      );
+    });
+  }
 
   writeValue(input: any): void {
     if (input) {
@@ -74,6 +87,7 @@ export class InputPlayerComponent implements ControlValueAccessor, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearSearchTimer();
+    this.membersSubscription.unsubscribe();
   }
 
   get showInvalidSelection(): boolean {
@@ -144,5 +158,9 @@ export class InputPlayerComponent implements ControlValueAccessor, OnDestroy {
       clearTimeout(this.searchTimer);
       this.searchTimer = undefined;
     }
+  }
+
+  private normalizeLicense(license: string): string {
+    return String(license ?? '').trim().padStart(8, '0');
   }
 }

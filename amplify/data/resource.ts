@@ -222,6 +222,9 @@ const schema = a.schema({
     updatedBy: a.string().required(),
   })
     .identifier(['gameId', 'license'])
+    .secondaryIndexes((index) => [
+      index('gameId').queryField('gameCheckInsByGame'),
+    ])
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),

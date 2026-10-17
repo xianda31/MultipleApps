@@ -22,7 +22,8 @@
     class="dropdown-list position-absolute start-0 end-0 mt-1 list-unstyled border rounded shadow-sm">
     <li *ngFor="let item of getFilteredItems()"
       (mousedown)="onItemMouseDown($event, item)"
-      class="p-2 cursor-pointer hover-highlight">
+      class="p-2 cursor-pointer hover-highlight"
+      [ngClass]="itemClassFn?.(item)">
       {{ itemDisplayFn ? itemDisplayFn(item) : displayFn(item) }}
     </li>
   </ul>

@@ -16,7 +16,7 @@ import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
 import { safeGetCurrentUserPromise } from '../../../common/authentification/safe-auth';
-import { canSelectGameCard, checkInState, gamerFeePrice, requiredGameCredits, tournamentUsesDoubledFees } from './fees-check-in.util';
+import { canSelectGameCard, checkInState, feeModeConfiguration, gamerFeePrice, requiredGameCredits, TournamentFeeMode, tournamentFeeMode } from './fees-check-in.util';
 
 
 
@@ -75,6 +75,8 @@ export class FeesCollectorService {
     for (const checkIn of checkIns) {
       const gamer = this.game.gamers?.find(candidate => candidate.license === checkIn.license);
       if (!gamer) continue;
+      if (gamer.check_in_updated_at && checkIn.updatedAt
+        && gamer.check_in_updated_at > checkIn.updatedAt) continue;
 
       Object.assign(gamer, checkInState(checkIn.mode));
       gamer.check_in_source = checkIn.source;
@@ -96,6 +98,10 @@ export class FeesCollectorService {
         console.error('[FeesCollector] GameCheckIn synchronization failed:', error);
         this.toastService.showError('Pointage partagé', 'La synchronisation temps réel est interrompue.');
       },
+    });
+    void this.refreshGameCheckIns().catch((error) => {
+      console.error('[FeesCollector] Unable to load tournament check-ins:', error);
+      this.toastService.showError('Pointage partagé', 'Les pointages existants n’ont pas pu être chargés.');
     });
   }
 
@@ -304,47 +310,31 @@ export class FeesCollectorService {
   }
 
 
-  async change_fee_rate(new_rate: FEE_RATE): Promise<boolean> {
-    const prev_rate = this.game.fee_rate;
-    let fee_rate = this.get_fee_rate(new_rate);
+  async changeFeeMode(mode: TournamentFeeMode): Promise<boolean> {
+    const { feeRate, feesDoubled } = feeModeConfiguration(mode);
+    const feeRateConfiguration = this.get_fee_rate(feeRate);
+    const oldFactor = requiredGameCredits(this.game.fees_doubled);
+    const newFactor = requiredGameCredits(feesDoubled);
 
     this.showFeeRateChangeAlert(
-      this.game.member_trn_price,
-      fee_rate.member_price,
-      this.game.non_member_trn_price,
-      fee_rate.non_member_price
+      this.game.member_trn_price * oldFactor,
+      +feeRateConfiguration.member_price * newFactor,
+      this.game.non_member_trn_price * oldFactor,
+      +feeRateConfiguration.non_member_price * newFactor,
     );
 
     try {
       const saved = await this.saveFeeConfiguration({
-        feeRate: new_rate,
-        memberPrice: +fee_rate.member_price,
-        nonMemberPrice: +fee_rate.non_member_price,
-        feesDoubled: this.game.fees_doubled,
+        feeRate,
+        memberPrice: +feeRateConfiguration.member_price,
+        nonMemberPrice: +feeRateConfiguration.non_member_price,
+        feesDoubled,
       });
       this.applyFeeConfiguration(saved);
     } catch (error) {
-      console.error('[FeesCollector] Unable to update fee rate:', error);
-      this.toastService.showError('Configuration du tournoi', 'Le changement de tarif n’a pas pu être partagé.');
+      console.error('[FeesCollector] Unable to update fee mode:', error);
+      this.toastService.showError('Configuration du tournoi', 'Le changement de tarification n’a pas pu être partagé.');
       return false;
-    }
-
-    // If we are leaving ACCESSION, re-enable all gamers and reset validation
-    if (prev_rate === FEE_RATE.ACCESSION && new_rate !== FEE_RATE.ACCESSION) {
-      this.game.gamers.forEach((gamer) => {
-        gamer.enabled = true;
-        gamer.validated = false;
-      });
-    }
-
-    // If the new rate is ACCESSION, disable gamers that can use accession credits
-    if (fee_rate.key === FEE_RATE.ACCESSION) {
-      this.game.gamers.forEach((gamer) => {
-        if (gamer.is_member && gamer.acc_credits) {
-          gamer.enabled = false;
-          gamer.validated = true;
-        }
-      });
     }
 
     this._game$.next(this.game);
@@ -369,33 +359,13 @@ export class FeesCollectorService {
     }
   }
 
-  async toggle_fee(): Promise<boolean> {
-    const feesDoubled = !this.game.fees_doubled;
-    const direction = feesDoubled ? 'activer' : 'désactiver';
-    window.alert(
-      `Attention, vous allez ${direction} les droits doublés.\n\n`
-      + 'Les pointages déjà effectués et les sommes déjà collectées ne seront pas annulés. '
-      + 'Vous devez vérifier leur cohérence avant la clôture.',
-    );
-    try {
-      const saved = await this.saveFeeConfiguration({
-        feeRate: this.game.fee_rate,
-        memberPrice: this.game.member_trn_price,
-        nonMemberPrice: this.game.non_member_trn_price,
-        feesDoubled,
-      });
-      this.applyFeeConfiguration(saved);
-      return true;
-    } catch (error) {
-      console.error('[FeesCollector] Unable to update doubled fees:', error);
-      this.toastService.showError('Configuration du tournoi', 'Le changement des droits doublés n’a pas pu être partagé.');
-      return false;
-    }
+  toggle_sort() {
+    this.set_alphabetic_sort(!this.game.alphabetic_sort);
   }
 
-  toggle_sort() {
+  set_alphabetic_sort(alphabeticSort: boolean): void {
     const preferences = this.getOrCreateViewPreferences();
-    preferences.alphabeticSort = !preferences.alphabeticSort;
+    preferences.alphabeticSort = alphabeticSort;
     this.game.alphabetic_sort = preferences.alphabeticSort;
     this.sortGamers();
     this._game$.next(this.game)
@@ -470,15 +440,6 @@ export class FeesCollectorService {
             gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(member);
           }
         });
-
-        if (this.game.fee_rate === FEE_RATE.ACCESSION) {
-          this.game.gamers.forEach((gamer) => {
-            if (gamer.is_member && gamer.acc_credits) {
-              gamer.enabled = false;
-              gamer.validated = true;
-            }
-          });
-        }
 
         this._game$.next(this.game);
       },
@@ -666,16 +627,9 @@ export class FeesCollectorService {
   set_game(tournament: club_tournament_extended) {
     this.game.season = this.sys_conf.season!;
     this.game.alphabetic_sort = this.getOrCreateViewPreferences(tournament.id, false).alphabeticSort;
-    const descriptionLower = (tournament.title ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-    this.game.fees_doubled = tournamentUsesDoubledFees(tournament.title);
-    this.game.fee_rate = descriptionLower.includes('ete')
-      ? FEE_RATE.HOLIDAYS
-      : (descriptionLower.includes('eleves') || descriptionLower.includes('accession'))
-        ? FEE_RATE.ACCESSION
-        : FEE_RATE.STANDARD;
+    const feeMode = feeModeConfiguration(tournamentFeeMode(tournament.title));
+    this.game.fees_doubled = feeMode.feesDoubled;
+    this.game.fee_rate = feeMode.feeRate;
     this.game.member_trn_price = +this.get_fee_rate(this.game.fee_rate).member_price;
     this.game.non_member_trn_price = +this.get_fee_rate(this.game.fee_rate).non_member_price;
     const tournamentDate = new Date(tournament.date);
@@ -714,7 +668,6 @@ export class FeesCollectorService {
           lastname: player.lastName,
           is_member: isMember,
           game_credits: isMember ? this.gameCardService.get_member_credit(member!.license_number) : 0,
-          acc_credits: member ? this.check_acc(this.membersService.full_name(member!)) : false,
           debt: 0,
           credit: 0,
           index: index,
@@ -757,9 +710,7 @@ export class FeesCollectorService {
         member_id: member?.id || null,
         my_birthday: member?.birthdate === new Date().toISOString().slice(0, 10) ? new Date().toISOString().slice(0, 10) : null,
         ffb_person_id: player.person_id,
-
         game_credits: 0,
-        acc_credits: (!!member) ? this.check_acc(this.membersService.full_name(member)) : false,
         debt: 0,
         credit: 0,
         index: this.game.gamers.length,
@@ -795,50 +746,6 @@ export class FeesCollectorService {
       .filter((member): member is Member => member !== undefined);
     return members;
   }
-
-  private check_acc(fullname: string): boolean {
-    const month_to_quarter = (month: number): number => {
-      if (month >= 7 && month <= 11) return 0;  //  juillet à novembre => T1
-      if (month === 12 || (month >= 0 && month <= 2)) return 1;  //  décembre à février => T2
-      if (month >= 3 && month <= 6) return 2;  //  mars à juin => T3
-      throw new Error('Invalid month');
-    }
-
-    const check_quarter = (index: number) => {
-      if (index > 2) {
-        // Ne bloque plus l'app, mais signale l'anomalie
-        console.warn('Quarter overflow for member', fullname, acc_op_dates);
-        if (this.toastService) {
-          this.toastService.showWarning('Anomalie trimestre', `Plus de 3 opérations trimestrielles pour ${fullname}`);
-        }
-        return;
-      }
-      if (!quarters[index]) {
-        quarters[index] = true;
-      } else {
-        check_quarter(index + 1);
-      }
-    }
-
-    const this_quarter = () => {
-      const month = new Date().getMonth();
-      return month_to_quarter(month);
-    }
-
-    const acc_op_dates = this.BookService.find_member_acc_operations(fullname);
-    // associate payment dates to quarter
-    let quarters: boolean[] = [false, false, false]; // T1, T2, T3
-    acc_op_dates.forEach((date) => {
-      const month = new Date(date).getMonth();
-      const quarter = month_to_quarter(month);
-      check_quarter(quarter);
-    });
-
-    return quarters[this_quarter()];
-  }
-
-
-
 
   generate_member_images() {
     this.game.gamers.forEach((gamer) => {

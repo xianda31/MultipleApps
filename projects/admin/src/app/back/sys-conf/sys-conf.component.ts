@@ -258,9 +258,11 @@ export class SysConfComponent {
       this.revenues.push(this.fb.group(account));
     });
 
-    configuration.fee_rates.forEach((fee_rate: any) => {
-      this.fee_rates.push(this.fb.group(fee_rate));
-    });
+    configuration.fee_rates
+      .filter((fee_rate) => String(fee_rate.key) !== 'accession')
+      .forEach((fee_rate: any) => {
+        this.fee_rates.push(this.fb.group(fee_rate));
+      });
 
 
     configuration.banks.forEach((bank: any) => {

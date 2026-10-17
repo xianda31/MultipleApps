@@ -1,4 +1,5 @@
-import { canSelectGameCard, checkInState, gamerFeePrice, membershipPaymentWarningActive, membershipPaymentWarningLevel, requiredGameCredits, tournamentUsesDoubledFees } from './fees-check-in.util';
+import { FEE_RATE } from '../fees.interface';
+import { canSelectGameCard, checkInState, feeModeConfiguration, feeModeFromConfiguration, gamerFeePrice, membershipPaymentWarningActive, membershipPaymentWarningLevel, requiredGameCredits, tournamentFeeMode } from './fees-check-in.util';
 
 describe('fees check-in rules', () => {
   it('requires two credits when fees are doubled', () => {
@@ -6,11 +7,25 @@ describe('fees check-in rules', () => {
     expect(requiredGameCredits(true)).toBe(2);
   });
 
-  it('detects Roy Rene tournaments and doubles their prices', () => {
-    expect(tournamentUsesDoubledFees('Challenge Roy René')).toBeTrue();
-    expect(tournamentUsesDoubledFees('Tournoi de régularité')).toBeFalse();
+  it('maps the three exclusive fee modes to the persisted configuration', () => {
+    expect(feeModeConfiguration('summer')).toEqual({ feeRate: FEE_RATE.HOLIDAYS, feesDoubled: false });
+    expect(feeModeConfiguration('standard')).toEqual({ feeRate: FEE_RATE.STANDARD, feesDoubled: false });
+    expect(feeModeConfiguration('standard-doubled')).toEqual({ feeRate: FEE_RATE.STANDARD, feesDoubled: true });
+    expect(feeModeFromConfiguration(FEE_RATE.HOLIDAYS, true)).toBe('summer');
+    expect(feeModeFromConfiguration(FEE_RATE.STANDARD, true)).toBe('standard-doubled');
+  });
+
+  it('detects the initial tournament fee mode and applies doubled prices', () => {
+    expect(tournamentFeeMode('Challenge Roy René')).toBe('standard-doubled');
+    expect(tournamentFeeMode('Tournoi de régularité')).toBe('standard');
     expect(gamerFeePrice(true, 2, 4, true)).toBe(4);
     expect(gamerFeePrice(false, 2, 4, true)).toBe(8);
+  });
+
+  it('uses the standard rate for accession and student tournaments', () => {
+    expect(tournamentFeeMode('Tournoi accession')).toBe('standard');
+    expect(tournamentFeeMode('Tournoi élèves')).toBe('standard');
+    expect(tournamentFeeMode('Tournoi d’été')).toBe('summer');
   });
 
   it('only allows solvent members to select a game card', () => {

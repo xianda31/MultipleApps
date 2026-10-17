@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { FeesCollectorService } from './fees-collector.service';
 import { BehaviorSubject, switchMap } from 'rxjs';
-import { club_tournament_extended, FEE_RATE, Game, Game_status, Gamer } from '../fees.interface';
+import { club_tournament_extended, Game, Game_status, Gamer } from '../fees.interface';
 import { PdfService } from '../../../common/services/pdf.service';
 import { HorizontalAlignment, PDF_table } from '../../../common/interfaces/pdf-table.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
@@ -24,7 +24,7 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { normalizeGender } from '../../../common/utils/gender.util';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
-import { membershipPaymentWarningActive, membershipPaymentWarningLevel } from './fees-check-in.util';
+import { feeModeFromConfiguration, membershipPaymentWarningActive, membershipPaymentWarningLevel, TournamentFeeMode } from './fees-check-in.util';
 
 
 
@@ -38,11 +38,13 @@ import { membershipPaymentWarningActive, membershipPaymentWarningLevel } from '.
 
 export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   GAME_STATUS = Game_status;
-  FEE_RATE = FEE_RATE;
   next_tournaments: club_tournament_extended[] = [];
   selected_tournament: club_tournament_extended | null = null;
-  fee_rates: FEE_RATE[] = Object.values(FEE_RATE);
-  selected_fee_rate: FEE_RATE = FEE_RATE.STANDARD;
+  feeModes: { value: TournamentFeeMode; label: string }[] = [
+    { value: 'summer', label: 'été' },
+    { value: 'standard', label: 'standard' },
+    { value: 'standard-doubled', label: 'doublée' },
+  ];
   days_back: number = 0;
   tournamentsWindow: number = 28; // Dynamically extensible window (4 weeks)
   private daysBack$ = new BehaviorSubject<number>(0);
@@ -211,8 +213,12 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
 
-  async fee_rate_changed(fee_rate: FEE_RATE): Promise<void> {
-    const saved = await this.feesCollectorService.change_fee_rate(fee_rate);
+  get selectedFeeMode(): TournamentFeeMode {
+    return feeModeFromConfiguration(this.game.fee_rate, this.game.fees_doubled);
+  }
+
+  async feeModeChanged(mode: TournamentFeeMode): Promise<void> {
+    const saved = await this.feesCollectorService.changeFeeMode(mode);
     if (saved) await this.log_game_state();
   }
 
@@ -267,12 +273,12 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     this.feesCollectorService.clear_tournament();
   }
 
-  toggle_sort() {
-    this.feesCollectorService.toggle_sort();
+  setAlphabeticSort(alphabeticSort: boolean): void {
+    this.feesCollectorService.set_alphabetic_sort(alphabeticSort);
   }
 
-  toggle_hide_validated() {
-    this.hideValidated = this.feesCollectorService.toggle_hide_validated();
+  setValidatedFilter(hideValidated: boolean): void {
+    this.hideValidated = this.feesCollectorService.set_hide_validated(hideValidated);
   }
 
   shouldShowGamer(gamer: Gamer): boolean {
@@ -306,11 +312,6 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     if (!saved) return;
     this.onGamerValidated(gamer);
     this.check_status();
-  }
-
-  async toggle_fee(): Promise<void> {
-    const saved = await this.feesCollectorService.toggle_fee();
-    if (saved) await this.log_game_state();
   }
 
   async validate_fees(): Promise<boolean> {
@@ -616,7 +617,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       if (gamer.enabled) {
         return gamer.in_euro ? (gamer.price.toFixed(2) + ' €') : ((this.game.fees_doubled ? 2 : 1) + ' tampon(s)');
       } else {
-        return this.game.fee_rate === 'accession' ? 'forfait' : 'non payant';
+        return 'non payant';
       }
     }
 

@@ -1,15 +1,33 @@
-import { GameCheckInMode } from '../fees.interface';
+import { FEE_RATE, GameCheckInMode } from '../fees.interface';
+
+export type TournamentFeeMode = 'summer' | 'standard' | 'standard-doubled';
 
 export function requiredGameCredits(feesDoubled: boolean): number {
   return feesDoubled ? 2 : 1;
 }
 
-export function tournamentUsesDoubledFees(title: string | null | undefined): boolean {
-  return (title ?? '')
+export function feeModeFromConfiguration(feeRate: FEE_RATE, feesDoubled: boolean): TournamentFeeMode {
+  if (feeRate === FEE_RATE.HOLIDAYS) return 'summer';
+  return feesDoubled ? 'standard-doubled' : 'standard';
+}
+
+export function feeModeConfiguration(mode: TournamentFeeMode): {
+  feeRate: FEE_RATE;
+  feesDoubled: boolean;
+} {
+  return {
+    feeRate: mode === 'summer' ? FEE_RATE.HOLIDAYS : FEE_RATE.STANDARD,
+    feesDoubled: mode === 'standard-doubled',
+  };
+}
+
+export function tournamentFeeMode(title: string | null | undefined): TournamentFeeMode {
+  const normalizedTitle = (title ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .includes('roy');
+    .toLowerCase();
+  if (normalizedTitle.includes('ete')) return 'summer';
+  return normalizedTitle.includes('roy') ? 'standard-doubled' : 'standard';
 }
 
 export function gamerFeePrice(

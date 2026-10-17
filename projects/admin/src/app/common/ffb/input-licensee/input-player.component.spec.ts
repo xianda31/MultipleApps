@@ -1,5 +1,7 @@
 import { FFB_proxyService } from '../services/ffb.service';
+import { MembersService } from '../../services/members.service';
 import { InputPlayerComponent } from './input-player.component';
+import { of } from 'rxjs';
 
 describe('InputPlayerComponent', () => {
   let searchPlayersSuchAs: jasmine.Spy;
@@ -15,7 +17,9 @@ describe('InputPlayerComponent', () => {
     });
     component = new InputPlayerComponent({
       searchPlayersSuchAs,
-    } as unknown as FFB_proxyService);
+    } as unknown as FFB_proxyService, {
+      listMembers: () => of([{ license_number: '00123456' }]),
+    } as unknown as MembersService);
     component.groupSessionId = 338081;
   });
 
@@ -47,5 +51,14 @@ describe('InputPlayerComponent', () => {
       'CLEMENT Jocelyne',
       { groupSessionId: 338081 }
     );
+  });
+
+  it('emphasizes players whose license exists in the local member database', () => {
+    expect(component.playerOptionClassFn({
+      license_number: '123456',
+    })).toBe('fw-bold');
+    expect(component.playerOptionClassFn({
+      license_number: '87654321',
+    })).toBe('');
   });
 });
