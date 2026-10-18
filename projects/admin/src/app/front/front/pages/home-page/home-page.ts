@@ -14,11 +14,12 @@ import { FileService } from '../../../../common/services/files.service';
 import { ALaUneRenderComponent } from '../generic-page/renderers/a-la-une-render/a-la-une-render.component';
 import { HomeHighlightsService } from '../../../../common/services/home-highlights.service';
 import { VisualIdentityService } from '../../../../common/services/visual-identity.service';
+import { NotificationSubscriptionDemoComponent } from './notification-subscription-demo/notification-subscription-demo.component';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, ALaUneRenderComponent, TournamentsComponent],
+  imports: [CommonModule, ALaUneRenderComponent, TournamentsComponent, NotificationSubscriptionDemoComponent],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss'
 })
@@ -83,7 +84,7 @@ export class HomePage {
     });
 
     this.titleService.setTitle('Les actualités et les prochains tournois de régularité');
-
+    
     this.countersSub = this.membersService.listMembers().subscribe((members) => {
       const counters = this.membersService.computeStatusCountersFromMembers();
       this.licensee_nbr = counters.ffbClubAttached;
