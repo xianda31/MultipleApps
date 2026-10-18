@@ -18,6 +18,7 @@ import { CardsImgTopLeftRenderComponent } from './renderers/cards-img-top-left-r
 import { AlbumsRenderComponent } from './renderers/albums-render/albums-render.component';
 import { BookletRenderComponent } from './renderers/booklet-render/booklet-render.component';
 import { BreakpointsSettings } from '../../../../common/interfaces/ui-conf.interface';
+import { resolvePageSnippets } from '../../../../common/utils/page-snippet-filter';
 
 @Component({
   selector: 'app-generic-page',
@@ -78,8 +79,10 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
     // Handle external page_snippets changes (e.g., from CMS wrapper)
     if (changes['page_snippets']) {
-      this.usesExternalPageSnippets = true;
-      if (!changes['page_snippets'].firstChange) {
+      const externalPageSnippets = changes['page_snippets'].currentValue as Snippet[] | undefined;
+      this.usesExternalPageSnippets = externalPageSnippets !== undefined;
+      this.page_snippets = externalPageSnippets ?? [];
+      if (this.usesExternalPageSnippets && !changes['page_snippets'].firstChange && this.page) {
         this.applyPageConfiguration(this.page_title);
       }
     }
@@ -132,9 +135,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
 
     // Load page_snippets from page snippet IDs if not provided externally
     if (!this.usesExternalPageSnippets) {
-      this.page_snippets = page.snippet_ids
-        .map(id => this.snippets.find(snippet => snippet.id === id))
-        .filter(snippet => snippet !== undefined) as Snippet[];
+      this.page_snippets = resolvePageSnippets(page.snippet_ids, this.snippets);
     }
 
     // Apply page-specific configuration

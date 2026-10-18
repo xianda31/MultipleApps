@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-18-les-documents-consultables-sont-maintenant-ranges-sous",
+    "publishedOn": "2026-10-18",
+    "site": "BACK_OFFICE",
+    "area": "SITE_WEB",
+    "kind": "NEW",
+    "summary": "Les documents consultables sont maintenant rangés sous répertoires"
+  },
+  {
     "id": "2026-10-17-ameliorations-de-l-ui-pointage-tournoi-selecteurs",
     "publishedOn": "2026-10-17",
     "site": "BACK_OFFICE",
