@@ -22,12 +22,9 @@ export class SnippetService {
         private dbHandler: DBhandler
     ) {
         this.auth.logged_member$.subscribe(user => {
-            if (user) {
-                this.logged = true;
-                if (this._snippets) this._snippets$.next(this._snippets.filter((s) => s.public || this.logged));
-
-            } else {
-                // console.log('not logged');
+            this.logged = user !== null;
+            if (this._snippets && this._snippets$) {
+                this._snippets$.next(this._snippets.filter((snippet) => snippet.public || this.logged));
             }
         });
     }

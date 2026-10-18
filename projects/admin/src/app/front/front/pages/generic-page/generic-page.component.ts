@@ -50,6 +50,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
   PAGE_TEMPLATES = PAGE_TEMPLATES;
   snippets: Snippet[] = [];
   scroll_to_snippet?: Snippet;
+  private usesExternalPageSnippets = false;
 
   constructor(
     private snippetService: SnippetService,
@@ -76,8 +77,11 @@ export class GenericPageComponent implements OnInit, OnChanges {
     }
 
     // Handle external page_snippets changes (e.g., from CMS wrapper)
-    if (changes['page_snippets'] && !changes['page_snippets'].firstChange) {
-      this.applyPageConfiguration(this.page_title);
+    if (changes['page_snippets']) {
+      this.usesExternalPageSnippets = true;
+      if (!changes['page_snippets'].firstChange) {
+        this.applyPageConfiguration(this.page_title);
+      }
     }
   }
 
@@ -127,7 +131,7 @@ export class GenericPageComponent implements OnInit, OnChanges {
     this.page = page;
 
     // Load page_snippets from page snippet IDs if not provided externally
-    if (!Array.isArray(this.page_snippets) || this.page_snippets.length === 0) {
+    if (!this.usesExternalPageSnippets) {
       this.page_snippets = page.snippet_ids
         .map(id => this.snippets.find(snippet => snippet.id === id))
         .filter(snippet => snippet !== undefined) as Snippet[];
