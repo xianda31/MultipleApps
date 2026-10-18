@@ -7,7 +7,7 @@ import { Group_names, Group_priorities } from '../../common/authentification/gro
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { GroupService } from '../../common/authentification/group.service';
 import { environment } from '../../../environments/environment';
-import { NgbCollapseModule, NgbDropdown, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapseModule, NgbDropdown, NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { Accreditation } from '../../common/authentification/group.interface';
 import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -29,7 +29,7 @@ import { GameCardService } from '../services/game-card.service';
 @Component({
   selector: 'app-back-navbar',
   standalone: true,
-  imports: [CommonModule, NgIf, RouterLink, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule],
+  imports: [CommonModule, NgIf, RouterLink, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule],
   templateUrl: './back-navbar.component.html',
   styleUrl: './back-navbar.component.scss'
 })
@@ -55,6 +55,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
   abandonedCheckoutCount$: Observable<number>;
   stripeWarningCount$: Observable<number>;
   gameCardOrphanCount$: Observable<number>;
+  usersWithoutGroupCount$: Observable<number>;
   readonly ffbAvailability$: FfbAvailabilityService['snapshot$'];
 //  BACK_ROUTE_PATHS = BACK_ROUTE_PATHS;
   
@@ -102,6 +103,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     this.authorizationFlag$ = this.breakingNewsService.authorizationFlag$;
     this.abandonedCheckoutCount$ = this.stripeReconciliationHealth.abandonedCheckoutCount$;
     this.stripeWarningCount$ = this.stripeReconciliationHealth.staleAbandonedCheckoutCount$;
+    this.usersWithoutGroupCount$ = this.groupService.usersWithoutGroupCount$;
     this.gameCardOrphanCount$ = this.gameCardService.gameCards.pipe(
       switchMap(cards => from(this.gameCardService.findOrphanCards(cards))),
       map(orphanIds => orphanIds.size),
@@ -175,6 +177,7 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
           let group = groups[0] as Group_names;
           this.accreditation_level = Group_priorities[group];
           this.refreshStripeWarningIfAuthorized();
+          this.refreshUsersWithoutGroupCountIfAuthorized();
         }
         // Ajout dynamique du User menu à la fin
         this.navbarMenus.push({
@@ -233,6 +236,10 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     this.router.navigate([BACK_ROUTE_ABS_PATHS['GameCardsEditor']]);
   }
 
+  go_to_groups_list() {
+    this.router.navigate([BACK_ROUTE_ABS_PATHS['GroupsList']]);
+  }
+
   private refreshStripeWarningIfAuthorized(): void {
     if (
       this.accreditation_level >= Group_priorities.Administrateur &&
@@ -240,6 +247,14 @@ export class BackNavbarComponent implements OnInit, OnDestroy {
     ) {
       this.stripeReconciliationHealth.refresh().catch(error =>
         console.error('Erreur chargement indicateur Stripe:', error)
+      );
+    }
+  }
+
+  private refreshUsersWithoutGroupCountIfAuthorized(): void {
+    if (this.accreditation_level >= Group_priorities.Administrateur) {
+      this.groupService.refreshUsersWithoutGroupCount().catch(error =>
+        console.error('Erreur chargement indicateur comptes à régulariser:', error)
       );
     }
   }

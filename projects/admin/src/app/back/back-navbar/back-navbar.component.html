@@ -37,38 +37,7 @@
       <button class="btn btn-sm btn-link p-0 px-1" (click)="go_to_prev_season()" title="Saison précédente"><i class="bi bi-chevron-left"></i></button>
       <span [class.text-warning]="season !== today_season" [title]="season !== today_season ? 'Consultation historique — saison non courante' : ''">{{season}}</span>
       <button class="btn btn-sm btn-link p-0 px-1" (click)="go_to_next_season()" [disabled]="season >= today_season" title="Saison suivante"><i class="bi bi-chevron-right"></i></button>
-      <span class="badge bg-success ms-1" style="font-size: 0.6rem; vertical-align: middle;">{{entries_nbr}}</span>
       <span *ngIf="loading" class="ms-1" style="vertical-align: middle;"><span class="spinner-border spinner-border-sm text-secondary" role="status" style="width:0.65rem;height:0.65rem;border-width:0.1em;"></span></span>
-      <span *ngIf="!production_mode" class="badge bg-dark ms-1" style="font-size: 0.6rem; vertical-align: middle;">dev</span>
-      <ng-container *ngIf="accreditation_level >= accreditation_levels.Administrateur">
-        <span *ngIf="(abandonedCheckoutCount$ | async) as abandonedCheckoutCount"
-          class="badge bg-danger text-white ms-1"
-          role="button"
-          title="{{abandonedCheckoutCount}} checkout(s) Stripe avec écriture comptable impossible(s) à réconcilier"
-          (click)="go_to_stripe_reconciliation()"
-          style="font-size: 0.6rem; vertical-align: middle;">
-          <i class="bi bi-exclamation-octagon me-1"></i> {{abandonedCheckoutCount}}
-        </span>
-        <span *ngIf="(stripeWarningCount$ | async) as stripeWarningCount"
-          class="badge bg-danger text-white ms-1"
-          role="button"
-          title="{{stripeWarningCount}} transaction(s) Stripe abandonnée(s) depuis plus de 24 h"
-          (click)="go_to_stripe_reconciliation()"
-          style="font-size: 0.6rem; vertical-align: middle;">
-          <i class="bi bi-credit-card me-1"></i> {{stripeWarningCount}}
-        </span>
-        <span *ngIf="(gameCardOrphanCount$ | async) as gameCardOrphanCount"
-          class="badge bg-warning text-white ms-1"
-          role="button"
-          title="{{gameCardOrphanCount}} carte(s) d'admission sans vente associée"
-          (click)="go_to_game_cards_editor()"
-          style="font-size: 0.6rem; vertical-align: middle;">
-          <i class="bi bi-table me-1"></i> {{gameCardOrphanCount}}
-        </span>
-      </ng-container>
-      <span *ngIf="new_assistances_nbr" class="badge bg-warning ms-1" (click)="go_to_assistance()" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);"> new : {{new_assistances_nbr}}</span>
-      <span *ngIf="in_progress_assistances_nbr" class="badge bg-info ms-1" (click)="go_to_assistance()" style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);"> progress : {{in_progress_assistances_nbr}} </span>
-
     </span>
 
     <span class="d-sm-inline d-md-none fs-5 ms-1 d-flex align-items-center gap-1">
@@ -76,6 +45,75 @@
       <button class="btn btn-sm btn-link p-0" (click)="go_to_prev_season()"><i class="bi bi-chevron-left"></i></button>
       <span [class.text-warning]="season !== today_season">{{season}}</span>
       <button class="btn btn-sm btn-link p-0" (click)="go_to_next_season()" [disabled]="season >= today_season"><i class="bi bi-chevron-right"></i></button>
+    </span>
+
+    <span class="navbar-alert-badges d-inline-flex align-items-center flex-wrap">
+      <span class="badge bg-success ms-1"
+        [ngbTooltip]="entries_nbr + ' écriture(s) comptable(s)'"
+        placement="bottom" container="body"
+        style="font-size: 0.6rem; vertical-align: middle;">{{entries_nbr}}</span>
+      <span *ngIf="!production_mode" class="badge bg-dark ms-1"
+        ngbTooltip="Environnement de développement"
+        placement="bottom" container="body"
+        style="font-size: 0.6rem; vertical-align: middle;">dev</span>
+      <ng-container *ngIf="accreditation_level >= accreditation_levels.Administrateur">
+        <span *ngIf="(usersWithoutGroupCount$ | async) as usersWithoutGroupCount"
+          class="badge bg-warning text-dark ms-1"
+          role="button"
+          tabindex="0"
+          [ngbTooltip]="usersWithoutGroupCount + ' compte(s) sans groupe à régulariser'"
+          placement="bottom" container="body"
+          [attr.aria-label]="usersWithoutGroupCount + ' compte(s) sans groupe à régulariser'"
+          (click)="go_to_groups_list()"
+          style="font-size: 0.6rem; vertical-align: middle;">
+          <i class="bi bi-person-exclamation me-1"></i> {{usersWithoutGroupCount}}
+        </span>
+        <span *ngIf="(abandonedCheckoutCount$ | async) as abandonedCheckoutCount"
+          class="badge bg-danger text-white ms-1"
+          role="button"
+          tabindex="0"
+          [ngbTooltip]="abandonedCheckoutCount + ' checkout(s) Stripe avec écriture comptable impossible(s) à réconcilier'"
+          placement="bottom" container="body"
+          [attr.aria-label]="abandonedCheckoutCount + ' checkout(s) Stripe avec écriture comptable impossible(s) à réconcilier'"
+          (click)="go_to_stripe_reconciliation()"
+          style="font-size: 0.6rem; vertical-align: middle;">
+          <i class="bi bi-exclamation-octagon me-1"></i> {{abandonedCheckoutCount}}
+        </span>
+        <span *ngIf="(stripeWarningCount$ | async) as stripeWarningCount"
+          class="badge bg-danger text-white ms-1"
+          role="button"
+          tabindex="0"
+          [ngbTooltip]="stripeWarningCount + ' transaction(s) Stripe abandonnée(s) depuis plus de 24 h'"
+          placement="bottom" container="body"
+          [attr.aria-label]="stripeWarningCount + ' transaction(s) Stripe abandonnée(s) depuis plus de 24 h'"
+          (click)="go_to_stripe_reconciliation()"
+          style="font-size: 0.6rem; vertical-align: middle;">
+          <i class="bi bi-credit-card me-1"></i> {{stripeWarningCount}}
+        </span>
+        <span *ngIf="(gameCardOrphanCount$ | async) as gameCardOrphanCount"
+          class="badge bg-warning text-white ms-1"
+          role="button"
+          tabindex="0"
+          [ngbTooltip]="gameCardOrphanCount + ' carte(s) d’admission sans vente associée'"
+          placement="bottom" container="body"
+          [attr.aria-label]="gameCardOrphanCount + ' carte(s) d’admission sans vente associée'"
+          (click)="go_to_game_cards_editor()"
+          style="font-size: 0.6rem; vertical-align: middle;">
+          <i class="bi bi-table me-1"></i> {{gameCardOrphanCount}}
+        </span>
+      </ng-container>
+      <span *ngIf="new_assistances_nbr" class="badge bg-warning ms-1" role="button" tabindex="0"
+        [ngbTooltip]="new_assistances_nbr + ' nouvelle(s) demande(s) d’assistance'"
+        placement="bottom" container="body"
+        [attr.aria-label]="new_assistances_nbr + ' nouvelle(s) demande(s) d’assistance'"
+        (click)="go_to_assistance()"
+        style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);"> new : {{new_assistances_nbr}}</span>
+      <span *ngIf="in_progress_assistances_nbr" class="badge bg-info ms-1" role="button" tabindex="0"
+        [ngbTooltip]="in_progress_assistances_nbr + ' demande(s) d’assistance en cours'"
+        placement="bottom" container="body"
+        [attr.aria-label]="in_progress_assistances_nbr + ' demande(s) d’assistance en cours'"
+        (click)="go_to_assistance()"
+        style="font-size: 0.6rem; vertical-align: middle; color: rgb(252, 249, 249);"> progress : {{in_progress_assistances_nbr}} </span>
     </span>
 
     <!-- backdoor to front + toggle breaking-news -->

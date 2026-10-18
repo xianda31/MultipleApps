@@ -8,6 +8,7 @@ import { ToastService } from '../../../common/services/toast.service';
 import { MembersService } from '../../../common/services/members.service';
 import { Schema } from '../../../../../../../amplify/data/resource';
 import { firstValueFrom, take } from 'rxjs';
+import { GroupService } from '../../../common/authentification/group.service';
 
 interface Profil extends UserInGroup {
   member: Member | null;
@@ -36,7 +37,8 @@ export class GroupsListComponent implements OnInit {
 
   constructor(
     private membersService: MembersService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private groupService: GroupService,
   ) {
   }
 
@@ -90,6 +92,7 @@ export class GroupsListComponent implements OnInit {
           prev_group: null,
         }))
         .sort((a, b) => this.profileName(a).localeCompare(this.profileName(b), 'fr', { sensitivity: 'base' }));
+      this.publishUsersWithoutGroupCount();
 
     } catch (error) {
       console.error(`Error listing users `, error);
@@ -112,6 +115,7 @@ export class GroupsListComponent implements OnInit {
       user.prev_group = new_group;
       user.highest_group = new_group;
       this.usersWithoutGroup = this.usersWithoutGroup.filter(item => item.Username !== user.Username);
+      this.publishUsersWithoutGroupCount();
       if (!this.usersArray.some(item => item.Username === user.Username)) {
         this.usersArray = [...this.usersArray, user];
       }
@@ -172,6 +176,7 @@ export class GroupsListComponent implements OnInit {
     try {
       await this._deleteUser(user.Username);
       this.usersWithoutGroup = this.usersWithoutGroup.filter(item => item.Username !== user.Username);
+      this.publishUsersWithoutGroupCount();
       this.usersArray = this.usersArray.filter(item => item.Username !== user.Username);
       if (user.Enabled !== false) {
         this.openAccountsCount = Math.max(0, this.openAccountsCount - 1);
@@ -201,6 +206,7 @@ export class GroupsListComponent implements OnInit {
       user.highest_group = Group_names.Member;
       user.prev_group = Group_names.Member;
       this.usersWithoutGroup = this.usersWithoutGroup.filter(item => item.Username !== user.Username);
+      this.publishUsersWithoutGroupCount();
       this.usersArray = [...this.usersArray, user];
       this.sortNominalUsers();
       this.toastService.showSuccess('Gestion des accès', `Compte ${email} confirmé et activé comme Membre`);
@@ -253,6 +259,10 @@ export class GroupsListComponent implements OnInit {
       throw new Error(`Invalid ${operation} response`);
     }
     return (parsed as { Users: UserInGroup[] }).Users;
+  }
+
+  private publishUsersWithoutGroupCount(): void {
+    this.groupService.setUsersWithoutGroupCount(this.usersWithoutGroup.length);
   }
 
   // User management methods

@@ -64,6 +64,30 @@
     }
 }
 
+@media (max-width: 767.98px) {
+    #navbar-header {
+        flex-wrap: wrap;
+    }
+
+    .navbar-alert-badges {
+        order: 2;
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        gap: 0.25rem;
+        padding-inline: 0.25rem;
+        box-sizing: border-box;
+        justify-content: flex-end;
+    }
+
+    .navbar-alert-badges > .badge,
+    .navbar-alert-badges > ng-container > .badge {
+        margin-left: 0 !important;
+        max-width: 100%;
+    }
+}
+
 .bg-light.p-0.m-0 {
     background-color: var(--bs-light, #f8f9fa) !important;
     border: 0 !important;

@@ -17,6 +17,7 @@ import { Schema } from '../../../../../../amplify/data/resource';
 })
 export class GroupService {
   private _auth_event$: BehaviorSubject<AuthEvent> = new BehaviorSubject<AuthEvent>({ event: '' });
+  private readonly usersWithoutGroupCountSubject = new BehaviorSubject<number>(0);
   private readonly GROUP_PRIORITY = Group_priorities;
 
 
@@ -41,6 +42,37 @@ export class GroupService {
 
   get authEvent$() {
     return this._auth_event$.asObservable();
+  }
+
+  get usersWithoutGroupCount$() {
+    return this.usersWithoutGroupCountSubject.asObservable();
+  }
+
+  setUsersWithoutGroupCount(count: number): void {
+    this.usersWithoutGroupCountSubject.next(count);
+  }
+
+  async refreshUsersWithoutGroupCount(): Promise<number> {
+    const client = generateClient<Schema>();
+    const { data: usersData, errors: usersErrors } = await client.queries.listUsers();
+    if (usersErrors?.length) {
+      throw usersErrors;
+    }
+
+    const allUsers = this.parseUsersResponse(usersData, 'listUsers');
+    const usersByGroup = await Promise.all(
+      Object.values(Group_names).map(async groupName => {
+        const { data, errors } = await client.mutations.listUsersInGroup({ groupName });
+        if (errors?.length) {
+          throw errors;
+        }
+        return this.parseUsersResponse(data, 'listUsersInGroup');
+      })
+    );
+    const groupedUsernames = new Set(usersByGroup.flat().map(user => user.Username));
+    const count = allUsers.filter(user => !groupedUsernames.has(user.Username)).length;
+    this.setUsersWithoutGroupCount(count);
+    return count;
   }
 
   async getCurrentUser(): Promise<AuthData> {
@@ -147,6 +179,14 @@ export class GroupService {
     }else {
       throw new Error('No groups found for the current user');
     }
+  }
+
+  private parseUsersResponse(data: unknown, operation: string): UserInGroup[] {
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { Users?: unknown }).Users)) {
+      throw new Error(`Invalid ${operation} response`);
+    }
+    return (parsed as { Users: UserInGroup[] }).Users;
   }
   
 
