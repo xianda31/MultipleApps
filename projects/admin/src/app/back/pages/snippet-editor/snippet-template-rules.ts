@@ -1,6 +1,6 @@
 import { PAGE_TEMPLATES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 
-export type SnippetField = 'title' | 'subtitle' | 'content' | 'publishedAt' | 'public' | 'featured' | 'image' | 'file' | 'folder';
+export type SnippetField = 'title' | 'subtitle' | 'content' | 'publishedAt' | 'public' | 'featured' | 'image' | 'file' | 'folder' | 'documentPath';
 
 export interface SnippetTemplateRule {
   required: SnippetField[];
@@ -28,7 +28,7 @@ export const SNIPPET_TEMPLATE_RULES: Record<PAGE_TEMPLATES, SnippetTemplateRule>
   },
   [PAGE_TEMPLATES.LOADABLE]: {
     required: ['title', 'file'],
-    visible: ['title', 'content', 'public', 'file'],
+    visible: ['title', 'content', 'public', 'file', 'documentPath'],
   },
   [PAGE_TEMPLATES.CARDS_top]: {
     required: ['title', 'image'],

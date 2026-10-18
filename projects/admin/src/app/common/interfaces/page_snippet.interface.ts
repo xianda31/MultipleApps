@@ -9,6 +9,7 @@ export interface Snippet {
     image: string;
     file: string;
     folder:string
+    documentPath?: string;
     featured: boolean;
     image_url?: string;
     pageId?: string;
@@ -61,4 +62,3 @@ export enum MENU_TITLES {
     AUTRES_RDV = 'autres rendez-vous',
 }
 export const CLIPBOARD_TITLE = '__CLIPBOARD__'
-

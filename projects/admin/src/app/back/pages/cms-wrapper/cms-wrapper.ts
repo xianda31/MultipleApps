@@ -549,6 +549,7 @@ export class CmsWrapper implements OnInit, OnDestroy {
       featured: false,
       file: '',
       folder: '',
+      documentPath: '',
       ownerPageId: this.selectedPage.id,
     };
 
@@ -610,6 +611,12 @@ export class CmsWrapper implements OnInit, OnDestroy {
 
   get selectedSnippet(): Snippet | null {
     return this.pageSnippets.find(snippet => snippet.id === this.openSnippetId) ?? null;
+  }
+
+  get existingDocumentPaths(): string[] {
+    return this.pageSnippets
+      .map(snippet => snippet.documentPath ?? '')
+      .filter(path => path.length > 0);
   }
 
   get filteredPages(): Page[] {

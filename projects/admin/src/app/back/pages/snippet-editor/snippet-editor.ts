@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { PAGE_TEMPLATES, Snippet } from '../../../common/interfaces/page_snippet.interface';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -10,6 +10,7 @@ import { FileService, S3_ROOT_FOLDERS } from '../../../common/services/files.ser
 import { DomSanitizer } from '@angular/platform-browser';
 import { isSnippetFieldVisible, SNIPPET_TEMPLATE_RULES, SnippetField, snippetMissingFields } from './snippet-template-rules';
 import { localDateValue, noFuturePublicationDate } from '../../../common/utils/publication-date';
+import { DocumentPathOption, listDocumentPathOptions, normalizeDocumentPath } from '../../../common/utils/document-path';
 
 @Component({
   selector: 'app-snippet-editor',
@@ -19,8 +20,10 @@ import { localDateValue, noFuturePublicationDate } from '../../../common/utils/p
   styleUrls: ['./snippet-editor.scss']
 })
 export class SnippetEditor implements OnChanges {
+  @ViewChild('documentPathInput') documentPathInput?: ElementRef<HTMLInputElement>;
   @Input() snippet: Snippet | null = null;
   @Input() pageTemplate: PAGE_TEMPLATES = PAGE_TEMPLATES.PUBLICATION;
+  @Input() existingDocumentPaths: string[] = [];
   @Input() selectedFilePath: string | null = null;
   @Input() selectionType: 'image' | 'document' | 'folder' | null = null;
   @Input() selectionTimestamp: number = 0;
@@ -47,6 +50,7 @@ export class SnippetEditor implements OnChanges {
     image: 'illustration',
     file: 'document',
     folder: 'album photo',
+    documentPath: 'répertoire',
   };
 
   // selectors are opened as modals when needed
@@ -68,7 +72,8 @@ export class SnippetEditor implements OnChanges {
       featured: [false],
       image: [''],
       file: [''],
-      folder: ['']
+      folder: [''],
+      documentPath: [''],
     });
   }
 
@@ -147,7 +152,8 @@ export class SnippetEditor implements OnChanges {
         featured: !!this.snippet.featured,
         image: newImage,
         file: this.snippet.file || '',
-        folder: this.snippet.folder || ''
+        folder: this.snippet.folder || '',
+        documentPath: normalizeDocumentPath(this.snippet.documentPath),
       }, { emitEvent: false });
       
       // If image changed, manually trigger the valueChanges logic
@@ -215,6 +221,8 @@ export class SnippetEditor implements OnChanges {
     }
     // Patch publishedAt to yyyy-MM-dd if present
     let formValue = { ...this.form.value };
+    formValue.documentPath = normalizeDocumentPath(formValue.documentPath);
+    this.form.get('documentPath')?.setValue(formValue.documentPath, { emitEvent: false });
     if (formValue.publishedAt) {
       // Only keep yyyy-MM-dd part if value is ISO string
       if (typeof formValue.publishedAt === 'string' && formValue.publishedAt.length > 10) {
@@ -241,7 +249,8 @@ export class SnippetEditor implements OnChanges {
         featured: !!updatedSnippet.featured,
         image: updatedSnippet.image || '',
         file: updatedSnippet.file || '',
-        folder: updatedSnippet.folder || ''
+        folder: updatedSnippet.folder || '',
+        documentPath: normalizeDocumentPath(updatedSnippet.documentPath),
       }, { emitEvent: false });
       this.saveState = 'saved';
     } catch (error) {
@@ -283,6 +292,37 @@ export class SnippetEditor implements OnChanges {
 
   get missingFieldLabels(): string {
     return this.missingFields.map(field => this.fieldLabels[field]).join(', ');
+  }
+
+  get documentPathOptions(): DocumentPathOption[] {
+    return listDocumentPathOptions([
+      ...this.existingDocumentPaths,
+      this.form.get('documentPath')?.value,
+    ]);
+  }
+
+  selectDocumentPath(path: string): void {
+    const normalizedPath = normalizeDocumentPath(path);
+    const control = this.form.get('documentPath');
+    control?.setValue(normalizedPath);
+    control?.markAsDirty();
+    setTimeout(() => {
+      const input = this.documentPathInput?.nativeElement;
+      if (!input) return;
+      input.focus();
+      input.setSelectionRange(normalizedPath.length, normalizedPath.length);
+    });
+  }
+
+  saveDocumentPath(): void {
+    const normalizedPath = normalizeDocumentPath(this.form.get('documentPath')?.value);
+    this.form.get('documentPath')?.setValue(normalizedPath, { emitEvent: false });
+    void this.saveSnippetSelected();
+  }
+
+  isSelectedDocumentPath(path: string): boolean {
+    return normalizeDocumentPath(this.form.get('documentPath')?.value).toLocaleLowerCase('fr')
+      === normalizeDocumentPath(path).toLocaleLowerCase('fr');
   }
 
   onSnippetContentClick(snippet: Snippet) {

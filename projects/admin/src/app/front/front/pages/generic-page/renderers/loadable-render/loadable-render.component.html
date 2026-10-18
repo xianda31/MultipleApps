@@ -2,11 +2,44 @@
   @if (snippets.length === 0) {
   <div class="alert alert-info text-center">Aucun contenu à afficher.</div>
   }
-  @for (snippet of snippets; track snippet.id) {
-  <div class="card nice_shadow mb-2">
+
+  @if (documentTree.rootDocuments.length > 0) {
+    @if (hasCategorizedDocuments) {
+    <h5 class="document-root-title">
+      <i class="bi bi-files me-2"></i>Autres documents
+    </h5>
+    }
+    <ng-container *ngTemplateOutlet="documentList; context: { $implicit: documentTree.rootDocuments }"></ng-container>
+  }
+
+  @for (node of documentTree.nodes; track node.path) {
+    <ng-container *ngTemplateOutlet="folderNode; context: { $implicit: node, depth: 0 }"></ng-container>
+  }
+</div>
+
+<ng-template #folderNode let-node let-depth="depth">
+  <details class="document-folder" open>
+    <summary class="document-folder-heading">
+      <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>
+      <span>{{ node.name }}</span>
+    </summary>
+    <div class="document-folder-content">
+      @if (node.documents.length > 0) {
+      <ng-container *ngTemplateOutlet="documentList; context: { $implicit: node.documents }"></ng-container>
+      }
+      @for (child of node.children; track child.path) {
+      <ng-container *ngTemplateOutlet="folderNode; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+      }
+    </div>
+  </details>
+</ng-template>
+
+<ng-template #documentList let-documents>
+  @for (snippet of documents; track snippet.id) {
+  <div class="card nice_shadow">
     <div class="card-body">
       <div class="card-title">
-        <i [class]="'text-success ' + doc_icon(snippet.file)" style="font-size: 2em;"></i>
+        <i [class]="'document-icon text-success ' + doc_icon(snippet.file)"></i>
         {{snippet.title}}
         <div class="float-end d-flex gap-2">
           <button 
@@ -27,4 +60,4 @@
     </div>
   </div>
   }
-</div>
+</ng-template>

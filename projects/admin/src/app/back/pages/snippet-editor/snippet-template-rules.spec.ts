@@ -34,5 +34,6 @@ describe('snippet template rules', () => {
   it('hides fields that are irrelevant to the template', () => {
     expect(isSnippetFieldVisible(PAGE_TEMPLATES.ALBUMS, 'file')).toBeFalse();
     expect(isSnippetFieldVisible(PAGE_TEMPLATES.LOADABLE, 'folder')).toBeFalse();
+    expect(isSnippetFieldVisible(PAGE_TEMPLATES.LOADABLE, 'documentPath')).toBeTrue();
   });
 });

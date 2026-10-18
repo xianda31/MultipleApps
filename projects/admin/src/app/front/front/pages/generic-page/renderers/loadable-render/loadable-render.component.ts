@@ -1,4 +1,4 @@
-import { Component, Input, HostListener } from '@angular/core';
+import { Component, Input, HostListener, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { PdfViewerComponent } from '../../../../../../back/pdf-viewer/pdf-viewer.component';
@@ -6,6 +6,7 @@ import { Snippet } from '../../../../../../common/interfaces/page_snippet.interf
 import { BreakpointsSettings } from '../../../../../../common/interfaces/ui-conf.interface';
 import { ToastService } from '../../../../../../common/services/toast.service';
 import { FileService } from '../../../../../../common/services/files.service';
+import { buildDocumentTree, DocumentTree } from '../../../../../../common/utils/document-path';
 
 @Component({
   selector: 'app-loadable-render',
@@ -14,17 +15,26 @@ import { FileService } from '../../../../../../common/services/files.service';
   templateUrl: './loadable-render.component.html',
   styleUrls: ['./loadable-render.component.scss']
 })
-export class LoadableRenderComponent {
+export class LoadableRenderComponent implements OnChanges {
   @Input() snippets: Snippet[] = [];
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   
   isDesktopMode: boolean = window.innerWidth >= 768;
+  documentTree: DocumentTree = { rootDocuments: [], nodes: [] };
 
   constructor(
     private fileService: FileService,
     private toastService: ToastService,
     private modalService: NgbModal
   ) {}
+
+  ngOnChanges(): void {
+    this.documentTree = buildDocumentTree(this.snippets);
+  }
+
+  get hasCategorizedDocuments(): boolean {
+    return this.documentTree.nodes.length > 0;
+  }
 
   @HostListener('window:resize')
   onResize(): void {

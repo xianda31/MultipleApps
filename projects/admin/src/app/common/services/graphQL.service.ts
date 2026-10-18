@@ -19,6 +19,29 @@ import { classifyMemberLookupError, sanitizeGraphqlErrors } from '../authentific
   providedIn: 'root'
 })
 export class DBhandler {
+  private readonly legacySnippetSelectionSet = [
+    'id',
+    'title',
+    'subtitle',
+    'content',
+    'public',
+    'featured',
+    'image',
+    'file',
+    'folder',
+    'ownerPageId',
+    'publishedAt',
+    'createdAt',
+    'updatedAt',
+  ] as const;
+
+  private readonly snippetSelectionSet = [
+    ...this.legacySnippetSelectionSet,
+    'documentPath',
+  ] as const;
+
+  private snippetDocumentPathSupported: boolean | undefined;
+
   constructor(
   ) { }
 
@@ -63,6 +86,59 @@ export class DBhandler {
         errorType.includes('unauthorized')
       );
     });
+  }
+
+  private isUndefinedDocumentPathError(error: unknown): boolean {
+    const entries = Array.isArray(error) ? error : [error];
+    return entries.some((entry: any) => {
+      const message = String(entry?.message ?? '').toLowerCase();
+      const errorType = String(entry?.errorType ?? entry?.extensions?.errorType ?? '').toLowerCase();
+      return (
+        message.includes('documentpath') &&
+        (message.includes('undefined') || errorType.includes('fieldundefined'))
+      );
+    });
+  }
+
+  private snippetWriteInput<T extends { documentPath?: string | null }>(
+    snippet: T,
+    clearDocumentPathWhenSupported = false,
+  ): T | Omit<T, 'documentPath'> {
+    if (snippet.documentPath?.trim()) {
+      return snippet;
+    }
+    if (clearDocumentPathWhenSupported && this.snippetDocumentPathSupported === true) {
+      return { ...snippet, documentPath: null };
+    }
+    const { documentPath, ...legacyInput } = snippet;
+    return legacyInput;
+  }
+
+  private async listSnippetPage(
+    client: any,
+    limit: number,
+    nextToken?: string,
+  ): Promise<{ data: unknown[]; errors?: readonly unknown[]; nextToken?: string | null }> {
+    const useLegacySelection = this.snippetDocumentPathSupported === false;
+    let response = await client.models.Snippet.list({
+      limit,
+      nextToken,
+      selectionSet: useLegacySelection ? this.legacySnippetSelectionSet : this.snippetSelectionSet,
+    });
+
+    if (!useLegacySelection && response.errors?.length && this.isUndefinedDocumentPathError(response.errors)) {
+      this.snippetDocumentPathSupported = false;
+      console.info('[Snippet] documentPath is not deployed yet; using the legacy schema.');
+      response = await client.models.Snippet.list({
+        limit,
+        nextToken,
+        selectionSet: this.legacySnippetSelectionSet,
+      });
+    } else if (!response.errors?.length && !useLegacySelection) {
+      this.snippetDocumentPathSupported = true;
+    }
+
+    return response;
   }
 
 
@@ -786,16 +862,37 @@ export class DBhandler {
   async createSnippet(snippet: Snippet_input): Promise<Snippet> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Snippet.create(snippet);
+    const input = this.snippetWriteInput(snippet);
+    const { data, errors } = await client.models.Snippet.create(input as Snippet_input, {
+      selectionSet: this.legacySnippetSelectionSet,
+    });
     if (errors) throw errors;
-    return data as unknown as Snippet;
+    return {
+      ...(data as unknown as Snippet),
+      ...(snippet.documentPath?.trim() ? { documentPath: snippet.documentPath } : {}),
+    };
   }
 
   // SNIPPET READ (single) PROMISE
   async readSnippet(id: string): Promise<Snippet> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Snippet.get({ id });
+    const useLegacySelection = this.snippetDocumentPathSupported === false;
+    let response = await client.models.Snippet.get(
+      { id },
+      { selectionSet: useLegacySelection ? this.legacySnippetSelectionSet : this.snippetSelectionSet },
+    );
+    if (!useLegacySelection && response.errors?.length && this.isUndefinedDocumentPathError(response.errors)) {
+      this.snippetDocumentPathSupported = false;
+      console.info('[Snippet] documentPath is not deployed yet; using the legacy schema.');
+      response = await client.models.Snippet.get(
+        { id },
+        { selectionSet: this.legacySnippetSelectionSet },
+      );
+    } else if (!response.errors?.length && !useLegacySelection) {
+      this.snippetDocumentPathSupported = true;
+    }
+    const { data, errors } = response;
     if (errors) throw errors;
     return data as unknown as Snippet;
   }
@@ -804,16 +901,25 @@ export class DBhandler {
   async updateSnippet(snippet: Snippet): Promise<Snippet> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { data, errors } = await client.models.Snippet.update(snippet);
+    const input = this.snippetWriteInput(snippet, true);
+    const { data, errors } = await client.models.Snippet.update(input as Snippet, {
+      selectionSet: this.legacySnippetSelectionSet,
+    });
     if (errors) throw errors;
-    return data as unknown as Snippet;
+    return {
+      ...(data as unknown as Snippet),
+      ...(snippet.documentPath?.trim() ? { documentPath: snippet.documentPath } : {}),
+    };
   }
 
   // SNIPPET DELETE PROMISE
   async deleteSnippet(id: string): Promise<boolean> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
-    const { errors } = await client.models.Snippet.delete({ id });
+    const { errors } = await client.models.Snippet.delete(
+      { id },
+      { selectionSet: this.legacySnippetSelectionSet },
+    );
     if (errors) throw errors;
     return true;
   }
@@ -824,7 +930,7 @@ export class DBhandler {
       switchMap((authMode) => {
         const client = generateClient<Schema>({ authMode: authMode });
         return from(
-          client.models.Snippet.list({ limit: 300 })
+          this.listSnippetPage(client, 300)
             .then(({ data, errors }) => {
               if (errors) {
                 console.error('Snippet.list error', errors);
@@ -844,10 +950,7 @@ export class DBhandler {
     let nextToken: string | null | undefined;
 
     do {
-      const page = await client.models.Snippet.list({
-        limit: 300,
-        nextToken: nextToken || undefined,
-      });
+      const page = await this.listSnippetPage(client, 300, nextToken || undefined);
       if (page.errors?.length) throw page.errors;
       snippets.push(...((page.data ?? []) as unknown as Snippet[]));
       nextToken = page.nextToken;

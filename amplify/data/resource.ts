@@ -454,6 +454,7 @@ const schema = a.schema({
     image: a.string(),
     file: a.string(),
     folder: a.string(),
+    documentPath: a.string(),
     ownerPageId: a.id().required(),
     publishedAt: a.string(),
   })

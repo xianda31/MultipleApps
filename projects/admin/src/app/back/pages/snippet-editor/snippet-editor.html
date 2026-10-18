@@ -96,6 +96,33 @@
         <i class="bi bi-paperclip me-2"></i>Médias associés
     </h6>
 
+    <div *ngIf="isFieldVisible('documentPath')" class="form-label mb-0 mt-2">
+        <label class="mb-1">Répertoire de présentation</label>
+        <div class="document-path-browser border rounded mb-2">
+            <button type="button" class="document-path-option"
+                [class.active]="isSelectedDocumentPath('')" (click)="selectDocumentPath('')">
+                <i class="bi bi-house-door me-2"></i>Sans répertoire
+            </button>
+            <button *ngFor="let option of documentPathOptions" type="button" class="document-path-option"
+                [class.active]="isSelectedDocumentPath(option.path)"
+                [style.padding-left.rem]="0.75 + option.depth * 1.25"
+                (click)="selectDocumentPath(option.path)" [title]="option.path">
+                <i class="bi bi-folder me-2"></i>{{ option.name }}
+            </button>
+        </div>
+        <label class="small text-muted mb-1" for="documentPath">Nouveau chemin ou chemin complet</label>
+        <div class="input-group input-group-sm">
+            <input #documentPathInput id="documentPath" type="text" formControlName="documentPath"
+                class="form-control" placeholder="Ex. Vie du club/Assemblées générales"
+                (keyup.enter)="saveDocumentPath()">
+            <button type="button" class="btn btn-outline-success" (click)="saveDocumentPath()">
+                Appliquer
+            </button>
+        </div>
+        <small class="text-muted">
+            L’ordre des répertoires suit la position de leur premier document. Les documents suivent l’ordre de la liste de la page.
+        </small>
+    </div>
 
     <!-- file url input with selection button -->
     <div *ngIf="isFieldVisible('file')" class="form-label mb-0 mt-2">
