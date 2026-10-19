@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Snippet } from '../../../common/interfaces/page_snippet.interface';
 import EditorJS from '@editorjs/editorjs';
@@ -12,6 +12,7 @@ import ColorPicker from 'editorjs-color-picker';
 
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { sanitizeSnippetHtml } from '../../../common/utils/snippet-html-sanitizer';
 
 
 @Component({
@@ -20,7 +21,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   templateUrl: './snippet-modal-editor.component.html',
   styleUrl: './snippet-modal-editor.component.scss'
 })
-export class SnippetModalEditorComponent implements AfterViewInit {
+export class SnippetModalEditorComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('editorHolder', { static: true }) editorHolder!: ElementRef<HTMLDivElement>;
   @Input() snippet!: Snippet;
   @Output() snippetChange = new EventEmitter<Snippet | null>();
   editor!: EditorJS;
@@ -48,6 +50,7 @@ export class SnippetModalEditorComponent implements AfterViewInit {
     }
   });
   output_html!: SafeHtml;
+  private readonly pasteHandler = (event: ClipboardEvent) => this.onPaste(event);
 
   constructor(
     private activeModal: NgbActiveModal,
@@ -57,7 +60,8 @@ export class SnippetModalEditorComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
 
-    const initialData = this.htmlToEditorJsBlocks(this.snippet.content);     // Convertit le HTML initial en blocks EditorJS
+    const initialData = this.htmlToEditorJsBlocks(sanitizeSnippetHtml(this.snippet.content));     // Convertit le HTML initial en blocks EditorJS
+    this.editorHolder.nativeElement.addEventListener('paste', this.pasteHandler, true);
 
     this.editor = new EditorJS(
       {
@@ -101,7 +105,7 @@ export class SnippetModalEditorComponent implements AfterViewInit {
       const data = await this.editor.save();
       const parsed = this.edjsParser.parse(data); // Convertit les blocks EditorJS en HTML
       // edjsHTML.parse peut retourner un tableau de fragments HTML; on les joint si nécessaire
-      const html = Array.isArray(parsed) ? parsed.join('') : String(parsed);
+      const html = sanitizeSnippetHtml(Array.isArray(parsed) ? parsed.join('') : String(parsed));
       this.output_html = this.sanitizer.bypassSecurityTrustHtml(html);
 
       let snippet = { ...this.snippet };
@@ -112,7 +116,27 @@ export class SnippetModalEditorComponent implements AfterViewInit {
       this.activeModal.close(this.snippet);
       return;
     }
+  }
 
+  ngOnDestroy(): void {
+    this.editorHolder?.nativeElement.removeEventListener('paste', this.pasteHandler, true);
+    this.editor?.destroy();
+  }
+
+  private onPaste(event: ClipboardEvent): void {
+    const clipboardHtml = event.clipboardData?.getData('text/html');
+    if (!clipboardHtml) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const sanitizedHtml = sanitizeSnippetHtml(clipboardHtml);
+    if (sanitizedHtml) {
+      document.execCommand('insertHTML', false, sanitizedHtml);
+    } else {
+      document.execCommand('insertText', false, event.clipboardData?.getData('text/plain') ?? '');
+    }
   }
 
 

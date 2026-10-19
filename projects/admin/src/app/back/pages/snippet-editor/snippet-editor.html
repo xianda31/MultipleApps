@@ -55,7 +55,7 @@
         <label class="form-label form-label-sm mb-1">
             Contenu <span *ngIf="isFieldRequired('content')" class="text-danger">*</span>
         </label>
-        <div class="snippet-content-preview" [class.is-empty]="!form.get('content')?.value">
+        <div class="snippet-content-preview tighter-html" [class.is-empty]="!form.get('content')?.value">
             <div *ngIf="form.get('content')?.value; else emptyContent" [innerHTML]="form.get('content')?.value"></div>
             <ng-template #emptyContent>Aucun contenu</ng-template>
         </div>
