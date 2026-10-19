@@ -1,5 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostBinding, inject, Input, signal } from '@angular/core';
 import { AppInstallService } from '../../services/app-install.service';
+
+type AppInstallVariant = 'footer' | 'card';
 
 @Component({
   selector: 'app-install-app',
@@ -9,6 +11,17 @@ import { AppInstallService } from '../../services/app-install.service';
 })
 export class AppInstallComponent {
   private readonly appInstallService = inject(AppInstallService);
+
+  @Input() variant: AppInstallVariant = 'footer';
+  @Input() compact = false;
+  @HostBinding('class.install-card-host')
+  get isCard(): boolean {
+    return this.variant === 'card';
+  }
+  @HostBinding('class.install-card-compact-host')
+  get isCompactCard(): boolean {
+    return this.variant === 'card' && this.compact;
+  }
 
   readonly state = this.appInstallService.state;
   readonly installing = signal(false);
@@ -47,6 +60,16 @@ export class AppInstallComponent {
     }
   }
 
+  get actionLabel(): string {
+    if (this.compact) {
+      return 'Installer';
+    }
+    if (this.state().mode === 'manual') {
+      return 'Comment installer';
+    }
+    return `Installer sur ${this.platformLabel}`;
+  }
+
   async runInstall(): Promise<void> {
     if (this.state().mode === 'manual') {
       this.showManualInstructions.set(true);
@@ -63,6 +86,11 @@ export class AppInstallComponent {
 
   closeInstructions(): void {
     this.showManualInstructions.set(false);
+  }
+
+  dismiss(): void {
+    this.showManualInstructions.set(false);
+    this.appInstallService.dismiss();
   }
 
   private isSafari(): boolean {

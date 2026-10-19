@@ -1,23 +1,62 @@
 @if (state().mode !== 'hidden') {
-  <button type="button" class="btn btn-sm btn-info" [disabled]="installing()"
-    [attr.aria-label]="'Installer bcsto sur ' + platformLabel"
-    [title]="'Installer bcsto sur ' + platformLabel" (click)="runInstall()">
-    @if (installing()) {
-      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-    } @else {
-      <i [class]="'bi ' + platformIcon" aria-hidden="true"></i>
-    }
-  </button>
-
-  @if (showManualInstructions()) {
-    <aside class="install-panel" aria-label="Instructions d'installation">
-      <button type="button" class="btn-close install-dismiss" aria-label="Fermer les instructions"
-        title="Fermer" (click)="closeInstructions()"></button>
-      <div class="install-heading">
-        <i class="bi bi-box-arrow-down install-icon" aria-hidden="true"></i>
-        <h2>Installer bcsto</h2>
+  @if (variant === 'card') {
+    <aside class="install-card" aria-label="Installer l’application bcsto">
+      <div class="install-card__main">
+        <div class="install-card__icon" aria-hidden="true">
+          <i class="bi bi-speedometer2"></i>
+        </div>
+        <div class="install-card__content">
+          @if (!compact) {
+            <h2>Installer l’application bcsto</h2>
+          }
+          <p>
+            @if (compact) {
+              Ajoutez l’<strong>app site</strong> à votre écran d’accueil ou à votre bureau.
+            } @else {
+              Accédez plus rapidement au site depuis votre écran d’accueil ou votre bureau.
+            }
+          </p>
+          @if (showManualInstructions()) {
+            <p class="install-card__instructions">{{ manualInstructions }}</p>
+          }
+        </div>
       </div>
-      <p class="install-instructions">{{ manualInstructions }}</p>
+      <div class="install-card__actions">
+        <button type="button" class="btn btn-primary" [class.btn-sm]="compact"
+          [disabled]="installing()" (click)="runInstall()">
+          @if (installing()) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          } @else {
+            <i class="bi bi-box-arrow-down me-2" aria-hidden="true"></i>
+          }
+          {{ actionLabel }}
+        </button>
+        <button type="button" class="btn btn-link btn-sm text-secondary" (click)="dismiss()">
+          Plus tard
+        </button>
+      </div>
     </aside>
+  } @else {
+    <button type="button" class="btn btn-sm btn-info" [disabled]="installing()"
+      [attr.aria-label]="'Installer bcsto sur ' + platformLabel"
+      [title]="'Installer bcsto sur ' + platformLabel" (click)="runInstall()">
+      @if (installing()) {
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      } @else {
+        <i [class]="'bi ' + platformIcon" aria-hidden="true"></i>
+      }
+    </button>
+
+    @if (showManualInstructions()) {
+      <aside class="install-panel" aria-label="Instructions d'installation">
+        <button type="button" class="btn-close install-dismiss" aria-label="Fermer les instructions"
+          title="Fermer" (click)="closeInstructions()"></button>
+        <div class="install-heading">
+          <i class="bi bi-box-arrow-down install-icon" aria-hidden="true"></i>
+          <h2>Installer bcsto</h2>
+        </div>
+        <p class="install-instructions">{{ manualInstructions }}</p>
+      </aside>
+    }
   }
 }

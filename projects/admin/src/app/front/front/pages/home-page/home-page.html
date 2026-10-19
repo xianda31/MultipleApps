@@ -16,11 +16,19 @@
     <div class="col-xs-6 col-md-4 home-welcome-column">
         <ng-container *ngTemplateOutlet="welcome"></ng-container>
     </div>
-    <div class="col-xs-6 col-md-5 d-flex justify-content-center home-carousel-column">
+    <div class="col-xs-6 col-md-4 d-flex justify-content-center home-carousel-column">
         <ng-container *ngTemplateOutlet="imagegallery"></ng-container>
     </div>
-    <div class="d-none d-md-block col-md-3 home-birthdays-column">
+    <div class="d-none d-md-flex flex-column col-md-4 home-birthdays-column">
         <ng-container *ngTemplateOutlet="birthdays"></ng-container>
+        @if (logged_member$ | async) {
+            <app-install-app variant="card" [compact]="true"></app-install-app>
+        }
+    </div>
+    <div class="d-md-none col-12 home-install-mobile">
+        @if (logged_member$ | async) {
+            <app-install-app variant="card" [compact]="true"></app-install-app>
+        }
     </div>
     <!-- @if (!(logged_member$ | async)) {
     <div class="text-uppercase text-success fw-bolder mt-2 mb-2">

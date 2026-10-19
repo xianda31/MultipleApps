@@ -6,6 +6,128 @@
   transform: translateY(-50%);
 }
 
+:host(.install-card-host) {
+  position: static;
+  display: block;
+  width: 100%;
+  margin: 0.85rem 0 0;
+  transform: none;
+}
+
+.install-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  width: min(58rem, calc(100% - 1.5rem));
+  margin-inline: auto;
+  padding: 0.85rem 1rem;
+  color: var(--content-text, var(--bs-body-color));
+  background: var(--content-bg, var(--bs-body-bg));
+  border: 1px solid color-mix(in srgb, var(--bs-primary) 35%, var(--bs-border-color));
+  border-left: 4px solid var(--bs-primary);
+  border-radius: var(--bs-border-radius);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+}
+
+.install-card__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  color: var(--bs-primary);
+  background: transparent;
+  font-size: 1.35rem;
+}
+
+.install-card__icon i {
+  animation: install-icon-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes install-icon-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-card__icon i {
+    animation: none;
+  }
+}
+
+.install-card__main {
+  display: contents;
+}
+
+.install-card__content h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.install-card__content p {
+  margin: 0;
+  color: var(--bs-secondary-color);
+  font-size: 1rem;
+}
+
+.install-card__content .install-card__instructions {
+  margin-top: 0.45rem;
+  color: var(--content-text, var(--bs-body-color));
+}
+
+.install-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+:host(.install-card-compact-host) {
+  margin-top: 0.65rem;
+}
+
+:host(.install-card-compact-host) .install-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  min-height: 5.25rem;
+  width: 100%;
+  padding: 0.35rem 0.7rem;
+}
+
+:host(.install-card-compact-host) .install-card__main {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+:host(.install-card-compact-host) .install-card__icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  font-size: 1.6rem;
+}
+
+:host(.install-card-compact-host) .install-card__content h2 {
+  font-size: 0.9rem;
+}
+
+:host(.install-card-compact-host) .install-card__content p {
+  line-height: 1.3;
+}
+
+:host(.install-card-compact-host) .install-card__actions {
+  grid-column: auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.15rem;
+}
+
+:host(.install-card-compact-host) .install-card__actions .btn-link {
+  padding-block: 0.1rem;
+}
+
 .install-icon-button {
   display: inline-flex;
   width: 1.7rem;
@@ -83,5 +205,27 @@
 
   .install-panel {
     width: calc(100vw - 1rem);
+  }
+
+  :host(.install-card-host) {
+    margin-top: 0.65rem;
+  }
+
+  .install-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
+    width: calc(100% - 1rem);
+    padding: 0.8rem;
+  }
+
+  .install-card__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.1rem;
+  }
+
+  .install-card__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
   }
 }

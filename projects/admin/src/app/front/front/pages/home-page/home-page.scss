@@ -66,21 +66,12 @@
 	width: min(38rem, 100%);
 }
 
-@media (min-width: 768px) {
-	:host-context(.laptop-main-shell) .home-welcome-column {
-		flex: 0 0 31%;
-		width: 31%;
-	}
+.home-install-mobile {
+	margin-top: 0.75rem;
+}
 
-	:host-context(.laptop-main-shell) .home-carousel-column {
-		flex: 0 0 46%;
-		width: 46%;
-	}
-
-	:host-context(.laptop-main-shell) .home-birthdays-column {
-		flex: 0 0 23%;
-		width: 23%;
-	}
+.home-birthdays-column > app-install-app {
+	margin-top: auto;
 }
 
 .welcome-panel {
