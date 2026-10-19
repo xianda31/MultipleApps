@@ -12,75 +12,112 @@
           (click)="exit()"></button>
       </div>
     </div>
-    <div class="modal-body text-start col-12 col-md-8 mx-auto">
-      <div class="mt-1 d-flex justify-content-between align-items-center">
-        <ng-container *ngIf="avatarFileExists">
-          <label class="form-label">Ma photo : </label>
-          <input type="file" #icoFileInput1 style="display:none" (change)="changeIco($event)" accept="image/*"
-            title="ma photo">
-          <label for="icoFileInput1" class="form-label visually-hidden">ma photo</label>
-          <img [src]="ico_url$ | async" alt="ico" class="rounded-circle"
-            style="width:64px; height:64px; max-width:64px; max-height:64px; object-fit:cover; cursor:pointer;"
-            (click)="icoFileInput1.click()">
-          <label class="form-label"></label>
-          <i class="ms-2 bi bi-trash" (click)="resetIco()"></i>
-        </ng-container>
-
-        <ng-container *ngIf="!avatarFileExists">
-          <label class="form-label">Aucune photo : </label>
-          <input type="file" #icoFileInput2 style="display:none" (change)="changeIco($event)" accept="image/*"
-            title="ma photo">
-          <button class="ms-2 btn btn-sm btn-outline-primary" (click)="icoFileInput2.click()">
-            <i class="bi bi-upload"></i> charger une photo
-          </button>
-        </ng-container>
-      </div>
-
-      <div class="mt-2 d-flex align-items-center justify-content-between">
-        <label for="accept_mailing" class="form-label mb-0">Mailing du Club:</label>
-        <div class="form-check form-switch d-flex align-items-center ms-4 mb-0" style="min-height: 0;">
-          <input class="form-check-input me-2" type="checkbox" id="accept_mailing" formControlName="accept_mailing">
-          <label class="form-check-label mb-0" for="accept_mailing">
-            <span *ngIf="preferenceForm.get('accept_mailing')?.value">Oui, j'accepte</span>
-            <span *ngIf="!preferenceForm.get('accept_mailing')?.value">Non, je n'en veux pas</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Contact Information Section -->
-      <div class="mt-4 pt-3 border-top">
-        <h6 class="mb-3">Informations de contact</h6>
-        
-        <div class="mb-3">
-          <label for="email" class="form-label">Email:</label>
-          <div class="input-group input-group-sm">
-            <input type="email" class="form-control" id="email" formControlName="email" placeholder="votre email">
-            <button type="button" class="btn btn-outline-secondary" (click)="copyEmail()"
-              [disabled]="!preferenceForm.get('email')?.value"
-              [title]="emailCopied ? 'Adresse copiée' : 'Copier l’adresse email'"
-              [attr.aria-label]="emailCopied ? 'Adresse email copiée' : 'Copier l’adresse email'">
-              <i class="bi" [class.bi-copy]="!emailCopied" [class.bi-clipboard-check]="emailCopied"
-                aria-hidden="true"></i>
-            </button>
+    <div class="modal-body text-start">
+      <section class="settings-section" aria-labelledby="personal-information-title">
+        <h6 id="personal-information-title" class="settings-section__title">
+          <i class="bi bi-person-vcard" aria-hidden="true"></i>
+          Informations personnelles
+        </h6>
+        <div class="personal-information">
+          <div class="personal-information__item">
+            <!-- <span class="personal-information__label">Prénom</span> -->
+            <span>{{ member.firstname || '—' }}</span>
+          </div>
+          <div class="personal-information__item">
+            <!-- <span class="personal-information__label">Nom</span> -->
+            <span>{{ member.lastname || '—' }}</span>
+          </div>
+          <div class="personal-information__item">
+            <!-- <span class="personal-information__label">Mail</span> -->
+            <span class="text-break">{{ member.email || '—' }}</span>
+          </div>
+          <div class="personal-information__item">
+            <!-- <span class="personal-information__label">Classement FFB</span> -->
+            <span>
+              IC {{ ffbRankingParts.series }}<strong [style.color]="ffbRankingParts.suitColor">{{ ffbRankingParts.suit }}</strong>{{ ffbRankingParts.tail }}
+              · IV {{ member.iv ?? '—' }}
+            </span>
           </div>
         </div>
+        <div class="local-information">
+          <div class="row g-2">
+          <div class="col-12 col-md-6">
+            <label for="phone_one" class="form-label">Téléphone</label>
+            <input type="tel" class="form-control form-control-sm" id="phone_one" formControlName="phone_one"
+              autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78"
+              (blur)="normalizePhoneInput()"
+              [class.is-invalid]="preferenceForm.get('phone_one')?.invalid && preferenceForm.get('phone_one')?.touched">
+            <div class="invalid-feedback">Saisissez un numéro français, par exemple 06 12 34 56 78.</div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label for="city" class="form-label">Ville</label>
+            <input type="text" class="form-control form-control-sm" id="city" formControlName="city"
+              placeholder="Votre ville">
+          </div>
+          </div>
+          <div class="avatar-settings mt-2">
+          <input type="file" #avatarFileInput class="visually-hidden" id="avatarFileInput"
+            (change)="changeIco($event)" accept="image/*">
+          <img *ngIf="avatarFileExists" [src]="ico_url$ | async" alt="Vignette du membre"
+            class="rounded-circle settings-avatar">
+          <div *ngIf="!avatarFileExists" class="settings-avatar settings-avatar--empty" aria-hidden="true">
+            <i class="bi bi-person"></i>
+          </div>
+          <div>
+            <div class="text-muted small mb-2">Image carrée utilisée dans le répertoire du club.</div>
+            <button type="button" class="btn btn-sm btn-outline-primary me-2" (click)="avatarFileInput.click()">
+              <i class="bi bi-upload me-1" aria-hidden="true"></i>
+              {{ avatarFileExists ? 'Remplacer' : 'Charger une photo' }}
+            </button>
+            <button *ngIf="avatarFileExists" type="button" class="btn btn-sm btn-outline-danger"
+              (click)="resetIco()">
+              <i class="bi bi-trash me-1" aria-hidden="true"></i>
+              Supprimer
+            </button>
+          </div>
+          </div>
+        </div>
+      </section>
 
-        <div class="mb-3">
-          <label for="phone_one" class="form-label">Téléphone:</label>
-          <input type="tel" class="form-control form-control-sm" id="phone_one" formControlName="phone_one" placeholder="votre téléphone">
+      <section class="settings-section mb-0" aria-labelledby="consents-title">
+        <div class="settings-section__heading">
+          <h6 id="consents-title" class="settings-section__title mb-0">
+            <i class="bi bi-envelope-check" aria-hidden="true"></i>
+            Consentements aux communications du club
+          </h6>
         </div>
 
-        <div class="mb-3">
-          <label for="city" class="form-label">Ville:</label>
-          <input type="text" class="form-control form-control-sm" id="city" formControlName="city" placeholder="votre ville">
+        <div class="consent-list">
+          <div class="consent-item">
+            <label class="fw-semibold" for="accept_mailing">mails du Club</label>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="accept_mailing"
+                formControlName="accept_mailing">
+              <label class="form-check-label" for="accept_mailing">
+                {{ preferenceForm.get('accept_mailing')?.value ? 'Accepté' : 'Refusé' }}
+              </label>
+            </div>
+          </div>
+          <div class="consent-item"
+            *ngFor="let label of ['notifications news', 'notifications joueur isolé', 'Flash-alertes (recommandé)']">
+            <span class="fw-semibold text-muted">{{ label }}</span>
+            <div class="d-flex align-items-center gap-2">
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch" disabled
+                  [attr.aria-label]="label + ' — bientôt'">
+                  <label class="form-check-label" [attr.aria-label]="label + ' — bientôt'">
+                    Bientôt
+                  </label>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-
-
+      </section>
     </div>
     <div class="modal-footer">
       <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="exit()">Fermer</button> -->
-      <button type="button" class="btn btn-primary" (click)="save()">Enregistrer</button>
+      <button type="button" class="btn btn-primary" [disabled]="preferenceForm.invalid"
+        (click)="save()">Enregistrer</button>
     </div>
   </form>
 </div>

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Component, Input } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { Member, Member_settings } from '../../interfaces/member.interface';
 import { FileService, S3_ROOT_FOLDERS } from '../../services/files.service';
@@ -9,6 +9,8 @@ import { MembersService } from '../../services/members.service';
 import { ImageService } from '../../services/image.service';
 import { ToastService } from '../../services/toast.service';
 import { MemberSettingsService } from '../../services/member-settings.service';
+import { normalizeFrenchPhoneNumber } from '../../pipes/phone.pipe';
+import { getFfbRankingCodeParts } from '../../utils/ffb-ranking.util';
 
 
 @Component({
@@ -18,15 +20,14 @@ import { MemberSettingsService } from '../../services/member-settings.service';
   templateUrl: './get-member-settings.html',
   styleUrls: ['./get-member-settings.scss']
 })
-export class GetMemberSettingsComponent implements OnDestroy {
+export class GetMemberSettingsComponent {
+  private readonly frenchPhonePattern = /^\s*(?:(?:(?:\+33|0033|33)[ .-]?[1-9])|0[1-9])(?:[ .-]?\d{2}){4}\s*$/;
   @Input() readonly member!: Member;
   preferenceForm !: FormGroup;
   preference!: Member_settings;
   base64_ico: string = '';
   full_name: string = '';
   avatarFileExists = false;
-  emailCopied = false;
-  private copyConfirmationTimeout?: ReturnType<typeof setTimeout>;
   // Sauvegarder les valeurs initiales pour la comparaison
   initialSettings!: Member_settings;
 
@@ -49,7 +50,7 @@ export class GetMemberSettingsComponent implements OnDestroy {
       accept_mailing: [true],
       city: [''],
       email: [{ value: '', disabled: true }],
-      phone_one: [''],
+      phone_one: ['', Validators.pattern(this.frenchPhonePattern)],
     });
   }
 
@@ -62,14 +63,14 @@ export class GetMemberSettingsComponent implements OnDestroy {
       accept_mailing: this.member.accept_mailing ?? true,
       city: this.member.city ?? '',
       email: this.member.email ?? '',
-      phone_one: this.member.phone_one ?? '',
+      phone_one: normalizeFrenchPhoneNumber(this.member.phone_one ?? ''),
     };
 
     this.preferenceForm.patchValue({
       accept_mailing: this.member.accept_mailing ?? true,
       city: this.member.city ?? '',
       email: this.member.email ?? '',
-      phone_one: this.member.phone_one ?? '',
+      phone_one: normalizeFrenchPhoneNumber(this.member.phone_one ?? ''),
     });
 
     this.memberSettingsService.getAvatarUrl(this.member).subscribe((avatarUrl) => {
@@ -85,37 +86,30 @@ export class GetMemberSettingsComponent implements OnDestroy {
     return this.preferenceForm.get('ico_url$')?.value;
   }
 
-  async copyEmail(): Promise<void> {
-    const email = this.preferenceForm.get('email')?.value?.trim();
-    if (!email) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(email);
-      this.emailCopied = true;
-      clearTimeout(this.copyConfirmationTimeout);
-      this.copyConfirmationTimeout = setTimeout(() => {
-        this.emailCopied = false;
-      }, 2000);
-      this.toastService.showSuccess('Email', 'Adresse copiée dans le presse-papiers');
-    } catch (error) {
-      console.error('[Member settings] Unable to copy email', error);
-      this.toastService.showWarning('Email', 'Impossible de copier l’adresse');
-    }
+  get ffbRankingParts() {
+    const code = this.member.iv === undefined
+      ? this.member.iv_code?.trim() || 'NC'
+      : this.membersService.iv_code(this.member.iv);
+    return getFfbRankingCodeParts(code);
   }
 
-  ngOnDestroy(): void {
-    clearTimeout(this.copyConfirmationTimeout);
+  normalizePhoneInput(): void {
+    const phoneControl = this.preferenceForm.get('phone_one');
+    const normalized = normalizeFrenchPhoneNumber(phoneControl?.value ?? '');
+    phoneControl?.setValue(normalized);
   }
 
   save() {
+    if (this.preferenceForm.invalid) {
+      this.preferenceForm.markAllAsTouched();
+      return;
+    }
     const formValue = this.preferenceForm.getRawValue();
     let new_preference: Member_settings = {
       accept_mailing: formValue.accept_mailing,
       city: formValue.city ?? '',
       email: formValue.email ?? '',
-      phone_one: formValue.phone_one ?? '',
+      phone_one: normalizeFrenchPhoneNumber(formValue.phone_one ?? ''),
     };
     if (this.base64_ico) {
       this.upload_avatar_file();

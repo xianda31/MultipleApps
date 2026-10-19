@@ -64,7 +64,7 @@ export class MemberSettingsService {
 
   access_settings(member: Member): Observable<boolean> {
     return new Observable<boolean>(observer => {
-      const modalRef = this.modalService.open(GetMemberSettingsComponent, { centered: true, size: 'lg', backdrop: 'static', keyboard: false });
+      const modalRef = this.modalService.open(GetMemberSettingsComponent, { centered: true, backdrop: 'static', keyboard: false });
       modalRef.componentInstance.member = member;
 
       modalRef.result.then((settings) => {

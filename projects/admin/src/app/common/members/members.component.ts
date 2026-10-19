@@ -18,6 +18,9 @@ import { MemberSyncService } from '../services/member-sync.service';
 import { SystemDataService } from '../services/system-data.service';
 import { AuthentificationService } from '../authentification/authentification.service';
 import { activeMembersCsvFileName, buildActiveMembersCsv } from './active-members-csv.util';
+import { GroupService } from '../authentification/group.service';
+import { Group_priorities } from '../authentification/group.interface';
+import { getFfbRankingCodeParts } from '../utils/ffb-ranking.util';
 
 type MemberStatusConfig = {
   label: string;
@@ -79,7 +82,8 @@ export class MembersComponent implements OnInit {
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
-  infoColumns = ['license_number', 'membership_date', 'register_date', 'email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
+  private readonly defaultInfoColumns = ['license_number', 'membership_date', 'register_date', 'email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
+  infoColumns = [...this.defaultInfoColumns];
   infoColumnLabels: { [key: string]: string } = {
     license_number: 'Licence',
     membership_date: "Date d'adhésion",
@@ -89,11 +93,13 @@ export class MembersComponent implements OnInit {
     phone_one: 'Téléphone',
     city: 'Ville',
     accept_mailing: 'Accepte mails',
+    lifecycleReason: 'Raison',
   };
   selectedInfoColumn: string = 'membership_date';
   private readonly destroy$ = new Subject<void>();
   private seasonRefreshInFlight = false;
   private pendingSeasonRefresh = false;
+  canDeleteMembers = false;
 
   // radioButtonGroup: FormGroup = new FormGroup({
   //   radioButton: new FormControl('Tous')
@@ -108,11 +114,19 @@ export class MembersComponent implements OnInit {
     private memberSyncService: MemberSyncService,
     private systemDataService: SystemDataService,
     private auth: AuthentificationService,
+    private groupService: GroupService,
   ) {
   }
 
   ngOnInit(): void {
     this.loading = true;
+    void this.groupService.getUserAccreditation()
+      .then(accreditation => {
+        this.canDeleteMembers = accreditation.level >= Group_priorities.Administrateur;
+      })
+      .catch(() => {
+        this.canDeleteMembers = false;
+      });
     this.systemDataService.get_configuration().pipe(
       distinctUntilKeyChanged('season'),
       skip(1),
@@ -308,6 +322,14 @@ export class MembersComponent implements OnInit {
 
   selectLifecycleFilter(filter: MemberLifecycleStatus): void {
     this.selectedLifecycleFilter = filter;
+    this.infoColumns = filter === 'BANNED'
+      ? ['lifecycleReason', ...this.defaultInfoColumns]
+      : [...this.defaultInfoColumns];
+    if (filter === 'BANNED') {
+      this.selectedInfoColumn = 'lifecycleReason';
+    } else if (this.selectedInfoColumn === 'lifecycleReason') {
+      this.selectedInfoColumn = 'membership_date';
+    }
     this.selectedStatusFilter = null;
     this.applyStatusCounters();
     this.applyFilters();
@@ -444,6 +466,20 @@ export class MembersComponent implements OnInit {
     await this.refreshMembersAsync();
   }
 
+  async deleteBannedMember(member: Member): Promise<void> {
+    if (!this.canDeleteMembers || this.getLifecycleStatus(member) !== 'BANNED') return;
+
+    const confirmed = window.confirm(
+      `Supprimer définitivement la fiche de ${this.membersService.full_name(member)} ?\n\n` +
+      `Cette action est irréversible. L’historique comptable sera conservé. ` +
+      `Le compte de connexion éventuel devra être supprimé séparément dans Droits d’accès.`
+    );
+    if (!confirmed) return;
+
+    await this.membersService.deleteMember(member);
+    await this.refreshMembersAsync();
+  }
+
   getLifecycleStatus(member: Member): MemberLifecycleStatus {
     return this.membersService.getLifecycleStatus(member);
   }
@@ -482,22 +518,7 @@ export class MembersComponent implements OnInit {
    *           "4SA" → {series: "4", suit: "", suitColor: "#000", tail: "SA"}
    */
   getIvCodeParts(iv: number | undefined): { series: string; suit: string; suitColor: string; tail: string } {
-    const code = this.getIvCode(iv);
-    
-    // Extract: series (leading digits), suit (one of ♥♦♣♠), tail (SA/N or empty)
-    const match = code.match(/^(\d*)([♥♦♣♠]?)(.*)$/);
-    
-    if (match) {
-      const series = match[1];
-      const suit = match[2];
-      const tail = match[3];
-      // Only suits get color
-      const suitColor = (suit === '♥' || suit === '♦') ? '#d32f2f' : '#000';
-      return { series, suit, suitColor, tail };
-    }
-    
-    // Fallback for codes like "NVL", "NC"
-    return { series: code, suit: '', suitColor: '#000', tail: '' };
+    return getFfbRankingCodeParts(this.getIvCode(iv));
   }
 
 }

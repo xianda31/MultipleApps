@@ -7,13 +7,14 @@
           <ng-container *ngIf="loading">
             <div class="spinner-border text-primary ms-2 align-middle"
               style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
-              <span class="visually-hidden">Chargement...</span>
             </div>
+            <span class="ms-2 align-middle text-muted">Exploration base de données FFB en cours...</span>
           </ng-container>
         </div>
         <div class="col-auto ms-auto" *ngIf="!loading && selectedLifecycleFilter === 'ACTIVE'">
           <button type="button" class="btn btn-sm btn-outline-primary"
-            title="Exporter les membres actifs au format CSV"
+            ngbTooltip="Exporter les membres actifs au format CSV"
+            placement="bottom" container="body"
             aria-label="Exporter les membres actifs au format CSV"
             [disabled]="active_members_nbr === 0"
             (click)="exportActiveMembersCsv()">
@@ -28,6 +29,8 @@
                   [class.btn-primary]="selectedLifecycleFilter === 'ACTIVE'"
                   [class.btn-outline-primary]="selectedLifecycleFilter !== 'ACTIVE'"
                   [attr.aria-pressed]="selectedLifecycleFilter === 'ACTIVE'"
+                  ngbTooltip="Afficher les membres actifs"
+                  placement="top" container="body"
                   (click)="selectLifecycleFilter('ACTIVE')">
                   <i class="bi bi-people-fill" aria-hidden="true"></i>
                   Actifs <strong>{{active_members_nbr}}</strong>
@@ -36,6 +39,8 @@
                   [class.btn-primary]="selectedLifecycleFilter === 'ARCHIVED'"
                   [class.btn-outline-primary]="selectedLifecycleFilter !== 'ARCHIVED'"
                   [attr.aria-pressed]="selectedLifecycleFilter === 'ARCHIVED'"
+                  ngbTooltip="Afficher les anciens membres archivés"
+                  placement="top" container="body"
                   (click)="selectLifecycleFilter('ARCHIVED')">
                   <i class="bi bi-archive-fill" aria-hidden="true"></i>
                   Anciens <strong>{{archived_members_nbr}}</strong>
@@ -44,6 +49,8 @@
                   [class.btn-primary]="selectedLifecycleFilter === 'BANNED'"
                   [class.btn-outline-primary]="selectedLifecycleFilter !== 'BANNED'"
                   [attr.aria-pressed]="selectedLifecycleFilter === 'BANNED'"
+                  ngbTooltip="Afficher les membres bannis"
+                  placement="top" container="body"
                   (click)="selectLifecycleFilter('BANNED')">
                   <i class="bi bi-person-fill-slash" aria-hidden="true"></i>
                   Bannis <strong>{{banned_members_nbr}}</strong>
@@ -188,7 +195,7 @@
           <thead class="sticky-top table-light">
             <tr>
               <th class="text-center member-avatar-column">
-                {{ getSelectedLifecycleLabel() }}
+                {{ filteredMembers.length }} {{ getSelectedLifecycleLabel() }}
               </th>
               <th class="member-name-column member-name-column-desktop">Nom</th>
               <th class="member-name-column member-name-column-desktop">Prénom</th>
@@ -275,6 +282,8 @@
                 } @else if (selectedInfoColumn === 'accept_mailing') {
                 <i
                   [class]="member.accept_mailing ? 'bi bi-check-circle-fill text-success' : 'bi bi-x-circle-fill text-danger'"></i>
+                } @else if (selectedInfoColumn === 'lifecycleReason') {
+                {{ member.lifecycleReason || '—' }}
                 }
               </td>
               <!-- <td class="d-none d-sm-table-cell text-center">
@@ -287,28 +296,41 @@
             </td> -->
               <td class="text-center text-nowrap member-actions-column">
                 <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                  title="Voir les préférences" (click)="accessSettings(member)">
+                  ngbTooltip="Voir les préférences" placement="top" container="body"
+                  aria-label="Voir les préférences" (click)="accessSettings(member)">
                   <i class="bi bi-eye"></i>
                 </button>
                 @if (getLifecycleStatus(member) === 'ACTIVE') {
                   <button type="button" class="btn btn-sm btn-outline-secondary me-1"
-                    title="Archiver" (click)="archiveMember(member)">
+                    ngbTooltip="Archiver" placement="top" container="body"
+                    aria-label="Archiver" (click)="archiveMember(member)">
                     <i class="bi bi-archive"></i>
                   </button>
                   <button type="button" class="btn btn-sm btn-outline-danger"
-                    title="Bannir" (click)="banMember(member)">
+                    ngbTooltip="Bannir" placement="top" container="body"
+                    aria-label="Bannir" (click)="banMember(member)">
                     <i class="bi bi-person-fill-slash"></i>
                   </button>
                 } @else if (getLifecycleStatus(member) === 'ARCHIVED') {
                   <button type="button" class="btn btn-sm btn-outline-success"
-                    title="Restaurer" (click)="restoreMember(member)">
+                    ngbTooltip="Restaurer" placement="top" container="body"
+                    aria-label="Restaurer" (click)="restoreMember(member)">
                     <i class="bi bi-arrow-counterclockwise"></i>
                   </button>
                 } @else {
-                  <button type="button" class="btn btn-sm btn-outline-success"
-                    title="Lever le bannissement" (click)="unbanMember(member)">
+                  <button type="button" class="btn btn-sm btn-outline-success me-1"
+                    ngbTooltip="Lever le bannissement" placement="top" container="body"
+                    aria-label="Lever le bannissement" (click)="unbanMember(member)">
                     <i class="bi bi-person-check-fill"></i>
                   </button>
+                  @if (canDeleteMembers) {
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                      ngbTooltip="Supprimer définitivement la fiche" placement="top" container="body"
+                      aria-label="Supprimer définitivement la fiche"
+                      (click)="deleteBannedMember(member)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  }
                 }
               </td>
             </tr>

@@ -1,14 +1,28 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-export function formatPhoneNumber(str: string): string {
-  if (!str) {
+export function normalizeFrenchPhoneNumber(value: string): string {
+  const original = value?.trim() ?? '';
+  if (!original) {
     return '';
   }
-  if (str.startsWith('33')) {
-    str = str.replace('33', '0');
+
+  const compact = original.replace(/[ .-]/g, '');
+  let domestic = compact;
+  if (/^\+33[1-9]\d{8}$/.test(compact)) {
+    domestic = `0${compact.slice(3)}`;
+  } else if (/^0033[1-9]\d{8}$/.test(compact)) {
+    domestic = `0${compact.slice(4)}`;
+  } else if (/^33[1-9]\d{8}$/.test(compact)) {
+    domestic = `0${compact.slice(2)}`;
   }
-  str = str.replace(/\+\d\d|\d\d?(?=(?:\d\d)+\b)/g, '$& ');
-  return str.replace(/ /g, '\u00a0');
+
+  return /^0[1-9]\d{8}$/.test(domestic)
+    ? domestic.match(/\d{2}/g)!.join(' ')
+    : original;
+}
+
+export function formatPhoneNumber(str: string): string {
+  return normalizeFrenchPhoneNumber(str).replace(/ /g, '\u00a0');
 }
 
 @Pipe({
