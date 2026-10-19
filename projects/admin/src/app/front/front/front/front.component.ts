@@ -29,6 +29,7 @@ import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { environment } from '../../../../environments/environment';
 import type { BuildInfo } from '../../../../environments/build-info.interface';
 import { FfbAvailabilityService } from '../../../common/services/ffb-availability.service';
+import { NotificationSubscriptionDemoComponent } from '../pages/home-page/notification-subscription-demo/notification-subscription-demo.component';
 
 type StripeReturnState = {
   checkout: 'success' | 'cancel';
@@ -39,7 +40,7 @@ type StripeReturnState = {
   selector: 'app-front',
   standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
-  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule, RouterLink, FrontNavbarComponent, AppInstallComponent],
+  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule, RouterLink, FrontNavbarComponent, AppInstallComponent, NotificationSubscriptionDemoComponent],
   templateUrl: './front.component.html',
   styleUrls: ['./front.component.scss']
 })

@@ -641,6 +641,26 @@ const schema = a.schema({
       allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
     ]),
 
+  PushSubscription: a.model({
+    id: a.string().required(),
+    endpoint: a.string().required(),
+    p256dh: a.string().required(),
+    auth: a.string().required(),
+    expirationTime: a.float(),
+    news: a.boolean().required(),
+    partner: a.boolean().required(),
+    alerts: a.boolean().required(),
+    userAgent: a.string(),
+    firstSubscribedAt: a.string().required(),
+    lastSeenAt: a.string().required(),
+  })
+    .identifier(['id'])
+    .authorization((allow) => [
+      allow.authenticated().to(['create', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+    ]),
+
   // Tokens pour accès mail sans login (UUID v4, validés côté Lambda)
   SurveyToken: a.model({
     token: a.string().required(),        // UUID v4 — clé primaire

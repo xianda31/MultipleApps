@@ -103,17 +103,46 @@
               </label>
             </div>
           </div>
-          <div class="consent-item"
-            *ngFor="let label of ['notifications news', 'notifications joueur isolé', 'Flash-alertes (recommandé)']">
-            <span class="fw-semibold text-muted">{{ label }}</span>
-            <div class="d-flex align-items-center gap-2">
-              <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" role="switch" disabled
-                  [attr.aria-label]="label + ' — bientôt'">
-                <label class="form-check-label" [attr.aria-label]="label + ' — bientôt'">
-                  Bientôt
-                </label>
-              </div>
+          <div class="consent-item">
+            <label class="consent-copy" for="pushNews">
+              <strong>Actualités du club</strong>
+              <small>Nouvelles publications ajoutées à la page d’accueil.</small>
+            </label>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="pushNews"
+                formControlName="pushNews">
+              <label class="form-check-label" for="pushNews">
+                {{ preferenceForm.get('pushNews')?.value ? 'Accepté' : 'Refusé' }}
+              </label>
+            </div>
+          </div>
+          <div class="consent-item">
+            <label class="consent-copy" for="pushPartner">
+              <strong>Recherches de partenaire</strong>
+              <small>Un joueur cherche un partenaire pour un tournoi.</small>
+            </label>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="pushPartner"
+                formControlName="pushPartner">
+              <label class="form-check-label" for="pushPartner">
+                {{ preferenceForm.get('pushPartner')?.value ? 'Accepté' : 'Refusé' }}
+              </label>
+            </div>
+          </div>
+          <div class="consent-item">
+            <label class="consent-copy" for="pushAlerts">
+              <strong>
+                Alertes importantes
+                <span class="badge text-bg-light ms-1">Recommandé</span>
+              </strong>
+              <small>Report, annulation ou changement exceptionnel.</small>
+            </label>
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch" id="pushAlerts"
+                formControlName="pushAlerts">
+              <label class="form-check-label" for="pushAlerts">
+                {{ preferenceForm.get('pushAlerts')?.value ? 'Accepté' : 'Refusé' }}
+              </label>
             </div>
           </div>
         </div>
@@ -121,8 +150,13 @@
     </div>
     <div class="modal-footer">
       <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" (click)="exit()">Fermer</button> -->
-      <button type="button" class="btn btn-primary" [disabled]="preferenceForm.invalid"
-        (click)="save()">Enregistrer</button>
+      <button type="button" class="btn btn-primary" [disabled]="preferenceForm.invalid || saving"
+        (click)="save()">
+        @if (saving) {
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+        }
+        Enregistrer
+      </button>
     </div>
   </form>
 </div>

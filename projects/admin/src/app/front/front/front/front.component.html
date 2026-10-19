@@ -1,5 +1,7 @@
 
-
+@if (logged_member$ | async) {
+  <app-notification-subscription-demo></app-notification-subscription-demo>
+}
 <div class="container-fluid">
 
   <div id="headerBanner">

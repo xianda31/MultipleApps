@@ -2,19 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-  NotificationDemoTopic,
-  NotificationSubscriptionDemoService,
+  NotificationSubscriptionService,
+  NotificationTopic,
 } from './notification-subscription-demo.service';
-
-type DemoDecision = 'accepted' | 'later' | 'declined';
-
-interface DemoPreference {
-  decision: DemoDecision;
-  topics: NotificationDemoTopic[];
-  updatedAt: string;
-}
-
-const STORAGE_KEY = 'bcsto.pushNotificationDemo.preference';
 
 @Component({
   selector: 'app-notification-subscription-demo',
@@ -31,18 +21,29 @@ export class NotificationSubscriptionDemoComponent implements OnInit {
   partner = false;
   alerts = false;
 
-  constructor(private demoService: NotificationSubscriptionDemoService) {}
+  constructor(private notificationService: NotificationSubscriptionService) {}
 
   get hasSelection(): boolean {
     return this.news || this.partner || this.alerts;
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const mode = new URLSearchParams(window.location.search).get('push-demo');
     if (mode === 'reset') {
-      this.clearPreference();
+      this.notificationService.reset();
     }
-    this.visible = true;
+    let preferences = this.notificationService.preferences;
+    try {
+      preferences = await this.notificationService.reconcileAcceptedSubscription();
+    } catch (error) {
+      this.errorMessage = error instanceof Error
+        ? error.message
+        : 'Impossible de vérifier l’abonnement Push de ce navigateur.';
+    }
+    this.news = preferences.topics.includes('news');
+    this.partner = preferences.topics.includes('partner');
+    this.alerts = preferences.topics.includes('alerts');
+    this.visible = mode === 'reset' || preferences.decision === 'later' || !!this.errorMessage;
   }
 
   async activate(): Promise<void> {
@@ -54,54 +55,33 @@ export class NotificationSubscriptionDemoComponent implements OnInit {
     this.requestingPermission = true;
     this.errorMessage = '';
     try {
-      await this.demoService.requestPermissionAndNotify(topics);
-      this.savePreference('accepted', topics);
+      await this.notificationService.subscribe(topics);
       this.visible = false;
     } catch (error) {
       this.errorMessage = error instanceof Error
         ? error.message
-        : 'Impossible d’afficher la notification de démonstration.';
+        : 'Impossible d’activer les notifications.';
     } finally {
       this.requestingPermission = false;
     }
   }
 
   decideLater(): void {
-    this.savePreference('later', this.selectedTopics());
+    this.notificationService.decideLater(this.selectedTopics());
     this.visible = false;
   }
 
   decline(): void {
-    this.savePreference('declined', []);
+    this.notificationService.decline();
     this.visible = false;
   }
 
-  private selectedTopics(): NotificationDemoTopic[] {
-    const topics: NotificationDemoTopic[] = [];
+  private selectedTopics(): NotificationTopic[] {
+    const topics: NotificationTopic[] = [];
     if (this.news) topics.push('news');
     if (this.partner) topics.push('partner');
     if (this.alerts) topics.push('alerts');
     return topics;
   }
 
-  private savePreference(decision: DemoDecision, topics: NotificationDemoTopic[]): void {
-    const preference: DemoPreference = {
-      decision,
-      topics,
-      updatedAt: new Date().toISOString(),
-    };
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(preference));
-    } catch {
-      this.errorMessage = 'Le choix ne peut pas être mémorisé par ce navigateur.';
-    }
-  }
-
-  private clearPreference(): void {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // The demo can still run when browser storage is unavailable.
-    }
-  }
 }
