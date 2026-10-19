@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-19-levee-de-limitation-de-volume-timing-du",
+    "publishedOn": "2026-10-19",
+    "site": "BACK_OFFICE",
+    "area": "COMMUNICATION",
+    "kind": "IMPROVEMENT",
+    "summary": "levée de limitation de volume/timing du service mail ; ajout d'une barre de progression"
+  },
+  {
     "id": "2026-10-18-les-documents-consultables-sont-maintenant-ranges-sous",
     "publishedOn": "2026-10-18",
     "site": "BACK_OFFICE",

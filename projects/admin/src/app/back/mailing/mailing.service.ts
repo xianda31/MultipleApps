@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MailingApiService } from '../services/mailing-api.service';
+import { MailingApiService, MailingProgress } from '../services/mailing-api.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { MAILING_TEMPLATE } from './mailing-template';
 import { environment } from '../../../environments/environment';
@@ -24,7 +24,10 @@ export interface SendEmailParams {
     subject: string;
     bodyHtml: string;
     attachments?: EmailAttachment[];
+    onProgress?: (progress: MailingProgress) => void;
 }
+
+export type { MailingProgress };
 
 @Injectable({
     providedIn: 'root'
@@ -106,7 +109,9 @@ export class MailingService {
         };
 
         try {
-            const result = await this.mailingApi.sendEmail(emailRequest);
+            const result = params.onProgress
+                ? await this.mailingApi.sendEmail(emailRequest, params.onProgress)
+                : await this.mailingApi.sendEmail(emailRequest);
             return result;
         } catch (error: any) {
             throw new Error(error?.error?.error || error?.message || 'Erreur lors de l\'envoi du mail');
@@ -125,11 +130,12 @@ export class MailingService {
         recipients: Array<{ email: string; name: string; memberId?: string; isExternal?: boolean }>;
         copyRecipients?: EmailRecipient[];
         attachments?: Array<{filename: string; content: string; contentType: string}>;
+        onProgress?: (progress: MailingProgress) => void;
     }): Promise<any> {
         if (!params.recipients.length) throw new Error('Aucun destinataire');
         const emailTemplate = this.buildEmailTemplate(params.surveyBodyHtml);
         try {
-            return await this.mailingApi.sendSurvey({
+            const surveyRequest = {
                 surveyId: params.surveyId,
                 subject: params.subject,
                 emailTemplate,
@@ -141,7 +147,10 @@ export class MailingService {
                 replyTo: this.defaultReplyTo,
                 baseUrl: window.location.origin,
                 attachments: params.attachments?.length ? params.attachments : undefined,
-            });
+            };
+            return params.onProgress
+                ? await this.mailingApi.sendSurvey(surveyRequest, params.onProgress)
+                : await this.mailingApi.sendSurvey(surveyRequest);
         } catch (error: any) {
             throw new Error(error?.error?.error || error?.message || 'Erreur lors de l\'envoi du sondage');
         }

@@ -262,8 +262,11 @@
 				<div class="mb-3">
 					<label class="form-label">Pièces jointes</label>
 					<input type="file" class="form-control" (change)="onFileSelected($event)" multiple
-						accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
-					<div class="small text-muted mt-1">Formats acceptés : PDF, Word, Excel, Images</div>
+						accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
+					<div class="small text-muted mt-1">Formats proposés : PDF, Word, Excel, PowerPoint, Images — 4 Mo maximum au total</div>
+					@if (attachmentError) {
+						<div class="small text-danger mt-1">{{ attachmentError }}</div>
+					}
 					@if (attachments.length > 0) {
 						<div class="mt-2">
 							@for (att of attachments; track $index) {
@@ -346,11 +349,32 @@
 				<h5>Prévisualisation</h5>
 				<div class="preview-surface" [innerHTML]="previewHtml"></div>
 
-				<button class="btn btn-success w-100 mb-2 mt-2" [disabled]="sending || !subject.trim() || totalRecipientCount === 0"
+				<button class="btn btn-success w-100 mb-2 mt-2" [disabled]="sending || !!attachmentError || !subject.trim() || totalRecipientCount === 0"
 					(click)="sendMail()">
 					<span *ngIf="sending" class="spinner-border spinner-border-sm me-2"></span>
 					@if (isSurveyMode) { Envoyer le sondage ({{ totalRecipientCount }}) } @else { Envoyer ({{ totalRecipientCount }}) }
 				</button>
+
+				@if (mailingProgress) {
+					<div class="mb-2" aria-live="polite">
+						<div class="d-flex justify-content-between small mb-1">
+							<span>
+								@if (mailingProgress.state === 'queued') {
+									Préparation du mailing…
+								} @else {
+									Envoi en cours…
+								}
+							</span>
+							<strong>{{ mailingProgress.sentCount }} / {{ mailingProgress.totalRecipients }}
+								({{ mailingProgressPercent }} %)</strong>
+						</div>
+						<div class="progress" role="progressbar" aria-label="Progression du mailing"
+							[attr.aria-valuenow]="mailingProgressPercent" aria-valuemin="0" aria-valuemax="100">
+							<div class="progress-bar progress-bar-striped progress-bar-animated"
+								[style.width.%]="mailingProgressPercent"></div>
+						</div>
+					</div>
+				}
 
 				<div class="small mb-2" *ngIf="configuredCcEmail; else noConfiguredCc">
 					📬 Copie club configurée : <strong>{{ configuredCcEmail }}</strong>

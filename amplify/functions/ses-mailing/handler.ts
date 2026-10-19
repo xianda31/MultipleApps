@@ -1,13 +1,20 @@
 import { SESClient, SendEmailCommand, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { randomUUID } from 'crypto';
 
 const ses = new SESClient({ region: process.env.AWS_REGION });
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const lambda = new LambdaClient({});
+const s3 = new S3Client({});
 
 const BATCH_CONCURRENCY = 10;
+const ATTACHMENT_BATCH_CONCURRENCY = 2;
+const MAX_RAW_EMAIL_BYTES = 9 * 1024 * 1024;
+const MAILING_JOB_PREFIX = 'mailing-jobs';
 
 interface MessageRecipient {
   email: string;
@@ -308,7 +315,169 @@ async function handleSurveySend(body: any, event: any) {
   };
 }
 
+type MailingJobState = 'queued' | 'sending' | 'completed' | 'failed';
+
+interface MailingJobStatus {
+  jobId: string;
+  state: MailingJobState;
+  createdAt: string;
+  updatedAt: string;
+  sentCount?: number;
+  totalRecipients?: number;
+  result?: Record<string, unknown>;
+  error?: string;
+}
+
+function mailingJobKey(jobId: string, file: 'payload' | 'status'): string {
+  return `${MAILING_JOB_PREFIX}/${jobId}/${file}.json`;
+}
+
+function requireMailingJobBucket(): string {
+  const bucketName = process.env.MAILING_JOB_BUCKET_NAME;
+  if (!bucketName) {
+    throw new Error('MAILING_JOB_BUCKET_NAME not configured');
+  }
+  return bucketName;
+}
+
+async function putMailingJobStatus(status: MailingJobStatus): Promise<void> {
+  await s3.send(new PutObjectCommand({
+    Bucket: requireMailingJobBucket(),
+    Key: mailingJobKey(status.jobId, 'status'),
+    Body: JSON.stringify(status),
+    ContentType: 'application/json',
+  }));
+}
+
+async function getJsonObject<T>(key: string): Promise<T> {
+  const response = await s3.send(new GetObjectCommand({
+    Bucket: requireMailingJobBucket(),
+    Key: key,
+  }));
+  if (!response.Body) {
+    throw new Error(`Missing mailing job object: ${key}`);
+  }
+  return JSON.parse(await response.Body.transformToString()) as T;
+}
+
+function estimatedAttachmentBytes(attachments: unknown): number {
+  if (!Array.isArray(attachments)) return 0;
+  return attachments.reduce((total, attachment) => {
+    const content = attachment && typeof attachment === 'object'
+      ? (attachment as Record<string, unknown>).content
+      : undefined;
+    if (typeof content !== 'string') return total;
+    const padding = content.endsWith('==') ? 2 : content.endsWith('=') ? 1 : 0;
+    return total + Math.max(0, Math.floor(content.length * 3 / 4) - padding);
+  }, 0);
+}
+
+function validateAttachments(body: any): string | null {
+  const decodedBytes = estimatedAttachmentBytes(body.attachments);
+  const estimatedRawBytes = Math.ceil(decodedBytes * 4 / 3)
+    + (body.bodyHtml?.length || body.emailTemplate?.length || 0)
+    + 64 * 1024;
+
+  if (estimatedRawBytes > MAX_RAW_EMAIL_BYTES) {
+    return 'Les pièces jointes dépassent la taille autorisée pour un email. Publiez le document sur le site et insérez un lien dans le message.';
+  }
+  return null;
+}
+
+async function enqueueMailingJob(parsedBody: any, event: any) {
+  const jobId = randomUUID();
+  const now = new Date().toISOString();
+  const payload = {
+    body: parsedBody,
+    domainName: event.requestContext?.domainName,
+  };
+
+  await s3.send(new PutObjectCommand({
+    Bucket: requireMailingJobBucket(),
+    Key: mailingJobKey(jobId, 'payload'),
+    Body: JSON.stringify(payload),
+    ContentType: 'application/json',
+  }));
+  await putMailingJobStatus({
+    jobId,
+    state: 'queued',
+    createdAt: now,
+    updatedAt: now,
+    totalRecipients: Array.isArray(parsedBody.to) ? parsedBody.to.length : parsedBody.recipients?.length,
+  });
+
+  await lambda.send(new InvokeCommand({
+    FunctionName: process.env.AWS_LAMBDA_FUNCTION_NAME,
+    InvocationType: 'Event',
+    Payload: Buffer.from(JSON.stringify({ mailingJobId: jobId })),
+  }));
+
+  return {
+    statusCode: 202,
+    body: JSON.stringify({
+      queued: true,
+      jobId,
+      totalRecipients: Array.isArray(parsedBody.to) ? parsedBody.to.length : parsedBody.recipients?.length,
+    }),
+  };
+}
+
+async function runMailingJob(jobId: string) {
+  const previousStatus = await getJsonObject<MailingJobStatus>(mailingJobKey(jobId, 'status'));
+  await putMailingJobStatus({
+    ...previousStatus,
+    state: 'sending',
+    updatedAt: new Date().toISOString(),
+  });
+
+  try {
+    const payload = await getJsonObject<{ body: any; domainName?: string }>(mailingJobKey(jobId, 'payload'));
+    const response = await handler({
+      body: payload.body,
+      internalMailingJobId: jobId,
+      requestContext: {
+        domainName: payload.domainName,
+        http: { method: 'POST' },
+        authorizer: {
+          jwt: {
+            claims: { 'cognito:groups': ['Systeme'] },
+          },
+        },
+      },
+    });
+    const result = JSON.parse(response.body || '{}') as Record<string, unknown>;
+    if (response.statusCode >= 400) {
+      throw new Error(typeof result.error === 'string' ? result.error : `Mailing failed (${response.statusCode})`);
+    }
+    await putMailingJobStatus({
+      ...previousStatus,
+      state: 'completed',
+      updatedAt: new Date().toISOString(),
+      sentCount: typeof result.sentCount === 'number' ? result.sentCount : undefined,
+      result,
+    });
+  } catch (error: any) {
+    console.error('[SES_MAILING] job:error', {
+      jobId,
+      errorName: error?.name || 'UnknownError',
+      errorMessage: error?.message || String(error),
+    });
+    await putMailingJobStatus({
+      ...previousStatus,
+      state: 'failed',
+      updatedAt: new Date().toISOString(),
+      error: error?.message || 'Le traitement asynchrone du mailing a échoué.',
+    });
+  }
+
+  return { statusCode: 200, body: JSON.stringify({ accepted: true }) };
+}
+
 export const handler = async (event: any) => {
+  if (event.mailingJobId) {
+    return runMailingJob(event.mailingJobId);
+  }
+
   // Vérifier l'authentification et les groupes
   const claims = event.requestContext?.authorizer?.jwt?.claims;
   
@@ -351,8 +520,36 @@ export const handler = async (event: any) => {
     };
   }
 
+  if (event.requestContext?.http?.method === 'GET') {
+    const jobId = event.pathParameters?.jobId;
+    if (typeof jobId !== 'string' || !/^[0-9a-f-]{36}$/i.test(jobId)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid mailing job identifier' }) };
+    }
+    try {
+      const status = await getJsonObject<MailingJobStatus>(mailingJobKey(jobId, 'status'));
+      return { statusCode: 200, body: JSON.stringify(status) };
+    } catch (error: any) {
+      if (error?.name === 'NoSuchKey') {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Mailing job not found' }) };
+      }
+      throw error;
+    }
+  }
+
   // event.body est stringifié si appelé via API Gateway HTTP
   const parsedBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+
+  const attachmentError = validateAttachments(parsedBody);
+  if (attachmentError) {
+    return { statusCode: 413, body: JSON.stringify({ error: attachmentError }) };
+  }
+
+  const recipientCount = Array.isArray(parsedBody.to)
+    ? parsedBody.to.length
+    : Array.isArray(parsedBody.recipients) ? parsedBody.recipients.length : 0;
+  if (!event.internalMailingJobId && parsedBody.attachments?.length && recipientCount > 10) {
+    return enqueueMailingJob(parsedBody, event);
+  }
 
   // ── Mode sondage : surveyId fourni dans le body ────────────────────────────
   if (parsedBody.surveyId) {
@@ -425,7 +622,9 @@ export const handler = async (event: any) => {
     }
     
     // Limiter la concurrence pour eviter le throttling SES sur les envois massifs.
-    const MAX_RECIPIENTS_PER_BATCH = BATCH_CONCURRENCY;
+    const MAX_RECIPIENTS_PER_BATCH = attachments?.length
+      ? ATTACHMENT_BATCH_CONCURRENCY
+      : BATCH_CONCURRENCY;
     const batches: string[][] = [];
     
     // Diviser les destinataires en lots de taille limitee
@@ -490,6 +689,18 @@ export const handler = async (event: any) => {
         sentCount,
         failureCount: failures.length,
       });
+      if (event.internalMailingJobId) {
+        const status = await getJsonObject<MailingJobStatus>(
+          mailingJobKey(event.internalMailingJobId, 'status'),
+        );
+        await putMailingJobStatus({
+          ...status,
+          state: 'sending',
+          updatedAt: new Date().toISOString(),
+          sentCount,
+          totalRecipients: validRecipients.length,
+        });
+      }
     }
 
     const detailsByEmail = new Map(normalizeRecipients(recipientDetails).map(recipient => [recipient.email, recipient]));

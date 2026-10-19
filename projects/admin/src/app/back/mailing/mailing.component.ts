@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { MailingService, SendEmailParams } from './mailing.service';
+import { MailingProgress, MailingService, SendEmailParams } from './mailing.service';
 import { Member } from '../../common/interfaces/member.interface';
 import {
   RecipientPreset,
@@ -71,16 +71,25 @@ export class MailingComponent implements OnInit, AfterViewInit {
   bodyHtml = '';
   previewHtml: SafeHtml = '';
   sending = false;
+  mailingProgress: MailingProgress | null = null;
   result: any = null;
   error: string | null = null;
+  attachmentError: string | null = null;
   skippedRecipients: string[] = [];
   attachments: Array<{filename: string, content: string, contentType: string}> = [];
+  private readonly maxAttachmentBytes = 4 * 1024 * 1024;
 
   get isSurveyMode(): boolean { return !!this.selectedSurveyId; }
   get surveyRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
   get totalRecipientCount(): number { return this.recipients.length + this.externalRecipients.length; }
   get totalCopyRecipientCount(): number { return this.copyRecipients.length + this.externalCopyRecipients.length; }
   get configuredCcEmail(): string { return this.mailingService.getConfiguredCcEmail(); }
+  get mailingProgressPercent(): number {
+    if (!this.mailingProgress?.totalRecipients) return 0;
+    return Math.min(100, Math.round(
+      this.mailingProgress.sentCount * 100 / this.mailingProgress.totalRecipients,
+    ));
+  }
   get primaryRecipientEmails(): string[] {
     return [
       ...this.recipients.map((member) => member.email ?? ''),
@@ -458,6 +467,17 @@ export class MailingComponent implements OnInit, AfterViewInit {
   onFileSelected(event: any) {
     const files: FileList = event.target.files;
     if (files && files.length > 0) {
+      const existingBytes = this.attachments.reduce(
+        (total, attachment) => total + Math.floor(attachment.content.length * 3 / 4),
+        0,
+      );
+      const selectedBytes = Array.from(files).reduce((total, file) => total + file.size, 0);
+      if (existingBytes + selectedBytes > this.maxAttachmentBytes) {
+        this.attachmentError = 'Les pièces jointes sont limitées à 4 Mo au total. Publiez les documents sur le site et insérez un lien dans le message.';
+        event.target.value = '';
+        return;
+      }
+      this.attachmentError = null;
       Array.from(files).forEach(file => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -475,12 +495,14 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   removeAttachment(index: number) {
     this.attachments.splice(index, 1);
+    this.attachmentError = null;
   }
 
   resetForm() {
     this.subject = '';
     this.bodyHtml = '';
     this.attachments = [];
+    this.attachmentError = null;
     this.recipients = [];
     this.copyRecipients = [];
     this.externalRecipients = [];
@@ -509,6 +531,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
 
   sendMail() {
     this.sending = true;
+    this.mailingProgress = null;
     this.result = null;
     this.error = null;
     this.skippedRecipients = [];
@@ -557,12 +580,15 @@ export class MailingComponent implements OnInit, AfterViewInit {
         recipients: recipientPayload,
         copyRecipients: copyRecipientPayload,
         attachments: this.attachments.length > 0 ? this.attachments : undefined,
+        onProgress: progress => this.mailingProgress = progress,
       }).then(res => {
         this.result = res;
         this.sending = false;
+        this.mailingProgress = null;
       }).catch(err => {
         this.error = err?.message || "Erreur lors de l'envoi du sondage";
         this.sending = false;
+        this.mailingProgress = null;
       });
       return;
     }
@@ -605,18 +631,21 @@ export class MailingComponent implements OnInit, AfterViewInit {
       ],
       subject: this.subject,
       bodyHtml: this.bodyHtml,
-      attachments: this.attachments.length > 0 ? this.attachments : undefined
+      attachments: this.attachments.length > 0 ? this.attachments : undefined,
+      onProgress: progress => this.mailingProgress = progress,
     };
     this.mailingService.sendEmail(emailParams)
       .then((res) => {
         this.result = res;
         this.skippedRecipients = res.skippedRecipients || [];
         this.sending = false;
+        this.mailingProgress = null;
         this.resetForm();
       })
       .catch((err) => {
         this.error = err?.message || "Erreur lors de l'envoi";
         this.sending = false;
+        this.mailingProgress = null;
       });
   }
 }

@@ -2,7 +2,7 @@ import * as path from "path";
 import { execFileSync } from "child_process";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { defineBackend } from "@aws-amplify/backend";
-import { Stack } from "aws-cdk-lib";
+import { ArnFormat, Duration, Stack } from "aws-cdk-lib";
 import { Rule, Schedule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { Architecture, CfnFunction, Code, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
@@ -16,7 +16,7 @@ import {  HttpUserPoolAuthorizer} from "aws-cdk-lib/aws-apigatewayv2-authorizers
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
 import { CfnTable } from "aws-cdk-lib/aws-dynamodb";
-import { EventType } from "aws-cdk-lib/aws-s3";
+import { BlockPublicAccess, Bucket, BucketEncryption, EventType } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
 import { sesMailing } from "./functions/ses-mailing/resource";
@@ -187,6 +187,13 @@ const httpApi = new HttpApi(apiStack, "HttpApi", {
 httpApi.addRoutes({
   path: "/api/send-email",
   methods: [HttpMethod.POST],
+  integration: sesMailingIntegration,
+  authorizer: userPoolAuthorizer,
+});
+
+httpApi.addRoutes({
+  path: "/api/send-email/status/{jobId}",
+  methods: [HttpMethod.GET],
   integration: sesMailingIntegration,
   authorizer: userPoolAuthorizer,
 });
@@ -467,6 +474,31 @@ backend.sesMailing.resources.lambda.role?.attachInlinePolicy(sesPolicy);
 // Set environment variable for table name
 backend.emailUnsubscribe.addEnvironment('MEMBER_TABLE_NAME', memberTable.tableName);
 backend.sesMailing.addEnvironment('MEMBER_TABLE_NAME', memberTable.tableName);
+const mailingJobBucket = new Bucket(Stack.of(backend.sesMailing.resources.lambda), 'MailingJobBucket', {
+  blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+  encryption: BucketEncryption.S3_MANAGED,
+  lifecycleRules: [{ expiration: Duration.days(2) }],
+});
+backend.sesMailing.addEnvironment('MAILING_JOB_BUCKET_NAME', mailingJobBucket.bucketName);
+mailingJobBucket.grantReadWrite(backend.sesMailing.resources.lambda, 'mailing-jobs/*');
+backend.sesMailing.resources.lambda.role?.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['lambda:InvokeFunction'],
+    resources: [
+      Stack.of(backend.sesMailing.resources.lambda).formatArn({
+        service: 'lambda',
+        resource: 'function',
+        resourceName: '*sesMailing*',
+        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+      }),
+    ],
+  }),
+);
+backend.sesMailing.resources.lambda.configureAsyncInvoke({
+  retryAttempts: 0,
+  maxEventAge: Duration.hours(1),
+});
 
 // Grant Systeme group DynamoDB access for book-backup tool
 // ARN en wildcard pour éviter toute référence cross-stack (pas de grantReadWriteData)
