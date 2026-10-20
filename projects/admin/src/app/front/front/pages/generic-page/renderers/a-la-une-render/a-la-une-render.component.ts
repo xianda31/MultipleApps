@@ -11,6 +11,25 @@ import { Subscription } from 'rxjs';
 import { attachExternalLinkHandler } from '../../utils/util_click_handler';
 import { formatRowColsClasses } from '../../../../../../common/utils/ui-utils';
 
+const RECENT_HIGHLIGHT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function findRecentHighlightIds(
+  snippets: Snippet[],
+  now = Date.now(),
+): Set<string> {
+  const recentIds = new Set<string>();
+
+  for (const snippet of snippets) {
+    if (!snippet.publishedAt) continue;
+    const publishedAt = Date.parse(snippet.publishedAt);
+    const age = now - publishedAt;
+    if (!Number.isFinite(publishedAt) || age < 0 || age > RECENT_HIGHLIGHT_WINDOW_MS) continue;
+    recentIds.add(String(snippet.id));
+  }
+
+  return recentIds;
+}
+
 @Component({
   selector: 'app-a-la-une-render',
   standalone: true,
@@ -22,6 +41,7 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   @Input() snippets: Snippet[] = [];
   @Input() selected_title?: string; // for news, the title of the selected snippet
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
+  @Input() highlightRecent = false;
 
   read_more: boolean = true;
   read_more_lines: number = 3;
@@ -40,6 +60,7 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   // Track if a snippet's text is visually overflowing (clamped)
   private overflowMap: Record<string, boolean> = {};
   private overflowCheckScheduled = false;
+  private recentHighlightIds = new Set<string>();
   
   constructor(
     private router: Router,
@@ -131,7 +152,13 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   }
 
 
-   ngOnChanges(changes: SimpleChanges): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['snippets'] || changes['highlightRecent']) {
+      this.recentHighlightIds = this.highlightRecent
+        ? findRecentHighlightIds(this.snippets)
+        : new Set<string>();
+    }
+
     if (changes['selected_title'] ) {
       // Scroll to the snippet if selected_title changes
       const snippet = this.snippets.find(s => s.title === this.selected_title);
@@ -143,6 +170,10 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
     }else{
       this.read_more = true;
     }
+  }
+
+  isRecentHighlight(snippet: Snippet): boolean {
+    return this.recentHighlightIds.has(String(snippet.id));
   }
 
   ngOnDestroy(): void {

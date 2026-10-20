@@ -40,7 +40,8 @@
     <div [ngClass]="newsColClass">
         <h6 class="text-uppercase text-success fw-bolder mt-2 mb-2">Les dernières nouvelles</h6>
         @if (highlights$ | async; as highlights) {
-        <app-a-la-une-render [snippets]="highlights" [row_cols]="news_row_cols"></app-a-la-une-render>
+        <app-a-la-une-render [snippets]="highlights" [row_cols]="news_row_cols"
+            [highlightRecent]="true"></app-a-la-une-render>
         }
     </div>
 </div>
