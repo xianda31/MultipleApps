@@ -17,6 +17,7 @@ function member(overrides: Partial<Member>): Member {
     email: 'alice@example.fr',
     phone_one: '0102030405',
     accept_mailing: true,
+    memberStatus: 'CLUB_LICENSEE',
     lifecycleStatus: 'ACTIVE',
     ...overrides,
   };
@@ -33,6 +34,8 @@ describe('active members CSV export', () => {
     expect(csv).not.toContain('ARCHIVE');
     expect(csv.indexOf('MARTIN')).toBeLessThan(csv.indexOf('ZOLA'));
     expect(csv).toContain('"Licencié"');
+    expect(csv).toContain('"memberStatus"');
+    expect(csv).toContain('"CLUB_LICENSEE"');
     expect(csv).toContain('"Oui"');
   });
 
