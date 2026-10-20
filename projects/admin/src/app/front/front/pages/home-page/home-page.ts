@@ -14,12 +14,11 @@ import { FileService } from '../../../../common/services/files.service';
 import { ALaUneRenderComponent } from '../generic-page/renderers/a-la-une-render/a-la-une-render.component';
 import { HomeHighlightsService } from '../../../../common/services/home-highlights.service';
 import { VisualIdentityService } from '../../../../common/services/visual-identity.service';
-import { AppInstallComponent } from '../../../../common/components/app-install/app-install.component';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, ALaUneRenderComponent, TournamentsComponent, AppInstallComponent],
+  imports: [CommonModule, ALaUneRenderComponent, TournamentsComponent],
   templateUrl: './home-page.html',
   styleUrl: './home-page.scss'
 })

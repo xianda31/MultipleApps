@@ -14,6 +14,18 @@
   transform: none;
 }
 
+:host(.install-popup-host) {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  left: auto;
+  top: auto;
+  z-index: 1040;
+  width: min(30rem, calc(100vw - 2rem));
+  margin: 0;
+  transform: none;
+}
+
 .install-card {
   position: relative;
   display: grid;
@@ -23,6 +35,7 @@
   width: min(58rem, calc(100% - 1.5rem));
   margin-inline: auto;
   padding: 0.85rem 1rem;
+  font-family: var(--site-font, inherit);
   color: var(--content-text, var(--bs-body-color));
   background: var(--content-bg, var(--bs-body-bg));
   border: 1px solid color-mix(in srgb, var(--bs-primary) 35%, var(--bs-border-color));
@@ -209,6 +222,13 @@
 
   :host(.install-card-host) {
     margin-top: 0.65rem;
+  }
+
+  :host(.install-popup-host) {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: calc(100vw - 1rem);
+    margin: 0;
   }
 
   .install-card {

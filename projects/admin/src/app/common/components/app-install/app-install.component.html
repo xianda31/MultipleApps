@@ -1,9 +1,11 @@
 @if (state().mode !== 'hidden') {
-  @if (variant === 'card') {
-    <aside class="install-card" aria-label="Installer l’application bcsto">
+  @if (variant !== 'footer') {
+    <aside class="install-card" aria-label="Installer l’application bcsto"
+      [attr.role]="variant === 'popup' ? 'dialog' : null"
+      [attr.aria-live]="variant === 'popup' ? 'polite' : null">
       <div class="install-card__main">
         <div class="install-card__icon" aria-hidden="true">
-          <i class="bi bi-speedometer2"></i>
+          <i [class]="'bi ' + platformIcon"></i>
         </div>
         <div class="install-card__content">
           @if (!compact) {
@@ -38,8 +40,9 @@
     </aside>
   } @else {
     <button type="button" class="btn btn-sm btn-info" [disabled]="installing()"
-      [attr.aria-label]="'Installer bcsto sur ' + platformLabel"
-      [title]="'Installer bcsto sur ' + platformLabel" (click)="runInstall()">
+      [attr.aria-label]="'Installer l\'app bcsto sous ' + platformLabel"
+      [ngbTooltip]="'Installer l\'app bcsto sous ' + platformLabel" placement="top"
+      container="body" (click)="runInstall()">
       @if (installing()) {
         <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
       } @else {
@@ -53,7 +56,7 @@
           title="Fermer" (click)="closeInstructions()"></button>
         <div class="install-heading">
           <i class="bi bi-box-arrow-down install-icon" aria-hidden="true"></i>
-          <h2>Installer bcsto</h2>
+          <h2>Installer l\'app bcsto</h2>
         </div>
         <p class="install-instructions">{{ manualInstructions }}</p>
       </aside>

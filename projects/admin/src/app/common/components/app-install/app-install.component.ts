@@ -1,11 +1,13 @@
 import { Component, HostBinding, inject, Input, signal } from '@angular/core';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AppInstallService } from '../../services/app-install.service';
 
-type AppInstallVariant = 'footer' | 'card';
+type AppInstallVariant = 'footer' | 'card' | 'popup';
 
 @Component({
   selector: 'app-install-app',
   standalone: true,
+  imports: [NgbTooltipModule],
   templateUrl: './app-install.component.html',
   styleUrl: './app-install.component.scss'
 })
@@ -16,11 +18,15 @@ export class AppInstallComponent {
   @Input() compact = false;
   @HostBinding('class.install-card-host')
   get isCard(): boolean {
-    return this.variant === 'card';
+    return this.variant !== 'footer';
   }
   @HostBinding('class.install-card-compact-host')
   get isCompactCard(): boolean {
-    return this.variant === 'card' && this.compact;
+    return this.variant !== 'footer' && this.compact;
+  }
+  @HostBinding('class.install-popup-host')
+  get isPopup(): boolean {
+    return this.variant === 'popup';
   }
 
   readonly state = this.appInstallService.state;

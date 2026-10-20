@@ -208,7 +208,7 @@
         <router-outlet></router-outlet>
       </div>
     </div>
-  </ng-template>
+  </ng-template> 
 
   <ng-template #tplFooter>
     <div class="footer-banner d-flex align-items-center justify-content-between flex-wrap mt-auto">
@@ -234,3 +234,7 @@
     aria-label="Retour en haut de la page" title="Retour en haut" (click)="scrollToTop()">
     <i class="bi bi-caret-up-square-fill" aria-hidden="true"></i>
   </button>
+
+  @if (logged_member$ | async) {
+    <app-install-app variant="popup" [compact]="true"></app-install-app>
+  }
