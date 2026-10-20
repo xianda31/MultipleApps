@@ -74,6 +74,7 @@
     "@editorjs/header": "^2.8.8",
     "@editorjs/list": "^2.0.8",
     "@editorjs/table": "^2.4.5",
+    "@exxili/capacitor-nfc": "^0.0.14",
     "@ng-bootstrap/ng-bootstrap": "^19.0.1",
     "@popperjs/core": "^2.11.8",
     "@stripe/terminal-js": "^0.26.0",

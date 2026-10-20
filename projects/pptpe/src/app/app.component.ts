@@ -17,6 +17,7 @@ import {
 import outputs from '../../../../amplify_outputs.json';
 import { environment } from '../environments/environment';
 import type { Schema } from '../../../../amplify/data/resource';
+import { NfcTagReaderService } from './nfc/nfc-tag-reader.service';
 
 type AppState = 'checking-auth' | 'login' | 'scanning' | 'connecting' | 'connected' | 'processing' | 'error';
 
@@ -29,6 +30,7 @@ type AppState = 'checking-auth' | 'login' | 'scanning' | 'connecting' | 'connect
 })
 export class AppComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
+  private readonly nfcReader = inject(NfcTagReaderService);
   state: AppState = 'checking-auth';
   readerLabel = '';
   firmwareProgress = 0;
@@ -42,6 +44,9 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly appVersion = environment.buildDate;
   loginError = '';
   loginLoading = false;
+  readonly nfcState = this.nfcReader.state;
+  readonly nfcScans = this.nfcReader.scans;
+  readonly nfcReadError = this.nfcReader.readError;
 
   // Token cache — pré-fetché avant connectReader pour répondre instantanément au SDK
   private cachedToken: string | null = null;
@@ -93,11 +98,13 @@ export class AppComponent implements OnInit, OnDestroy {
     );
 
     this.client = generateClient<Schema>();
+    void this.nfcReader.start();
     this.checkAuth();
   }
 
   ngOnDestroy(): void {
     this.paymentRequestSub?.unsubscribe();
+    this.nfcReader.stop();
     this.stopHeartbeat();
     this.clearResumeWatchdog();
     // Fermeture propre : marquer la session comme déconnectée
