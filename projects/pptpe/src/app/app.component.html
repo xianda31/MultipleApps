@@ -116,6 +116,37 @@
   </div>
   }
 
+  @if (nfcState().status !== 'unsupported') {
+  <aside class="nfc-diagnostic" aria-live="polite">
+    <div class="nfc-diagnostic__heading">
+      <i class="bi bi-wifi" aria-hidden="true"></i>
+      <strong>Test NFC</strong>
+      <span class="nfc-diagnostic__status"
+        [class.nfc-diagnostic__status--ready]="nfcState().status === 'ready'">
+        {{ nfcState().status === 'ready' ? 'prêt' : nfcState().status }}
+      </span>
+    </div>
+    <p class="nfc-diagnostic__message">{{ nfcState().message }}</p>
+    @if (nfcReadError()) {
+    <p class="nfc-diagnostic__error">{{ nfcReadError() }}</p>
+    }
+    @if (nfcScans().length > 0) {
+    <div class="nfc-diagnostic__last-scan">
+      <span>Dernier UID</span>
+      <code>{{ nfcScans()[0].uid }}</code>
+      <small>{{ nfcScans()[0].scannedAt | date:'HH:mm:ss' }}</small>
+    </div>
+    @if (nfcScans().length > 1) {
+    <div class="nfc-diagnostic__history">
+      @for (scan of nfcScans().slice(1); track scan.scannedAt) {
+      <code>{{ scan.uid }}</code>
+      }
+    </div>
+    }
+    }
+  </aside>
+  }
+
   <!-- Bouton déconnexion (visible sauf sur les écrans login/checking) -->
   @if (state !== 'checking-auth' && state !== 'login') {
   <div class="footer-actions">

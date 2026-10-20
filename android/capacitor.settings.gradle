@@ -4,3 +4,6 @@ project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/
 
 include ':capacitor-community-stripe-terminal'
 project(':capacitor-community-stripe-terminal').projectDir = new File('../node_modules/@capacitor-community/stripe-terminal/android')
+
+include ':exxili-capacitor-nfc'
+project(':exxili-capacitor-nfc').projectDir = new File('../node_modules/@exxili/capacitor-nfc/android')
