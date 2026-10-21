@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import Stripe from 'stripe';
-import { GetCommand, PutCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, ScanCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 process.env['STRIPE_SECRET_KEY'] = 'dummy';
 process.env['STRIPE_WEBHOOK_SECRET'] = 'whsec_terminal_test';
@@ -107,6 +107,102 @@ test('terminal webhook confirms and fulfills its BookEntry exactly once', async 
     assert.equal(playBooks.size, 1);
     assert.equal(executions.size, 1);
     assert.equal(transactions.get('pi_terminal')?.['bookEntryId'], bookEntry.id);
+  } finally {
+    webhookModule.documentClient.send = originalWebhookSend as typeof webhookModule.documentClient.send;
+    fulfillmentModule.documentClient.send = originalFulfillmentSend as typeof fulfillmentModule.documentClient.send;
+  }
+});
+
+test('online webhook finds a pending BookEntry by stripeTag and records the paid transaction', async () => {
+  const webhookModule = await import('./handler');
+  const fulfillmentModule = await import('../process-book-entry-actions/handler');
+  const transactions = new Map<string, Record<string, any>>();
+  const executions = new Map<string, Record<string, any>>();
+  const bookEntry: Record<string, any> = {
+    id: 'book-entry-online',
+    status: 'pending',
+    stripeTag: 'stripe:123456789012',
+    purchasedItems: [],
+  };
+
+  const originalWebhookSend = webhookModule.documentClient.send.bind(webhookModule.documentClient);
+  const originalFulfillmentSend = fulfillmentModule.documentClient.send.bind(fulfillmentModule.documentClient);
+
+  webhookModule.documentClient.send = (async (command: unknown) => {
+    if (command instanceof ScanCommand && command.input.TableName === 'BookEntry') {
+      assert.equal(command.input.FilterExpression, 'stripeSessionId = :sessionId OR stripeTag = :stripeTag');
+      assert.equal(command.input.ExpressionAttributeValues?.[':stripeTag'], bookEntry.stripeTag);
+      return { Items: [bookEntry] };
+    }
+    if (command instanceof GetCommand) {
+      if (command.input.TableName === 'BookEntry') return { Item: bookEntry };
+      if (command.input.TableName === 'StripeTransaction') {
+        return { Item: transactions.get(String(command.input.Key?.['id'])) };
+      }
+    }
+    if (command instanceof UpdateCommand) {
+      if (command.input.TableName === 'BookEntry') {
+        bookEntry.status = 'confirmed';
+        bookEntry.stripeSessionId = 'cs_test_123456789012';
+        return {};
+      }
+      if (command.input.TableName === 'StripeTransaction') {
+        const transaction = transactions.get(String(command.input.Key?.['id']));
+        if (transaction) transaction['bookEntryId'] = bookEntry.id;
+        return {};
+      }
+    }
+    if (command instanceof PutCommand && command.input.TableName === 'StripeTransaction') {
+      const item = command.input.Item as Record<string, any>;
+      transactions.set(String(item['id']), item);
+      return {};
+    }
+    throw new Error(`Unexpected webhook command: ${String(command)}`);
+  }) as typeof webhookModule.documentClient.send;
+
+  fulfillmentModule.documentClient.send = (async (command: unknown) => {
+    if (command instanceof GetCommand) {
+      if (command.input.TableName === 'BookEntry') return { Item: bookEntry };
+      if (command.input.TableName === 'FulfillmentExecution') {
+        return { Item: executions.get(String(command.input.Key?.['id'])) };
+      }
+    }
+    throw new Error(`Unexpected fulfillment command: ${String(command)}`);
+  }) as typeof fulfillmentModule.documentClient.send;
+
+  const payload = JSON.stringify({
+    id: 'evt_checkout_completed',
+    object: 'event',
+    api_version: '2024-04-10',
+    created: 1,
+    livemode: false,
+    pending_webhooks: 1,
+    request: null,
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: 'cs_test_123456789012',
+        object: 'checkout.session',
+        amount_total: 3000,
+        currency: 'eur',
+        payment_status: 'paid',
+        metadata: {},
+      },
+    },
+  });
+  const stripe = new Stripe('dummy', { apiVersion: '2024-04-10' as any });
+  const signature = stripe.webhooks.generateTestHeaderString({ payload, secret: 'whsec_terminal_test' });
+
+  try {
+    const response = await webhookModule.handler({
+      body: payload,
+      headers: { 'stripe-signature': signature },
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(bookEntry.status, 'confirmed');
+    assert.equal(bookEntry.stripeSessionId, 'cs_test_123456789012');
+    assert.equal(transactions.get('cs_test_123456789012')?.['bookEntryId'], bookEntry.id);
   } finally {
     webhookModule.documentClient.send = originalWebhookSend as typeof webhookModule.documentClient.send;
     fulfillmentModule.documentClient.send = originalFulfillmentSend as typeof fulfillmentModule.documentClient.send;
