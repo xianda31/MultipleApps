@@ -20,61 +20,66 @@
         </h6>
         <div class="personal-information">
           <div class="personal-information__item">
-            <!-- <span class="personal-information__label">Prénom</span> -->
             <span>{{ member.firstname || '—' }}</span>
-          </div>
-          <div class="personal-information__item">
-            <!-- <span class="personal-information__label">Nom</span> -->
             <span>{{ member.lastname || '—' }}</span>
           </div>
+
           <div class="personal-information__item">
-            <!-- <span class="personal-information__label">Mail</span> -->
             <span class="text-break">{{ member.email || '—' }}</span>
           </div>
+        </div>
+
+        <div class="personal-information mt-1">
           <div class="personal-information__item">
-            <!-- <span class="personal-information__label">Classement FFB</span> -->
-            <span>
-              IC {{ ffbRankingParts.series }}<strong [style.color]="ffbRankingParts.suitColor">{{ ffbRankingParts.suit }}</strong>{{ ffbRankingParts.tail }}
+            <span>N° licence {{ member.license_number || '—' }}</span>
+          </div>
+
+          <div class="personal-information__item">
+            <span> classement :
+              IC {{ ffbRankingParts.series }}<strong [style.color]="ffbRankingParts.suitColor">{{ ffbRankingParts.suit
+                }}</strong>{{ ffbRankingParts.tail }}
               · IV {{ member.iv ?? '—' }}
             </span>
           </div>
         </div>
-        <div class="local-information">
-          <div class="row g-2">
-          <div class="col-12 col-md-6">
-            <label for="phone_one" class="form-label">Téléphone</label>
-            <input type="tel" class="form-control form-control-sm" id="phone_one" formControlName="phone_one"
-              autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78"
-              (blur)="normalizePhoneInput()"
-              [class.is-invalid]="preferenceForm.get('phone_one')?.invalid && preferenceForm.get('phone_one')?.touched">
-            <div class="invalid-feedback">Saisissez un numéro français, par exemple 06 12 34 56 78.</div>
-          </div>
-          <div class="col-12 col-md-6">
-            <label for="city" class="form-label">Ville</label>
-            <input type="text" class="form-control form-control-sm" id="city" formControlName="city"
-              placeholder="Votre ville">
-          </div>
+
+        <div class="mt-1">
+          <div class="personal-fields">
+            <div>
+              <div class="input-group input-group-sm has-validation">
+                <label class="input-group-text" for="phone_one">Tél.</label>
+                <input type="tel" class="form-control" id="phone_one" formControlName="phone_one" autocomplete="tel"
+                  inputmode="tel" placeholder="06 12 34 56 78" (blur)="normalizePhoneInput()"
+                  [class.is-invalid]="preferenceForm.get('phone_one')?.invalid && preferenceForm.get('phone_one')?.touched">
+                <div class="invalid-feedback">Saisissez un numéro français, par exemple 06 12 34 56 78.</div>
+              </div>
+            </div>
+            <div>
+              <div class="input-group input-group-sm">
+                <label class="input-group-text" for="city">Ville</label>
+                <input type="text" class="form-control" id="city" formControlName="city" placeholder="Votre ville">
+              </div>
+            </div>
           </div>
           <div class="avatar-settings mt-2">
-          <input type="file" #avatarFileInput class="visually-hidden" id="avatarFileInput"
-            (change)="changeIco($event)" accept="image/*">
-          <img *ngIf="avatarFileExists" [src]="ico_url$ | async" alt="Vignette du membre"
-            class="rounded-circle settings-avatar">
-          <div *ngIf="!avatarFileExists" class="settings-avatar settings-avatar--empty" aria-hidden="true">
-            <i class="bi bi-person"></i>
-          </div>
-          <div>
-            <div class="text-muted small mb-2">Image carrée utilisée dans le répertoire du club.</div>
-            <button type="button" class="btn btn-sm btn-outline-primary me-2" (click)="avatarFileInput.click()">
-              <i class="bi bi-upload me-1" aria-hidden="true"></i>
-              {{ avatarFileExists ? 'Remplacer' : 'Charger une photo' }}
-            </button>
-            <button *ngIf="avatarFileExists" type="button" class="btn btn-sm btn-outline-danger"
-              (click)="resetIco()">
-              <i class="bi bi-trash me-1" aria-hidden="true"></i>
-              Supprimer
-            </button>
-          </div>
+            <input type="file" #avatarFileInput class="visually-hidden" id="avatarFileInput"
+              (change)="changeIco($event)" accept="image/*">
+            <img *ngIf="avatarFileExists" [src]="ico_url$ | async" alt="Vignette du membre"
+              class="rounded-circle settings-avatar">
+            <div *ngIf="!avatarFileExists" class="settings-avatar settings-avatar--empty" aria-hidden="true">
+              <i class="bi bi-person"></i>
+            </div>
+            <div>
+              <div class="text-muted small mb-2">Image carrée utilisée dans le répertoire du club.</div>
+              <button type="button" class="btn btn-sm btn-outline-primary me-2" (click)="avatarFileInput.click()">
+                <i class="bi bi-upload me-1" aria-hidden="true"></i>
+                {{ avatarFileExists ? 'Remplacer' : 'Charger une photo' }}
+              </button>
+              <button *ngIf="avatarFileExists" type="button" class="btn btn-sm btn-outline-danger" (click)="resetIco()">
+                <i class="bi bi-trash me-1" aria-hidden="true"></i>
+                Supprimer
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -83,7 +88,7 @@
         <div class="settings-section__heading">
           <h6 id="consents-title" class="settings-section__title mb-0">
             <i class="bi bi-envelope-check" aria-hidden="true"></i>
-            Consentements aux communications du club
+            Consentements communications club
           </h6>
         </div>
 
@@ -105,9 +110,9 @@
               <div class="form-check form-switch mb-0">
                 <input class="form-check-input" type="checkbox" role="switch" disabled
                   [attr.aria-label]="label + ' — bientôt'">
-                  <label class="form-check-label" [attr.aria-label]="label + ' — bientôt'">
-                    Bientôt
-                  </label>
+                <label class="form-check-label" [attr.aria-label]="label + ' — bientôt'">
+                  Bientôt
+                </label>
               </div>
             </div>
           </div>
