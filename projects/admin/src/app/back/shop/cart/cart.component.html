@@ -188,7 +188,7 @@
     </div>
     <div class="cart-actions">
         @if (onlineMode) {
-        <button type="button" class="btn-checkout" [disabled]="stripe_checkout_not_ready() || checkoutDisabled"
+        <button type="button" class="btn-checkout" [disabled]="stripe_checkout_not_ready() || checkoutDisabled || checkoutInProgress"
             (click)="stripeCheckout.emit()">
             @if (checkoutInProgress) {
             <span class="spinner-border spinner-border-sm me-2" role="status"></span>Validation en cours…

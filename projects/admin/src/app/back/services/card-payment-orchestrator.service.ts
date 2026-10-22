@@ -18,8 +18,8 @@ export interface CardPaymentParams {
 export interface CardPaymentCallbacks {
   onPaymentIntentCreated?: (stripeTag: string, paymentIntentId: string) => void | Promise<void>;
   onSuccess: (result: TerminalPaymentResult) => void | Promise<void>;
-  onFailed: (message: string) => void;
-  onCancelled: () => void;
+  onFailed: (message: string, cleanupComplete: boolean) => void;
+  onCancelled: (cleanupComplete: boolean) => void;
   onTimeout: () => void;
   onError: () => void;
 }

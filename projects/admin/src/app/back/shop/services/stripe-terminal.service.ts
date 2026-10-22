@@ -493,9 +493,9 @@ export class StripeTerminalService {
       /** Carte acceptée — le paiement est confirmé. */
       onSuccess: (paymentIntentId: string, stripeTag: string) => void;
       /** Carte refusée ou erreur Stripe. */
-      onFailed: (message: string) => void;
+      onFailed: (message: string, cleanupComplete: boolean) => void;
       /** Paiement annulé (par ppTPE ou par l'utilisateur). */
-      onCancelled: () => void;
+      onCancelled: (cleanupComplete: boolean) => void;
       /** ppTPE ne répond pas dans les 30 s. */
       onTimeout: () => void;
       /** Connexion AppSync perdue. */
@@ -540,10 +540,15 @@ export class StripeTerminalService {
 
     // Timeout de sécurité : si ppTPE ne passe pas en 'processing' dans les 30 s
     // c'est qu'il est inactif — annuler proprement le PaymentIntent Stripe.
-    this._pendingPaymentTimeout = setTimeout(() => {
+    this._pendingPaymentTimeout = setTimeout(async () => {
       if (this._pendingPaymentRequestId) {
-        this.cancelRemotePayment();
-        callbacks.onTimeout();
+        try {
+          await this.cancelRemotePayment();
+          callbacks.onTimeout();
+        } catch (error) {
+          console.error('[StripeTerminal] Timeout cleanup failed:', error);
+          callbacks.onError();
+        }
       }
     }, 30_000);
 
@@ -569,15 +574,35 @@ export class StripeTerminalService {
           callbacks.onSuccess(paymentIntentId, stripeTag);
         } else if (updated.status === 'failed') {
           this._clearPendingPaymentTimeout();
-          this._cleanupPaymentSub();
+          const cleanupComplete = await this._cleanupFailedPayment(
+            client,
+            paymentIntentId,
+            params.bookEntryId,
+          );
+          if (cleanupComplete) {
+            this._cleanupPaymentSub();
+          } else {
+            this._stopPaymentSubscription();
+          }
           this.remotePendingAmount$.next(0);
-          callbacks.onFailed(updated.errorMessage || 'Paiement refusé par le TPE');
+          callbacks.onFailed(
+            updated.errorMessage || 'Paiement refusé par le TPE',
+            cleanupComplete,
+          );
         } else if (updated.status === 'cancelled') {
           this._clearPendingPaymentTimeout();
-          await this._markBookEntryCancelled(client, params.bookEntryId);
-          this._cleanupPaymentSub();
+          const cleanupComplete = await this._cleanupFailedPayment(
+            client,
+            paymentIntentId,
+            params.bookEntryId,
+          );
+          if (cleanupComplete) {
+            this._cleanupPaymentSub();
+          } else {
+            this._stopPaymentSubscription();
+          }
           this.remotePendingAmount$.next(0);
-          callbacks.onCancelled();
+          callbacks.onCancelled(cleanupComplete);
         }
       },
       error: () => {
@@ -597,28 +622,46 @@ export class StripeTerminalService {
     const prId = this._pendingPaymentRequestId;
     const piId = this._pendingPaymentIntentId;
     const bookEntryId = this._pendingBookEntryId;
-    this._cleanupPaymentSub();
-    this.remotePendingAmount$.next(0);
-
     const client = generateClient<Schema>() as any;
     if (prId) {
       try {
         await client.models.PaymentRequest.update({ id: prId, status: 'cancelled' } as any);
-      } catch { /* TTL nettoiera automatiquement */ }
+      } catch (error) {
+        console.warn('[StripeTerminal] Unable to cancel PaymentRequest; TTL will remove it:', error);
+      }
     }
-    await this._markBookEntryCancelled(client, bookEntryId);
-    if (piId) {
-      try {
-        await this.cancelPaymentIntent(piId);
-      } catch { /* ignore — déjà capturé ou annulé */ }
+    const cleanupComplete = await this._cleanupFailedPayment(client, piId, bookEntryId);
+    if (!cleanupComplete) {
+      throw new Error('Le paiement a été annulé mais son écriture comptable n’a pas pu être nettoyée');
     }
+    this._cleanupPaymentSub();
+    this.remotePendingAmount$.next(0);
   }
 
-  private async _markBookEntryCancelled(client: any, bookEntryId?: string | null): Promise<void> {
-    if (!bookEntryId) return;
+  private async _cleanupFailedPayment(
+    client: any,
+    paymentIntentId?: string | null,
+    bookEntryId?: string | null,
+  ): Promise<boolean> {
     try {
-      await client.models.BookEntry.update({ id: bookEntryId, status: 'cancelled' } as any);
-    } catch { /* Le BookEntry reste pending et pourra être réconcilié. */ }
+      if (paymentIntentId) {
+        await this.cancelPaymentIntent(paymentIntentId);
+      }
+      if (bookEntryId) {
+        const { errors } = await client.models.BookEntry.delete({ id: bookEntryId } as any);
+        if (errors?.length) {
+          throw new Error(errors.map((error: any) => error.message || String(error)).join(', '));
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error('[StripeTerminal] Failed payment cleanup incomplete:', {
+        paymentIntentId,
+        bookEntryId,
+        error,
+      });
+      return false;
+    }
   }
 
   private _clearPendingPaymentTimeout(): void {
@@ -629,10 +672,14 @@ export class StripeTerminalService {
   }
 
   private _cleanupPaymentSub(): void {
-    this._paymentRequestSub?.unsubscribe();
-    this._paymentRequestSub = null;
+    this._stopPaymentSubscription();
     this._pendingPaymentRequestId = null;
     this._pendingPaymentIntentId = null;
     this._pendingBookEntryId = null;
+  }
+
+  private _stopPaymentSubscription(): void {
+    this._paymentRequestSub?.unsubscribe();
+    this._paymentRequestSub = null;
   }
 }

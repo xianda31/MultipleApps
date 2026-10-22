@@ -31,6 +31,8 @@ import { MembersService } from '../../../common/services/members.service';
   providedIn: 'root'
 })
 export class StripeCheckoutOrchestrator {
+  private checkoutInFlight: Promise<{ sessionUrl: string }> | null = null;
+
   
   private state$ = new BehaviorSubject<StripeCheckoutState>(initialCheckoutState);
   
@@ -73,7 +75,31 @@ export class StripeCheckoutOrchestrator {
    * En cas d'échec Stripe (cancel_url) : le BookEntry est supprimé par le frontend.
    * En cas d'abandon : BookEntry non réconcilié → détecté en Phase 2 (réconciliation).
    */
-  async initiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string, discountAmountCents?: number): Promise<{ sessionUrl: string }> {
+  initiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string, discountAmountCents?: number): Promise<{ sessionUrl: string }> {
+    if (this.checkoutInFlight) {
+      return this.checkoutInFlight;
+    }
+
+    const checkout = this.doInitiateCheckout(
+      cartItems,
+      member,
+      debtAmount,
+      assetAmount,
+      session,
+      onlineMode,
+      onlineSuccessUrl,
+      onlineCancelUrl,
+      discountAmountCents,
+    );
+    this.checkoutInFlight = checkout;
+    return checkout.finally(() => {
+      if (this.checkoutInFlight === checkout) {
+        this.checkoutInFlight = null;
+      }
+    });
+  }
+
+  private async doInitiateCheckout(cartItems: CartItem[], member: Member | null, debtAmount: number, assetAmount: number, session: any, onlineMode: boolean, onlineSuccessUrl: string, onlineCancelUrl: string, discountAmountCents?: number): Promise<{ sessionUrl: string }> {
     if (!member) {
       throw new Error('Aucun acheteur sélectionné');
     }
