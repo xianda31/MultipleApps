@@ -277,6 +277,7 @@ export class StripeTerminalService {
   async createPaymentIntent(params: {
     amountCents: number;
     memberName: string;
+    memberFirstName?: string;
     buyerMemberId?: string;
     buyerEmail?: string;
     season: string;
@@ -479,6 +480,7 @@ export class StripeTerminalService {
     params: {
       amountCents: number;
       memberName: string;
+      memberFirstName?: string;
       buyerMemberId?: string;
       buyerEmail?: string;
       season: string;

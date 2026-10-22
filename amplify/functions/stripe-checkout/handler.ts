@@ -69,6 +69,7 @@ interface CheckoutRequest {
   assetAmountCents?: number;  // Montant d'avoir optionnel (en centimes)
   discountAmountCents?: number; // Ristourne staff uniquement (mode offline QR)
   memberName?: string;  // Nom du membre (pour traçabilité)
+  memberFirstName?: string; // Prénom du membre (pour le mail de confirmation)
   buyerMemberId?: string; // DynamoDB Member ID (pour traçabilité)
   bookEntryId?: string;  // ID du BookEntry créé avant navigation (BookEntry-first)
   season?: string; // saison comptable
@@ -806,6 +807,7 @@ async function handleCheckout(event: any): Promise<any> {
           debtAmountCents: event.debtAmountCents,
           assetAmountCents: event.assetAmountCents,
           memberName: event.memberName,
+          memberFirstName: event.memberFirstName,
           buyerMemberId: event.buyerMemberId,
           bookEntryId: event.bookEntryId,
           season: event.season,
@@ -976,6 +978,7 @@ async function handleCheckout(event: any): Promise<any> {
         totalAmount: totalAmountCents.toString(),
         productCount: validatedItems.length.toString(),
         memberName: request.memberName || '',
+        memberFirstName: request.memberFirstName || '',
         debtAmountCents: debtAmountCents.toString(),
         assetAmountCents: assetAmountCents.toString(),
         discountAmountCents: discountAmountCents.toString(),
@@ -1261,7 +1264,7 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { action, paymentIntentId: cancelId, amountCents, memberName, buyerMemberId, buyerEmail, season, date, bookEntryId } = body;
+  const { action, paymentIntentId: cancelId, amountCents, memberName, memberFirstName, buyerMemberId, buyerEmail, season, date, bookEntryId } = body;
 
   // ── Action : annulation d'un PaymentIntent en attente ──
   if (action === 'cancel') {
@@ -1298,6 +1301,7 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
       capture_method: 'automatic',
       metadata: {
         memberName: memberName.trim(),
+        memberFirstName: typeof memberFirstName === 'string' ? memberFirstName.trim() : '',
         buyerMemberId: buyerMemberId || '',
         buyerEmail: buyerEmail || '',
         season: season || '',

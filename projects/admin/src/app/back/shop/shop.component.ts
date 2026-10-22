@@ -863,6 +863,7 @@ export class ShopComponent implements OnInit, OnDestroy {
     const paymentParams = {
       amountCents,
       memberName,
+      memberFirstName: buyer.firstname,
       buyerMemberId: buyer.id,
       buyerEmail: buyer.email || '',
       season: this.session.season,

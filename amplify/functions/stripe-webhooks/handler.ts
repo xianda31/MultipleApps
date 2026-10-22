@@ -163,14 +163,14 @@ async function sendPurchaseConfirmationEmail(session: Stripe.Checkout.Session): 
     return;
   }
 
-  const memberName = String(session.metadata?.memberName || session.customer_details?.name || '');
+  const memberFirstName = String(session.metadata?.memberFirstName || '');
   const amount = formatAmount(session.amount_total || 0);
   const currency = String(session.currency || 'eur').toUpperCase();
   const { receiptUrl, attachment } = await getReceiptAttachment(session.id);
   const subject = `Confirmation de votre achat - ${amount}`;
 
   const bodyHtml = buildPurchaseConfirmationMailTemplate({
-    memberName,
+    memberFirstName,
     amount,
     currency,
     receiptUrl,
@@ -287,14 +287,14 @@ async function sendTerminalConfirmationEmail(pi: Stripe.PaymentIntent): Promise<
     return;
   }
 
-  const memberName = String(pi.metadata?.['memberName'] || '');
+  const memberFirstName = String(pi.metadata?.['memberFirstName'] || '');
   const amount = formatAmount(pi.amount || 0);
   const currency = String(pi.currency || 'eur').toUpperCase();
   const { receiptUrl, attachment } = await getTerminalReceiptAttachment(pi.id);
   const subject = `Confirmation de votre achat - ${amount}`;
 
   const bodyHtml = buildPurchaseConfirmationMailTemplate(
-    { memberName, amount, currency, receiptUrl },
+    { memberFirstName, amount, currency, receiptUrl },
     resolvePurchaseEmailTemplateOptions(),
   );
 

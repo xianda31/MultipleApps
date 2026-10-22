@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-22-resolutions-bugs-importants-cas-de-reprise-paiement",
+    "publishedOn": "2026-10-22",
+    "site": "BACK_OFFICE",
+    "area": "PAIEMENTS",
+    "kind": "NEW",
+    "summary": "résolutions bugs importants :\n- cas de reprise paiement par CB générant des incohérences BD\n- synchronisation crédit carte de tournoi sur achat CB"
+  },
+  {
     "id": "2026-10-19-levee-de-limitation-de-volume-timing-du",
     "publishedOn": "2026-10-19",
     "site": "BACK_OFFICE",

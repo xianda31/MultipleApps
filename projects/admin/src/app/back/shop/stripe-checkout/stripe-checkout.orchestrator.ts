@@ -131,6 +131,7 @@ export class StripeCheckoutOrchestrator {
         assetAmountCents,
         discountAmountCents: (discountAmountCents && discountAmountCents > 0) ? discountAmountCents : undefined,
         memberName,
+        memberFirstName: member.firstname,
         customerEmail: member.email || undefined,
         buyerMemberId: member.id,
         season: session.season,

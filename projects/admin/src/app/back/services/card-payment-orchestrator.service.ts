@@ -8,6 +8,7 @@ import {
 export interface CardPaymentParams {
   amountCents: number;
   memberName: string;
+  memberFirstName?: string;
   season: string;
   date: string;
   buyerMemberId?: string;

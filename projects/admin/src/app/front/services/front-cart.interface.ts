@@ -26,6 +26,7 @@ export interface StripeCheckoutRequest {
   assetAmountCents?: number; // optionnel, montant d'avoir à retenir en centimes
   discountAmountCents?: number; // staff uniquement, ristourne globale en centimes
   memberName?: string; // optionnel, nom du membre (pour traçabilité)
+  memberFirstName?: string; // optionnel, prénom pour le mail de confirmation
   buyerMemberId?: string; // DynamoDB Member ID (pour traçabilité)
   bookEntryId?: string; // ID BookEntry créé avant navigation Stripe (BookEntry-first)
   season?: string; // saison comptable
