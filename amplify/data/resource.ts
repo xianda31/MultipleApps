@@ -7,6 +7,7 @@ import { listUsers } from './list-users/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
 import { processBookEntryActions } from '../functions/process-book-entry-actions/resource';
+import { stripeWebhooks } from '../functions/stripe-webhooks/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
@@ -717,7 +718,10 @@ AssistanceRequest: a.model({
       allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
     ]),
-});
+}).authorization((allow) => [
+  allow.resource(processBookEntryActions).to(['mutate']),
+  allow.resource(stripeWebhooks).to(['mutate']),
+]);
 export type Schema = ClientSchema<typeof schema>;
 
 export const data = defineData({

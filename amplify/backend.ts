@@ -376,6 +376,10 @@ backend.processBookEntryActions.addEnvironment('MEMBER_TABLE_NAME', fulfillmentM
 backend.processBookEntryActions.addEnvironment('PLAYBOOK_TABLE_NAME', playBookTable.tableName);
 backend.processBookEntryActions.addEnvironment('FULFILLMENT_EXECUTION_TABLE_NAME', fulfillmentExecutionTable.tableName);
 backend.processBookEntryActions.addEnvironment('ASSISTANCE_REQUEST_TABLE_NAME', assistanceRequestTable.tableName);
+backend.processBookEntryActions.addEnvironment(
+  'APPSYNC_GRAPHQL_URL',
+  backend.data.resources.cfnResources.cfnGraphqlApi.attrGraphQlUrl,
+);
 
 bookEntryTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 saleItemTable.grantReadData(backend.stripeWebhooks.resources.lambda);
@@ -389,6 +393,10 @@ backend.stripeWebhooks.addEnvironment('MEMBER_TABLE_NAME', fulfillmentMemberTabl
 backend.stripeWebhooks.addEnvironment('PLAYBOOK_TABLE_NAME', playBookTable.tableName);
 backend.stripeWebhooks.addEnvironment('FULFILLMENT_EXECUTION_TABLE_NAME', fulfillmentExecutionTable.tableName);
 backend.stripeWebhooks.addEnvironment('ASSISTANCE_REQUEST_TABLE_NAME', assistanceRequestTable.tableName);
+backend.stripeWebhooks.addEnvironment(
+  'APPSYNC_GRAPHQL_URL',
+  backend.data.resources.cfnResources.cfnGraphqlApi.attrGraphQlUrl,
+);
 
 // Grant stripeWebhooks write access to StripeTransaction table (data recording only)
 stripeTransactionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);

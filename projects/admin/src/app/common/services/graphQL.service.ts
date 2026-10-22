@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
-import { catchError, from, lastValueFrom, map, merge, Observable, of, switchMap, tap, filter } from 'rxjs';
+import { catchError, defer, from, lastValueFrom, map, merge, Observable, of, switchMap, tap, filter } from 'rxjs';
 import { safeGetCurrentUser$ } from '../authentification/safe-auth';
 import { Member, Member_input } from '../interfaces/member.interface';
 import { BookEntry } from '../interfaces/accounting.interface';
@@ -1514,12 +1514,41 @@ export class DBhandler {
   queryPlayBooks(onlySynced: boolean = true): Observable<PlayBook[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
-        const client = generateClient<Schema>({ authMode: authMode });
-        const stream = (client.models.PlayBook as any).observeQuery();
-        return (onlySynced
-          ? stream.pipe(filter((payload: any) => payload?.isSynced === true))
-          : stream
-        ).pipe(map(({ items }: any) => items as PlayBook[])) as Observable<PlayBook[]>;
+        return defer(() => {
+          const client = generateClient<Schema>({ authMode: authMode });
+          const stream = (client.models.PlayBook as any).observeQuery();
+          let receivedSyncedSnapshot = false;
+
+          return stream.pipe(
+            filter((payload: any) => !onlySynced || payload?.isSynced === true),
+            switchMap((payload: any) => {
+              if (!payload?.isSynced || !receivedSyncedSnapshot) {
+                receivedSyncedSnapshot ||= payload?.isSynced === true;
+                return of(payload.items as PlayBook[]);
+              }
+
+              return from((async () => {
+                const playBooks: PlayBook[] = [];
+                let nextToken: string | null | undefined;
+
+                do {
+                  const page = await client.models.PlayBook.list({
+                    limit: 300,
+                    nextToken: nextToken || undefined,
+                  });
+                  if (page.errors?.length) {
+                    console.error('PlayBook.list refresh failed', page.errors);
+                    throw page.errors;
+                  }
+                  playBooks.push(...(page.data as unknown as PlayBook[]));
+                  nextToken = page.nextToken;
+                } while (nextToken);
+
+                return playBooks;
+              })());
+            }),
+          ) as Observable<PlayBook[]>;
+        });
       })
     );
   }
