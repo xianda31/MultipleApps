@@ -12,13 +12,25 @@ export function normalizeMemberIdentityName(value: string | null | undefined): s
     .trim();
 }
 
+export function hasSameNormalizedNames(
+  firstNameA: string | null | undefined,
+  lastNameA: string | null | undefined,
+  firstNameB: string | null | undefined,
+  lastNameB: string | null | undefined,
+): boolean {
+  const normalizedFirstName = normalizeMemberIdentityName(firstNameA);
+  const normalizedLastName = normalizeMemberIdentityName(lastNameA);
+  return !!normalizedFirstName
+    && !!normalizedLastName
+    && normalizedFirstName === normalizeMemberIdentityName(firstNameB)
+    && normalizedLastName === normalizeMemberIdentityName(lastNameB);
+}
+
 export function hasSameNormalizedMemberName(member: Member, clubMember: ClubMember): boolean {
-  const memberFirstName = normalizeMemberIdentityName(member.firstname);
-  const memberLastName = normalizeMemberIdentityName(member.lastname);
-  const ffbFirstName = normalizeMemberIdentityName(clubMember.firstName);
-  const ffbLastName = normalizeMemberIdentityName(clubMember.lastName);
-  return !!memberFirstName
-    && !!memberLastName
-    && memberFirstName === ffbFirstName
-    && memberLastName === ffbLastName;
+  return hasSameNormalizedNames(
+    member.firstname,
+    member.lastname,
+    clubMember.firstName,
+    clubMember.lastName,
+  );
 }

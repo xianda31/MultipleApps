@@ -24,7 +24,8 @@
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" id="email" class="form-control" formControlName="email">
+            <input type="email" id="email" class="form-control" formControlName="email" required>
+            <div class="form-text">Cette adresse permettra à la personne de créer son compte et d’acheter en ligne.</div>
         </div>
         <div class="mb-3">
             <label for="phone" class="form-label">Téléphone</label>
@@ -33,6 +34,12 @@
         <div class="mb-3">
             <label for="city" class="form-label">Ville</label>
             <input type="text" id="city" class="form-control" formControlName="city">
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="acceptMailing" formControlName="acceptMailing">
+            <label class="form-check-label" for="acceptMailing">
+                La personne accepte de recevoir les communications du club
+            </label>
         </div>
     </form>
 

@@ -4,7 +4,7 @@ import { Observable, Subject, distinctUntilKeyChanged, firstValueFrom, skip, tak
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
+import { GetNewbeeComponent, NewMemberFormValue } from '../modals/get-newbee/get-newbee.component';
 import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { Member, LicenseStatus, MemberLifecycleStatus } from '../interfaces/member.interface';
@@ -25,6 +25,13 @@ import {
   MemberMergeConflictModalComponent,
   MemberMergeDecision,
 } from './member-merge-conflict-modal.component';
+import {
+  FfbMemberCreationDecision,
+  FfbMemberCreationModalComponent,
+} from './ffb-member-creation-modal.component';
+import { ManualMemberDuplicateModalComponent } from './manual-member-duplicate-modal.component';
+import { hasSameNormalizedNames } from '../services/member-identity.util';
+import { normalizeMemberEmail } from '../services/member-email.util';
 
 type MemberStatusConfig = {
   label: string;
@@ -255,53 +262,175 @@ export class MembersComponent implements OnInit {
   async add_licensee(player: ClubMember) {
     if (!player) { return; }
 
-    const personV2 = await this.ffbService.getFFBPerson(player.id).catch(() => null);
-    const new_member: Member = this.createNewMember(player, personV2);
-    console.log('Ajout d\'un nouveau membre :', new_member);
-    this.memberSyncService.createMemberWithComputedStatus(new_member).then(() => {
-      this.refreshMembers();
-      this.new_player = null as any;
-    });
-  }
+    this.new_player = null as any;
+    const existingMember = this.members.find((member) =>
+      member.person_id === player.id
+      || member.license_number?.trim() === player.license_number?.trim()
+    );
+    if (existingMember) {
+      this.toastService.showWarning(
+        'Personne déjà présente',
+        `${existingMember.firstname} ${existingMember.lastname} existe déjà dans le répertoire`
+      );
+      return;
+    }
 
-  addNewbee() {
-    const modalRef = this.modalService.open(GetNewbeeComponent, { centered: true });
+    try {
+      const personV2 = await this.ffbService.getFFBPerson(player.id).catch(() => null);
+      const candidates = this.members.filter((member) => hasSameNormalizedNames(
+        member.firstname,
+        member.lastname,
+        player.firstName,
+        player.lastName,
+      ));
 
-    modalRef.result.then((newbee: any) => {
-      if (newbee) {
-        // Vérifier si l'email existe déjà
-        this.membersService.searchMemberByEmail(newbee.email).then((existingMember) => {
-          if (existingMember) {
-            this.toastService.showWarning('Nouveau membre', `Un membre avec l'email ${newbee.email} existe déjà`);
-            return;
-          }
-
-          let new_member: Member = {
-            id: '',
-            gender: normalizeGender(newbee.gender),
-            firstname: newbee.firstname,
-            lastname: newbee.lastname.toUpperCase(),
-            license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
-            birthdate: newbee.birthdate,
-            city: this.capitalizeFirst(newbee.city.toLowerCase()),
-            email: newbee.email ?? '',
-            phone_one: newbee.phone ?? '',
-            license_taken_at: 'BCSTO',
-            license_status: LicenseStatus.UNREGISTERED,
-            accept_mailing: newbee.email ? true : false,
-            membership_date: '',
-            memberStatus: 'NON_ADHERENT',
-            person_id: undefined,
-            iv: undefined
-          }
-          this.memberSyncService.createMemberWithComputedStatus(new_member).then((_member) => {
-            this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
-            this.refreshMembers();
-          });
+      if (candidates.length > 0) {
+        const conflict = { clubMember: player, person: personV2, candidates };
+        const modalRef = this.modalService.open(MemberMergeConflictModalComponent, {
+          size: 'lg',
+          centered: true,
+          backdrop: 'static',
+          keyboard: false,
         });
+        modalRef.componentInstance.conflict = conflict;
+        const decision = await modalRef.result.catch(() => ({ action: 'defer' } as MemberMergeDecision));
+
+        if (decision.action === 'merge') {
+          await this.memberSyncService.mergeMemberConflict(conflict, decision.memberId);
+          this.toastService.showSuccess(
+            'Rapprochement FFB',
+            `${player.firstName} ${player.lastName} a été fusionné avec la fiche existante`
+          );
+          await this.refreshMembersAsync();
+          return;
+        }
+        if (decision.action !== 'create') return;
       }
 
-    });
+      const modalRef = this.modalService.open(FfbMemberCreationModalComponent, {
+        centered: true,
+        backdrop: 'static',
+        keyboard: false,
+      });
+      modalRef.componentInstance.clubMember = player;
+      modalRef.componentInstance.person = personV2;
+      const creation = await modalRef.result.catch(() => null) as FfbMemberCreationDecision | null;
+      if (!creation) return;
+
+      const email = await this.validateCreationEmail(creation.email);
+      if (!email) return;
+
+      const newMember: Member = {
+        ...this.createNewMember(player, personV2),
+        email,
+        accept_mailing: creation.acceptMailing,
+      };
+      await this.memberSyncService.createMemberWithComputedStatus(newMember);
+      await this.refreshMembersAsync();
+    } catch (error) {
+      console.error('Erreur lors de l’ajout d’une personne FFB:', error);
+      this.toastService.showError('Ajout FFB', 'La personne n’a pas pu être ajoutée au répertoire');
+    }
+  }
+
+  async addNewbee(): Promise<void> {
+    const modalRef = this.modalService.open(GetNewbeeComponent, { centered: true });
+    const newbee = await modalRef.result.catch(() => null) as NewMemberFormValue | null;
+    if (!newbee) return;
+
+    const email = await this.validateCreationEmail(newbee.email);
+    if (!email) return;
+
+    const candidates = this.members.filter((member) => hasSameNormalizedNames(
+      member.firstname,
+      member.lastname,
+      newbee.firstname,
+      newbee.lastname,
+    ));
+    if (candidates.length > 0) {
+      const duplicateModal = this.modalService.open(ManualMemberDuplicateModalComponent, {
+        size: 'lg',
+        centered: true,
+        backdrop: 'static',
+        keyboard: false,
+      });
+      duplicateModal.componentInstance.firstName = newbee.firstname;
+      duplicateModal.componentInstance.lastName = newbee.lastname;
+      duplicateModal.componentInstance.candidates = candidates;
+      const createDistinct = await duplicateModal.result.catch(() => false);
+      if (!createDistinct) return;
+    }
+
+    const newMember: Member = {
+      id: '',
+      gender: normalizeGender(newbee.gender),
+      firstname: newbee.firstname.trim(),
+      lastname: newbee.lastname.trim().toUpperCase(),
+      license_number: this.createProvisionalLicense(newbee.lastname, newbee.firstname),
+      birthdate: '',
+      city: this.capitalizeFirst(newbee.city.trim()),
+      email,
+      phone_one: newbee.phone.trim(),
+      license_taken_at: 'BCSTO',
+      license_status: LicenseStatus.UNREGISTERED,
+      accept_mailing: newbee.acceptMailing,
+      membership_date: '',
+      memberStatus: 'NON_ADHERENT',
+      person_id: undefined,
+      iv: undefined
+    };
+
+    try {
+      await this.memberSyncService.createMemberWithComputedStatus(newMember);
+      this.toastService.showSuccess(
+        'Nouveau membre non licencié',
+        `${newMember.lastname} ${newMember.firstname}`
+      );
+      await this.refreshMembersAsync();
+    } catch (error) {
+      console.error('Erreur lors de la création d’une personne non licenciée:', error);
+      this.toastService.showError('Nouveau membre', 'La personne n’a pas pu être créée');
+    }
+  }
+
+  private async validateCreationEmail(value: string): Promise<string | null> {
+    const email = normalizeMemberEmail(value);
+    if (!email) {
+      this.toastService.showWarning('Email obligatoire', 'Une adresse email est nécessaire pour créer la fiche');
+      return null;
+    }
+
+    try {
+      const existingMember = await this.membersService.searchMemberByEmail(email);
+      if (!existingMember) return email;
+
+      this.toastService.showWarning(
+        'Email déjà utilisé',
+        `${email} est déjà associé à ${existingMember.firstname} ${existingMember.lastname}`
+      );
+      return null;
+    } catch (error) {
+      console.error('Erreur lors du contrôle d’unicité de l’email:', error);
+      this.toastService.showError(
+        'Contrôle de l’email',
+        'Impossible de vérifier cette adresse ; création annulée'
+      );
+      return null;
+    }
+  }
+
+  private createProvisionalLicense(lastName: string, firstName: string): string {
+    const base = '??' + lastName.trim().toUpperCase().slice(0, 3) + firstName.trim().slice(0, 3);
+    const existingLicenses = new Set(this.members.map((member) => member.license_number));
+    if (!existingLicenses.has(base)) return base;
+
+    for (let index = 1; index < 1296; index++) {
+      const suffix = index.toString(36).toUpperCase().padStart(2, '0');
+      const candidate = base.slice(0, 6).padEnd(6, 'X') + suffix;
+      if (!existingLicenses.has(candidate)) return candidate;
+    }
+
+    throw new Error(`Impossible de générer un identifiant provisoire unique pour ${firstName} ${lastName}`);
   }
 
   capitalizeFirst(str: string | undefined): string {

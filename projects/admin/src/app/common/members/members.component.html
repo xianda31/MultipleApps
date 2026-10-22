@@ -296,8 +296,8 @@
             </td> -->
               <td class="text-center text-nowrap member-actions-column">
                 <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                  ngbTooltip="Voir les préférences" placement="top" container="body"
-                  aria-label="Voir les préférences" (click)="accessSettings(member)">
+                  ngbTooltip="Voir la fiche" placement="top" container="body"
+                  aria-label="Voir la fiche" (click)="accessSettings(member)">
                   <i class="bi bi-eye"></i>
                 </button>
                 @if (getLifecycleStatus(member) === 'ACTIVE') {
@@ -340,13 +340,14 @@
 
       <hr class="my-3">
 
-      <!-- ajout d'un adhérent licencié supplémentaire -->
-      <h6 class="fw-bold">ajout de personne :</h6>
+      <h6 class="fw-bold">Ajouter une personne au répertoire :</h6>
       <div class="row justify-content-around align-items-end">
         <div class="col-md-6">
           <div class="input-group input-group-sm w-auto" style="max-width: 400px;">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex.
-              débutant(e))</span>
+            <span class="input-group-text">
+              <strong class="me-1">ABSENTE DE LA FFB</strong>
+              (ex. débutant(e))
+            </span>
             <button class="btn btn-primary btn-sm" (click)="addNewbee()">
               <i class="bi bi-mortarboard-fill"></i>
             </button>
@@ -354,7 +355,7 @@
         </div>
         <div class="col-md-6">
           <div class="input-group input-group-sm">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>LICENCIÉ(E) </strong> :</span>
+            <span class="input-group-text"><strong>CONNUE DE LA FFB</strong> :</span>
             <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
               class="form-control form-control-sm" style="max-width: 300px;" [(ngModel)]="new_player"
               (ngModelChange)="add_licensee(new_player)"></app-input-player>

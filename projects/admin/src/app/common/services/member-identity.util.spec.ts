@@ -1,6 +1,10 @@
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { Member } from '../interfaces/member.interface';
-import { hasSameNormalizedMemberName, normalizeMemberIdentityName } from './member-identity.util';
+import {
+  hasSameNormalizedMemberName,
+  hasSameNormalizedNames,
+  normalizeMemberIdentityName,
+} from './member-identity.util';
 
 describe('member identity normalization', () => {
   it('normalizes accents, apostrophes, hyphens and repeated spaces', () => {
@@ -19,5 +23,14 @@ describe('member identity normalization', () => {
       { firstname: '', lastname: '' } as Member,
       { firstName: '', lastName: '' } as ClubMember,
     )).toBeFalse();
+  });
+
+  it('compares two manually entered identities with the same rules', () => {
+    expect(hasSameNormalizedNames(
+      'Jean-Pierre',
+      'D’ALMEIDA',
+      'jean pierre',
+      'd-almeida',
+    )).toBeTrue();
   });
 });
