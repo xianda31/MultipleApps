@@ -21,6 +21,10 @@ import { activeMembersCsvFileName, buildActiveMembersCsv } from './active-member
 import { GroupService } from '../authentification/group.service';
 import { Group_priorities } from '../authentification/group.interface';
 import { getFfbRankingCodeParts } from '../utils/ffb-ranking.util';
+import {
+  MemberMergeConflictModalComponent,
+  MemberMergeDecision,
+} from './member-merge-conflict-modal.component';
 
 type MemberStatusConfig = {
   label: string;
@@ -208,7 +212,12 @@ export class MembersComponent implements OnInit {
     this.loading = true;
     try {
       const members = await this.memberSyncService.ensureMembersSynchronized(forceSync);
-      this.applyMembers(members);
+      const changed = await this.resolveMemberMergeConflicts();
+      if (changed) {
+        await this.refreshMembersAsync();
+      } else {
+        this.applyMembers(members);
+      }
     } catch (err) {
       console.error('Erreur lors du chargement des membres:', err);
       this.toastService.showError('Membres', 'Erreur lors du chargement des membres');
@@ -230,6 +239,7 @@ export class MembersComponent implements OnInit {
       do {
         this.pendingSeasonRefresh = false;
         await this.memberSyncService.ensureMembersSynchronized(true);
+        await this.resolveMemberMergeConflicts();
       } while (this.pendingSeasonRefresh);
 
       await this.refreshMembersAsync();
@@ -496,6 +506,37 @@ export class MembersComponent implements OnInit {
   private async refreshMembersAsync(): Promise<void> {
     const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
     this.applyMembers(members ?? []);
+  }
+
+  private async resolveMemberMergeConflicts(): Promise<boolean> {
+    let changed = false;
+    for (const conflict of this.memberSyncService.getPendingMergeConflicts()) {
+      const modalRef = this.modalService.open(MemberMergeConflictModalComponent, {
+        size: 'lg',
+        centered: true,
+        backdrop: 'static',
+        keyboard: false,
+      });
+      modalRef.componentInstance.conflict = conflict;
+
+      const decision = await modalRef.result as MemberMergeDecision;
+      if (decision.action === 'merge') {
+        await this.memberSyncService.mergeMemberConflict(conflict, decision.memberId);
+        this.toastService.showSuccess(
+          'Rapprochement FFB',
+          `${conflict.clubMember.firstName} ${conflict.clubMember.lastName} a été fusionné avec la fiche existante`
+        );
+        changed = true;
+      } else if (decision.action === 'create') {
+        await this.memberSyncService.createDistinctMember(conflict);
+        this.toastService.showSuccess(
+          'Rapprochement FFB',
+          `${conflict.clubMember.firstName} ${conflict.clubMember.lastName} a été créé comme personne distincte`
+        );
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   accessSettings(member: Member): void {

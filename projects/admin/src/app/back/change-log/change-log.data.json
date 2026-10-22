@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-22-fix-rapprochement-ffb-avec-les-adherents-qui",
+    "publishedOn": "2026-10-22",
+    "site": "BACK_OFFICE",
+    "area": "ADHERENTS",
+    "kind": "FIX",
+    "summary": "fix :  rapprochement FFB avec les adhérents qui prennent leur toute première licence"
+  },
+  {
     "id": "2026-10-22-resolutions-bugs-importants-cas-de-reprise-paiement",
     "publishedOn": "2026-10-22",
     "site": "BACK_OFFICE",

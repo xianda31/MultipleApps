@@ -151,7 +151,7 @@ describe('MemberSyncService', () => {
     }));
   });
 
-  it('does not merge unrelated FFB members with an empty license number', async () => {
+  it('suspends creation when an existing member has the same normalized name', async () => {
     const { service, membersService } = createService();
     const localWithoutLicense = {
       ...member,
@@ -163,6 +163,108 @@ describe('MemberSyncService', () => {
     await (service as any).createOrUpdateMember([localWithoutLicense], ffbWithoutLicense);
 
     expect(membersService.updateMember).not.toHaveBeenCalled();
-    expect(membersService.createMember).toHaveBeenCalled();
+    expect(membersService.createMember).not.toHaveBeenCalled();
+    expect(service.getPendingMergeConflicts()).toEqual([
+      jasmine.objectContaining({
+        clubMember: ffbWithoutLicense,
+        candidates: [localWithoutLicense],
+      }),
+    ]);
+  });
+
+  it('offers every local homonym as a merge candidate', async () => {
+    const { service, membersService } = createService();
+    const firstCandidate = {
+      ...member,
+      id: 'first-candidate',
+      person_id: undefined,
+      license_number: '??DUSDON',
+    } as Member;
+    const secondCandidate = {
+      ...firstCandidate,
+      id: 'second-candidate',
+      license_number: '',
+    } as Member;
+
+    await (service as any).createOrUpdateMember([firstCandidate, secondCandidate], clubMember);
+
+    expect(membersService.createMember).not.toHaveBeenCalled();
+    expect(service.getPendingMergeConflicts()[0].candidates).toEqual([
+      firstCandidate,
+      secondCandidate,
+    ]);
+  });
+
+  it('creates a new member immediately when no local identity matches', async () => {
+    const { service, membersService } = createService();
+    const unrelatedMember = {
+      ...member,
+      firstname: 'Alice',
+      lastname: 'MARTIN',
+      person_id: undefined,
+      license_number: '',
+    } as Member;
+
+    await (service as any).createOrUpdateMember([unrelatedMember], clubMember);
+
+    expect(membersService.createMember).toHaveBeenCalledWith(jasmine.objectContaining({
+      person_id: clubMember.id,
+      license_number: clubMember.license_number,
+    }));
+    expect(service.getPendingMergeConflicts()).toEqual([]);
+  });
+
+  it('merges an FFB identity into the selected historical member', async () => {
+    const { service, membersService } = createService();
+    const historicalMember = {
+      ...member,
+      id: 'historical-member',
+      firstname: 'Françoise',
+      lastname: 'RAMOS',
+      license_number: '??RAMFra',
+      person_id: undefined,
+      email: 'local@example.fr',
+    } as Member;
+    const ramosFfb = {
+      ...clubMember,
+      id: 277263,
+      firstName: 'Francoise',
+      lastName: 'RAMOS',
+      license_number: '24827406',
+      licence: true,
+    } as ClubMember;
+
+    await (service as any).createOrUpdateMember([historicalMember], ramosFfb);
+    const [conflict] = service.getPendingMergeConflicts();
+    await service.mergeMemberConflict(conflict, historicalMember.id);
+
+    expect(membersService.createMember).not.toHaveBeenCalled();
+    expect(membersService.updateMember).toHaveBeenCalledWith(jasmine.objectContaining({
+      id: historicalMember.id,
+      person_id: ramosFfb.id,
+      license_number: ramosFfb.license_number,
+      email: historicalMember.email,
+    }));
+    expect(service.getPendingMergeConflicts()).toEqual([]);
+  });
+
+  it('creates a distinct member when the administrator confirms an homonym', async () => {
+    const { service, membersService } = createService();
+    const homonym = {
+      ...member,
+      person_id: 999999,
+      license_number: '09999999',
+    } as Member;
+
+    await (service as any).createOrUpdateMember([homonym], clubMember);
+    const [conflict] = service.getPendingMergeConflicts();
+    await service.createDistinctMember(conflict);
+
+    expect(membersService.updateMember).not.toHaveBeenCalled();
+    expect(membersService.createMember).toHaveBeenCalledWith(jasmine.objectContaining({
+      person_id: clubMember.id,
+      license_number: clubMember.license_number,
+    }));
+    expect(service.getPendingMergeConflicts()).toEqual([]);
   });
 });
