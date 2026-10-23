@@ -31,17 +31,20 @@
 
 
 
-<div class="row px-2 mt-1 mb-4 g-md-5">
+<div class="row px-2 mt-1 mb-4 g-3 g-md-5">
     <div [ngClass]="tournamentsColClass">
         <h6 class="text-uppercase text-success fw-bolder mt-2 mb-2">Prochains tournois de régularité</h6>
-        <app-tournaments [displayTitle]="false" [row_cols]="tournaments_row_cols"></app-tournaments>
+        <section class="home-content-section h-100">
+            <app-tournaments [displayTitle]="false" [row_cols]="tournaments_row_cols"
+                [displayMode]="tournaments_display_mode"></app-tournaments>
+        </section>
     </div>
 
     <div [ngClass]="newsColClass">
         <h6 class="text-uppercase text-success fw-bolder mt-2 mb-2">Les dernières nouvelles</h6>
         @if (highlights$ | async; as highlights) {
         <app-a-la-une-render [snippets]="highlights" [row_cols]="news_row_cols"
-            [highlightRecent]="true"></app-a-la-une-render>
+            [highlightRecent]="true" [compact]="true"></app-a-la-une-render>
         }
     </div>
 </div>

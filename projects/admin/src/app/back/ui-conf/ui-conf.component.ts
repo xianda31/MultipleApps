@@ -109,6 +109,7 @@ export class UiConfComponent implements OnInit, OnDestroy {
         LG: [4, [Validators.min(1), Validators.max(6)]],
         XL: [6, [Validators.min(1), Validators.max(6)]]
       }, { validators: this.breakpointsOrderValidator }),
+      tournaments_display_mode: ['cards'],
       news_row_cols: this.fb.group({
         SM: [1, [Validators.min(1), Validators.max(6)]],
         MD: [2, [Validators.min(1), Validators.max(6)]],
@@ -457,6 +458,7 @@ export class UiConfComponent implements OnInit, OnDestroy {
         LG: tournaments.LG ?? 4,
         XL: tournaments.XL ?? 6
       },
+      tournaments_display_mode: homepage.tournaments_display_mode ?? 'cards',
       news_row_cols: {
         SM: news.SM ?? 1,
         MD: news.MD ?? 2,
@@ -618,6 +620,7 @@ export class UiConfComponent implements OnInit, OnDestroy {
         },
         homepage: {
           tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
+          tournaments_display_mode: formVal.tournaments_display_mode || 'cards',
           news_row_cols: formVal.news_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
           read_more_lines: formVal.read_more_lines ?? 3,
           unfold_on_hover: !!formVal.unfold_on_hover,
@@ -716,6 +719,7 @@ export class UiConfComponent implements OnInit, OnDestroy {
         },
         homepage: {
           tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
+          tournaments_display_mode: formVal.tournaments_display_mode || 'cards',
           news_row_cols: formVal.news_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
           read_more_lines: formVal.read_more_lines ?? 3,
           unfold_on_hover: !!formVal.unfold_on_hover,

@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-23-nouveau-look-type-calendar",
+    "publishedOn": "2026-10-23",
+    "site": "FRONT",
+    "area": "ACCUEIL_ACTUALITES",
+    "kind": "IMPROVEMENT",
+    "summary": "nouveau look type calendar"
+  },
+  {
     "id": "2026-10-22-fix-rapprochement-ffb-avec-les-adherents-qui",
     "publishedOn": "2026-10-22",
     "site": "BACK_OFFICE",

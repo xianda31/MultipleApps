@@ -11,6 +11,8 @@ export interface BreakpointsSettings {
   XL: number;
 }
 
+export type TournamentDisplayMode = 'cards' | 'calendar';
+
 export interface ImageSize {
   width: number;
   height: number;
@@ -53,6 +55,7 @@ export interface UIConfiguration {
     // parameters for layout of tournaments and news cards on homepage
     tournaments_row_cols: BreakpointsSettings;
     news_row_cols: BreakpointsSettings;
+    tournaments_display_mode?: TournamentDisplayMode;
     // parameters for 'read more' behavior on news cards
     read_more_lines?: number;
     unfold_on_hover?: boolean;

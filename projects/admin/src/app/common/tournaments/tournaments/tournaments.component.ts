@@ -5,7 +5,7 @@ import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams, Tournament } from '../../ffb/interface/tournament.interface';
 import { AuthentificationService } from '../../authentification/authentification.service';
 import { TitleService } from '../../../front/title/title.service';
-import { BreakpointsSettings } from '../../interfaces/ui-conf.interface';
+import { BreakpointsSettings, TournamentDisplayMode } from '../../interfaces/ui-conf.interface';
 import { formatRowColsClasses } from '../../utils/ui-utils';
 import { SystemDataService } from '../../services/system-data.service';
 import { catchError, combineLatest, filter, forkJoin, map, merge, of, scan, startWith, switchMap, take } from 'rxjs';
@@ -15,6 +15,80 @@ import { findTournamentImageUrl } from '../../utils/tournament-thumbnail.util';
 
 const MAX_TOURNAMENTS_LISTED = 9;
 const DEFAULT_ROW_COLS: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
+const CALENDAR_WEEKDAYS = [
+  { weekday: 1 as const, label: 'Lundi' },
+  { weekday: 3 as const, label: 'Mercredi' },
+  { weekday: 5 as const, label: 'Vendredi' },
+];
+
+export interface TournamentCalendarDay {
+  weekday: 1 | 3 | 5;
+  label: string;
+  tournaments: TournamentTeams[];
+}
+
+export interface TournamentCalendarWeek {
+  monday: Date;
+  days: TournamentCalendarDay[];
+}
+
+export interface TournamentCalendarMonth {
+  key: string;
+  monthStart: Date;
+  weeks: TournamentCalendarWeek[];
+}
+
+export function buildTournamentCalendar(tournaments: TournamentTeams[]): TournamentCalendarMonth[] {
+  const months = new Map<string, {
+    monthStart: Date;
+    weeks: Map<string, TournamentCalendarWeek>;
+  }>();
+
+  for (const tournament of [...tournaments].sort(
+    (left, right) => new Date(left.tournament.date).getTime() - new Date(right.tournament.date).getTime()
+  )) {
+    const date = new Date(tournament.tournament.date);
+    const weekday = date.getDay();
+    if (Number.isNaN(date.getTime()) || (weekday !== 1 && weekday !== 3 && weekday !== 5)) continue;
+
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    let month = months.get(monthKey);
+    if (!month) {
+      month = {
+        monthStart: new Date(date.getFullYear(), date.getMonth(), 1),
+        weeks: new Map<string, TournamentCalendarWeek>(),
+      };
+      months.set(monthKey, month);
+    }
+
+    const monday = new Date(date);
+    monday.setHours(0, 0, 0, 0);
+    monday.setDate(date.getDate() - ((weekday + 6) % 7));
+    const weekKey = [
+      monday.getFullYear(),
+      String(monday.getMonth() + 1).padStart(2, '0'),
+      String(monday.getDate()).padStart(2, '0'),
+    ].join('-');
+    let week = month.weeks.get(weekKey);
+    if (!week) {
+      week = {
+        monday,
+        days: CALENDAR_WEEKDAYS.map((day) => ({ ...day, tournaments: [] })),
+      };
+      month.weeks.set(weekKey, week);
+    }
+
+    week.days.find((day) => day.weekday === weekday)?.tournaments.push(tournament);
+  }
+
+  return [...months.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, month]) => ({
+      key,
+      monthStart: month.monthStart,
+      weeks: [...month.weeks.values()].sort((left, right) => left.monday.getTime() - right.monday.getTime()),
+    }));
+}
 
 @Component({
   selector: 'app-tournaments',
@@ -25,6 +99,7 @@ const DEFAULT_ROW_COLS: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
 })
 export class TournamentsComponent {
   @Input() displayTitle: boolean = true;
+  @Input() displayMode: TournamentDisplayMode = 'cards';
   private _rowCols: BreakpointsSettings = DEFAULT_ROW_COLS;
 
   @Input()
@@ -38,6 +113,7 @@ export class TournamentsComponent {
 
 
   next_tournament_teams: TournamentTeams[] = [];
+  calendarMonths: TournamentCalendarMonth[] = [];
 
   person_id: number | null | undefined; // Person ID of the logged member
   // logged: boolean = false;
@@ -96,8 +172,7 @@ export class TournamentsComponent {
         this.logged = member;
 
         const nextTournaments = [...tournaments]
-          .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime())
-          .slice(0, MAX_TOURNAMENTS_LISTED);
+          .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
         const initialTeams = nextTournaments.map(tournament => this.deserializeTournament(tournament));
         if (!member || initialTeams.length === 0) {
           return of({ teams: initialTeams, completed: initialTeams.length, total: initialTeams.length });
@@ -123,6 +198,7 @@ export class TournamentsComponent {
     ).subscribe({
       next: ({ teams, completed, total }) => {
         this.next_tournament_teams = this.enrichWithImages(teams);
+        this.calendarMonths = buildTournamentCalendar(this.next_tournament_teams);
         this.loading = false;
         if (completed === total) {
           this.loadIsolatedRegistrations(this.next_tournament_teams);
@@ -232,6 +308,10 @@ export class TournamentsComponent {
 
   getPairedTeamCount(tournament: TournamentTeams): number {
     return tournament.tournament.entryCount;
+  }
+
+  get listedTournamentTeams(): TournamentTeams[] {
+    return this.next_tournament_teams.slice(0, MAX_TOURNAMENTS_LISTED);
   }
 
   selectTournament(tournamentId: number) {

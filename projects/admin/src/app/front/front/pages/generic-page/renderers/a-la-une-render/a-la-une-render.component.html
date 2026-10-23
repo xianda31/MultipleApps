@@ -1,4 +1,4 @@
-<div [ngClass]="rowCols()">
+<div [ngClass]="rowCols()" [class.compact-news]="compact">
   @for (snippet of snippets; track snippet.id) {
   <div class="col">
     <div class="card nice_shadow" [class.recent-highlight]="isRecentHighlight(snippet)"

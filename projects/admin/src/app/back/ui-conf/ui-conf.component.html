@@ -92,14 +92,6 @@
                 </tbody>
               </table>
             </div>
-
-
-
-            <!-- Bouton Enregistrer accessible en bas de la section -->
-            <div class="d-flex justify-content-end mt-2">
-              <button type="submit" class="btn btn-success btn-sm"
-                [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid">Enregistrer</button>
-            </div>
           </div>
         </div>
       </div>
@@ -138,6 +130,15 @@
               *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'tournaments_row_cols', label: 'Tournois par ligne' }"></ng-container>
             <ng-container
               *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'news_row_cols', label: 'News par ligne' }"></ng-container>
+
+            <div class="mt-2 mb-2 d-flex align-items-center gap-2">
+              <label for="tournamentsDisplayMode" class="form-label small mb-0">Affichage des tournois :</label>
+              <select id="tournamentsDisplayMode" class="form-select form-select-sm w-auto"
+                formControlName="tournaments_display_mode">
+                <option value="cards">Cartes</option>
+                <option value="calendar">Calendrier</option>
+              </select>
+            </div>
 
             <button type="button" class="btn btn-secondary btn-sm" (click)="previewSettings()"
               [disabled]="uiForm.get('tournaments_row_cols')?.invalid">Aperçu</button>
@@ -290,14 +291,11 @@
     </div>
 
 
-    <!-- Import/Export/store Action buttons -->
+    <!-- Import/Export actions -->
     <div class="col-12 d-flex gap-2 justify-content-end mt-2 bg-body-secondary p-2 rounded">
       <input type="file" accept="application/json" (change)="onImportFile($event)"
         class="form-control form-control-sm w-auto" />
       <a [href]="export_file_url" download="ui_settings.json" class="btn btn-outline-success btn-sm">Export</a>
-      <small class="text-muted align-self-center ms-2">sauvegarde</small>
-      <button type="submit" class="btn btn-success btn-sm"
-        [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid">Enregistrer</button>
     </div>
 
     <!-- // compact template for breakpoints inputs -->
@@ -339,6 +337,16 @@
         </div>
       </div>
     </ng-template>
+
+    <button type="submit" class="btn ui-conf-save-button"
+      [class.btn-primary]="uiForm.dirty"
+      [class.btn-outline-primary]="!uiForm.dirty"
+      [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid"
+      title="Sauvegarder la configuration de l'interface"
+      aria-label="Sauvegarder la configuration de l'interface">
+      <i class="bi bi-cloud-arrow-up-fill"></i>
+      <span>Sauvegarder</span>
+    </button>
 
   </form>
 

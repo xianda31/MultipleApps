@@ -42,6 +42,7 @@ export class ALaUneRenderComponent implements OnChanges, OnDestroy, AfterViewIni
   @Input() selected_title?: string; // for news, the title of the selected snippet
   @Input() row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   @Input() highlightRecent = false;
+  @Input() compact = false;
 
   read_more: boolean = true;
   read_more_lines: number = 3;
