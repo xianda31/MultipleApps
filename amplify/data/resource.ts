@@ -659,6 +659,10 @@ const schema = a.schema({
 
   PushSubscription: a.model({
     id: a.string().required(),
+    owner: a.string().authorization((allow) => [
+      allow.owner().to(['read', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
     endpoint: a.string().required(),
     p256dh: a.string().required(),
     auth: a.string().required(),
