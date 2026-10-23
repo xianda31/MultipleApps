@@ -658,21 +658,48 @@ const schema = a.schema({
     ]),
 
   PushSubscription: a.model({
-    id: a.string().required(),
+    id: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
     owner: a.string().authorization((allow) => [
       allow.owner().to(['read', 'delete']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
     ]),
-    endpoint: a.string().required(),
-    p256dh: a.string().required(),
-    auth: a.string().required(),
+    endpoint: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    p256dh: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    auth: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
     expirationTime: a.float(),
-    news: a.boolean().required(),
-    partner: a.boolean().required(),
-    alerts: a.boolean().required(),
+    news: a.boolean().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    partner: a.boolean().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    alerts: a.boolean().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
     userAgent: a.string(),
-    firstSubscribedAt: a.string().required(),
-    lastSeenAt: a.string().required(),
+    firstSubscribedAt: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    lastSeenAt: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
   })
     .identifier(['id'])
     .authorization((allow) => [
