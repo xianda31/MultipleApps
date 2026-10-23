@@ -24,7 +24,7 @@
 
             <div *ngFor="let week of month.weeks" class="tournament-calendar-week">
                 <div class="tournament-calendar-week-label">
-                    Sem. {{ week.monday | date:'w' }}
+                    S{{ week.monday | date:'w' }}
                 </div>
 
                 <div *ngFor="let day of week.days" class="tournament-calendar-day">

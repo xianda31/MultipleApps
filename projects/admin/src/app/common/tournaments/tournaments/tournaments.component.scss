@@ -43,9 +43,9 @@
 .tournament-calendar-heading,
 .tournament-calendar-week {
   display: grid;
-  grid-template-columns: 3.25rem repeat(3, minmax(5.25rem, 1fr));
+  grid-template-columns: 2rem repeat(3, minmax(5.25rem, 1fr));
   gap: 0.4rem;
-  min-width: 19.75rem;
+  min-width: 18.5rem;
 }
 
 .tournament-calendar-heading {
