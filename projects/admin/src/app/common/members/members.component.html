@@ -22,7 +22,7 @@
           </button>
         </div>
         <ng-container *ngIf="!loading">
-          <div class="col-12 mt-2 members-stats-line">
+          <div class="col-12 mt-2 members-overview-layout">
             <div class="members-stats-table-wrapper">
               <div class="members-directory-summary">
                 <button type="button" class="btn btn-sm members-directory-count"
@@ -184,6 +184,26 @@
                 </tfoot>
               </table>
             </div>
+            <section class="members-add-person" aria-labelledby="members-add-person-title">
+              <h6 id="members-add-person-title" class="fw-bold mb-3">Ajouter une personne au répertoire :</h6>
+              <div class="members-add-options">
+                <div class="input-group input-group-sm ">
+                  <span class="input-group-text flex-grow-1">
+                    <strong class="me-1">ABSENTE DE LA FFB</strong>
+                  </span>
+                  <button class="btn btn-primary btn-sm" (click)="addNewbee()"
+                    aria-label="Ajouter une personne absente de la FFB">
+                    <i class="bi bi-person-fill-add "></i>
+                  </button>
+                </div>
+                <div class="input-group input-group-sm ">
+                  <span class="input-group-text"><strong>CONNUE DE LA FFB</strong> :</span>
+                  <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
+                    class="form-control form-control-sm" [(ngModel)]="new_player"
+                    (ngModelChange)="add_licensee(new_player)"></app-input-player>
+                </div>
+              </div>
+            </section>
           </div>
         </ng-container>
       </div>
@@ -197,8 +217,6 @@
               <th class="text-center member-avatar-column">
                 {{ filteredMembers.length }} {{ getSelectedLifecycleLabel() }}
               </th>
-              <th class="member-name-column member-name-column-desktop">Nom</th>
-              <th class="member-name-column member-name-column-desktop">Prénom</th>
               <th class="member-player-column">Joueur</th>
               <th class="text-center member-status-column">
                 @if (selectedStatusFilter) {
@@ -228,6 +246,21 @@
                   </ul>
                 </div>
               </th>
+              <th class="member-license-detail-column member-license-number-column">Licence</th>
+              <th class="member-license-detail-column member-license-date-column"
+                [attr.aria-sort]="getDateAriaSort('membership_date')">
+                <button type="button" class="member-sort-button" (click)="sortByDate('membership_date')">
+                  Date adhésion
+                  <i [class]="getDateSortIcon('membership_date')" aria-hidden="true"></i>
+                </button>
+              </th>
+              <th class="member-license-detail-column member-license-date-column"
+                [attr.aria-sort]="getDateAriaSort('register_date')">
+                <button type="button" class="member-sort-button" (click)="sortByDate('register_date')">
+                  Date licence
+                  <i [class]="getDateSortIcon('register_date')" aria-hidden="true"></i>
+                </button>
+              </th>
 
 
               <th class="d-none d-sm-table-cell member-info-column" ngbDropdown style="cursor:pointer;">
@@ -251,8 +284,6 @@
                 <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
                   class="rounded-circle table-avatar">
               </td>
-              <td class="member-name-column member-name-column-desktop">{{member.lastname | uppercase}}</td>
-              <td class="member-name-column member-name-column-desktop">{{member.firstname}}</td>
               <td class="member-player-column">
                 <span class="member-player-lastname">{{member.lastname | uppercase}}</span>
                 <span>{{member.firstname}}</span>
@@ -263,15 +294,18 @@
                   <i [class.text-danger]="isStatusWarning(member)" [class]="getMemberStatusIconClass(member)"></i>
                 </span>
               </td>
+              <td class="member-license-detail-column member-license-number-column">
+                {{ member.license_number }}
+              </td>
+              <td class="member-license-detail-column member-license-date-column">
+                {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '—' }}
+              </td>
+              <td class="member-license-detail-column member-license-date-column">
+                {{ member.register_date ? (member.register_date | date:'dd/MM/yyyy') : '—' }}
+              </td>
 
               <td class="d-none d-sm-table-cell member-info-column">
-                @if (selectedInfoColumn === 'license_number') {
-                {{ member.license_number }}
-                } @else if (selectedInfoColumn === 'membership_date') {
-                {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
-                } @else if (selectedInfoColumn === 'register_date') {
-                {{ member.register_date ? (member.register_date | date:'dd/MM/yyyy') : '' }}
-                } @else if (selectedInfoColumn === 'email') {
+                @if (selectedInfoColumn === 'email') {
                 {{ member.email }}
                 } @else if (selectedInfoColumn === 'birthdate') {
                 {{ member.birthdate | date:'dd/MM/yyyy' : '' }}
@@ -336,31 +370,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <hr class="my-3">
-
-      <h6 class="fw-bold">Ajouter une personne au répertoire :</h6>
-      <div class="row justify-content-around align-items-end">
-        <div class="col-md-6">
-          <div class="input-group input-group-sm w-auto" style="max-width: 400px;">
-            <span class="input-group-text">
-              <strong class="me-1">ABSENTE DE LA FFB</strong>
-              (ex. débutant(e))
-            </span>
-            <button class="btn btn-primary btn-sm" (click)="addNewbee()">
-              <i class="bi bi-mortarboard-fill"></i>
-            </button>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text"><strong>CONNUE DE LA FFB</strong> :</span>
-            <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
-              class="form-control form-control-sm" style="max-width: 300px;" [(ngModel)]="new_player"
-              (ngModelChange)="add_licensee(new_player)"></app-input-player>
-          </div>
-        </div>
       </div>
 
     </div>

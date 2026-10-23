@@ -93,7 +93,7 @@ export class MembersComponent implements OnInit {
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
-  private readonly defaultInfoColumns = ['license_number', 'membership_date', 'register_date', 'email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
+  private readonly defaultInfoColumns = ['email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
   infoColumns = [...this.defaultInfoColumns];
   infoColumnLabels: { [key: string]: string } = {
     license_number: 'Licence',
@@ -106,7 +106,9 @@ export class MembersComponent implements OnInit {
     accept_mailing: 'Accepte mails',
     lifecycleReason: 'Raison',
   };
-  selectedInfoColumn: string = 'membership_date';
+  selectedInfoColumn: string = 'email';
+  dateSortField: 'membership_date' | 'register_date' | null = null;
+  dateSortDirection: 'asc' | 'desc' = 'asc';
   private readonly destroy$ = new Subject<void>();
   private seasonRefreshInFlight = false;
   private pendingSeasonRefresh = false;
@@ -467,7 +469,7 @@ export class MembersComponent implements OnInit {
     if (filter === 'BANNED') {
       this.selectedInfoColumn = 'lifecycleReason';
     } else if (this.selectedInfoColumn === 'lifecycleReason') {
-      this.selectedInfoColumn = 'membership_date';
+      this.selectedInfoColumn = 'email';
     }
     this.selectedStatusFilter = null;
     this.applyStatusCounters();
@@ -479,13 +481,58 @@ export class MembersComponent implements OnInit {
     this.applyFilters();
   }
 
+  sortByDate(field: 'membership_date' | 'register_date'): void {
+    if (this.dateSortField === field) {
+      this.dateSortDirection = this.dateSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.dateSortField = field;
+      this.dateSortDirection = 'asc';
+    }
+    this.applyFilters();
+  }
+
+  getDateSortIcon(field: 'membership_date' | 'register_date'): string {
+    if (this.dateSortField !== field) return 'bi bi-chevron-expand';
+    return this.dateSortDirection === 'asc' ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+  }
+
+  getDateAriaSort(field: 'membership_date' | 'register_date'): 'none' | 'ascending' | 'descending' {
+    if (this.dateSortField !== field) return 'none';
+    return this.dateSortDirection === 'asc' ? 'ascending' : 'descending';
+  }
+
   private applyFilters(): void {
     this.filteredMembers = this.members
       .filter((member: Member) =>
         this.membersService.getLifecycleStatus(member) === this.selectedLifecycleFilter
         && (this.selectedStatusFilter === null || this.matchesStatusFilter(member, this.selectedStatusFilter))
       )
-      .sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+      .sort((a, b) => this.compareMembers(a, b));
+  }
+
+  private compareMembers(left: Member, right: Member): number {
+    const compareNames = () => {
+      const lastNameComparison = left.lastname.localeCompare(right.lastname, 'fr', { sensitivity: 'base' });
+      return lastNameComparison || left.firstname.localeCompare(right.firstname, 'fr', { sensitivity: 'base' });
+    };
+
+    if (!this.dateSortField) return compareNames();
+
+    const leftTime = this.parseSortableDate(left[this.dateSortField]);
+    const rightTime = this.parseSortableDate(right[this.dateSortField]);
+    if (leftTime === null && rightTime === null) return compareNames();
+    if (leftTime === null) return 1;
+    if (rightTime === null) return -1;
+
+    const dateComparison = leftTime - rightTime;
+    if (dateComparison === 0) return compareNames();
+    return this.dateSortDirection === 'asc' ? dateComparison : -dateComparison;
+  }
+
+  private parseSortableDate(value: string | undefined): number | null {
+    if (!value) return null;
+    const timestamp = Date.parse(value);
+    return Number.isNaN(timestamp) ? null : timestamp;
   }
 
   getSelectedLifecycleLabel(): string {
