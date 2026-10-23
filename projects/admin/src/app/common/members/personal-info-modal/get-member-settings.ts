@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Injector, Input } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { Member, Member_settings } from '../../interfaces/member.interface';
@@ -11,10 +11,11 @@ import { ToastService } from '../../services/toast.service';
 import { MemberSettingsService } from '../../services/member-settings.service';
 import { normalizeFrenchPhoneNumber } from '../../pipes/phone.pipe';
 import { getFfbRankingCodeParts } from '../../utils/ffb-ranking.util';
+import { SystemDataService } from '../../services/system-data.service';
 import {
   NotificationSubscriptionService,
   NotificationTopic,
-} from '../../../front/front/pages/home-page/notification-subscription-demo/notification-subscription-demo.service';
+} from '../../../front/front/pages/home-page/notification-subscription/notification-subscription.service';
 
 
 @Component({
@@ -35,6 +36,8 @@ export class GetMemberSettingsComponent {
   // Sauvegarder les valeurs initiales pour la comparaison
   initialSettings!: Member_settings;
   private initialPushTopics: NotificationTopic[] = [];
+  private notificationService?: NotificationSubscriptionService;
+  webPushActive = false;
   saving = false;
 
   readonly default_ico = 'anybody.png';
@@ -48,7 +51,8 @@ export class GetMemberSettingsComponent {
     private toastService: ToastService,
     private memberSettingsService: MemberSettingsService,
     private membersService: MembersService,
-    readonly notificationService: NotificationSubscriptionService,
+    private systemDataService: SystemDataService,
+    private injector: Injector,
 
   ) {
 
@@ -58,9 +62,9 @@ export class GetMemberSettingsComponent {
       city: [''],
       email: [{ value: '', disabled: true }],
       phone_one: ['', Validators.pattern(this.frenchPhonePattern)],
-      pushNews: [{ value: false, disabled: !this.notificationService.isSupported }],
-      pushPartner: [{ value: false, disabled: !this.notificationService.isSupported }],
-      pushAlerts: [{ value: false, disabled: !this.notificationService.isSupported }],
+      pushNews: [{ value: false, disabled: true }],
+      pushPartner: [{ value: false, disabled: true }],
+      pushAlerts: [{ value: false, disabled: true }],
     });
   }
 
@@ -76,15 +80,30 @@ export class GetMemberSettingsComponent {
       phone_one: normalizeFrenchPhoneNumber(this.member.phone_one ?? ''),
     };
 
-    this.initialPushTopics = [...this.notificationService.preferences.topics];
     this.preferenceForm.patchValue({
       accept_mailing: this.member.accept_mailing ?? true,
       city: this.member.city ?? '',
       email: this.member.email ?? '',
       phone_one: normalizeFrenchPhoneNumber(this.member.phone_one ?? ''),
-      pushNews: this.initialPushTopics.includes('news'),
-      pushPartner: this.initialPushTopics.includes('partner'),
-      pushAlerts: this.initialPushTopics.includes('alerts'),
+    });
+    this.systemDataService.get_configuration().subscribe((configuration) => {
+      this.webPushActive = configuration.web_push_active ?? false;
+      if (!this.webPushActive) {
+        return;
+      }
+
+      const notificationService = this.getNotificationService();
+      this.initialPushTopics = [...notificationService.preferences.topics];
+      this.preferenceForm.patchValue({
+        pushNews: this.initialPushTopics.includes('news'),
+        pushPartner: this.initialPushTopics.includes('partner'),
+        pushAlerts: this.initialPushTopics.includes('alerts'),
+      });
+      if (notificationService.isSupported) {
+        this.preferenceForm.get('pushNews')?.enable();
+        this.preferenceForm.get('pushPartner')?.enable();
+        this.preferenceForm.get('pushAlerts')?.enable();
+      }
     });
 
     this.memberSettingsService.getAvatarUrl(this.member).subscribe((avatarUrl) => {
@@ -120,21 +139,23 @@ export class GetMemberSettingsComponent {
     }
     this.saving = true;
     const formValue = this.preferenceForm.getRawValue();
-    const pushTopics: NotificationTopic[] = [];
-    if (formValue.pushNews) pushTopics.push('news');
-    if (formValue.pushPartner) pushTopics.push('partner');
-    if (formValue.pushAlerts) pushTopics.push('alerts');
+    if (this.webPushActive) {
+      const pushTopics: NotificationTopic[] = [];
+      if (formValue.pushNews) pushTopics.push('news');
+      if (formValue.pushPartner) pushTopics.push('partner');
+      if (formValue.pushAlerts) pushTopics.push('alerts');
 
-    if (!this.samePushTopics(pushTopics, this.initialPushTopics)) {
-      try {
-        await this.notificationService.subscribe(pushTopics);
-      } catch (error) {
-        this.toastService.showError(
-          'Notifications',
-          error instanceof Error ? error.message : 'Impossible d’enregistrer les notifications.',
-        );
-        this.saving = false;
-        return;
+      if (!this.samePushTopics(pushTopics, this.initialPushTopics)) {
+        try {
+          await this.getNotificationService().subscribe(pushTopics);
+        } catch (error) {
+          this.toastService.showError(
+            'Notifications',
+            error instanceof Error ? error.message : 'Impossible d’enregistrer les notifications.',
+          );
+          this.saving = false;
+          return;
+        }
       }
     }
 
@@ -152,6 +173,11 @@ export class GetMemberSettingsComponent {
 
   private samePushTopics(first: NotificationTopic[], second: NotificationTopic[]): boolean {
     return first.length === second.length && first.every(topic => second.includes(topic));
+  }
+
+  private getNotificationService(): NotificationSubscriptionService {
+    this.notificationService ??= this.injector.get(NotificationSubscriptionService);
+    return this.notificationService;
   }
 
   exit() {

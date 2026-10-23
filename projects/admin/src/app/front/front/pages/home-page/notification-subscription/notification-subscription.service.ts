@@ -42,6 +42,19 @@ const STORAGE_KEY = 'bcsto.pushNotification.preference';
 const LEGACY_STORAGE_KEY = 'bcsto.pushNotificationDemo.preference';
 const PUSH_WORKER_PATH = '/push/notification-sw.js';
 const PUSH_WORKER_SCOPE = '/push/';
+export const NOTIFICATION_REMINDER_DELAY_MS = 30 * 24 * 60 * 60 * 1000;
+
+export function shouldPromptForNotifications(
+  preferences: NotificationPreferences,
+  now = Date.now(),
+): boolean {
+  if (preferences.decision !== 'later') {
+    return false;
+  }
+  const lastDecisionAt = Date.parse(preferences.updatedAt);
+  return !Number.isFinite(lastDecisionAt)
+    || now - lastDecisionAt >= NOTIFICATION_REMINDER_DELAY_MS;
+}
 
 export function urlBase64ToUint8Array(value: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - value.length % 4) % 4);
@@ -125,6 +138,7 @@ export class NotificationSubscriptionService {
   private readonly preferencesSubject = new BehaviorSubject<NotificationPreferences>(
     this.readPreferences(),
   );
+  private subscriptionChange: Promise<void> | null = null;
 
   readonly preferences$ = this.preferencesSubject.asObservable();
 
@@ -137,6 +151,10 @@ export class NotificationSubscriptionService {
       && 'Notification' in window
       && 'serviceWorker' in navigator
       && 'PushManager' in window;
+  }
+
+  get isChanging(): boolean {
+    return this.subscriptionChange !== null;
   }
 
   async reconcileAcceptedSubscription(): Promise<NotificationPreferences> {
@@ -184,8 +202,16 @@ export class NotificationSubscriptionService {
   }
 
   async subscribe(topics: NotificationTopic[]): Promise<void> {
+    return this.runExclusive(() => this.performSubscriptionChange(topics));
+  }
+
+  async unsubscribe(): Promise<void> {
+    return this.runExclusive(() => this.performUnsubscribe());
+  }
+
+  private async performSubscriptionChange(topics: NotificationTopic[]): Promise<void> {
     if (topics.length === 0) {
-      await this.unsubscribe();
+      await this.performUnsubscribe();
       return;
     }
     if (!this.isSupported) {
@@ -224,7 +250,7 @@ export class NotificationSubscriptionService {
     });
   }
 
-  async unsubscribe(): Promise<void> {
+  private async performUnsubscribe(): Promise<void> {
     if (this.isSupported) {
       const registration = await navigator.serviceWorker.getRegistration(PUSH_WORKER_SCOPE);
       const subscription = await registration?.pushManager.getSubscription();
@@ -247,6 +273,21 @@ export class NotificationSubscriptionService {
       topics: [],
       updatedAt: new Date().toISOString(),
     });
+  }
+
+  private async runExclusive(action: () => Promise<void>): Promise<void> {
+    if (this.subscriptionChange) {
+      throw new Error('Une modification des notifications est déjà en cours.');
+    }
+    const operation = Promise.resolve().then(action);
+    this.subscriptionChange = operation;
+    try {
+      await operation;
+    } finally {
+      if (this.subscriptionChange === operation) {
+        this.subscriptionChange = null;
+      }
+    }
   }
 
   decideLater(topics: NotificationTopic[]): void {

@@ -8,6 +8,7 @@ import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
 import { processBookEntryActions } from '../functions/process-book-entry-actions/resource';
 import { stripeWebhooks } from '../functions/stripe-webhooks/resource';
+import { sendWebPush } from '../functions/send-web-push/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
@@ -110,6 +111,21 @@ const schema = a.schema({
       allow.group(Group_names.Support),
     ])
     .handler(a.handler.function(processBookEntryActions))
+    .returns(a.json()),
+
+  sendWebPush: a
+    .mutation()
+    .arguments({
+      topic: a.string().required(),
+      title: a.string().required(),
+      body: a.string().required(),
+      url: a.string().required(),
+      subscriptionId: a.string(),
+    })
+    .authorization((allow) => [
+      allow.group(Group_names.System),
+    ])
+    .handler(a.handler.function(sendWebPush))
     .returns(a.json()),
 
 
@@ -656,9 +672,8 @@ const schema = a.schema({
   })
     .identifier(['id'])
     .authorization((allow) => [
-      allow.authenticated().to(['create', 'update', 'delete']),
+      allow.owner().to(['create', 'update', 'delete']),
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
     ]),
 
   // Tokens pour accès mail sans login (UUID v4, validés côté Lambda)

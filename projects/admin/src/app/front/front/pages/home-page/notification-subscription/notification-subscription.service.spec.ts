@@ -1,11 +1,14 @@
 import {
   hashPushEndpoint,
   mapPushSubscription,
+  NotificationPreferences,
+  NotificationSubscriptionService,
   persistPushSubscription,
   PushSubscriptionModel,
   PushSubscriptionRecord,
+  shouldPromptForNotifications,
   urlBase64ToUint8Array,
-} from './notification-subscription-demo.service';
+} from './notification-subscription.service';
 
 describe('NotificationSubscriptionService utilities', () => {
   const record: PushSubscriptionRecord = {
@@ -105,6 +108,54 @@ describe('NotificationSubscriptionService utilities', () => {
 
     expect(model.update).toHaveBeenCalledTimes(1);
   });
+
+  it('waits 30 days before prompting again after a later decision', () => {
+    const decidedAt = Date.parse('2026-01-01T10:00:00.000Z');
+    const preferences = laterPreferences(new Date(decidedAt).toISOString());
+
+    expect(shouldPromptForNotifications(
+      preferences,
+      decidedAt + 30 * 24 * 60 * 60 * 1000 - 1,
+    )).toBeFalse();
+    expect(shouldPromptForNotifications(
+      preferences,
+      decidedAt + 30 * 24 * 60 * 60 * 1000,
+    )).toBeTrue();
+  });
+
+  it('does not prompt after notifications have been accepted', () => {
+    const preferences: NotificationPreferences = {
+      ...laterPreferences('2026-01-01T10:00:00.000Z'),
+      decision: 'accepted',
+    };
+
+    expect(shouldPromptForNotifications(preferences, Date.parse('2027-01-01T10:00:00.000Z')))
+      .toBeFalse();
+  });
+
+  it('rejects a second subscription change while one is in progress', async () => {
+    const service = new NotificationSubscriptionService();
+    spyOnProperty(service, 'isSupported', 'get').and.returnValue(false);
+
+    const firstChange = service.subscribe(['news']);
+    const concurrentChange = service.subscribe(['alerts']);
+
+    await expectAsync(concurrentChange).toBeRejectedWithError(
+      'Une modification des notifications est déjà en cours.',
+    );
+    await expectAsync(firstChange).toBeRejectedWithError(
+      'Ce navigateur ne prend pas en charge les notifications Push.',
+    );
+    expect(service.isChanging).toBeFalse();
+  });
+
+  function laterPreferences(updatedAt: string): NotificationPreferences {
+    return {
+      decision: 'later',
+      topics: ['news'],
+      updatedAt,
+    };
+  }
 
   function createModel(): jasmine.SpyObj<PushSubscriptionModel> {
     const model = jasmine.createSpyObj<PushSubscriptionModel>(

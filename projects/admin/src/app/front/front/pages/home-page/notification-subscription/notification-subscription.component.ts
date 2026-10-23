@@ -4,18 +4,20 @@ import { FormsModule } from '@angular/forms';
 import {
   NotificationSubscriptionService,
   NotificationTopic,
-} from './notification-subscription-demo.service';
+  shouldPromptForNotifications,
+} from './notification-subscription.service';
 
 @Component({
-  selector: 'app-notification-subscription-demo',
+  selector: 'app-notification-subscription',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './notification-subscription-demo.component.html',
-  styleUrl: './notification-subscription-demo.component.scss',
+  templateUrl: './notification-subscription.component.html',
+  styleUrl: './notification-subscription.component.scss',
 })
-export class NotificationSubscriptionDemoComponent implements OnInit {
+export class NotificationSubscriptionComponent implements OnInit {
   visible = false;
   requestingPermission = false;
+  permissionBlocked = false;
   errorMessage = '';
   news = false;
   partner = false;
@@ -28,11 +30,16 @@ export class NotificationSubscriptionDemoComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const mode = new URLSearchParams(window.location.search).get('push-demo');
+    if (!this.notificationService.isSupported) {
+      return;
+    }
+
+    const mode = new URLSearchParams(window.location.search).get('push');
     if (mode === 'reset') {
       this.notificationService.reset();
     }
     let preferences = this.notificationService.preferences;
+    const subscriptionWasAccepted = preferences.decision === 'accepted';
     try {
       preferences = await this.notificationService.reconcileAcceptedSubscription();
     } catch (error) {
@@ -43,7 +50,15 @@ export class NotificationSubscriptionDemoComponent implements OnInit {
     this.news = preferences.topics.includes('news');
     this.partner = preferences.topics.includes('partner');
     this.alerts = preferences.topics.includes('alerts');
-    this.visible = mode === 'reset' || preferences.decision === 'later' || !!this.errorMessage;
+    this.permissionBlocked = Notification.permission === 'denied';
+    if (this.permissionBlocked) {
+      this.errorMessage =
+        'Les notifications sont bloquées dans les réglages de ce navigateur. Autorisez-les pour ce site avant de réessayer.';
+    }
+    this.visible = mode === 'reset'
+      || shouldPromptForNotifications(preferences)
+      || (subscriptionWasAccepted && this.permissionBlocked)
+      || !!this.errorMessage;
   }
 
   async activate(): Promise<void> {
@@ -61,6 +76,7 @@ export class NotificationSubscriptionDemoComponent implements OnInit {
       this.errorMessage = error instanceof Error
         ? error.message
         : 'Impossible d’activer les notifications.';
+      this.permissionBlocked = Notification.permission === 'denied';
     } finally {
       this.requestingPermission = false;
     }

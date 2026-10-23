@@ -1,6 +1,6 @@
 
-@if (logged_member$ | async) {
-  <app-notification-subscription-demo></app-notification-subscription-demo>
+@if (webPushActive && (logged_member$ | async)) {
+  <app-notification-subscription></app-notification-subscription>
 }
 <div class="container-fluid">
 

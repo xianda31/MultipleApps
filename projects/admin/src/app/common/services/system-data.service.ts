@@ -48,6 +48,7 @@ export class SystemDataService {
       ),
       online_payment_active: conf.online_payment_active ?? false,
       tpe_payment_active: conf.tpe_payment_active ?? false,
+      web_push_active: conf.web_push_active ?? false,
       minimum_cb_amount: conf.minimum_cb_amount ?? 0,
       membership_payment_warning_month: conf.membership_payment_warning_month ?? 11,
     } : conf;
@@ -77,6 +78,7 @@ export class SystemDataService {
         if (conf.remembered_auth_session_days == null) missing.push('remembered_auth_session_days');
         if (conf.online_payment_active == null) missing.push('online_payment_active');
         if (conf.tpe_payment_active == null) missing.push('tpe_payment_active');
+        if (conf.web_push_active == null) missing.push('web_push_active');
         if (conf.minimum_cb_amount == null) missing.push('minimum_cb_amount');
         if (conf.membership_payment_warning_month == null) missing.push('membership_payment_warning_month');
         if (missing.length) {

@@ -69,6 +69,14 @@
                   <label class="form-check-label">{{includeSystemVisits ? 'inclus' : 'exclu'}}</label>
                 </div>
               </div>
+              <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                <span class="fw-bold">Notifications Web Push :</span>
+                <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+                  <input type="checkbox" class="form-check-input mt-0" role="switch"
+                    formControlName="web_push_active">
+                  <label class="form-check-label">{{webPushActive ? 'activées' : 'désactivées'}}</label>
+                </div>
+              </div>
               <div class="d-flex flex-wrap align-items-center  gap-2 mt-3">
                 <span class="fw-bold">Tickets d'assistance :</span>
                 <span class="input-group flex-nowrap w-auto">

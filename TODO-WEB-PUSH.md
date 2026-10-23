@@ -12,6 +12,7 @@ Thèmes fonctionnels :
 
 ## État actuel - V1 abonnement navigateur
 
+- [x] Protéger toutes les surfaces clientes par `web_push_active`, désactivé par défaut si absent de la configuration système.
 - [x] Générer et configurer la clé publique VAPID.
 - [x] Détecter le support Web Push du navigateur.
 - [x] Demander explicitement l'autorisation de notification.
@@ -30,40 +31,65 @@ Thèmes fonctionnels :
 
 ## Phase 1 - Stabiliser la V1
 
-- [ ] Renommer les fichiers et symboles `notification-subscription-demo` pour retirer la notion de démonstration.
-- [ ] Ajouter un délai persistant au choix « Plus tard » afin de ne pas reproposer à chaque nouvelle visite.
-- [ ] Définir la durée du délai « Plus tard ».
-- [ ] Ne pas afficher la proposition sur les navigateurs non compatibles.
-- [ ] Afficher un état explicite lorsque les notifications sont bloquées dans les réglages du navigateur.
-- [ ] Empêcher deux actions d'abonnement ou de désabonnement simultanées.
+- [x] Renommer les fichiers et symboles `notification-subscription-demo` pour retirer la notion de démonstration.
+- [x] Ajouter un délai persistant au choix « Plus tard » afin de ne pas reproposer à chaque nouvelle visite.
+- [x] Définir la durée du délai « Plus tard » : 30 jours.
+- [x] Ne pas afficher la proposition sur les navigateurs non compatibles.
+- [x] Afficher un état explicite lorsque les notifications sont bloquées dans les réglages du navigateur.
+- [x] Empêcher deux actions d'abonnement ou de désabonnement simultanées.
 - [ ] Ajouter les tests du cycle complet : accepter, modifier les thèmes, refuser, révoquer et réconcilier.
 - [ ] Vérifier la coexistence du Service Worker Push et du Service Worker Angular PWA.
 - [ ] Vérifier Android, Windows Chrome, Windows Edge et macOS.
 
+Validation sandbox du 21 octobre 2026 :
+
+- [x] Créer un abonnement depuis la proposition navigateur.
+- [x] Vérifier l'ajout automatique du propriétaire Cognito.
+- [x] Mettre à jour les thèmes depuis « Mes préférences » sans créer de doublon.
+- [x] Supprimer l'abonnement en désactivant tous les thèmes.
+
 ## Phase 2 - Sécuriser les abonnements
 
-- [ ] Associer chaque abonnement à son propriétaire Cognito.
-- [ ] Limiter la création, la modification et la suppression au propriétaire de l'abonnement.
-- [ ] Réserver la lecture globale des endpoints et clés aux groupes serveur autorisés.
-- [ ] Vérifier qu'un membre ne peut ni modifier ni supprimer l'abonnement d'un autre membre.
-- [ ] Ne jamais exposer la clé privée VAPID au client ou au dépôt.
-- [ ] Stocker la clé privée VAPID dans AWS Secrets Manager ou SSM.
+- [x] Associer chaque abonnement à son propriétaire Cognito.
+- [x] Limiter la création, la modification et la suppression au propriétaire de l'abonnement.
+- [x] Réserver la lecture globale des endpoints et clés au groupe système utilisé par le serveur.
+- [x] Vérifier par revue de code qu'un membre ne peut ni modifier ni supprimer l'abonnement d'un autre membre.
+- [x] Ne jamais exposer la clé privée VAPID au client ou au dépôt.
+- [x] Charger la clé privée VAPID depuis un paramètre SSM SecureString côté serveur.
 - [ ] Documenter la rotation de la paire VAPID et son impact sur les abonnements existants.
 - [ ] Définir une politique de conservation et de purge des abonnements inactifs.
 
+Migration V1 : purger les enregistrements `PushSubscription` créés avant l'ajout de la règle
+propriétaire. Ils ne contiennent aucune identité permettant d'attribuer leur propriétaire de façon
+fiable ; les navigateurs concernés devront se réabonner.
+
+Validation de l'isolation : la règle `allow.owner().to(['create', 'update', 'delete'])` ajoute le
+propriétaire Cognito à la création et impose sa correspondance pour les mutations. Le test dynamique
+avec deux comptes n'a pas été exécuté, par choix. Un changement de compte dans un même profil
+navigateur reste à gérer explicitement avant la production.
+
 ## Phase 3 - Émetteur Web Push serveur
 
-- [ ] Créer une fonction Amplify dédiée à l'envoi Web Push.
-- [ ] Ajouter la dépendance serveur Web Push appropriée.
-- [ ] Charger le sujet, la clé publique et la clé privée VAPID côté serveur.
-- [ ] Valider strictement le titre, le corps, l'URL cible, le thème et les options du message.
-- [ ] Sélectionner uniquement les abonnements ayant accepté le thème demandé.
-- [ ] Envoyer par lots avec une concurrence limitée.
-- [ ] Supprimer automatiquement les abonnements retournant HTTP 404 ou 410.
-- [ ] Distinguer les erreurs permanentes des erreurs temporaires.
-- [ ] Journaliser le nombre de destinataires, les succès, les expirations et les échecs.
-- [ ] Retourner un bilan explicite à l'appelant, sans transformer un échec en succès apparent.
-- [ ] Ajouter des tests unitaires avec transport Push simulé.
+- [x] Créer une fonction Amplify dédiée à l'envoi Web Push.
+- [x] Ajouter la dépendance serveur `web-push`.
+- [x] Charger le sujet, la clé publique et la clé privée VAPID côté serveur.
+- [x] Valider strictement le titre, le corps, l'URL cible, le thème et les options du message.
+- [x] Sélectionner uniquement les abonnements ayant accepté le thème demandé.
+- [x] Envoyer par lots avec une concurrence limitée à dix envois.
+- [x] Supprimer automatiquement les abonnements retournant HTTP 404 ou 410.
+- [x] Distinguer les erreurs permanentes des erreurs temporaires.
+- [x] Journaliser le nombre de destinataires, les succès, les expirations et les échecs.
+- [x] Retourner un bilan explicite à l'appelant, sans transformer un échec en succès apparent.
+- [x] Ajouter des tests unitaires avec transport Push simulé.
+
+Configuration SSM attendue :
+
+- `/multiple-apps/web-push/vapid-subject` : chaîne `mailto:` ou URL HTTPS ;
+- `/multiple-apps/web-push/vapid-public-key` : clé publique VAPID ;
+- `/multiple-apps/web-push/vapid-private-key` : clé privée VAPID de type `SecureString`.
+
+La mutation `sendWebPush` est réservée au seul groupe Cognito `Systeme`. Elle accepte un ciblage
+optionnel par identifiant d'abonnement pour les essais, sans exposer les endpoints ou les clés.
 
 Résultat attendu : un appel serveur contrôlé peut envoyer une notification de test réelle à un navigateur abonné.
 
@@ -111,6 +137,7 @@ Résultat attendu : un appel serveur contrôlé peut envoyer une notification de
 
 ## Validation de mise en production
 
+- [ ] Activer `web_push_active` dans la configuration système uniquement après les validations ci-dessous.
 - [ ] Déployer le modèle `PushSubscription` dans l'environnement cible.
 - [ ] Vérifier que le site est servi en HTTPS.
 - [ ] Vérifier la paire VAPID de production.
@@ -123,4 +150,6 @@ Résultat attendu : un appel serveur contrôlé peut envoyer une notification de
 
 ## Prochain jalon
 
-Sécuriser la propriété des `PushSubscription`, puis implémenter une fonction serveur capable d'envoyer une notification de test et de supprimer automatiquement les abonnements expirés.
+La branche peut être fusionnée avec `web_push_active` absent ou à `false` : aucune proposition, préférence ou réconciliation Push n'est alors lancée côté client. L'activation en production reste conditionnée aux validations de plateforme, au déploiement du modèle et à la configuration VAPID.
+
+Ajouter l'envoi de test administrateur, puis terminer les validations multi-navigateurs avant toute activation en production.
