@@ -38,6 +38,11 @@ export interface TournamentCalendarMonth {
   weeks: TournamentCalendarWeek[];
 }
 
+export function compactTournamentName(name: string): string {
+  const compactName = name.replace(/^\s*(?:lundi|mercredi|vendredi)\b[\s:–—-]*/iu, '').trim();
+  return compactName || name;
+}
+
 export function buildTournamentCalendar(tournaments: TournamentTeams[]): TournamentCalendarMonth[] {
   const months = new Map<string, {
     monthStart: Date;
@@ -263,6 +268,9 @@ export class TournamentsComponent {
   }
   name_of(tTeams: TournamentTeams): string {
     return tTeams.tournament.title;
+  }
+  compactNameOf(tTeams: TournamentTeams): string {
+    return compactTournamentName(this.name_of(tTeams));
   }
   ivPlayerMax_of(tTeams: TournamentTeams): number | undefined {
     return tTeams.tournament.ivPlayerMax;

@@ -141,6 +141,10 @@
   -webkit-line-clamp: 2;
 }
 
+.tournament-calendar-name-portrait {
+  display: none;
+}
+
 .tournament-calendar-meta {
   margin-top: 0.18rem;
   overflow: hidden;
@@ -176,5 +180,15 @@
     margin-inline: -0.25rem;
     overflow-x: auto;
     padding: 0.25rem;
+  }
+}
+
+@media (orientation: portrait) {
+  .tournament-calendar-name-full {
+    display: none;
+  }
+
+  .tournament-calendar-name-portrait {
+    display: -webkit-box;
   }
 }

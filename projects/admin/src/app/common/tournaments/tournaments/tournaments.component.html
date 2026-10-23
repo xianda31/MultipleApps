@@ -40,7 +40,10 @@
                             <img *ngIf="getImageUrl(t) as imgUrl" class="tournament-calendar-image"
                                 [attr.src]="imgUrl" [alt]="name_of(t) || 'vignette du tournoi'">
                         </span>
-                        <span class="tournament-calendar-name">{{ name_of(t) }}</span>
+                        <span class="tournament-calendar-name tournament-calendar-name-full">{{ name_of(t) }}</span>
+                        <span class="tournament-calendar-name tournament-calendar-name-portrait">
+                            {{ compactNameOf(t) }}
+                        </span>
                         <span *ngIf="ivPlayerMax_of(t)" class="tournament-calendar-meta">
                             IV max {{ ivPlayerMax_of(t) }}
                         </span>

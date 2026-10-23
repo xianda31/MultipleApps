@@ -1,5 +1,5 @@
 import { TournamentTeams } from '../../ffb/interface/tournament.interface';
-import { buildTournamentCalendar } from './tournaments.component';
+import { buildTournamentCalendar, compactTournamentName } from './tournaments.component';
 
 describe('buildTournamentCalendar', () => {
   it('groups tournaments by month, week and Monday-Wednesday-Friday columns', () => {
@@ -30,6 +30,13 @@ describe('buildTournamentCalendar', () => {
     ]);
 
     expect(calendar).toEqual([]);
+  });
+
+  it('removes redundant tournament weekdays from compact portrait names', () => {
+    expect(compactTournamentName('Vendredi - Tournoi de régularité')).toBe('Tournoi de régularité');
+    expect(compactTournamentName('mercredi : Rondes de France')).toBe('Rondes de France');
+    expect(compactTournamentName('LUNDI Simultané national')).toBe('Simultané national');
+    expect(compactTournamentName('Simultané du lundi')).toBe('Simultané du lundi');
   });
 
   function tournament(id: number, date: string): TournamentTeams {
