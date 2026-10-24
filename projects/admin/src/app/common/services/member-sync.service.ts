@@ -226,7 +226,7 @@ export class MemberSyncService {
             phone_one: member.phone_one?.trim() || personV2?.phone || '',
             license_taken_at: clubMember.club?.label ?? 'BCSTO',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
-            orga_license_name: '',
+            orga_license_name: member.orga_license_name ? '' : member.orga_license_name,
             license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
             accept_mailing: member.accept_mailing,
             membership_date: member.membership_date,
