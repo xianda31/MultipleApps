@@ -71,6 +71,19 @@ describe('active members CSV export', () => {
     expect(csv).toContain('"2026-10-03"');
   });
 
+  it('labels a licensed sympathisant as licensed outside the club', () => {
+    const csv = buildActiveMembersCsv([
+      member({
+        memberStatus: 'SYMPATHISANT',
+        license_status: LicenseStatus.DULY_REGISTERED,
+        license_taken_at: 'Bridge Club de Toulouse',
+      }),
+    ]);
+
+    expect(csv).toContain('"Licencié hors club"');
+    expect(csv).toContain('"Bridge Club de Toulouse"');
+  });
+
   it('builds a locally dated filename', () => {
     expect(activeMembersCsvFileName(new Date(2026, 9, 13))).toBe('membres-actifs-2026-10-13.csv');
   });

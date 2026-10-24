@@ -16,7 +16,13 @@ function toCsvCell(value: unknown): string {
 }
 
 function licenseStatusLabel(member: Member): string {
-  if (member.orga_license_name) {
+  const licensedOutsideClub = member.orga_license_name
+    || (
+      member.memberStatus === 'SYMPATHISANT'
+      && (member.license_status === LicenseStatus.DULY_REGISTERED
+        || member.license_status === LicenseStatus.PROMOTED_ONLY)
+    );
+  if (licensedOutsideClub) {
     return 'Licencié hors club';
   }
   return LICENSE_STATUS_LABELS[member.license_status] ?? member.license_status;
