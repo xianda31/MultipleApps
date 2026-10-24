@@ -153,7 +153,9 @@
 	}
 }
 .home-content-section {
+    min-width: 0;
     padding: 0.75rem;
+    overflow: hidden;
     border: 2px solid color-mix(in srgb, var(--bs-success) 55%, var(--bs-border-color));
     border-radius: 0.65rem;
 }

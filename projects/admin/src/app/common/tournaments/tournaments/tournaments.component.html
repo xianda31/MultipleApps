@@ -16,17 +16,12 @@
             </h5>
 
             <div class="tournament-calendar-heading" aria-hidden="true">
-                <span></span>
                 <span>Lundi</span>
                 <span>Mercredi</span>
                 <span>Vendredi</span>
             </div>
 
             <div *ngFor="let week of month.weeks" class="tournament-calendar-week">
-                <div class="tournament-calendar-week-label">
-                    S{{ week.monday | date:'w' }}
-                </div>
-
                 <div *ngFor="let day of week.days" class="tournament-calendar-day">
                     <button *ngFor="let t of day.tournaments" type="button"
                         class="tournament-calendar-card nice_shadow"
