@@ -56,6 +56,21 @@ describe('active members CSV export', () => {
     expect(csv).toContain('"01 23 45 67 89"');
   });
 
+  it('exports the current external FFB license club and date', () => {
+    const csv = buildActiveMembersCsv([
+      member({
+        license_status: LicenseStatus.UNREGISTERED,
+        memberStatus: 'OUTSIDE_FFB_CLUB',
+        orga_license_name: 'Bridge Club de Toulouse',
+        register_date: '2026-10-03',
+      }),
+    ]);
+
+    expect(csv).toContain('"Licencié hors club"');
+    expect(csv).toContain('"Bridge Club de Toulouse"');
+    expect(csv).toContain('"2026-10-03"');
+  });
+
   it('builds a locally dated filename', () => {
     expect(activeMembersCsvFileName(new Date(2026, 9, 13))).toBe('membres-actifs-2026-10-13.csv');
   });

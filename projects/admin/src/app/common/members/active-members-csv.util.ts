@@ -15,8 +15,11 @@ function toCsvCell(value: unknown): string {
   return `"${guarded.replace(/"/g, '""')}"`;
 }
 
-function licenseStatusLabel(status: string): string {
-  return LICENSE_STATUS_LABELS[status] ?? status;
+function licenseStatusLabel(member: Member): string {
+  if (member.orga_license_name) {
+    return 'Licencié hors club';
+  }
+  return LICENSE_STATUS_LABELS[member.license_status] ?? member.license_status;
 }
 
 function formatFrenchDate(value: string): string {
@@ -55,9 +58,9 @@ export function buildActiveMembersCsv(members: Member[]): string {
       member.firstname,
       member.gender,
       member.license_number,
-      licenseStatusLabel(member.license_status),
+      licenseStatusLabel(member),
       member.memberStatus,
-      member.license_taken_at,
+      member.orga_license_name || member.license_taken_at,
       member.register_date,
       member.membership_date,
       formatFrenchDate(member.birthdate),

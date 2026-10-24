@@ -217,7 +217,12 @@
               <th class="text-center member-avatar-column">
                 {{ filteredMembers.length }} {{ getSelectedLifecycleLabel() }}
               </th>
-              <th class="member-player-column">Joueur</th>
+              <th class="member-player-column" [attr.aria-sort]="getNameAriaSort()">
+                <button type="button" class="member-sort-button" (click)="sortByName()">
+                  Joueur
+                  <i [class]="getNameSortIcon()" aria-hidden="true"></i>
+                </button>
+              </th>
               <th class="text-center member-status-column">
                 @if (selectedStatusFilter) {
                   <i [class]="getFilterIconClass(selectedStatusFilter)"></i>
@@ -301,7 +306,12 @@
                 {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '—' }}
               </td>
               <td class="member-license-detail-column member-license-date-column">
-                {{ member.register_date ? (member.register_date | date:'dd/MM/yyyy') : '—' }}
+                {{ getDisplayedLicenseDate(member) ? (getDisplayedLicenseDate(member) | date:'dd/MM/yyyy') : '—' }}
+                <small *ngIf="getDisplayedLicenseClub(member) as licenseClub"
+                  class="member-license-club"
+                  [title]="licenseClub">
+                  {{ licenseClub }}
+                </small>
               </td>
 
               <td class="d-none d-sm-table-cell member-info-column">

@@ -129,6 +129,11 @@ export class MemberSyncService {
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        members = await this.commitPhase(() => this.syncExternalLicenseDetails(members, licensees));
+
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.getSortedMembersSnapshot();
+        }
         members = await this.commitPhase(() => this.ensureMemberStatuses(members));
 
         members = await this.getMembersSnapshot();
@@ -221,6 +226,7 @@ export class MemberSyncService {
             phone_one: member.phone_one?.trim() || personV2?.phone || '',
             license_taken_at: clubMember.club?.label ?? 'BCSTO',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
+            orga_license_name: '',
             license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
             accept_mailing: member.accept_mailing,
             membership_date: member.membership_date,
@@ -269,6 +275,7 @@ export class MemberSyncService {
             license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
             license_taken_at: clubMember.club?.label ?? 'BCSTO',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
+            orga_license_name: '',
             membership_date: '',
             person_id: clubMember.id,
             memberStatus: this.computeMemberStatusFromClubMember(clubMember),
@@ -305,6 +312,72 @@ export class MemberSyncService {
         }
 
         await Promise.all(updates);
+    }
+
+    private async syncExternalLicenseDetails(members: Member[], clubLicensees: ClubMember[]): Promise<void> {
+        const clubReferences = this.membersService.buildFfbBaseReferences(clubLicensees);
+        const candidates = members.filter((member) => {
+            const licenseNumber = member.license_number?.trim();
+            return this.membersService.getLifecycleStatus(member) === 'ACTIVE'
+                && !!licenseNumber
+                && !licenseNumber.startsWith('?')
+                && !this.membersService.isInFfbBase(member, clubReferences);
+        });
+
+        const batchSize = 5;
+        for (let index = 0; index < candidates.length; index += batchSize) {
+            await Promise.all(
+                candidates.slice(index, index + batchSize).map((member) => this.syncExternalLicenseDetail(member))
+            );
+        }
+    }
+
+    private async syncExternalLicenseDetail(member: Member): Promise<void> {
+        const normalizedLicense = member.license_number.trim().padStart(8, '0');
+        const searchHints = [
+            normalizedLicense.replace(/^0+/, ''),
+            `${member.lastname} ${member.firstname}`.trim(),
+        ].filter((hint, index, hints) => hint.length > 3 && hints.indexOf(hint) === index);
+        let currentLicense: ClubMember | undefined;
+
+        for (const hint of searchHints) {
+            try {
+                const result = await this.ffbService.searchPlayersSuchAs(hint, { maxPerPage: 10 });
+                currentLicense = result.items.find((candidate) =>
+                    candidate.id === member.person_id
+                    || candidate.license_number.trim().padStart(8, '0') === normalizedLicense
+                );
+                if (currentLicense) break;
+            } catch (error) {
+                console.warn('[MemberSync] External FFB license lookup failed', {
+                    memberId: member.id,
+                    licenseNumber: normalizedLicense,
+                    hint,
+                    error,
+                });
+                return;
+            }
+        }
+
+        const externalLicenseClub = currentLicense?.licence
+            ? currentLicense.club?.label || currentLicense.club?.name || currentLicense.club?.ffbCode || ''
+            : '';
+        const externalLicenseDate = currentLicense?.licence && currentLicense.mainRegistration?.createdAt
+            ? currentLicense.mainRegistration.createdAt.split('T')[0]
+            : '';
+
+        if (
+            member.orga_license_name === externalLicenseClub
+            && member.register_date === externalLicenseDate
+        ) {
+            return;
+        }
+
+        await this.membersService.updateMember({
+            ...member,
+            orga_license_name: externalLicenseClub,
+            register_date: externalLicenseDate,
+        });
     }
 
     private async syncMembershipDates(

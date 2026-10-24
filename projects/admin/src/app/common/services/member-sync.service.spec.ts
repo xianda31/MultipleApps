@@ -42,11 +42,29 @@ describe('MemberSyncService', () => {
   } as PersonV2;
 
   function createService(localSeason = '2026/2027', initializedSeason = '2026/2027') {
-    const membersService = jasmine.createSpyObj('MembersService', ['updateMember', 'createMember', 'listMembers']);
+    const membersService = jasmine.createSpyObj(
+      'MembersService',
+      [
+        'updateMember',
+        'createMember',
+        'listMembers',
+        'buildFfbBaseReferences',
+        'getLifecycleStatus',
+        'hasPaidMembership',
+        'isInFfbBase',
+      ],
+    );
     membersService.updateMember.and.resolveTo();
     membersService.listMembers.and.returnValue(of([member]));
-    const ffbService = jasmine.createSpyObj('FFBProxyService', ['getFFBPerson']);
+    membersService.getLifecycleStatus.and.returnValue('ACTIVE');
+    membersService.hasPaidMembership.and.returnValue(true);
+    membersService.buildFfbBaseReferences.and.returnValue(new Set([clubMember.id, clubMember.license_number]));
+    membersService.isInFfbBase.and.callFake((candidate: Member, references: Set<number | string>) =>
+      references.has(candidate.person_id as number) || references.has(candidate.license_number)
+    );
+    const ffbService = jasmine.createSpyObj('FFBProxyService', ['getFFBPerson', 'searchPlayersSuchAs']);
     ffbService.getFFBPerson.and.resolveTo(person);
+    ffbService.searchPlayersSuchAs.and.resolveTo({ items: [], totalItems: 0, totalPages: 1, currentPage: 1 });
     const licenseesService = jasmine.createSpyObj('LicenseesService', ['getClubMembers$']);
     licenseesService.getClubMembers$.and.returnValue(of([clubMember]));
     const systemDataService = jasmine.createSpyObj(
@@ -131,6 +149,43 @@ describe('MemberSyncService', () => {
     await expectAsync((service as any).resetObsoleteLicenses([licensedMember], []))
       .toBeRejectedWithError(/liste FFB est vide/i);
     expect(membersService.updateMember).not.toHaveBeenCalled();
+  });
+
+  it('stores the current FFB date and club for a member outside the club base', async () => {
+    const { service, membersService, ffbService } = createService();
+    membersService.hasPaidMembership.and.returnValue(false);
+    const outsideMember = {
+      ...member,
+      id: 'outside-member',
+      person_id: 987654,
+      license_number: '01234567',
+      register_date: '2025-09-01',
+      license_taken_at: 'Bridge Club de Saint Orens',
+    } as Member;
+    const externalLicense = {
+      ...clubMember,
+      id: 987654,
+      license_number: '01234567',
+      licence: true,
+      club: { ...clubMember.club, label: 'Bridge Club de Toulouse' },
+      mainRegistration: { free: false, createdAt: '2026-10-03T09:30:00+02:00' },
+    } as ClubMember;
+    ffbService.searchPlayersSuchAs.and.resolveTo({
+      items: [externalLicense],
+      totalItems: 1,
+      totalPages: 1,
+      currentPage: 1,
+    });
+
+    await (service as any).syncExternalLicenseDetails([outsideMember], [clubMember]);
+
+    expect(ffbService.searchPlayersSuchAs).toHaveBeenCalledOnceWith('1234567', { maxPerPage: 10 });
+    expect(membersService.updateMember).toHaveBeenCalledWith(jasmine.objectContaining({
+      id: 'outside-member',
+      license_taken_at: 'Bridge Club de Saint Orens',
+      orga_license_name: 'Bridge Club de Toulouse',
+      register_date: '2026-10-03',
+    }));
   });
 
   it('matches a FFB member by person_id before license number', async () => {

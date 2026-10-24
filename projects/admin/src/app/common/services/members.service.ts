@@ -176,6 +176,7 @@ export class MembersService {
       }
     }
     catch (errors) {
+      console.error('[MembersService] updateMember failed', errors);
       if (Array.isArray(errors) && errors.length > 0 && typeof errors[0] === 'object' && errors[0] !== null && 'errorType' in errors[0]) {
         if ((errors[0] as any).errorType === 'Unauthorized') {
           this.toastService.showError('Gestion des membres', 'Vous n\'êtes pas autorisé à modifier une fiche adhérent');

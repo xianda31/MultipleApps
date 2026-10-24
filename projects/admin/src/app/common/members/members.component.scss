@@ -76,6 +76,17 @@ table.table.table-sm tbody tr td {
   min-width: 7rem;
 }
 
+.member-license-club {
+  display: block;
+  max-width: 10rem;
+  overflow: hidden;
+  color: var(--bs-secondary-color);
+  font-size: 0.7rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .member-license-date-column {
   width: 8rem;
   min-width: 8rem;

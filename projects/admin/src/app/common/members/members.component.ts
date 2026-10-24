@@ -491,6 +491,20 @@ export class MembersComponent implements OnInit {
     this.applyFilters();
   }
 
+  sortByName(): void {
+    this.dateSortField = null;
+    this.dateSortDirection = 'asc';
+    this.applyFilters();
+  }
+
+  getNameSortIcon(): string {
+    return this.dateSortField === null ? 'bi bi-chevron-up' : 'bi bi-chevron-expand';
+  }
+
+  getNameAriaSort(): 'none' | 'ascending' {
+    return this.dateSortField === null ? 'ascending' : 'none';
+  }
+
   getDateSortIcon(field: 'membership_date' | 'register_date'): string {
     if (this.dateSortField !== field) return 'bi bi-chevron-expand';
     return this.dateSortDirection === 'asc' ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
@@ -592,10 +606,31 @@ export class MembersComponent implements OnInit {
     }
 
     if (status === MemberStatus.OUTSIDE_FFB_CLUB || status === MemberStatus.NON_ADHERENT) {
+      if (member.orga_license_name || member.register_date) {
+        const licenseLocation = member.orga_license_name ? ` au ${member.orga_license_name}` : '';
+        const licenseDate = member.register_date
+          ? ` le ${this.formatDate(member.register_date)}`
+          : '';
+        return `Licence FFB prise${licenseLocation}${licenseDate}. ${membership}`;
+      }
       return `Absent de la base FFB du club. Sa situation de licence FFB ailleurs n’est pas connue. ${membership}`;
     }
 
     return this.getStatusLabel(status);
+  }
+
+  getDisplayedLicenseDate(member: Member): string {
+    return member.register_date || '';
+  }
+
+  getDisplayedLicenseClub(member: Member): string {
+    const status = this.getMemberStatus(member);
+    if (status === MemberStatus.SYMPATHISANT && this.membersService.isLicensed(member)) {
+      return member.license_taken_at || '';
+    }
+    return status === MemberStatus.OUTSIDE_FFB_CLUB || status === MemberStatus.NON_ADHERENT
+      ? member.orga_license_name || ''
+      : '';
   }
 
   private formatDate(value: string): string {
