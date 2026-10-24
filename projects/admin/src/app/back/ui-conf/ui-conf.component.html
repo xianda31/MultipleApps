@@ -127,21 +127,9 @@
               </div>
             </div>
             <ng-container
-              *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'tournaments_row_cols', label: 'Tournois par ligne' }"></ng-container>
-            <ng-container
               *ngTemplateOutlet="breakpointsInputs; context: { groupName: 'news_row_cols', label: 'News par ligne' }"></ng-container>
 
-            <div class="mt-2 mb-2 d-flex align-items-center gap-2">
-              <label for="tournamentsDisplayMode" class="form-label small mb-0">Affichage des tournois :</label>
-              <select id="tournamentsDisplayMode" class="form-select form-select-sm w-auto"
-                formControlName="tournaments_display_mode">
-                <option value="cards">Cartes</option>
-                <option value="calendar">Calendrier</option>
-              </select>
-            </div>
-
-            <button type="button" class="btn btn-secondary btn-sm" (click)="previewSettings()"
-              [disabled]="uiForm.get('tournaments_row_cols')?.invalid">Aperçu</button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="previewSettings()">Aperçu</button>
 
 
 
@@ -341,7 +329,7 @@
     <button type="submit" class="btn ui-conf-save-button"
       [class.btn-primary]="uiForm.dirty"
       [class.btn-outline-primary]="!uiForm.dirty"
-      [disabled]="uiForm.invalid || uiForm.get('tournaments_row_cols')?.invalid"
+      [disabled]="uiForm.invalid"
       title="Sauvegarder la configuration de l'interface"
       aria-label="Sauvegarder la configuration de l'interface">
       <i class="bi bi-cloud-arrow-up-fill"></i>

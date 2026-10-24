@@ -42,14 +42,24 @@ export class TournamentService {
         options: { refresh?: boolean } = { refresh: false }
     ): Observable<Tournament[]> {
         const window = tournamentsWindow || TOURNAMENTS_WINDOW;
-        // Calculate date range: (today - days_back) to (today + window)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const dateFrom = new Date(today);
         dateFrom.setDate(today.getDate() - days_back);
-        
         const dateTo = new Date(today);
         dateTo.setDate(today.getDate() + window);
+
+        return this.list_tournaments(dateFrom, dateTo, options);
+    }
+
+    list_tournaments(
+        dateFrom: Date,
+        dateTo: Date,
+        options: { refresh?: boolean } = { refresh: false }
+    ): Observable<Tournament[]> {
+        if (dateTo.getTime() < dateFrom.getTime()) {
+            throw new Error('La date de fin des tournois doit être postérieure à la date de début');
+        }
 
         const cacheKey = `${dateFrom.toISOString().slice(0, 10)}:${dateTo.toISOString().slice(0, 10)}`;
         if (!options.refresh && this._tournamentCache.has(cacheKey)) {

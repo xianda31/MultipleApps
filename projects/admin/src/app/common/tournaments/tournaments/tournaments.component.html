@@ -1,3 +1,25 @@
+<nav *ngIf="isCalendarPage"
+    class="tournament-calendar-navigation col-12 col-xl-8 mx-auto"
+    aria-label="Navigation entre les mois">
+    <button type="button" class="btn btn-outline-success btn-sm"
+        [disabled]="loading || !canNavigateBackward"
+        (click)="navigateCalendarMonths(-1)"
+        aria-label="Afficher les deux mois précédents">
+        <i class="bi bi-skip-backward-fill" aria-hidden="true"></i>
+    </button>
+    <strong>
+        {{ visibleCalendarRange.start | date:'MMMM yyyy':'':'fr-FR' | titlecase }}
+        –
+        {{ visibleCalendarRange.end | date:'MMMM yyyy':'':'fr-FR' | titlecase }}
+    </strong>
+    <button type="button" class="btn btn-outline-success btn-sm"
+        [disabled]="loading || !canNavigateForward"
+        (click)="navigateCalendarMonths(1)"
+        aria-label="Afficher les deux mois suivants">
+        <i class="bi bi-skip-forward-fill" aria-hidden="true"></i>
+    </button>
+</nav>
+
 <div *ngIf="loading" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Chargement des tournois...</span>
@@ -9,19 +31,28 @@
 </div>
 
 <ng-container *ngIf="!loading && !in_error">
-    <div *ngIf="displayMode === 'calendar'; else cardsView" class="tournament-calendar">
-        <section *ngFor="let month of calendarMonths" class="tournament-calendar-month">
+    <div class="tournament-calendar-container"
+        [ngClass]="isCalendarPage ? 'col-12 col-xl-8 mx-auto' : null">
+    <div class="tournament-calendar"
+        [ngClass]="isCalendarPage ? 'tournament-calendar-page row row-cols-1 row-cols-lg-2 g-4' : null">
+        <div *ngFor="let month of calendarMonths" [class.col]="isCalendarPage">
+        <section class="tournament-calendar-month" [class.h-100]="isCalendarPage">
             <h5 class="tournament-calendar-month-title">
                 {{ month.monthStart | date:'MMMM yyyy':'':'fr-FR' | titlecase }}
             </h5>
 
-            <div class="tournament-calendar-heading" aria-hidden="true">
+            <div class="tournament-calendar-heading" [class.with-week-numbers]="showWeekNumbers" aria-hidden="true">
+                <span *ngIf="showWeekNumbers">Sem.</span>
                 <span>Lundi</span>
                 <span>Mercredi</span>
                 <span>Vendredi</span>
             </div>
 
-            <div *ngFor="let week of month.weeks" class="tournament-calendar-week">
+            <div *ngFor="let week of month.weeks" class="tournament-calendar-week"
+                [class.with-week-numbers]="showWeekNumbers">
+                <span *ngIf="showWeekNumbers" class="tournament-calendar-week-number">
+                    S{{ week.monday | date:'ww' }}
+                </span>
                 <div *ngFor="let day of week.days" class="tournament-calendar-day">
                     <button *ngFor="let t of day.tournaments" type="button"
                         class="tournament-calendar-card nice_shadow"
@@ -59,69 +90,15 @@
                         [attr.aria-label]="'Aucun tournoi le ' + day.label"></span>
                 </div>
             </div>
+            <p *ngIf="month.weeks.length === 0" class="tournament-calendar-no-event">
+                Aucun tournoi programmé.
+            </p>
         </section>
+        </div>
 
         <p *ngIf="calendarMonths.length === 0" class="text-muted small">
             Aucun tournoi à venir.
         </p>
     </div>
-
-    <ng-template #cardsView>
-        <div class="equal-height-cards" [ngClass]="rowCols()" [style]="gridStyle()">
-            <div class="col" *ngFor="let t of listedTournamentTeams">
-
-                <div class="card h-100 nice_shadow position-relative"
-                    style="cursor:pointer; border-radius: 0.5rem; overflow:hidden;"
-                    (click)="selectTournament(t.tournament.id)">
-            <!-- Bandeau diagonal coin supérieur droit -->
-            <div *ngIf="registrated_in(t) || isolated_in(t)"
-                class="position-absolute bg-info text-white fw-bold d-flex align-items-center justify-content-center"
-                style="width: 130px; padding: 6px 0; transform: rotate(45deg); font-size: 0.8em; top: 18px; right: -32px; z-index: 1;">
-                {{registrated_in(t) ? 'INSCRIT' : 'ISOLÉ'}}<span *ngIf="isLoggedFemale()">E</span>
-            </div>
-
-                    <div class="card-body d-flex flex-column">
-
-                <div class="d-flex align-items-center justify-content-start">
-                    <h4 class="text-success fw-bolder mb-0">
-                        {{ date_of(t) | date:'EEEE d MMMM':'':'fr-FR' }}<ng-container *ngIf="time_of(t)"> &nbsp;&nbsp;
-                            {{ time_of(t) }}</ng-container>
-                    </h4>
-                </div>
-
-                <div class="row  g-0">
-                    <div class="col col-sm-9 col-md-8 d-flex flex-column justify-content-center align-items-start px-1">
-                        <div class="text-start fw-bolder mb-0">
-                            {{name_of(t)}}
-                        </div>
-                        <div *ngIf="ivPlayerMax_of(t)" class="small text-muted">
-                            (IV max: {{ ivPlayerMax_of(t) }})
-                        </div>
-                    </div>
-                    <div class="col col-sm-3 col-md-4 d-flex">
-                        <div class="tournament-thumbnail-frame overflow-hidden w-100">
-                            <ng-container *ngIf="getImageUrl(t) as imgUrl; else noImg">
-                                <img [attr.src]="imgUrl" [alt]="name_of(t) || 'vignette'">
-                            </ng-container>
-                            <ng-template #noImg>
-                                <div class="w-100 h-100" style=" background: transparent;"></div>
-                            </ng-template>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-auto pt-2 g-0 d-flex justify-content-around align-items-center  text-success fw-bolder">
-                    <div  *ngIf="getPairedTeamCount(t)">
-                        {{ getPairedTeamCount(t) }} paire{{ getPairedTeamCount(t) > 1 ? 's' : '' }}
-                    </div>
-                    <div  *ngIf="getIsolatedPlayerCount(t)">
-                         {{ getIsolatedPlayerCount(t) }} {{ getIsolatedPlayerCount(t) > 1 ? 'joueurs isolés' : 'joueur isolé' }}
-                    </div>
-                </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ng-template>
+    </div>
 </ng-container>

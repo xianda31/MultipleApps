@@ -1,20 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { TournamentService } from '../../services/tournament.service';
 import { TournamentTeams, Tournament } from '../../ffb/interface/tournament.interface';
 import { AuthentificationService } from '../../authentification/authentification.service';
 import { TitleService } from '../../../front/title/title.service';
-import { BreakpointsSettings, TournamentDisplayMode } from '../../interfaces/ui-conf.interface';
-import { formatRowColsClasses } from '../../utils/ui-utils';
 import { SystemDataService } from '../../services/system-data.service';
 import { catchError, combineLatest, filter, forkJoin, map, merge, of, scan, startWith, switchMap, take } from 'rxjs';
 import { Member } from '../../interfaces/member.interface';
 import { isFemaleGender } from '../../utils/gender.util';
 import { findTournamentImageUrl } from '../../utils/tournament-thumbnail.util';
 
-const MAX_TOURNAMENTS_LISTED = 9;
-const DEFAULT_ROW_COLS: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
 const CALENDAR_WEEKDAYS = [
   { weekday: 1 as const, label: 'Lundi' },
   { weekday: 3 as const, label: 'Mercredi' },
@@ -36,6 +32,24 @@ export interface TournamentCalendarMonth {
   key: string;
   monthStart: Date;
   weeks: TournamentCalendarWeek[];
+}
+
+export interface TournamentCalendarRange {
+  start: Date;
+  end: Date;
+}
+
+export function tournamentCalendarRange(today: Date, monthOffset: number, seasonEnd: Date): TournamentCalendarRange {
+  const firstMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const start = monthOffset === 0
+    ? new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    : firstMonth;
+  const requestedEnd = new Date(firstMonth.getFullYear(), firstMonth.getMonth() + 2, 0, 23, 59, 59, 999);
+
+  return {
+    start,
+    end: requestedEnd.getTime() > seasonEnd.getTime() ? new Date(seasonEnd) : requestedEnd,
+  };
 }
 
 export function compactTournamentName(name: string): string {
@@ -104,21 +118,20 @@ export function buildTournamentCalendar(tournaments: TournamentTeams[]): Tournam
 })
 export class TournamentsComponent {
   @Input() displayTitle: boolean = true;
-  @Input() displayMode: TournamentDisplayMode = 'cards';
-  private _rowCols: BreakpointsSettings = DEFAULT_ROW_COLS;
+  private _showWeekNumbers = true;
 
   @Input()
-  set row_cols(value: BreakpointsSettings | null | undefined) {
-    this._rowCols = value ?? DEFAULT_ROW_COLS;
+  set showWeekNumbers(value: boolean | string | null | undefined) {
+    this._showWeekNumbers = value !== false && value !== 'false';
   }
 
-  get row_cols(): BreakpointsSettings {
-    return this._rowCols;
+  get showWeekNumbers(): boolean {
+    return this._showWeekNumbers;
   }
-
 
   next_tournament_teams: TournamentTeams[] = [];
   calendarMonths: TournamentCalendarMonth[] = [];
+  calendarMonthOffset = 0;
 
   person_id: number | null | undefined; // Person ID of the logged member
   // logged: boolean = false;
@@ -150,6 +163,41 @@ export class TournamentsComponent {
     this.loadTournamentTeams();
   }
 
+  get isCalendarPage(): boolean {
+    return this.displayTitle !== false;
+  }
+
+  get visibleCalendarRange(): TournamentCalendarRange {
+    return tournamentCalendarRange(new Date(), this.calendarMonthOffset, this.getCurrentSeasonEnd());
+  }
+
+  get canNavigateBackward(): boolean {
+    return this.calendarMonthOffset > 0;
+  }
+
+  get canNavigateForward(): boolean {
+    const nextRange = tournamentCalendarRange(
+      new Date(),
+      this.calendarMonthOffset + 2,
+      this.getCurrentSeasonEnd()
+    );
+    return nextRange.start.getTime() <= this.getCurrentSeasonEnd().getTime();
+  }
+
+  navigateCalendarMonths(direction: -1 | 1): void {
+    if (this.loading || (direction < 0 && !this.canNavigateBackward) || (direction > 0 && !this.canNavigateForward)) {
+      return;
+    }
+
+    this.calendarMonthOffset = Math.max(0, this.calendarMonthOffset + direction * 2);
+    this.loadTournamentTeams();
+  }
+
+  private getCurrentSeasonEnd(): Date {
+    const lastDate = this.systemDataService.last_date(this.systemDataService.get_today_season());
+    return new Date(`${lastDate}T23:59:59.999`);
+  }
+
   private loadTournamentImages(): void {
     this.systemDataService.tournamentsTypeWithUrl$().pipe(take(1)).subscribe({
       next: (typesMap) => {
@@ -162,8 +210,16 @@ export class TournamentsComponent {
 
   loadTournamentTeams() {
     this.loading = true;
+    this.in_error = false;
+    const tournaments$ = this.isCalendarPage
+      ? this.tournamentService.list_tournaments(
+        this.visibleCalendarRange.start,
+        this.visibleCalendarRange.end
+      )
+      : this.tournamentService.list_next_tournaments(0);
+
     combineLatest([
-      this.tournamentService.list_next_tournaments(0),
+      tournaments$,
       combineLatest([
         this.auth.isRestoringSession$,
         this.auth.logged_member$
@@ -203,7 +259,7 @@ export class TournamentsComponent {
     ).subscribe({
       next: ({ teams, completed, total }) => {
         this.next_tournament_teams = this.enrichWithImages(teams);
-        this.calendarMonths = buildTournamentCalendar(this.next_tournament_teams);
+        this.calendarMonths = this.buildVisibleCalendar(this.next_tournament_teams);
         this.loading = false;
         if (completed === total) {
           this.loadIsolatedRegistrations(this.next_tournament_teams);
@@ -215,6 +271,31 @@ export class TournamentsComponent {
         console.error('Erreur lors du chargement des tournois :', err);
       }
     });
+  }
+
+  private buildVisibleCalendar(tournaments: TournamentTeams[]): TournamentCalendarMonth[] {
+    const calendar = buildTournamentCalendar(tournaments);
+    if (!this.isCalendarPage) {
+      return calendar;
+    }
+
+    const byMonth = new Map(calendar.map((month) => [month.key, month]));
+    const { start, end } = this.visibleCalendarRange;
+    const visibleMonths: TournamentCalendarMonth[] = [];
+    const month = new Date(start.getFullYear(), start.getMonth(), 1);
+    const lastMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+    while (month.getTime() <= lastMonth.getTime()) {
+      const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+      visibleMonths.push(byMonth.get(key) ?? {
+        key,
+        monthStart: new Date(month),
+        weeks: [],
+      });
+      month.setMonth(month.getMonth() + 1);
+    }
+
+    return visibleMonths;
   }
 
   private loadIsolatedRegistrations(tournaments: TournamentTeams[]): void {
@@ -318,33 +399,8 @@ export class TournamentsComponent {
     return tournament.tournament.entryCount;
   }
 
-  get listedTournamentTeams(): TournamentTeams[] {
-    return this.next_tournament_teams.slice(0, MAX_TOURNAMENTS_LISTED);
-  }
-
   selectTournament(tournamentId: number) {
     this.router.navigate(['.', tournamentId],
       { relativeTo: this.route });
   }
-
-  // Compute bootstrap row classes from the `row_cols` input (breakpoints settings).
-  rowCols(): string[] {
-    return formatRowColsClasses(this.row_cols);
-  }
-
-  @HostListener('window:resize')
-  onResize(): void { /* déclenche la réévaluation de gridStyle() */ }
-
-  gridStyle(): { [key: string]: string } {
-    const w = window.innerWidth;
-    const bp = this.row_cols;
-    let cols: number;
-    if (w >= 1200 && bp.XL != null) cols = bp.XL;
-    else if (w >= 992 && bp.LG != null) cols = bp.LG;
-    else if (w >= 768 && bp.MD != null) cols = bp.MD;
-    else if (w >= 576 && bp.SM != null) cols = bp.SM;
-    else cols = 1;
-    return { 'grid-template-columns': `repeat(${cols}, 1fr)` };
-  }
-
 }

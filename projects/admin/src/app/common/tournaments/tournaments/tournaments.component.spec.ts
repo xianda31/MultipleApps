@@ -1,5 +1,5 @@
 import { TournamentTeams } from '../../ffb/interface/tournament.interface';
-import { buildTournamentCalendar, compactTournamentName } from './tournaments.component';
+import { buildTournamentCalendar, compactTournamentName, tournamentCalendarRange } from './tournaments.component';
 
 describe('buildTournamentCalendar', () => {
   it('groups tournaments by month, week and Monday-Wednesday-Friday columns', () => {
@@ -50,4 +50,30 @@ describe('buildTournamentCalendar', () => {
       items: [],
     };
   }
+});
+
+describe('tournamentCalendarRange', () => {
+  const today = new Date(2026, 9, 24);
+  const seasonEnd = new Date(2027, 5, 30, 23, 59, 59, 999);
+
+  it('starts the first two-month period on the current day', () => {
+    const range = tournamentCalendarRange(today, 0, seasonEnd);
+
+    expect(range.start).toEqual(new Date(2026, 9, 24));
+    expect(range.end).toEqual(new Date(2026, 10, 30, 23, 59, 59, 999));
+  });
+
+  it('moves forward by two full calendar months', () => {
+    const range = tournamentCalendarRange(today, 2, seasonEnd);
+
+    expect(range.start).toEqual(new Date(2026, 11, 1));
+    expect(range.end).toEqual(new Date(2027, 0, 31, 23, 59, 59, 999));
+  });
+
+  it('does not extend beyond the end of the season', () => {
+    const range = tournamentCalendarRange(today, 8, seasonEnd);
+
+    expect(range.start).toEqual(new Date(2027, 5, 1));
+    expect(range.end).toEqual(seasonEnd);
+  });
 });

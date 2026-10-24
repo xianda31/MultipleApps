@@ -281,9 +281,7 @@ export class SystemDataService {
             club: { name: '', logo: '', image: '', font: 'Roboto, serif' }
           },
           homepage: {
-            tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
             news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
-            tournaments_display_mode: 'cards',
           },
           frontBannerEnabled: false,
           homepage_intro: '',
@@ -357,9 +355,7 @@ export class SystemDataService {
         club: { name: '', logo: '', image: '', font: 'Roboto, serif' }
       },
       homepage: {
-        tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
         news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
-        tournaments_display_mode: 'cards',
         featured_duration_days: 30,
       },
       frontBannerEnabled: false,
@@ -420,16 +416,11 @@ export class SystemDataService {
       const mergedRaw = { ...(this._ui_settings || {}), ...(ui || {}) } as any;
       mergedRaw.homepage = mergedRaw.homepage || {};
       // support legacy top-level keys or nested homepage keys
-      if ((ui as any)?.homepage?.tournaments_row_cols || (ui as any)?.tournaments_row_cols) {
-        const t = (ui as any)?.homepage?.tournaments_row_cols || (ui as any)?.tournaments_row_cols;
-        mergedRaw.homepage.tournaments_row_cols = normalizeBreakpoints(t);
-      }
       if ((ui as any)?.homepage?.news_row_cols || (ui as any)?.news_row_cols) {
         const n = (ui as any)?.homepage?.news_row_cols || (ui as any)?.news_row_cols;
         mergedRaw.homepage.news_row_cols = normalizeBreakpoints(n);
       }
       // delete legacy top-level keys if any
-      if (mergedRaw.tournaments_row_cols !== undefined) delete mergedRaw.tournaments_row_cols;
       if (mergedRaw.news_row_cols !== undefined) delete mergedRaw.news_row_cols;
       this._ui_settings = mergedRaw as UIConfiguration;
       try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }
