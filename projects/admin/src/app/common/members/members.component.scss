@@ -6,6 +6,28 @@
   border-top-color: #007bff !important;
 }
 
+.members-sync-progress {
+  width: min(26rem, 55vw);
+  min-width: 16rem;
+}
+
+.members-sync-progress-label {
+  display: block;
+  margin-bottom: 0.2rem;
+  overflow: hidden;
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.members-sync-progress-bar {
+  height: 1rem;
+  font-size: 0.68rem;
+}
+
 /* Avatar images should not stretch row height */
 .table-avatar {
   width: 32px;
@@ -137,31 +159,9 @@ table.table.table-sm tbody tr td {
 
 .members-overview-layout {
   display: grid;
-  grid-template-columns: minmax(20rem, 38rem) minmax(16rem, 20rem);
-  column-gap: 4rem;
+  grid-template-columns: minmax(20rem, 38rem);
   justify-content: center;
   align-items: start;
-}
-
-.members-add-person {
-  width: 100%;
-  max-width: 20rem;
-  min-width: 0;
-  align-self: end;
-  justify-self: end;
-  padding: 0.75rem;
-  border: 1px solid var(--bs-border-color);
-  border-radius: 0.5rem;
-  background: var(--bs-body-bg);
-}
-
-.members-add-options {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.members-add-person .input-group-text {
-  white-space: normal;
 }
 
 .members-stats-table {
@@ -257,6 +257,13 @@ table.table.table-sm tbody tr td {
     --bs-gutter-x: 0;
   }
 
+  .members-sync-progress {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.35rem;
+    margin-left: 0 !important;
+  }
+
   .members-table-scroll {
     margin-right: calc(-1 * var(--bs-card-spacer-x));
     margin-left: calc(-1 * var(--bs-card-spacer-x));
@@ -317,11 +324,6 @@ table.table.table-sm tbody tr td {
 @media (max-width: 767.98px) and (orientation: portrait) {
   .members-overview-layout {
     grid-template-columns: minmax(0, 1fr);
-    row-gap: 1rem;
-  }
-
-  .members-add-person {
-    max-width: none;
   }
 
   .members-table {

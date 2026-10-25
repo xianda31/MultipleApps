@@ -4,8 +4,7 @@ import { Observable, Subject, distinctUntilKeyChanged, firstValueFrom, skip, tak
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { GetNewbeeComponent, NewMemberFormValue } from '../modals/get-newbee/get-newbee.component';
-import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
+import { NewMemberFormValue } from '../modals/get-newbee/get-newbee.component';
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { Member, LicenseStatus, MemberLifecycleStatus } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
@@ -14,7 +13,7 @@ import { MemberSettingsService } from '../services/member-settings.service';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { PersonV2 } from '../ffb/interface/person-v2.interface';
 import { normalizeGender } from '../utils/gender.util';
-import { MemberSyncService } from '../services/member-sync.service';
+import { MemberSyncProgress, MemberSyncService } from '../services/member-sync.service';
 import { SystemDataService } from '../services/system-data.service';
 import { AuthentificationService } from '../authentification/authentification.service';
 import { activeMembersCsvFileName, buildActiveMembersCsv } from './active-members-csv.util';
@@ -25,13 +24,13 @@ import {
   MemberMergeConflictModalComponent,
   MemberMergeDecision,
 } from './member-merge-conflict-modal.component';
-import {
-  FfbMemberCreationDecision,
-  FfbMemberCreationModalComponent,
-} from './ffb-member-creation-modal.component';
 import { ManualMemberDuplicateModalComponent } from './manual-member-duplicate-modal.component';
 import { hasSameNormalizedNames } from '../services/member-identity.util';
 import { normalizeMemberEmail } from '../services/member-email.util';
+import {
+  AddDirectoryPersonModalComponent,
+  AddDirectoryPersonResult,
+} from './add-directory-person-modal.component';
 
 type MemberStatusConfig = {
   label: string;
@@ -44,7 +43,7 @@ type DirectoryFilter = MemberStatus | MemberLifecycleStatus;
   selector: 'app-members',
   standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, InputPlayerComponent, NgbTooltipModule, NgbDropdownModule, PhonePipe],
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, NgbTooltipModule, NgbDropdownModule, PhonePipe],
   templateUrl: './members.component.html',
   styleUrl: './members.component.scss'
 })
@@ -69,7 +68,6 @@ export class MembersComponent implements OnInit {
   outside_ffb_unrenewed_members_nbr = 0;
   archived_members_nbr = 0;
   banned_members_nbr = 0;
-  new_player!: ClubMember;
   STATUSES = MemberStatus;
   filters: MemberStatus[] = [
     MemberStatus.CLUB_LICENSEE,
@@ -90,6 +88,10 @@ export class MembersComponent implements OnInit {
   selectedLifecycleFilter: MemberLifecycleStatus = 'ACTIVE';
   selectedStatusFilter: MemberStatus | null = null;
   loading: boolean = true;
+  syncProgress: MemberSyncProgress = {
+    percent: 0,
+    label: 'Préparation de la synchronisation...',
+  };
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
@@ -154,6 +156,12 @@ export class MembersComponent implements OnInit {
     ).subscribe(() => {
       this.avatar_urls$ = this.collect_avatars(this.members);
       this.applyFilters();
+    });
+
+    this.memberSyncService.syncProgress$.pipe(
+      takeUntil(this.destroy$),
+    ).subscribe((progress) => {
+      this.syncProgress = progress;
     });
 
     void this.loadMembersWithSynchronization(true);
@@ -261,10 +269,31 @@ export class MembersComponent implements OnInit {
     }
   }
 
-  async add_licensee(player: ClubMember) {
+  async openAddPersonModal(): Promise<void> {
+    const modalRef = this.modalService.open(AddDirectoryPersonModalComponent, {
+      size: 'lg',
+      centered: true,
+      backdrop: 'static',
+      keyboard: false,
+    });
+    const result = await modalRef.result.catch(() => null) as AddDirectoryPersonResult | null;
+    if (!result) return;
+
+    if (result.kind === 'ffb') {
+      await this.add_licensee(result.player, result.person, result.email, result.acceptMailing);
+      return;
+    }
+    await this.addNewbee(result.member);
+  }
+
+  async add_licensee(
+    player: ClubMember,
+    personV2: PersonV2 | null,
+    creationEmail: string,
+    acceptMailing: boolean,
+  ) {
     if (!player) { return; }
 
-    this.new_player = null as any;
     const existingMember = this.members.find((member) =>
       member.person_id === player.id
       || member.license_number?.trim() === player.license_number?.trim()
@@ -278,7 +307,6 @@ export class MembersComponent implements OnInit {
     }
 
     try {
-      const personV2 = await this.ffbService.getFFBPerson(player.id).catch(() => null);
       const candidates = this.members.filter((member) => hasSameNormalizedNames(
         member.firstname,
         member.lastname,
@@ -309,23 +337,13 @@ export class MembersComponent implements OnInit {
         if (decision.action !== 'create') return;
       }
 
-      const modalRef = this.modalService.open(FfbMemberCreationModalComponent, {
-        centered: true,
-        backdrop: 'static',
-        keyboard: false,
-      });
-      modalRef.componentInstance.clubMember = player;
-      modalRef.componentInstance.person = personV2;
-      const creation = await modalRef.result.catch(() => null) as FfbMemberCreationDecision | null;
-      if (!creation) return;
-
-      const email = await this.validateCreationEmail(creation.email);
+      const email = await this.validateCreationEmail(creationEmail);
       if (!email) return;
 
       const newMember: Member = {
         ...this.createNewMember(player, personV2),
         email,
-        accept_mailing: creation.acceptMailing,
+        accept_mailing: acceptMailing,
       };
       await this.memberSyncService.createMemberWithComputedStatus(newMember);
       await this.refreshMembersAsync();
@@ -335,11 +353,7 @@ export class MembersComponent implements OnInit {
     }
   }
 
-  async addNewbee(): Promise<void> {
-    const modalRef = this.modalService.open(GetNewbeeComponent, { centered: true });
-    const newbee = await modalRef.result.catch(() => null) as NewMemberFormValue | null;
-    if (!newbee) return;
-
+  async addNewbee(newbee: NewMemberFormValue): Promise<void> {
     const email = await this.validateCreationEmail(newbee.email);
     if (!email) return;
 
@@ -559,7 +573,7 @@ export class MembersComponent implements OnInit {
   }
 
   exportActiveMembersCsv(): void {
-    const csv = buildActiveMembersCsv(this.members);
+    const csv = buildActiveMembersCsv(this.members, this.systemDataService.get_local_season());
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');

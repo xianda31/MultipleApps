@@ -5,20 +5,40 @@
         <div class="col-auto card-title me-4 d-flex flex-wrap align-items-center">
           <span class="fw-bold">Répertoire Club</span>
           <ng-container *ngIf="loading">
-            <div class="spinner-border text-primary ms-2 align-middle"
-              style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
+            <div class="members-sync-progress ms-3" role="status" aria-live="polite">
+              <span class="members-sync-progress-label">{{ syncProgress.label }}</span>
+              <div class="progress members-sync-progress-bar"
+                role="progressbar"
+                aria-label="Progression de la synchronisation des membres"
+                [attr.aria-valuenow]="syncProgress.percent"
+                aria-valuemin="0"
+                aria-valuemax="100">
+                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                  [style.width.%]="syncProgress.percent">
+                  {{ syncProgress.percent }} %
+                </div>
+              </div>
             </div>
-            <span class="ms-2 align-middle text-muted">Consultation base de données FFB en cours...</span>
           </ng-container>
         </div>
-        <div class="col-auto ms-auto" *ngIf="!loading && selectedLifecycleFilter === 'ACTIVE'">
+        <div class="col-auto ms-auto d-flex gap-2" *ngIf="!loading">
           <button type="button" class="btn btn-sm btn-outline-primary"
+            ngbTooltip="Ajouter une personne au répertoire"
+            placement="bottom" container="body"
+            aria-label="Ajouter une personne au répertoire"
+            (click)="openAddPersonModal()">
+            <i class="bi bi-person-fill-add" aria-hidden="true"></i>
+            <span class="d-none d-sm-inline ms-1">Ajouter</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-primary"
+            *ngIf="selectedLifecycleFilter === 'ACTIVE'"
             ngbTooltip="Exporter les membres actifs au format CSV"
             placement="bottom" container="body"
             aria-label="Exporter les membres actifs au format CSV"
             [disabled]="active_members_nbr === 0"
             (click)="exportActiveMembersCsv()">
             <i class="bi bi-download" aria-hidden="true"></i>
+            <span class="d-none d-sm-inline ms-1">Export .csv</span>
           </button>
         </div>
         <ng-container *ngIf="!loading">
@@ -184,26 +204,6 @@
                 </tfoot>
               </table>
             </div>
-            <section class="members-add-person" aria-labelledby="members-add-person-title">
-              <h6 id="members-add-person-title" class="fw-bold mb-3">Ajouter une personne au répertoire :</h6>
-              <div class="members-add-options">
-                <div class="input-group input-group-sm ">
-                  <span class="input-group-text flex-grow-1">
-                    <strong class="me-1">ABSENTE DE LA FFB</strong>
-                  </span>
-                  <button class="btn btn-primary btn-sm" (click)="addNewbee()"
-                    aria-label="Ajouter une personne absente de la FFB">
-                    <i class="bi bi-person-fill-add "></i>
-                  </button>
-                </div>
-                <div class="input-group input-group-sm ">
-                  <span class="input-group-text"><strong>CONNUE DE LA FFB</strong> :</span>
-                  <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
-                    class="form-control form-control-sm" [(ngModel)]="new_player"
-                    (ngModelChange)="add_licensee(new_player)"></app-input-player>
-                </div>
-              </div>
-            </section>
           </div>
         </ng-container>
       </div>

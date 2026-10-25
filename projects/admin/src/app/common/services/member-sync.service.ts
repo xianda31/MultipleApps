@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { filter, firstValueFrom, take } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, take } from 'rxjs';
 import { BookService } from '../../back/services/book.service';
 import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { Revenue } from '../interfaces/accounting.interface';
@@ -19,6 +19,11 @@ export interface MemberMergeConflict {
     candidates: Member[];
 }
 
+export interface MemberSyncProgress {
+    percent: number;
+    label: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -27,6 +32,11 @@ export class MemberSyncService {
     private lastSyncAt = 0;
     private readonly MIN_SYNC_INTERVAL_MS = 15_000;
     private pendingMergeConflicts: MemberMergeConflict[] = [];
+    private readonly syncProgressSubject = new BehaviorSubject<MemberSyncProgress>({
+        percent: 0,
+        label: 'Préparation de la synchronisation...',
+    });
+    readonly syncProgress$ = this.syncProgressSubject.asObservable();
 
     constructor(
         private membersService: MembersService,
@@ -94,6 +104,7 @@ export class MemberSyncService {
 
     private async runSynchronization(synchronizationSeason: string): Promise<Member[]> {
         this.pendingMergeConflicts = [];
+        this.reportProgress(3, 'Chargement des données FFB et comptables...');
         const [operations, licensees] = await Promise.all([
             this.loadOperations(),
             firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1))),
@@ -109,37 +120,50 @@ export class MemberSyncService {
 
         let members = await this.getMembersSnapshot();
 
-        for (const licensee of licensees) {
+        for (const [index, licensee] of licensees.entries()) {
             if (!this.canSynchronizeSeason(synchronizationSeason)) {
                 return this.getSortedMembersSnapshot();
             }
             await this.createOrUpdateMember(members, licensee);
+            this.reportProgress(
+                8 + Math.round(((index + 1) / licensees.length) * 47),
+                `Fusion des membres FFB : ${index + 1}/${licensees.length}`
+            );
         }
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.reportProgress(58, 'Contrôle des rattachements FFB...');
         members = await this.commitPhase(() => this.resetObsoleteLicenses(members, licensees));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.reportProgress(65, 'Mise à jour des adhésions...');
         members = await this.commitPhase(() => this.syncMembershipDates(members, operations, synchronizationSeason));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.reportProgress(72, 'Recherche des licences prises dans un autre club...');
         members = await this.commitPhase(() => this.syncExternalLicenseDetails(members, licensees));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.reportProgress(96, 'Finalisation des statuts...');
         members = await this.commitPhase(() => this.ensureMemberStatuses(members));
 
         members = await this.getMembersSnapshot();
         this.lastSyncAt = Date.now();
+        this.reportProgress(100, 'Synchronisation terminée');
 
         return this.sortMembers(members);
+    }
+
+    private reportProgress(percent: number, label: string): void {
+        this.syncProgressSubject.next({ percent, label });
     }
 
     private async loadOperations(): Promise<Revenue[]> {
@@ -326,8 +350,14 @@ export class MemberSyncService {
 
         const batchSize = 5;
         for (let index = 0; index < candidates.length; index += batchSize) {
+            const batch = candidates.slice(index, index + batchSize);
             await Promise.all(
-                candidates.slice(index, index + batchSize).map((member) => this.syncExternalLicenseDetail(member))
+                batch.map((member) => this.syncExternalLicenseDetail(member))
+            );
+            const completed = Math.min(index + batch.length, candidates.length);
+            this.reportProgress(
+                72 + Math.round((completed / candidates.length) * 22),
+                `Recherche des licences externes : ${completed}/${candidates.length}`
             );
         }
     }

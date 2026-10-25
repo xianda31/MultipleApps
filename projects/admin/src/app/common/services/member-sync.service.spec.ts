@@ -186,6 +186,10 @@ describe('MemberSyncService', () => {
       orga_license_name: 'Bridge Club de Toulouse',
       register_date: '2026-10-03',
     }));
+    expect((service as any).syncProgressSubject.value).toEqual({
+      percent: 94,
+      label: 'Recherche des licences externes : 1/1',
+    });
   });
 
   it('matches a FFB member by person_id before license number', async () => {

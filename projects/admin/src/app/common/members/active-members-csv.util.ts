@@ -33,7 +33,23 @@ function formatFrenchDate(value: string): string {
   return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
 }
 
-export function buildActiveMembersCsv(members: Member[]): string {
+function currentSeason(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  return date.getMonth() < 6
+    ? `${year - 1}/${year}`
+    : `${year}/${year + 1}`;
+}
+
+export function hasMembershipForSeason(membershipDate: string, season: string): boolean {
+  const seasonMatch = /^(\d{4})\/(\d{4})$/.exec(season);
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(membershipDate?.trim() ?? '');
+  if (!seasonMatch || !dateMatch) return false;
+
+  const date = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+  return date >= `${seasonMatch[1]}-07-01` && date <= `${seasonMatch[2]}-06-30`;
+}
+
+export function buildActiveMembersCsv(members: Member[], season: string = currentSeason()): string {
   const headers = [
     'Nom',
     'Prénom',
@@ -44,6 +60,7 @@ export function buildActiveMembersCsv(members: Member[]): string {
     'Club de licence',
     'Date de licence',
     'Date d’adhésion',
+    `Adhésion ${season} réglée`,
     'Date de naissance',
     'Email',
     'Téléphone',
@@ -69,6 +86,7 @@ export function buildActiveMembersCsv(members: Member[]): string {
       member.orga_license_name || member.license_taken_at,
       member.register_date,
       member.membership_date,
+      hasMembershipForSeason(member.membership_date, season) ? 'Oui' : 'Non',
       formatFrenchDate(member.birthdate),
       member.email,
       formatPhoneNumber(member.phone_one),
