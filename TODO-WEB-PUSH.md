@@ -95,11 +95,11 @@ Résultat attendu : un appel serveur contrôlé peut envoyer une notification de
 
 ## Phase 4 - Envoi de test administrateur
 
-- [ ] Ajouter une action administrateur « Envoyer une notification de test ».
-- [ ] Permettre de choisir le thème, le titre, le message et l'URL cible.
-- [ ] Proposer un mode limité au navigateur ou au membre courant.
-- [ ] Afficher le bilan réel de l'envoi.
-- [ ] Empêcher l'accès aux utilisateurs non autorisés.
+- [x] Ajouter une action administrateur « Envoyer une notification de test ».
+- [x] Permettre de choisir le thème, le titre, le message et l'URL cible.
+- [x] Proposer un mode limité au navigateur courant.
+- [x] Afficher le bilan réel de l'envoi.
+- [x] Empêcher l'accès aux utilisateurs non autorisés.
 - [ ] Tester la réception lorsque l'application est ouverte, en arrière-plan et fermée.
 - [ ] Tester le clic et la navigation vers la page cible.
 

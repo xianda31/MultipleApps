@@ -810,6 +810,28 @@ export const HELP_TOPICS: HelpTopic[] = [
         ],
       },
       {
+        id: 'communication-web-push',
+        title: 'Test Web Push',
+        summary: 'Envoi contrôlé d’une notification Web Push de validation.',
+        route: BACK_ROUTE_ABS_PATHS['WebPushAdmin'],
+        nav: {
+          menuTitle: 'Communication',
+          subMenuTitle: 'Test Web Push',
+          icon: 'bi-envelope-paper',
+          groupLevel: 'Systeme',
+        },
+        functionalities: [
+          'Test limité au navigateur courant.',
+          'Test collectif par thème avec confirmation.',
+          'Affichage du bilan réel et des abonnements expirés.',
+        ],
+        howTo: [
+          'Vérifier que Web Push est activé dans la configuration système.',
+          'Tester d’abord ce navigateur avec un thème auquel il est abonné.',
+          'Réserver l’envoi collectif à une validation contrôlée.',
+        ],
+      },
+      {
         id: 'communication-sondage',
         title: 'Sondage',
         summary: 'Creation, publication et analyse de sondages.',

@@ -50,6 +50,7 @@ export const BACK_ROUTE_ACCESS = {
   Assistance: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-assistance' },
   Mailing: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-mailing' },
   BreakingNews: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-breaking-news' },
+  WebPushAdmin: { minimumGroup: Group_names.System, helpTopicId: 'communication-web-push' },
   SondageList: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-sondage' },
   SondageEditor: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-sondage' },
   SondageResultats: { minimumGroup: Group_names.Editor, helpTopicId: 'communication-sondage' },
