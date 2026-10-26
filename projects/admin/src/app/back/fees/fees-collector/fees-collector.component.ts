@@ -555,39 +555,50 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     URL.revokeObjectURL(url);
   }
 
-  export_csv_ns() {
-    if (!this.game) return;
-    const csvRows: string[] = [];
-    for (let i = 0; i < this.game.gamers.length; i += 2) {
-      const gamer1 = this.game.gamers[i]?.license ?? '';
-      const gamer2 = this.game.gamers[i + 1]?.license ?? '';
-      csvRows.push(`${gamer1};${gamer2}`);
+  private csvPairRows(): string[] {
+    if (!this.game) return [];
+    const gamers = [...this.game.gamers].sort((a, b) => a.index - b.index);
+    const rows: string[] = [];
+    for (let i = 0; i < gamers.length; i += 2) {
+      const gamer1 = gamers[i]?.license ?? '';
+      const gamer2 = gamers[i + 1]?.license ?? '';
+      rows.push(`${gamer1};${gamer2}`);
     }
-    const ns = csvRows.filter((_, i) => i % 2 === 0);
-    this.to_csv('NS', ns);
+    return rows;
   }
 
-  export_csv_eo() {
-    if (!this.game) return;
-    const csvRows: string[] = [];
-    for (let i = 0; i < this.game.gamers.length; i += 2) {
-      const gamer1 = this.game.gamers[i]?.license ?? '';
-      const gamer2 = this.game.gamers[i + 1]?.license ?? '';
-      csvRows.push(`${gamer1};${gamer2}`);
-    }
-    const eo = csvRows.filter((_, i) => i % 2 === 1);
-    this.to_csv('EO', eo);
+  csvListPairCounts(): { a: number; b: number } {
+    const pairCount = Math.ceil((this.game?.gamers.length ?? 0) / 2);
+    const a = Math.ceil(pairCount / 2);
+    return { a, b: pairCount - a };
+  }
+
+  private csvFilenamePrefix(): string {
+    return this.game?.tournament?.date?.split('T')[0] ?? 'tournoi';
+  }
+
+  export_csv_a() {
+    const rows = this.csvPairRows();
+    const { a } = this.csvListPairCounts();
+    this.to_csv(`${this.csvFilenamePrefix()}_demie_liste_A_${a}_paires`, rows.slice(0, a));
+  }
+
+  export_csv_b() {
+    const rows = this.csvPairRows();
+    const { a } = this.csvListPairCounts();
+    const listB = rows.slice(a);
+    this.to_csv(`${this.csvFilenamePrefix()}_demie_liste_B_${listB.length}_paires`, listB);
   }
 
   export_csv_all() {
-    if (!this.game) return;
-    const csvRows: string[] = [];
-    for (let i = 0; i < this.game.gamers.length; i += 2) {
-      const gamer1 = this.game.gamers[i]?.license ?? '';
-      const gamer2 = this.game.gamers[i + 1]?.license ?? '';
-      csvRows.push(`${gamer1};${gamer2}`);
-    }
-    this.to_csv('tournoi', csvRows);
+    const rows = this.csvPairRows();
+    this.to_csv(`${this.csvFilenamePrefix()}_${rows.length}_paires`, rows);
+  }
+
+  export_csv_files() {
+    this.export_csv_all();
+    this.export_csv_a();
+    this.export_csv_b();
   }
 
   // PDF generation 
