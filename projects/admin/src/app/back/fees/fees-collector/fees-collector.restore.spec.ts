@@ -3,6 +3,46 @@ import { Game_status } from '../fees.interface';
 import { FeesCollectorComponent } from './fees-collector.component';
 
 describe('FeesCollectorComponent restored tournament', () => {
+  it('closes the restore choice without offering settlement when no gamer was saved', async () => {
+    const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
+    const tournament = {
+      id: 338132,
+      date: '2026-11-11',
+      title: 'Tournoi ouvert par erreur',
+      entryCount: 0,
+      status: Game_status.RECOVERED,
+    };
+    const restoreModal = {
+      componentInstance: {},
+      result: Promise.resolve(false),
+    };
+    const modalService = jasmine.createSpyObj('NgbModal', ['open']);
+    modalService.open.and.returnValue(restoreModal);
+    const feesCollectorService = jasmine.createSpyObj('FeesCollectorService', ['set_tournament']);
+    feesCollectorService.set_tournament.and.callFake(async () => {
+      Object.assign(component as object, {
+        game: {
+          tournament: { id: tournament.id },
+          gamers: [],
+        },
+      });
+    });
+    Object.assign(component as object, {
+      GAME_STATUS: Game_status,
+      feesCollectorService,
+      modalService,
+      toastService: jasmine.createSpyObj('ToastService', ['showInfo', 'showSuccess']),
+      next_tournaments: [tournament],
+    });
+
+    await component.set_tournament(tournament);
+    await restoreModal.result;
+    await Promise.resolve();
+
+    expect(modalService.open).toHaveBeenCalledTimes(1);
+    expect(component.all_gamers_validated()).toBeFalse();
+  });
+
   it('offers settlement after resuming a fully checked-in tournament', async () => {
     const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
     const tournament = {

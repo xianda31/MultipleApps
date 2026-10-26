@@ -480,7 +480,9 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
 
 
   all_gamers_validated(): boolean {
-    return !!this.game?.tournament && !!this.game && this.game.gamers.every(gamer => gamer.validated);
+    return !!this.game?.tournament
+      && this.game.gamers.length > 0
+      && this.game.gamers.every(gamer => gamer.validated);
   }
 
   gamer_solvent(gamer: Gamer): boolean {
