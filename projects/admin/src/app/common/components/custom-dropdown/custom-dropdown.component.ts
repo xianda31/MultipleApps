@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -10,6 +10,9 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './custom-dropdown.component.scss'
 })
 export class CustomDropdownComponent {
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  private suppressNextFocusSuggestions = false;
+
   @Input() items: any[] = [];
   @Input() placeholder = 'Rechercher...';
   @Input() searchValue = '';
@@ -53,18 +56,29 @@ export class CustomDropdownComponent {
   }
 
   onFocus() {
+    if (this.suppressNextFocusSuggestions) {
+      this.suppressNextFocusSuggestions = false;
+      return;
+    }
     this.showSuggestions = true;
   }
 
+  focus(): void {
+    if (!this.searchInput) return;
+    this.suppressNextFocusSuggestions = true;
+    this.searchInput.nativeElement.focus();
+  }
+
   getFilteredItems(): any[] {
+    const items = this.items ?? [];
     if (!this.searchValue || this.searchValue.length === 0) {
-      return this.items;
+      return items;
     }
     if (this.filterFn) {
-      return this.items.filter(item => this.filterFn!(item, this.searchValue));
+      return items.filter(item => this.filterFn!(item, this.searchValue));
     }
     const searchLower = this.searchValue.toLowerCase();
-    return this.items.filter(item => 
+    return items.filter(item =>
       (this.itemDisplayFn?.(item) ?? this.displayFn(item)).toLowerCase().includes(searchLower)
     );
   }

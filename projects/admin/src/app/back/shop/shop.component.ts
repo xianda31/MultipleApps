@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LicenseStatus, Member } from '../../common/interfaces/member.interface';
@@ -63,7 +63,9 @@ import { MemberSyncService } from '../../common/services/member-sync.service';
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
-export class ShopComponent implements OnInit, OnDestroy {
+export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('buyerInput') buyerInput?: InputMemberComponent;
+
   @Input() member_id: string | null = null;
   @Input() onlineMode !: boolean;
   members!: Member[];
@@ -169,6 +171,12 @@ export class ShopComponent implements OnInit, OnDestroy {
     private bookService: BookService,
     private memberSyncService: MemberSyncService,
   ) {}
+
+  ngAfterViewInit(): void {
+    if (!this.onlineMode && !this.buyer) {
+      setTimeout(() => this.focusBuyerInput());
+    }
+  }
 
   ngOnInit(): void {
     // Apply default for @Input (not auto-applied by Angular)
@@ -421,6 +429,10 @@ export class ShopComponent implements OnInit, OnDestroy {
     console.log(message, ...optionalParams);
   }
 
+  focusBuyerInput(): void {
+    this.buyerInput?.focus();
+  }
+
   on_product_click(product: Product) {
 
     if (!this.buyerForm.valid || !this.ensureBuyerCanPurchase(this.buyer)) {
@@ -478,6 +490,7 @@ export class ShopComponent implements OnInit, OnDestroy {
         this.buyerForm.reset();
         this.isSaving = false;
         this.validateMembershipGuardrailBeforeCheckout();
+        setTimeout(() => this.focusBuyerInput());
       });
   }
 
@@ -486,12 +499,14 @@ export class ShopComponent implements OnInit, OnDestroy {
     this.buyerForm.reset();
     this.debt_amount = 0;
     this.asset_amount = 0;
+    setTimeout(() => this.focusBuyerInput());
   }
 
   date_change(date: any) {
     this.session.date = new Date(date).toISOString().split('T')[0]; //new Date().toISOString().split('T')[0])
     this.cartService.clearCart();
     this.buyerForm.reset();
+    setTimeout(() => this.focusBuyerInput());
   }
 
   member_name(member_id: string) {

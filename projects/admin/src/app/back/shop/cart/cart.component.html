@@ -8,7 +8,12 @@
     </div>
     }
 
-    <h3 class="cart-title"><i class="bi bi-bag-check"></i> Panier</h3>
+    <h3 class="cart-title">
+        @if (!onlineMode) {
+        <span class="shop-step-number">3</span>
+        }
+        <i class="bi bi-bag-check"></i> Panier
+    </h3>
 
     @if (onlineMode && !onlinePaymentActive) {
     <div class="alert alert-warning d-flex align-items-center gap-2 my-3" role="alert">

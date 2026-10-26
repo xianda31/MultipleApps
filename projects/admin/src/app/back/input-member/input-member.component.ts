@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, Input, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
 import { Member } from '../../common/interfaces/member.interface';
 import { CustomDropdownComponent } from '../../common/components/custom-dropdown/custom-dropdown.component';
@@ -19,6 +19,8 @@ import { CustomDropdownComponent } from '../../common/components/custom-dropdown
     styleUrl: './input-member.component.scss'
 })
 export class InputMemberComponent implements ControlValueAccessor {
+  @ViewChild(CustomDropdownComponent) dropdown?: CustomDropdownComponent;
+
   @Input() members: Member[] = [];
   input!: string;
   searchInput: string = '';
@@ -49,6 +51,10 @@ export class InputMemberComponent implements ControlValueAccessor {
     this.disabled = isDisabled;
   }
 
+  focus(): void {
+    this.dropdown?.focus();
+  }
+
   onSearchChange(value: string) {
     this.onTouch();
     this.searchInput = value;
@@ -60,5 +66,4 @@ export class InputMemberComponent implements ControlValueAccessor {
     this.onChange(member);
   }
 }
-
 

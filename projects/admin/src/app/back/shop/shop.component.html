@@ -87,11 +87,18 @@
         </div>
         }
         @if (!onlineMode) {
-        <div class="shop-buyer-header" [formGroup]="buyerForm">
-          <i class="bi bi-person-check-fill me-2"></i>
-          <app-input-member class="buyer-input" [members]="members" formControlName="buyer"
+        <div class="shop-step-heading" [class.completed]="buyer">
+          <span class="shop-step-number">{{ buyer ? '✓' : '1' }}</span>
+          <span>{{ buyer ? 'Acheteur sélectionné' : 'Sélectionnez l’acheteur' }}</span>
+        </div>
+        <div class="shop-buyer-header" [class.awaiting-buyer]="!buyer" [formGroup]="buyerForm">
+          <i class="bi me-2" [class.bi-person-check-fill]="buyer" [class.bi-person-fill]="!buyer"></i>
+          <app-input-member #buyerInput class="buyer-input" [members]="members" formControlName="buyer"
             placeholder="Sélectionner un adhérent"></app-input-member>
-          <i class="bi bi-x-circle ms-2" style="cursor:pointer;" (click)="clear_sale()"></i>
+          <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-secondary"
+            (click)="clear_sale()" title="Nouvelle vente" aria-label="Réinitialiser et commencer une nouvelle vente">
+            <i class="bi bi-x-circle"></i>
+          </button>
         </div>
         }
 
@@ -109,8 +116,20 @@
       </div>
 
       <!-- Panel: Products (scrollable) -->
-      <div class="shop-panel-products" [class.pe-none]="accountingCheckoutBlocked || (onlineMode && !onlinePaymentActive)"
+      <div class="shop-panel-products" [class.buyer-required]="!onlineMode && !buyer"
+        [class.pe-none]="accountingCheckoutBlocked || (onlineMode && !onlinePaymentActive)"
         [class.opacity-50]="accountingCheckoutBlocked || (onlineMode && !onlinePaymentActive)">
+        @if (!onlineMode) {
+        <div class="shop-step-heading products-heading" [class.completed]="buyer">
+          <span class="shop-step-number">2</span>
+          <span>Produits</span>
+          @if (!buyer) {
+          <small class="fw-normal text-muted">— disponibles après sélection de l’acheteur</small>
+          }
+        </div>
+        }
+        <div class="shop-products-content" [attr.inert]="!onlineMode && !buyer ? '' : null"
+          [attr.aria-disabled]="!onlineMode && !buyer">
         <div *ngFor="let products of products_array | keyvalue | moveToEnd:'LIC'">
           <div class="shop-product-grid">
             <div *ngFor="let product of products.value">
@@ -144,6 +163,7 @@
                 </div>
               </ng-container>
             </div>
+          </div>
           </div>
         </div>
       </div>

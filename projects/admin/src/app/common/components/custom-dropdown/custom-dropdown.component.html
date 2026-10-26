@@ -1,5 +1,5 @@
 <div class="custom-dropdown-container position-relative w-100">
-  <input type="text"
+  <input #searchInput type="text"
     class="dropdown-input"
     [(ngModel)]="searchValue"
     (ngModelChange)="onInputChange($any($event))"
