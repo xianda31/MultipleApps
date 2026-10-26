@@ -5,24 +5,44 @@
         <div class="col-auto card-title me-4 d-flex flex-wrap align-items-center">
           <span class="fw-bold">Répertoire Club</span>
           <ng-container *ngIf="loading">
-            <div class="spinner-border text-primary ms-2 align-middle"
-              style="width: 1.5em; height: 1.5em; font-size: inherit; vertical-align: middle;" role="status">
+            <div class="members-sync-progress ms-3" role="status" aria-live="polite">
+              <span class="members-sync-progress-label">{{ syncProgress.label }}</span>
+              <div class="progress members-sync-progress-bar"
+                role="progressbar"
+                aria-label="Progression de la synchronisation des membres"
+                [attr.aria-valuenow]="syncProgress.percent"
+                aria-valuemin="0"
+                aria-valuemax="100">
+                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                  [style.width.%]="syncProgress.percent">
+                  {{ syncProgress.percent }} %
+                </div>
+              </div>
             </div>
-            <span class="ms-2 align-middle text-muted">Exploration base de données FFB en cours...</span>
           </ng-container>
         </div>
-        <div class="col-auto ms-auto" *ngIf="!loading && selectedLifecycleFilter === 'ACTIVE'">
+        <div class="col-auto ms-auto d-flex gap-2" *ngIf="!loading">
           <button type="button" class="btn btn-sm btn-outline-primary"
+            ngbTooltip="Ajouter une personne au répertoire"
+            placement="bottom" container="body"
+            aria-label="Ajouter une personne au répertoire"
+            (click)="openAddPersonModal()">
+            <i class="bi bi-person-fill-add" aria-hidden="true"></i>
+            <span class="d-none d-sm-inline ms-1">Ajouter</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-primary"
+            *ngIf="selectedLifecycleFilter === 'ACTIVE'"
             ngbTooltip="Exporter les membres actifs au format CSV"
             placement="bottom" container="body"
             aria-label="Exporter les membres actifs au format CSV"
             [disabled]="active_members_nbr === 0"
             (click)="exportActiveMembersCsv()">
             <i class="bi bi-download" aria-hidden="true"></i>
+            <span class="d-none d-sm-inline ms-1">Export .csv</span>
           </button>
         </div>
         <ng-container *ngIf="!loading">
-          <div class="col-12 mt-2 members-stats-line">
+          <div class="col-12 mt-2 members-overview-layout">
             <div class="members-stats-table-wrapper">
               <div class="members-directory-summary">
                 <button type="button" class="btn btn-sm members-directory-count"
@@ -197,9 +217,12 @@
               <th class="text-center member-avatar-column">
                 {{ filteredMembers.length }} {{ getSelectedLifecycleLabel() }}
               </th>
-              <th class="member-name-column member-name-column-desktop">Nom</th>
-              <th class="member-name-column member-name-column-desktop">Prénom</th>
-              <th class="member-player-column">Joueur</th>
+              <th class="member-player-column" [attr.aria-sort]="getNameAriaSort()">
+                <button type="button" class="member-sort-button" (click)="sortByName()">
+                  Joueur
+                  <i [class]="getNameSortIcon()" aria-hidden="true"></i>
+                </button>
+              </th>
               <th class="text-center member-status-column">
                 @if (selectedStatusFilter) {
                   <i [class]="getFilterIconClass(selectedStatusFilter)"></i>
@@ -228,6 +251,21 @@
                   </ul>
                 </div>
               </th>
+              <th class="member-license-detail-column member-license-number-column">Licence</th>
+              <th class="member-license-detail-column member-license-date-column"
+                [attr.aria-sort]="getDateAriaSort('membership_date')">
+                <button type="button" class="member-sort-button" (click)="sortByDate('membership_date')">
+                  Date adhésion
+                  <i [class]="getDateSortIcon('membership_date')" aria-hidden="true"></i>
+                </button>
+              </th>
+              <th class="member-license-detail-column member-license-date-column"
+                [attr.aria-sort]="getDateAriaSort('register_date')">
+                <button type="button" class="member-sort-button" (click)="sortByDate('register_date')">
+                  Date licence
+                  <i [class]="getDateSortIcon('register_date')" aria-hidden="true"></i>
+                </button>
+              </th>
 
 
               <th class="d-none d-sm-table-cell member-info-column" ngbDropdown style="cursor:pointer;">
@@ -251,8 +289,6 @@
                 <img *ngIf="avatar_urls$[member.license_number] | async as avatarUrl" [src]="avatarUrl" alt="avatar"
                   class="rounded-circle table-avatar">
               </td>
-              <td class="member-name-column member-name-column-desktop">{{member.lastname | uppercase}}</td>
-              <td class="member-name-column member-name-column-desktop">{{member.firstname}}</td>
               <td class="member-player-column">
                 <span class="member-player-lastname">{{member.lastname | uppercase}}</span>
                 <span>{{member.firstname}}</span>
@@ -263,15 +299,23 @@
                   <i [class.text-danger]="isStatusWarning(member)" [class]="getMemberStatusIconClass(member)"></i>
                 </span>
               </td>
+              <td class="member-license-detail-column member-license-number-column">
+                {{ member.license_number }}
+              </td>
+              <td class="member-license-detail-column member-license-date-column">
+                {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '—' }}
+              </td>
+              <td class="member-license-detail-column member-license-date-column">
+                {{ getDisplayedLicenseDate(member) ? (getDisplayedLicenseDate(member) | date:'dd/MM/yyyy') : '—' }}
+                <small *ngIf="getDisplayedLicenseClub(member) as licenseClub"
+                  class="member-license-club"
+                  [title]="licenseClub">
+                  {{ licenseClub }}
+                </small>
+              </td>
 
               <td class="d-none d-sm-table-cell member-info-column">
-                @if (selectedInfoColumn === 'license_number') {
-                {{ member.license_number }}
-                } @else if (selectedInfoColumn === 'membership_date') {
-                {{ member.membership_date ? (member.membership_date | date:'dd/MM/yyyy') : '' }}
-                } @else if (selectedInfoColumn === 'register_date') {
-                {{ member.register_date ? (member.register_date | date:'dd/MM/yyyy') : '' }}
-                } @else if (selectedInfoColumn === 'email') {
+                @if (selectedInfoColumn === 'email') {
                 {{ member.email }}
                 } @else if (selectedInfoColumn === 'birthdate') {
                 {{ member.birthdate | date:'dd/MM/yyyy' : '' }}
@@ -296,8 +340,8 @@
             </td> -->
               <td class="text-center text-nowrap member-actions-column">
                 <button type="button" class="btn btn-sm btn-outline-primary me-1"
-                  ngbTooltip="Voir les préférences" placement="top" container="body"
-                  aria-label="Voir les préférences" (click)="accessSettings(member)">
+                  ngbTooltip="Voir la fiche" placement="top" container="body"
+                  aria-label="Voir la fiche" (click)="accessSettings(member)">
                   <i class="bi bi-eye"></i>
                 </button>
                 @if (getLifecycleStatus(member) === 'ACTIVE') {
@@ -336,30 +380,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <hr class="my-3">
-
-      <!-- ajout d'un adhérent licencié supplémentaire -->
-      <h6 class="fw-bold">ajout de personne :</h6>
-      <div class="row justify-content-around align-items-end">
-        <div class="col-md-6">
-          <div class="input-group input-group-sm w-auto" style="max-width: 400px;">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong class="me-1">NON LICENCIÉ(E) </strong>(ex.
-              débutant(e))</span>
-            <button class="btn btn-primary btn-sm" (click)="addNewbee()">
-              <i class="bi bi-mortarboard-fill"></i>
-            </button>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text" id="inputGroup-sizing-sm"><strong>LICENCIÉ(E) </strong> :</span>
-            <app-input-player listeId="new_guest" placeholder="Nom ou prénom (sélection liste)" type="text"
-              class="form-control form-control-sm" style="max-width: 300px;" [(ngModel)]="new_player"
-              (ngModelChange)="add_licensee(new_player)"></app-input-player>
-          </div>
-        </div>
       </div>
 
     </div>

@@ -10,7 +10,7 @@ process.env['FULFILLMENT_EXECUTION_TABLE_NAME'] = 'FulfillmentExecution';
 process.env['ASSISTANCE_REQUEST_TABLE_NAME'] = 'AssistanceRequest';
 
 test('replaying a confirmed BookEntry creates one PlayBook', async () => {
-  const { documentClient, handler } = await import('./handler');
+  const { documentClient, handler, playBookNotifier } = await import('./handler');
   const executions = new Map<string, Record<string, unknown>>();
   const playBooks = new Map<string, Record<string, unknown>>();
   const bookEntry = {
@@ -30,6 +30,11 @@ test('replaying a confirmed BookEntry creates one PlayBook', async () => {
   const member = { id: 'member-1', license_number: '00000001' };
 
   const originalSend = documentClient.send.bind(documentClient);
+  const originalNotify = playBookNotifier.notify;
+  const notifiedPlayBooks: string[] = [];
+  playBookNotifier.notify = async (playBookId) => {
+    notifiedPlayBooks.push(playBookId);
+  };
   documentClient.send = (async (command: unknown) => {
     if (command instanceof GetCommand) {
       const input = command.input;
@@ -71,8 +76,13 @@ test('replaying a confirmed BookEntry creates one PlayBook', async () => {
     assert.equal(second.skipped, 1);
     assert.equal(playBooks.size, 1);
     assert.equal(executions.size, 1);
+    assert.deepEqual(notifiedPlayBooks, [
+      first.results[0].resultId,
+      first.results[0].resultId,
+    ]);
   } finally {
     documentClient.send = originalSend as typeof documentClient.send;
+    playBookNotifier.notify = originalNotify;
   }
 });
 

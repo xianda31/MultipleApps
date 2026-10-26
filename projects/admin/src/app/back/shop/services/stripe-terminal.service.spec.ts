@@ -1,24 +1,38 @@
 import { StripeTerminalService } from './stripe-terminal.service';
 
 describe('StripeTerminalService', () => {
-  it('marks the pending BookEntry as cancelled', async () => {
+  it('cancels the PaymentIntent and deletes the pending BookEntry', async () => {
     const service = new StripeTerminalService();
-    const update = jasmine.createSpy('update').and.resolveTo({});
-    const client = { models: { BookEntry: { update } } };
+    spyOn(service, 'cancelPaymentIntent').and.resolveTo();
+    const deleteBookEntry = jasmine.createSpy('delete').and.resolveTo({ errors: undefined });
+    const client = { models: { BookEntry: { delete: deleteBookEntry } } };
 
-    await (service as any)._markBookEntryCancelled(client, 'book-entry-1');
+    const result = await (service as any)._cleanupFailedPayment(
+      client,
+      'payment-intent-1',
+      'book-entry-1',
+    );
 
-    expect(update).toHaveBeenCalledOnceWith({ id: 'book-entry-1', status: 'cancelled' });
+    expect(service.cancelPaymentIntent).toHaveBeenCalledOnceWith('payment-intent-1');
+    expect(deleteBookEntry).toHaveBeenCalledOnceWith({ id: 'book-entry-1' });
+    expect(result).toBeTrue();
   });
 
-  it('does nothing when the payment has no BookEntry', async () => {
+  it('does not delete the BookEntry when PaymentIntent cancellation fails', async () => {
     const service = new StripeTerminalService();
-    const update = jasmine.createSpy('update');
-    const client = { models: { BookEntry: { update } } };
+    spyOn(service, 'cancelPaymentIntent').and.rejectWith(new Error('Stripe unavailable'));
+    const deleteBookEntry = jasmine.createSpy('delete');
+    const client = { models: { BookEntry: { delete: deleteBookEntry } } };
+    spyOn(console, 'error');
 
-    await (service as any)._markBookEntryCancelled(client, null);
+    const result = await (service as any)._cleanupFailedPayment(
+      client,
+      'payment-intent-1',
+      'book-entry-1',
+    );
 
-    expect(update).not.toHaveBeenCalled();
+    expect(deleteBookEntry).not.toHaveBeenCalled();
+    expect(result).toBeFalse();
   });
 
   it('clears every identifier when a remote payment finishes', () => {

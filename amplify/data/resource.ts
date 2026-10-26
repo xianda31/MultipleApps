@@ -7,6 +7,8 @@ import { listUsers } from './list-users/resource';
 import { listUsersInGroup } from './list-users-in-group/resource';
 import { removeUserFromGroup } from './remove-user-from-group/resource';
 import { processBookEntryActions } from '../functions/process-book-entry-actions/resource';
+import { stripeWebhooks } from '../functions/stripe-webhooks/resource';
+import { sendWebPush } from '../functions/send-web-push/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
@@ -109,6 +111,21 @@ const schema = a.schema({
       allow.group(Group_names.Support),
     ])
     .handler(a.handler.function(processBookEntryActions))
+    .returns(a.json()),
+
+  sendWebPush: a
+    .mutation()
+    .arguments({
+      topic: a.string().required(),
+      title: a.string().required(),
+      body: a.string().required(),
+      url: a.string().required(),
+      subscriptionId: a.string(),
+    })
+    .authorization((allow) => [
+      allow.group(Group_names.System),
+    ])
+    .handler(a.handler.function(sendWebPush))
     .returns(a.json()),
 
 
@@ -640,6 +657,56 @@ const schema = a.schema({
       allow.group(Group_names.Member).to(['read', 'create', 'update', 'delete']),
     ]),
 
+  PushSubscription: a.model({
+    id: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    owner: a.string().authorization((allow) => [
+      allow.owner().to(['read', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    endpoint: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    p256dh: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    auth: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    expirationTime: a.float(),
+    news: a.boolean().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    partner: a.boolean().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    alerts: a.boolean().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    userAgent: a.string(),
+    firstSubscribedAt: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+    lastSeenAt: a.string().required().authorization((allow) => [
+      allow.owner().to(['create', 'read', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+  })
+    .identifier(['id'])
+    .authorization((allow) => [
+      allow.owner().to(['create', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+    ]),
+
   // Tokens pour accès mail sans login (UUID v4, validés côté Lambda)
   SurveyToken: a.model({
     token: a.string().required(),        // UUID v4 — clé primaire
@@ -717,7 +784,10 @@ AssistanceRequest: a.model({
       allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
     ]),
-});
+}).authorization((allow) => [
+  allow.resource(processBookEntryActions).to(['mutate']),
+  allow.resource(stripeWebhooks).to(['mutate']),
+]);
 export type Schema = ClientSchema<typeof schema>;
 
 export const data = defineData({

@@ -12,6 +12,7 @@ import {
   clearAuthSessionPolicy,
   hasValidPersistedAuthSession,
 } from './app/common/authentification/auth-session-persistence';
+import { environment } from './environments/environment';
 
 
 
@@ -57,6 +58,7 @@ Amplify.configure(
 cognitoUserPoolsTokenProvider.setKeyValueStorage(defaultStorage);
 
 async function startApplication(): Promise<void> {
+  await clearStaleDevelopmentServiceWorker();
   if (!hasValidPersistedAuthSession()) {
     await signOut();
     clearAuthSessionPolicy();
@@ -66,3 +68,32 @@ async function startApplication(): Promise<void> {
 }
 
 startApplication().catch((err) => console.error(err));
+
+async function clearStaleDevelopmentServiceWorker(): Promise<void> {
+  if (environment.production || !('serviceWorker' in navigator)) {
+    return;
+  }
+
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(
+    registrations
+      .filter(registration => {
+        const scriptUrls = [
+          registration.active?.scriptURL,
+          registration.installing?.scriptURL,
+          registration.waiting?.scriptURL,
+        ];
+        return scriptUrls.some(url => url?.endsWith('/ngsw-worker.js'));
+      })
+      .map(registration => registration.unregister()),
+  );
+
+  if ('caches' in window) {
+    const cacheNames = await caches.keys();
+    await Promise.all(
+      cacheNames
+        .filter(cacheName => cacheName.startsWith('ngsw:'))
+        .map(cacheName => caches.delete(cacheName)),
+    );
+  }
+}

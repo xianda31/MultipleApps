@@ -1,5 +1,7 @@
 
-
+@if (webPushActive && (logged_member$ | async)) {
+  <app-notification-subscription></app-notification-subscription>
+}
 <div class="container-fluid">
 
   <div id="headerBanner">

@@ -50,8 +50,7 @@ export interface UIConfiguration {
   };
 
   homepage: {
-    // parameters for layout of tournaments and news cards on homepage
-    tournaments_row_cols: BreakpointsSettings;
+    // parameters for layout of news cards on homepage
     news_row_cols: BreakpointsSettings;
     // parameters for 'read more' behavior on news cards
     read_more_lines?: number;

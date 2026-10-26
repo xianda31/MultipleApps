@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-10-23-nouveau-look-type-calendar",
+    "publishedOn": "2026-10-23",
+    "site": "FRONT",
+    "area": "ACCUEIL_ACTUALITES",
+    "kind": "IMPROVEMENT",
+    "summary": "nouveau look type calendar"
+  },
+  {
+    "id": "2026-10-22-fix-rapprochement-ffb-avec-les-adherents-qui",
+    "publishedOn": "2026-10-22",
+    "site": "BACK_OFFICE",
+    "area": "ADHERENTS",
+    "kind": "FIX",
+    "summary": "fix :  rapprochement FFB avec les adhérents qui prennent leur toute première licence"
+  },
+  {
+    "id": "2026-10-22-resolutions-bugs-importants-cas-de-reprise-paiement",
+    "publishedOn": "2026-10-22",
+    "site": "BACK_OFFICE",
+    "area": "PAIEMENTS",
+    "kind": "NEW",
+    "summary": "résolutions bugs importants :\n- cas de reprise paiement par CB générant des incohérences BD\n- synchronisation crédit carte de tournoi sur achat CB"
+  },
+  {
     "id": "2026-10-19-levee-de-limitation-de-volume-timing-du",
     "publishedOn": "2026-10-19",
     "site": "BACK_OFFICE",

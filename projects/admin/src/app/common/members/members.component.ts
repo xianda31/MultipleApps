@@ -4,8 +4,7 @@ import { Observable, Subject, distinctUntilKeyChanged, firstValueFrom, skip, tak
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, UpperCasePipe } from '@angular/common';
 import { NgbModal, NgbTooltipModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { GetNewbeeComponent } from '../modals/get-newbee/get-newbee.component';
-import { InputPlayerComponent } from '../ffb/input-licensee/input-player.component';
+import { NewMemberFormValue } from '../modals/get-newbee/get-newbee.component';
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { Member, LicenseStatus, MemberLifecycleStatus } from '../interfaces/member.interface';
 import { ToastService } from '../services/toast.service';
@@ -14,13 +13,24 @@ import { MemberSettingsService } from '../services/member-settings.service';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { PersonV2 } from '../ffb/interface/person-v2.interface';
 import { normalizeGender } from '../utils/gender.util';
-import { MemberSyncService } from '../services/member-sync.service';
+import { MemberSyncProgress, MemberSyncService } from '../services/member-sync.service';
 import { SystemDataService } from '../services/system-data.service';
 import { AuthentificationService } from '../authentification/authentification.service';
 import { activeMembersCsvFileName, buildActiveMembersCsv } from './active-members-csv.util';
 import { GroupService } from '../authentification/group.service';
 import { Group_priorities } from '../authentification/group.interface';
 import { getFfbRankingCodeParts } from '../utils/ffb-ranking.util';
+import {
+  MemberMergeConflictModalComponent,
+  MemberMergeDecision,
+} from './member-merge-conflict-modal.component';
+import { ManualMemberDuplicateModalComponent } from './manual-member-duplicate-modal.component';
+import { hasSameNormalizedNames } from '../services/member-identity.util';
+import { normalizeMemberEmail } from '../services/member-email.util';
+import {
+  AddDirectoryPersonModalComponent,
+  AddDirectoryPersonResult,
+} from './add-directory-person-modal.component';
 
 type MemberStatusConfig = {
   label: string;
@@ -33,7 +43,7 @@ type DirectoryFilter = MemberStatus | MemberLifecycleStatus;
   selector: 'app-members',
   standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les CSS des tooltips fonctionnent
-  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, InputPlayerComponent, NgbTooltipModule, NgbDropdownModule, PhonePipe],
+  imports: [FormsModule, CommonModule, ReactiveFormsModule, UpperCasePipe, NgbTooltipModule, NgbDropdownModule, PhonePipe],
   templateUrl: './members.component.html',
   styleUrl: './members.component.scss'
 })
@@ -58,7 +68,6 @@ export class MembersComponent implements OnInit {
   outside_ffb_unrenewed_members_nbr = 0;
   archived_members_nbr = 0;
   banned_members_nbr = 0;
-  new_player!: ClubMember;
   STATUSES = MemberStatus;
   filters: MemberStatus[] = [
     MemberStatus.CLUB_LICENSEE,
@@ -79,10 +88,14 @@ export class MembersComponent implements OnInit {
   selectedLifecycleFilter: MemberLifecycleStatus = 'ACTIVE';
   selectedStatusFilter: MemberStatus | null = null;
   loading: boolean = true;
+  syncProgress: MemberSyncProgress = {
+    percent: 0,
+    label: 'Préparation de la synchronisation...',
+  };
   avatar_urls$: { [key: string]: Observable<string> } = {};
 
   // For dynamic info column in members table
-  private readonly defaultInfoColumns = ['license_number', 'membership_date', 'register_date', 'email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
+  private readonly defaultInfoColumns = ['email', 'birthdate', 'phone_one', 'city', 'accept_mailing'];
   infoColumns = [...this.defaultInfoColumns];
   infoColumnLabels: { [key: string]: string } = {
     license_number: 'Licence',
@@ -95,7 +108,9 @@ export class MembersComponent implements OnInit {
     accept_mailing: 'Accepte mails',
     lifecycleReason: 'Raison',
   };
-  selectedInfoColumn: string = 'membership_date';
+  selectedInfoColumn: string = 'email';
+  dateSortField: 'membership_date' | 'register_date' | null = null;
+  dateSortDirection: 'asc' | 'desc' = 'asc';
   private readonly destroy$ = new Subject<void>();
   private seasonRefreshInFlight = false;
   private pendingSeasonRefresh = false;
@@ -141,6 +156,12 @@ export class MembersComponent implements OnInit {
     ).subscribe(() => {
       this.avatar_urls$ = this.collect_avatars(this.members);
       this.applyFilters();
+    });
+
+    this.memberSyncService.syncProgress$.pipe(
+      takeUntil(this.destroy$),
+    ).subscribe((progress) => {
+      this.syncProgress = progress;
     });
 
     void this.loadMembersWithSynchronization(true);
@@ -208,7 +229,12 @@ export class MembersComponent implements OnInit {
     this.loading = true;
     try {
       const members = await this.memberSyncService.ensureMembersSynchronized(forceSync);
-      this.applyMembers(members);
+      const changed = await this.resolveMemberMergeConflicts();
+      if (changed) {
+        await this.refreshMembersAsync();
+      } else {
+        this.applyMembers(members);
+      }
     } catch (err) {
       console.error('Erreur lors du chargement des membres:', err);
       this.toastService.showError('Membres', 'Erreur lors du chargement des membres');
@@ -230,6 +256,7 @@ export class MembersComponent implements OnInit {
       do {
         this.pendingSeasonRefresh = false;
         await this.memberSyncService.ensureMembersSynchronized(true);
+        await this.resolveMemberMergeConflicts();
       } while (this.pendingSeasonRefresh);
 
       await this.refreshMembersAsync();
@@ -242,56 +269,184 @@ export class MembersComponent implements OnInit {
     }
   }
 
-  async add_licensee(player: ClubMember) {
-    if (!player) { return; }
-
-    const personV2 = await this.ffbService.getFFBPerson(player.id).catch(() => null);
-    const new_member: Member = this.createNewMember(player, personV2);
-    console.log('Ajout d\'un nouveau membre :', new_member);
-    this.memberSyncService.createMemberWithComputedStatus(new_member).then(() => {
-      this.refreshMembers();
-      this.new_player = null as any;
+  async openAddPersonModal(): Promise<void> {
+    const modalRef = this.modalService.open(AddDirectoryPersonModalComponent, {
+      size: 'lg',
+      centered: true,
+      backdrop: 'static',
+      keyboard: false,
     });
+    const result = await modalRef.result.catch(() => null) as AddDirectoryPersonResult | null;
+    if (!result) return;
+
+    if (result.kind === 'ffb') {
+      await this.add_licensee(result.player, result.person, result.email, result.acceptMailing);
+      return;
+    }
+    await this.addNewbee(result.member);
   }
 
-  addNewbee() {
-    const modalRef = this.modalService.open(GetNewbeeComponent, { centered: true });
+  async add_licensee(
+    player: ClubMember,
+    personV2: PersonV2 | null,
+    creationEmail: string,
+    acceptMailing: boolean,
+  ) {
+    if (!player) { return; }
 
-    modalRef.result.then((newbee: any) => {
-      if (newbee) {
-        // Vérifier si l'email existe déjà
-        this.membersService.searchMemberByEmail(newbee.email).then((existingMember) => {
-          if (existingMember) {
-            this.toastService.showWarning('Nouveau membre', `Un membre avec l'email ${newbee.email} existe déjà`);
-            return;
-          }
+    const existingMember = this.members.find((member) =>
+      member.person_id === player.id
+      || member.license_number?.trim() === player.license_number?.trim()
+    );
+    if (existingMember) {
+      this.toastService.showWarning(
+        'Personne déjà présente',
+        `${existingMember.firstname} ${existingMember.lastname} existe déjà dans le répertoire`
+      );
+      return;
+    }
 
-          let new_member: Member = {
-            id: '',
-            gender: normalizeGender(newbee.gender),
-            firstname: newbee.firstname,
-            lastname: newbee.lastname.toUpperCase(),
-            license_number: '??' + newbee.lastname.toUpperCase().slice(0, 3) + newbee.firstname.slice(0, 3),
-            birthdate: newbee.birthdate,
-            city: this.capitalizeFirst(newbee.city.toLowerCase()),
-            email: newbee.email ?? '',
-            phone_one: newbee.phone ?? '',
-            license_taken_at: 'BCSTO',
-            license_status: LicenseStatus.UNREGISTERED,
-            accept_mailing: newbee.email ? true : false,
-            membership_date: '',
-            memberStatus: 'NON_ADHERENT',
-            person_id: undefined,
-            iv: undefined
-          }
-          this.memberSyncService.createMemberWithComputedStatus(new_member).then((_member) => {
-            this.toastService.showSuccess('Nouveau membre non licencié', new_member.lastname + ' ' + new_member.firstname);
-            this.refreshMembers();
-          });
+    try {
+      const candidates = this.members.filter((member) => hasSameNormalizedNames(
+        member.firstname,
+        member.lastname,
+        player.firstName,
+        player.lastName,
+      ));
+
+      if (candidates.length > 0) {
+        const conflict = { clubMember: player, person: personV2, candidates };
+        const modalRef = this.modalService.open(MemberMergeConflictModalComponent, {
+          size: 'lg',
+          centered: true,
+          backdrop: 'static',
+          keyboard: false,
         });
+        modalRef.componentInstance.conflict = conflict;
+        const decision = await modalRef.result.catch(() => ({ action: 'defer' } as MemberMergeDecision));
+
+        if (decision.action === 'merge') {
+          await this.memberSyncService.mergeMemberConflict(conflict, decision.memberId);
+          this.toastService.showSuccess(
+            'Rapprochement FFB',
+            `${player.firstName} ${player.lastName} a été fusionné avec la fiche existante`
+          );
+          await this.refreshMembersAsync();
+          return;
+        }
+        if (decision.action !== 'create') return;
       }
 
-    });
+      const email = await this.validateCreationEmail(creationEmail);
+      if (!email) return;
+
+      const newMember: Member = {
+        ...this.createNewMember(player, personV2),
+        email,
+        accept_mailing: acceptMailing,
+      };
+      await this.memberSyncService.createMemberWithComputedStatus(newMember);
+      await this.refreshMembersAsync();
+    } catch (error) {
+      console.error('Erreur lors de l’ajout d’une personne FFB:', error);
+      this.toastService.showError('Ajout FFB', 'La personne n’a pas pu être ajoutée au répertoire');
+    }
+  }
+
+  async addNewbee(newbee: NewMemberFormValue): Promise<void> {
+    const email = await this.validateCreationEmail(newbee.email);
+    if (!email) return;
+
+    const candidates = this.members.filter((member) => hasSameNormalizedNames(
+      member.firstname,
+      member.lastname,
+      newbee.firstname,
+      newbee.lastname,
+    ));
+    if (candidates.length > 0) {
+      const duplicateModal = this.modalService.open(ManualMemberDuplicateModalComponent, {
+        size: 'lg',
+        centered: true,
+        backdrop: 'static',
+        keyboard: false,
+      });
+      duplicateModal.componentInstance.firstName = newbee.firstname;
+      duplicateModal.componentInstance.lastName = newbee.lastname;
+      duplicateModal.componentInstance.candidates = candidates;
+      const createDistinct = await duplicateModal.result.catch(() => false);
+      if (!createDistinct) return;
+    }
+
+    const newMember: Member = {
+      id: '',
+      gender: normalizeGender(newbee.gender),
+      firstname: newbee.firstname.trim(),
+      lastname: newbee.lastname.trim().toUpperCase(),
+      license_number: this.createProvisionalLicense(newbee.lastname, newbee.firstname),
+      birthdate: '',
+      city: this.capitalizeFirst(newbee.city.trim()),
+      email,
+      phone_one: newbee.phone.trim(),
+      license_taken_at: 'BCSTO',
+      license_status: LicenseStatus.UNREGISTERED,
+      accept_mailing: newbee.acceptMailing,
+      membership_date: '',
+      memberStatus: 'NON_ADHERENT',
+      person_id: undefined,
+      iv: undefined
+    };
+
+    try {
+      await this.memberSyncService.createMemberWithComputedStatus(newMember);
+      this.toastService.showSuccess(
+        'Nouveau membre non licencié',
+        `${newMember.lastname} ${newMember.firstname}`
+      );
+      await this.refreshMembersAsync();
+    } catch (error) {
+      console.error('Erreur lors de la création d’une personne non licenciée:', error);
+      this.toastService.showError('Nouveau membre', 'La personne n’a pas pu être créée');
+    }
+  }
+
+  private async validateCreationEmail(value: string): Promise<string | null> {
+    const email = normalizeMemberEmail(value);
+    if (!email) {
+      this.toastService.showWarning('Email obligatoire', 'Une adresse email est nécessaire pour créer la fiche');
+      return null;
+    }
+
+    try {
+      const existingMember = await this.membersService.searchMemberByEmail(email);
+      if (!existingMember) return email;
+
+      this.toastService.showWarning(
+        'Email déjà utilisé',
+        `${email} est déjà associé à ${existingMember.firstname} ${existingMember.lastname}`
+      );
+      return null;
+    } catch (error) {
+      console.error('Erreur lors du contrôle d’unicité de l’email:', error);
+      this.toastService.showError(
+        'Contrôle de l’email',
+        'Impossible de vérifier cette adresse ; création annulée'
+      );
+      return null;
+    }
+  }
+
+  private createProvisionalLicense(lastName: string, firstName: string): string {
+    const base = '??' + lastName.trim().toUpperCase().slice(0, 3) + firstName.trim().slice(0, 3);
+    const existingLicenses = new Set(this.members.map((member) => member.license_number));
+    if (!existingLicenses.has(base)) return base;
+
+    for (let index = 1; index < 1296; index++) {
+      const suffix = index.toString(36).toUpperCase().padStart(2, '0');
+      const candidate = base.slice(0, 6).padEnd(6, 'X') + suffix;
+      if (!existingLicenses.has(candidate)) return candidate;
+    }
+
+    throw new Error(`Impossible de générer un identifiant provisoire unique pour ${firstName} ${lastName}`);
   }
 
   capitalizeFirst(str: string | undefined): string {
@@ -328,7 +483,7 @@ export class MembersComponent implements OnInit {
     if (filter === 'BANNED') {
       this.selectedInfoColumn = 'lifecycleReason';
     } else if (this.selectedInfoColumn === 'lifecycleReason') {
-      this.selectedInfoColumn = 'membership_date';
+      this.selectedInfoColumn = 'email';
     }
     this.selectedStatusFilter = null;
     this.applyStatusCounters();
@@ -340,13 +495,72 @@ export class MembersComponent implements OnInit {
     this.applyFilters();
   }
 
+  sortByDate(field: 'membership_date' | 'register_date'): void {
+    if (this.dateSortField === field) {
+      this.dateSortDirection = this.dateSortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.dateSortField = field;
+      this.dateSortDirection = 'asc';
+    }
+    this.applyFilters();
+  }
+
+  sortByName(): void {
+    this.dateSortField = null;
+    this.dateSortDirection = 'asc';
+    this.applyFilters();
+  }
+
+  getNameSortIcon(): string {
+    return this.dateSortField === null ? 'bi bi-chevron-up' : 'bi bi-chevron-expand';
+  }
+
+  getNameAriaSort(): 'none' | 'ascending' {
+    return this.dateSortField === null ? 'ascending' : 'none';
+  }
+
+  getDateSortIcon(field: 'membership_date' | 'register_date'): string {
+    if (this.dateSortField !== field) return 'bi bi-chevron-expand';
+    return this.dateSortDirection === 'asc' ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+  }
+
+  getDateAriaSort(field: 'membership_date' | 'register_date'): 'none' | 'ascending' | 'descending' {
+    if (this.dateSortField !== field) return 'none';
+    return this.dateSortDirection === 'asc' ? 'ascending' : 'descending';
+  }
+
   private applyFilters(): void {
     this.filteredMembers = this.members
       .filter((member: Member) =>
         this.membersService.getLifecycleStatus(member) === this.selectedLifecycleFilter
         && (this.selectedStatusFilter === null || this.matchesStatusFilter(member, this.selectedStatusFilter))
       )
-      .sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+      .sort((a, b) => this.compareMembers(a, b));
+  }
+
+  private compareMembers(left: Member, right: Member): number {
+    const compareNames = () => {
+      const lastNameComparison = left.lastname.localeCompare(right.lastname, 'fr', { sensitivity: 'base' });
+      return lastNameComparison || left.firstname.localeCompare(right.firstname, 'fr', { sensitivity: 'base' });
+    };
+
+    if (!this.dateSortField) return compareNames();
+
+    const leftTime = this.parseSortableDate(left[this.dateSortField]);
+    const rightTime = this.parseSortableDate(right[this.dateSortField]);
+    if (leftTime === null && rightTime === null) return compareNames();
+    if (leftTime === null) return 1;
+    if (rightTime === null) return -1;
+
+    const dateComparison = leftTime - rightTime;
+    if (dateComparison === 0) return compareNames();
+    return this.dateSortDirection === 'asc' ? dateComparison : -dateComparison;
+  }
+
+  private parseSortableDate(value: string | undefined): number | null {
+    if (!value) return null;
+    const timestamp = Date.parse(value);
+    return Number.isNaN(timestamp) ? null : timestamp;
   }
 
   getSelectedLifecycleLabel(): string {
@@ -359,7 +573,7 @@ export class MembersComponent implements OnInit {
   }
 
   exportActiveMembersCsv(): void {
-    const csv = buildActiveMembersCsv(this.members);
+    const csv = buildActiveMembersCsv(this.members, this.systemDataService.get_local_season());
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -406,10 +620,31 @@ export class MembersComponent implements OnInit {
     }
 
     if (status === MemberStatus.OUTSIDE_FFB_CLUB || status === MemberStatus.NON_ADHERENT) {
+      if (member.orga_license_name || member.register_date) {
+        const licenseLocation = member.orga_license_name ? ` au ${member.orga_license_name}` : '';
+        const licenseDate = member.register_date
+          ? ` le ${this.formatDate(member.register_date)}`
+          : '';
+        return `Licence FFB prise${licenseLocation}${licenseDate}. ${membership}`;
+      }
       return `Absent de la base FFB du club. Sa situation de licence FFB ailleurs n’est pas connue. ${membership}`;
     }
 
     return this.getStatusLabel(status);
+  }
+
+  getDisplayedLicenseDate(member: Member): string {
+    return member.register_date || '';
+  }
+
+  getDisplayedLicenseClub(member: Member): string {
+    const status = this.getMemberStatus(member);
+    if (status === MemberStatus.SYMPATHISANT && this.membersService.isLicensed(member)) {
+      return member.license_taken_at || '';
+    }
+    return status === MemberStatus.OUTSIDE_FFB_CLUB || status === MemberStatus.NON_ADHERENT
+      ? member.orga_license_name || ''
+      : '';
   }
 
   private formatDate(value: string): string {
@@ -496,6 +731,37 @@ export class MembersComponent implements OnInit {
   private async refreshMembersAsync(): Promise<void> {
     const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
     this.applyMembers(members ?? []);
+  }
+
+  private async resolveMemberMergeConflicts(): Promise<boolean> {
+    let changed = false;
+    for (const conflict of this.memberSyncService.getPendingMergeConflicts()) {
+      const modalRef = this.modalService.open(MemberMergeConflictModalComponent, {
+        size: 'lg',
+        centered: true,
+        backdrop: 'static',
+        keyboard: false,
+      });
+      modalRef.componentInstance.conflict = conflict;
+
+      const decision = await modalRef.result as MemberMergeDecision;
+      if (decision.action === 'merge') {
+        await this.memberSyncService.mergeMemberConflict(conflict, decision.memberId);
+        this.toastService.showSuccess(
+          'Rapprochement FFB',
+          `${conflict.clubMember.firstName} ${conflict.clubMember.lastName} a été fusionné avec la fiche existante`
+        );
+        changed = true;
+      } else if (decision.action === 'create') {
+        await this.memberSyncService.createDistinctMember(conflict);
+        this.toastService.showSuccess(
+          'Rapprochement FFB',
+          `${conflict.clubMember.firstName} ${conflict.clubMember.lastName} a été créé comme personne distincte`
+        );
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   accessSettings(member: Member): void {

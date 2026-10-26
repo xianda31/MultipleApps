@@ -44,7 +44,6 @@ export class HomePage {
   private identitySub?: Subscription;
   transitioning = false; // legacy flag (unused in sequential fade)
   opacity = 1;           // controls sequential fade opacity
-  tournaments_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 4 };
   news_row_cols: BreakpointsSettings = { SM: 1, MD: 2, LG: 3, XL: 2 };
   home_layout_ratio!: number;
   tournamentsColClass: string = 'col-12 col-md-8';
@@ -83,7 +82,7 @@ export class HomePage {
     });
 
     this.titleService.setTitle('Les actualités et les prochains tournois de régularité');
-
+    
     this.countersSub = this.membersService.listMembers().subscribe((members) => {
       const counters = this.membersService.computeStatusCountersFromMembers();
       this.licensee_nbr = counters.ffbClubAttached;
@@ -147,7 +146,6 @@ export class HomePage {
     this.systemDataService.get_ui_settings().subscribe((ui: UIConfiguration) => {
       const conf: UIConfiguration = ui || {} as UIConfiguration;
       // breakpoints stored under `homepage` by contract; use defaults when missing
-      this.tournaments_row_cols = (conf && conf.homepage && conf.homepage.tournaments_row_cols) ? conf.homepage.tournaments_row_cols : this.tournaments_row_cols;
       this.news_row_cols = (conf && conf.homepage && conf.homepage.news_row_cols) ? conf.homepage.news_row_cols : this.news_row_cols;
       this.home_layout_ratio = (conf && conf.homepage && conf.homepage.home_layout_ratio !== undefined)
         ? conf.homepage.home_layout_ratio

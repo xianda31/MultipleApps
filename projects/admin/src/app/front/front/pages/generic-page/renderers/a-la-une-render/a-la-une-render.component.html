@@ -1,13 +1,14 @@
-<div [ngClass]="rowCols()">
+<div [ngClass]="rowCols()" [class.compact-news]="compact">
   @for (snippet of snippets; track snippet.id) {
   <div class="col">
-    <div class="card nice_shadow" [class.recent-highlight]="isRecentHighlight(snippet)" id="{{snippet.title}}">
+    <div class="card nice_shadow" [class.recent-highlight]="isRecentHighlight(snippet)"
+      [class.card-shine]="isRecentHighlight(snippet)" id="{{snippet.title}}">
       <div class="card-body">
         <div class="row g-0">
           <div class="snippet-heading d-flex align-items-stretch mb-2">
             <div class="snippet-media">
               <div class="inline-image-frame">
-                <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top ken-burns-image">
+                <img [src]="snippet.image_url" alt="{{snippet.title}}" class="card-img-top">
               </div>
               <div class="snippet-date text-muted">{{snippet.publishedAt | date:'shortDate'}}</div>
             </div>
@@ -15,8 +16,8 @@
               <div class="snippet-headings">
                 @if (isRecentHighlight(snippet)) {
                 <div class="recent-highlight-badge">
-                  <i class="bi bi-heart-fill" aria-hidden="true"></i>
-                  Nouveau
+                  <i class="bi bi-bell-fill" aria-hidden="true"></i>
+                  Récent
                 </div>
                 }
                 @if (snippet.subtitle) {

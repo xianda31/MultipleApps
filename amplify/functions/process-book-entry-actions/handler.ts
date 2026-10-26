@@ -7,6 +7,7 @@ import {
   PutCommand,
   TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { notifyPlayBookUpdate } from './appsync-playbook-notifier';
 
 export const documentClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
@@ -17,6 +18,10 @@ const PLAYBOOK_TABLE = process.env['PLAYBOOK_TABLE_NAME'] || '';
 const FULFILLMENT_EXECUTION_TABLE = process.env['FULFILLMENT_EXECUTION_TABLE_NAME'] || '';
 const ASSISTANCE_REQUEST_TABLE = process.env['ASSISTANCE_REQUEST_TABLE_NAME'] || '';
 const DEFAULT_PLAYBOOK_CREDITS = 12;
+
+export const playBookNotifier = {
+  notify: notifyPlayBookUpdate,
+};
 
 type Handler = Schema['processBookEntryActions']['functionHandler'];
 type ActionResult = {
@@ -143,6 +148,21 @@ async function recordFailure(
   await reportFailureToAssistance(executionId, bookEntryId, purchasedItemIndex, error, paymentChannel);
 }
 
+async function notifyPlayBookUpdateBestEffort(playBookId: string): Promise<void> {
+  if (!playBookId) {
+    console.error('[fulfillment] Completed execution has no PlayBook resultId');
+    return;
+  }
+  try {
+    await playBookNotifier.notify(playBookId);
+  } catch (error) {
+    console.error('[fulfillment] Unable to publish PlayBook update to AppSync', {
+      playBookId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 async function createPlayBook(
   bookEntryId: string,
   purchasedItemIndex: number,
@@ -157,6 +177,7 @@ async function createPlayBook(
     Key: { id: executionId },
   }));
   if (existingExecution.Item?.['status'] === 'completed') {
+    await notifyPlayBookUpdateBestEffort(String(existingExecution.Item['resultId'] || ''));
     return {
       executionId,
       actionType: 'CREATE_PLAYBOOK',
@@ -231,6 +252,7 @@ async function createPlayBook(
         },
       ],
     }));
+    await notifyPlayBookUpdateBestEffort(playBookId);
 
     return {
       executionId,
@@ -246,6 +268,7 @@ async function createPlayBook(
       ConsistentRead: true,
     }));
     if (completedExecution.Item?.['status'] === 'completed') {
+      await notifyPlayBookUpdateBestEffort(String(completedExecution.Item['resultId'] || ''));
       return {
         executionId,
         actionType: 'CREATE_PLAYBOOK',
@@ -253,6 +276,7 @@ async function createPlayBook(
         resultId: completedExecution.Item['resultId'],
       };
     }
+
     try {
       await recordFailure(executionId, bookEntryId, purchasedItemIndex, message, paymentChannel);
     } catch (recordError: any) {

@@ -29,6 +29,7 @@ import { NAVITEM_PLUGIN } from '../../../common/interfaces/plugin.interface';
 import { environment } from '../../../../environments/environment';
 import type { BuildInfo } from '../../../../environments/build-info.interface';
 import { FfbAvailabilityService } from '../../../common/services/ffb-availability.service';
+import { NotificationSubscriptionComponent } from '../pages/home-page/notification-subscription/notification-subscription.component';
 
 type StripeReturnState = {
   checkout: 'success' | 'cancel';
@@ -39,7 +40,7 @@ type StripeReturnState = {
   selector: 'app-front',
   standalone: true,
   encapsulation: ViewEncapsulation.None, // nécessaire pour que les tooltips fonctionnent
-  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule, RouterLink, FrontNavbarComponent, AppInstallComponent],
+  imports: [CommonModule, RouterModule, TitleComponent, FormsModule, ReactiveFormsModule, NgbDropdownModule, NgbCollapseModule, NgbTooltipModule, RouterLink, FrontNavbarComponent, AppInstallComponent, NotificationSubscriptionComponent],
   templateUrl: './front.component.html',
   styleUrls: ['./front.component.scss']
 })
@@ -60,6 +61,7 @@ export class FrontComponent implements AfterViewInit {
   showBackToTop = false;
   buildInfo: BuildInfo = environment.buildInfo;
   readonly ffbAvailability$: FfbAvailabilityService['snapshot$'];
+  webPushActive = false;
 
   @HostListener('window:resize')
   onResize() {
@@ -117,6 +119,9 @@ export class FrontComponent implements AfterViewInit {
     this.captureStripeReturnContext();
     this.localStorageService.setItem('entry_point', 'front');
     this.onResize(); // Ensure correct mode on init
+    this.systemDataService.get_configuration().subscribe((configuration) => {
+      this.webPushActive = configuration.web_push_active ?? false;
+    });
     this.siteLayoutService.getAlbums().subscribe((albums) => {
       this.albums = albums;
     });

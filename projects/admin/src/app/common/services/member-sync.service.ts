@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { filter, firstValueFrom, take } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, take } from 'rxjs';
 import { BookService } from '../../back/services/book.service';
 import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { Revenue } from '../interfaces/accounting.interface';
@@ -11,6 +11,18 @@ import { LicenseesService } from './licensees.service';
 import { MemberStatus } from './members.service';
 import { MembersService } from './members.service';
 import { SystemDataService } from './system-data.service';
+import { hasSameNormalizedMemberName } from './member-identity.util';
+
+export interface MemberMergeConflict {
+    clubMember: ClubMember;
+    person: PersonV2 | null;
+    candidates: Member[];
+}
+
+export interface MemberSyncProgress {
+    percent: number;
+    label: string;
+}
 
 @Injectable({
     providedIn: 'root'
@@ -19,6 +31,12 @@ export class MemberSyncService {
     private syncInFlight: Promise<Member[]> | null = null;
     private lastSyncAt = 0;
     private readonly MIN_SYNC_INTERVAL_MS = 15_000;
+    private pendingMergeConflicts: MemberMergeConflict[] = [];
+    private readonly syncProgressSubject = new BehaviorSubject<MemberSyncProgress>({
+        percent: 0,
+        label: 'Préparation de la synchronisation...',
+    });
+    readonly syncProgress$ = this.syncProgressSubject.asObservable();
 
     constructor(
         private membersService: MembersService,
@@ -59,7 +77,34 @@ export class MemberSyncService {
         await this.membersService.createMember(nextMember);
     }
 
+    getPendingMergeConflicts(): MemberMergeConflict[] {
+        return this.pendingMergeConflicts.map((conflict) => ({
+            ...conflict,
+            candidates: [...conflict.candidates],
+        }));
+    }
+
+    async mergeMemberConflict(conflict: MemberMergeConflict, memberId: string): Promise<void> {
+        const candidate = conflict.candidates.find((member) => member.id === memberId);
+        if (!candidate) {
+            throw new Error(`Member merge candidate ${memberId} is no longer available`);
+        }
+
+        const updatedMember = this.buildUpdatedMember(candidate, conflict.clubMember, conflict.person);
+        if (updatedMember) {
+            await this.membersService.updateMember(updatedMember);
+        }
+        this.removePendingConflict(conflict.clubMember.id);
+    }
+
+    async createDistinctMember(conflict: MemberMergeConflict): Promise<void> {
+        await this.membersService.createMember(this.createNewMember(conflict.clubMember, conflict.person));
+        this.removePendingConflict(conflict.clubMember.id);
+    }
+
     private async runSynchronization(synchronizationSeason: string): Promise<Member[]> {
+        this.pendingMergeConflicts = [];
+        this.reportProgress(3, 'Chargement des données FFB et comptables...');
         const [operations, licensees] = await Promise.all([
             this.loadOperations(),
             firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1))),
@@ -75,32 +120,50 @@ export class MemberSyncService {
 
         let members = await this.getMembersSnapshot();
 
-        for (const licensee of licensees) {
+        for (const [index, licensee] of licensees.entries()) {
             if (!this.canSynchronizeSeason(synchronizationSeason)) {
                 return this.getSortedMembersSnapshot();
             }
             await this.createOrUpdateMember(members, licensee);
+            this.reportProgress(
+                8 + Math.round(((index + 1) / licensees.length) * 47),
+                `Fusion des membres FFB : ${index + 1}/${licensees.length}`
+            );
         }
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.reportProgress(58, 'Contrôle des rattachements FFB...');
         members = await this.commitPhase(() => this.resetObsoleteLicenses(members, licensees));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.reportProgress(65, 'Mise à jour des adhésions...');
         members = await this.commitPhase(() => this.syncMembershipDates(members, operations, synchronizationSeason));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.reportProgress(72, 'Recherche des licences prises dans un autre club...');
+        members = await this.commitPhase(() => this.syncExternalLicenseDetails(members, licensees));
+
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.getSortedMembersSnapshot();
+        }
+        this.reportProgress(96, 'Finalisation des statuts...');
         members = await this.commitPhase(() => this.ensureMemberStatuses(members));
 
         members = await this.getMembersSnapshot();
         this.lastSyncAt = Date.now();
+        this.reportProgress(100, 'Synchronisation terminée');
 
         return this.sortMembers(members);
+    }
+
+    private reportProgress(percent: number, label: string): void {
+        this.syncProgressSubject.next({ percent, label });
     }
 
     private async loadOperations(): Promise<Revenue[]> {
@@ -155,6 +218,21 @@ export class MemberSyncService {
         }
 
         const personV2 = await this.ffbService.getFFBPerson(clubMember.id).catch(() => null);
+        const candidates = members.filter((member) => hasSameNormalizedMemberName(member, clubMember));
+        if (candidates.length > 0) {
+            this.pendingMergeConflicts.push({
+                clubMember,
+                person: personV2,
+                candidates: [...candidates],
+            });
+            console.warn('[MemberSync] Member creation suspended pending identity review', {
+                ffbPersonId: clubMember.id,
+                licenseNumber,
+                candidateIds: candidates.map((candidate) => candidate.id),
+            });
+            return;
+        }
+
         const newMember = this.createNewMember(clubMember, personV2);
         await this.membersService.createMember(newMember);
     }
@@ -167,11 +245,12 @@ export class MemberSyncService {
             firstname: clubMember.firstName,
             lastname: clubMember.lastName.toUpperCase(),
             birthdate: clubMember.birthdate,
-            city: member.city,
-            email: personV2?.email?.trim() || member.email,
-            phone_one: member.phone_one,
+            city: member.city?.trim() || personV2?.city || '',
+            email: member.email?.trim() || personV2?.email?.trim() || '',
+            phone_one: member.phone_one?.trim() || personV2?.phone || '',
             license_taken_at: clubMember.club?.label ?? 'BCSTO',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
+            orga_license_name: member.orga_license_name ? '' : member.orga_license_name,
             license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
             accept_mailing: member.accept_mailing,
             membership_date: member.membership_date,
@@ -199,6 +278,12 @@ export class MemberSyncService {
         return null;
     }
 
+    private removePendingConflict(personId: number): void {
+        this.pendingMergeConflicts = this.pendingMergeConflicts.filter(
+            (conflict) => conflict.clubMember.id !== personId
+        );
+    }
+
     private createNewMember(clubMember: ClubMember, personV2: PersonV2 | null): Member {
         const nextMember: Member = {
             id: '',
@@ -214,6 +299,7 @@ export class MemberSyncService {
             license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
             license_taken_at: clubMember.club?.label ?? 'BCSTO',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
+            orga_license_name: '',
             membership_date: '',
             person_id: clubMember.id,
             memberStatus: this.computeMemberStatusFromClubMember(clubMember),
@@ -250,6 +336,78 @@ export class MemberSyncService {
         }
 
         await Promise.all(updates);
+    }
+
+    private async syncExternalLicenseDetails(members: Member[], clubLicensees: ClubMember[]): Promise<void> {
+        const clubReferences = this.membersService.buildFfbBaseReferences(clubLicensees);
+        const candidates = members.filter((member) => {
+            const licenseNumber = member.license_number?.trim();
+            return this.membersService.getLifecycleStatus(member) === 'ACTIVE'
+                && !!licenseNumber
+                && !licenseNumber.startsWith('?')
+                && !this.membersService.isInFfbBase(member, clubReferences);
+        });
+
+        const batchSize = 5;
+        for (let index = 0; index < candidates.length; index += batchSize) {
+            const batch = candidates.slice(index, index + batchSize);
+            await Promise.all(
+                batch.map((member) => this.syncExternalLicenseDetail(member))
+            );
+            const completed = Math.min(index + batch.length, candidates.length);
+            this.reportProgress(
+                72 + Math.round((completed / candidates.length) * 22),
+                `Recherche des licences externes : ${completed}/${candidates.length}`
+            );
+        }
+    }
+
+    private async syncExternalLicenseDetail(member: Member): Promise<void> {
+        const normalizedLicense = member.license_number.trim().padStart(8, '0');
+        const searchHints = [
+            normalizedLicense.replace(/^0+/, ''),
+            `${member.lastname} ${member.firstname}`.trim(),
+        ].filter((hint, index, hints) => hint.length > 3 && hints.indexOf(hint) === index);
+        let currentLicense: ClubMember | undefined;
+
+        for (const hint of searchHints) {
+            try {
+                const result = await this.ffbService.searchPlayersSuchAs(hint, { maxPerPage: 10 });
+                currentLicense = result.items.find((candidate) =>
+                    candidate.id === member.person_id
+                    || candidate.license_number.trim().padStart(8, '0') === normalizedLicense
+                );
+                if (currentLicense) break;
+            } catch (error) {
+                console.warn('[MemberSync] External FFB license lookup failed', {
+                    memberId: member.id,
+                    licenseNumber: normalizedLicense,
+                    hint,
+                    error,
+                });
+                return;
+            }
+        }
+
+        const externalLicenseClub = currentLicense?.licence
+            ? currentLicense.club?.label || currentLicense.club?.name || currentLicense.club?.ffbCode || ''
+            : '';
+        const externalLicenseDate = currentLicense?.licence && currentLicense.mainRegistration?.createdAt
+            ? currentLicense.mainRegistration.createdAt.split('T')[0]
+            : '';
+
+        if (
+            member.orga_license_name === externalLicenseClub
+            && member.register_date === externalLicenseDate
+        ) {
+            return;
+        }
+
+        await this.membersService.updateMember({
+            ...member,
+            orga_license_name: externalLicenseClub,
+            register_date: externalLicenseDate,
+        });
     }
 
     private async syncMembershipDates(

@@ -163,14 +163,14 @@ async function sendPurchaseConfirmationEmail(session: Stripe.Checkout.Session): 
     return;
   }
 
-  const memberName = String(session.metadata?.memberName || session.customer_details?.name || '');
+  const memberFirstName = String(session.metadata?.memberFirstName || '');
   const amount = formatAmount(session.amount_total || 0);
   const currency = String(session.currency || 'eur').toUpperCase();
   const { receiptUrl, attachment } = await getReceiptAttachment(session.id);
   const subject = `Confirmation de votre achat - ${amount}`;
 
   const bodyHtml = buildPurchaseConfirmationMailTemplate({
-    memberName,
+    memberFirstName,
     amount,
     currency,
     receiptUrl,
@@ -287,14 +287,14 @@ async function sendTerminalConfirmationEmail(pi: Stripe.PaymentIntent): Promise<
     return;
   }
 
-  const memberName = String(pi.metadata?.['memberName'] || '');
+  const memberFirstName = String(pi.metadata?.['memberFirstName'] || '');
   const amount = formatAmount(pi.amount || 0);
   const currency = String(pi.currency || 'eur').toUpperCase();
   const { receiptUrl, attachment } = await getTerminalReceiptAttachment(pi.id);
   const subject = `Confirmation de votre achat - ${amount}`;
 
   const bodyHtml = buildPurchaseConfirmationMailTemplate(
-    { memberName, amount, currency, receiptUrl },
+    { memberFirstName, amount, currency, receiptUrl },
     resolvePurchaseEmailTemplateOptions(),
   );
 
@@ -402,13 +402,17 @@ async function recordStripeTransaction(session: Stripe.Checkout.Session, resolve
 async function confirmAndProcessBookEntry(session: Stripe.Checkout.Session): Promise<string> {
   if (!BOOK_ENTRY_TABLE) throw new Error('BOOK_ENTRY_TABLE_NAME not configured');
 
+  const stripeTag = session.metadata?.['stripeTag'] || `stripe:${session.id.slice(-12)}`;
   const matches: Record<string, any>[] = [];
   let exclusiveStartKey: Record<string, any> | undefined;
   do {
     const page = await docClient.send(new ScanCommand({
       TableName: BOOK_ENTRY_TABLE,
-      FilterExpression: 'stripeSessionId = :sessionId',
-      ExpressionAttributeValues: { ':sessionId': session.id },
+      FilterExpression: 'stripeSessionId = :sessionId OR stripeTag = :stripeTag',
+      ExpressionAttributeValues: {
+        ':sessionId': session.id,
+        ':stripeTag': stripeTag,
+      },
       ExclusiveStartKey: exclusiveStartKey,
     }));
     matches.push(...(page.Items || []));
@@ -420,7 +424,7 @@ async function confirmAndProcessBookEntry(session: Stripe.Checkout.Session): Pro
   }
 
   const bookEntryId = String(matches[0]['id']);
-  return confirmAndProcessBookEntryById(bookEntryId, session.id, `stripe:${session.id.slice(-12)}`);
+  return confirmAndProcessBookEntryById(bookEntryId, session.id, stripeTag);
 }
 
 async function confirmAndProcessBookEntryById(
@@ -555,12 +559,12 @@ export async function handler(event: any): Promise<any> {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
         console.log(`Session Stripe complétée: ${session.id}, payment_status: ${session.payment_status}, payment_intent: ${session.payment_intent}`);
-        let bookEntryId: string | undefined;
         if (session.payment_status === 'paid' || session.payment_status === 'no_payment_required') {
-          bookEntryId = await confirmAndProcessBookEntry(session);
-        }
-        await recordStripeTransaction(session, bookEntryId);
-        if (bookEntryId) {
+          // Persister d'abord le paiement Stripe afin qu'une erreur de fulfillment ne
+          // transforme jamais un paiement réellement encaissé en faux checkout abandonné.
+          await recordStripeTransaction(session);
+          const bookEntryId = await confirmAndProcessBookEntry(session);
+          await recordStripeTransaction(session, bookEntryId);
           await sendPurchaseConfirmationEmail(session);
         }
         break;
@@ -588,6 +592,7 @@ export async function handler(event: any): Promise<any> {
       case 'checkout.session.async_payment_succeeded': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
         console.log(`Paiement asynchrone réussi: ${session.id}`);
+        await recordStripeTransaction(session);
         const bookEntryId = await confirmAndProcessBookEntry(session);
         await recordStripeTransaction(session, bookEntryId);
         await sendPurchaseConfirmationEmail(session);

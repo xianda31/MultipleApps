@@ -51,6 +51,7 @@ export class SysConfComponent {
       club_bank_key: [''],
       assistance_request_retention_days: [90],
       remembered_auth_session_days: [30, [Validators.required, Validators.min(1), Validators.max(30)]],
+      web_push_active: [false],
       online_payment_active: [false],
       tpe_payment_active: [false],
       CB_fees_account: [''],
@@ -155,6 +156,10 @@ export class SysConfComponent {
 
   get includeSystemVisits(): boolean {
     return !!this.systemFormGroup.get('include_system_visits')?.value;
+  }
+
+  get webPushActive(): boolean {
+    return !!this.systemFormGroup.get('web_push_active')?.value;
   }
 
   private computeBankOptions(): { key: string; name: string }[] {

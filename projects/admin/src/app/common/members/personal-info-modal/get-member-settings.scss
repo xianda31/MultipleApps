@@ -93,6 +93,18 @@
   padding: 0.25rem 0;
 }
 
+.consent-copy {
+  display: grid;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.consent-copy small {
+  margin-top: 0.1rem;
+  color: var(--bs-secondary-color);
+  font-weight: 400;
+}
+
 @media (max-width: 575.98px) {
   .modal-body {
     max-height: 72vh;

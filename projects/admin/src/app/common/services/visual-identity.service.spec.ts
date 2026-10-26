@@ -63,7 +63,6 @@ describe('VisualIdentityService', () => {
         club: { name: '', font: '', image, imageMobile, imageMobileLandscape, logo },
       },
       homepage: {
-        tournaments_row_cols: { SM: 1, MD: 1, LG: 1, XL: 1 },
         news_row_cols: { SM: 1, MD: 1, LG: 1, XL: 1 },
       },
       card_thumbnails: [],

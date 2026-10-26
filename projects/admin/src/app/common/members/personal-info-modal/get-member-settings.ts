@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Injector, Input } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
 import { Member, Member_settings } from '../../interfaces/member.interface';
@@ -11,6 +11,11 @@ import { ToastService } from '../../services/toast.service';
 import { MemberSettingsService } from '../../services/member-settings.service';
 import { normalizeFrenchPhoneNumber } from '../../pipes/phone.pipe';
 import { getFfbRankingCodeParts } from '../../utils/ffb-ranking.util';
+import { SystemDataService } from '../../services/system-data.service';
+import {
+  NotificationSubscriptionService,
+  NotificationTopic,
+} from '../../../front/front/pages/home-page/notification-subscription/notification-subscription.service';
 
 
 @Component({
@@ -30,6 +35,10 @@ export class GetMemberSettingsComponent {
   avatarFileExists = false;
   // Sauvegarder les valeurs initiales pour la comparaison
   initialSettings!: Member_settings;
+  private initialPushTopics: NotificationTopic[] = [];
+  private notificationService?: NotificationSubscriptionService;
+  webPushActive = false;
+  saving = false;
 
   readonly default_ico = 'anybody.png';
   readonly avatar_path = S3_ROOT_FOLDERS.PORTRAITS + '/';
@@ -41,7 +50,9 @@ export class GetMemberSettingsComponent {
     private imageService: ImageService,
     private toastService: ToastService,
     private memberSettingsService: MemberSettingsService,
-    private membersService: MembersService
+    private membersService: MembersService,
+    private systemDataService: SystemDataService,
+    private injector: Injector,
 
   ) {
 
@@ -51,6 +62,9 @@ export class GetMemberSettingsComponent {
       city: [''],
       email: [{ value: '', disabled: true }],
       phone_one: ['', Validators.pattern(this.frenchPhonePattern)],
+      pushNews: [{ value: false, disabled: true }],
+      pushPartner: [{ value: false, disabled: true }],
+      pushAlerts: [{ value: false, disabled: true }],
     });
   }
 
@@ -71,6 +85,25 @@ export class GetMemberSettingsComponent {
       city: this.member.city ?? '',
       email: this.member.email ?? '',
       phone_one: normalizeFrenchPhoneNumber(this.member.phone_one ?? ''),
+    });
+    this.systemDataService.get_configuration().subscribe((configuration) => {
+      this.webPushActive = configuration.web_push_active ?? false;
+      if (!this.webPushActive) {
+        return;
+      }
+
+      const notificationService = this.getNotificationService();
+      this.initialPushTopics = [...notificationService.preferences.topics];
+      this.preferenceForm.patchValue({
+        pushNews: this.initialPushTopics.includes('news'),
+        pushPartner: this.initialPushTopics.includes('partner'),
+        pushAlerts: this.initialPushTopics.includes('alerts'),
+      });
+      if (notificationService.isSupported) {
+        this.preferenceForm.get('pushNews')?.enable();
+        this.preferenceForm.get('pushPartner')?.enable();
+        this.preferenceForm.get('pushAlerts')?.enable();
+      }
     });
 
     this.memberSettingsService.getAvatarUrl(this.member).subscribe((avatarUrl) => {
@@ -99,12 +132,33 @@ export class GetMemberSettingsComponent {
     phoneControl?.setValue(normalized);
   }
 
-  save() {
-    if (this.preferenceForm.invalid) {
+  async save(): Promise<void> {
+    if (this.preferenceForm.invalid || this.saving) {
       this.preferenceForm.markAllAsTouched();
       return;
     }
+    this.saving = true;
     const formValue = this.preferenceForm.getRawValue();
+    if (this.webPushActive) {
+      const pushTopics: NotificationTopic[] = [];
+      if (formValue.pushNews) pushTopics.push('news');
+      if (formValue.pushPartner) pushTopics.push('partner');
+      if (formValue.pushAlerts) pushTopics.push('alerts');
+
+      if (!this.samePushTopics(pushTopics, this.initialPushTopics)) {
+        try {
+          await this.getNotificationService().subscribe(pushTopics);
+        } catch (error) {
+          this.toastService.showError(
+            'Notifications',
+            error instanceof Error ? error.message : 'Impossible d’enregistrer les notifications.',
+          );
+          this.saving = false;
+          return;
+        }
+      }
+    }
+
     let new_preference: Member_settings = {
       accept_mailing: formValue.accept_mailing,
       city: formValue.city ?? '',
@@ -112,9 +166,18 @@ export class GetMemberSettingsComponent {
       phone_one: normalizeFrenchPhoneNumber(formValue.phone_one ?? ''),
     };
     if (this.base64_ico) {
-      this.upload_avatar_file();
+      await this.upload_avatar_file();
     }
     this.activeModal.close(new_preference);
+  }
+
+  private samePushTopics(first: NotificationTopic[], second: NotificationTopic[]): boolean {
+    return first.length === second.length && first.every(topic => second.includes(topic));
+  }
+
+  private getNotificationService(): NotificationSubscriptionService {
+    this.notificationService ??= this.injector.get(NotificationSubscriptionService);
+    return this.notificationService;
   }
 
   exit() {

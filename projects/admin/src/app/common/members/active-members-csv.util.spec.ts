@@ -1,5 +1,5 @@
 import { LicenseStatus, Member } from '../interfaces/member.interface';
-import { activeMembersCsvFileName, buildActiveMembersCsv } from './active-members-csv.util';
+import { activeMembersCsvFileName, buildActiveMembersCsv, hasMembershipForSeason } from './active-members-csv.util';
 
 function member(overrides: Partial<Member>): Member {
   return {
@@ -29,7 +29,7 @@ describe('active members CSV export', () => {
       member({ id: 'archived', lastname: 'ARCHIVE', lifecycleStatus: 'ARCHIVED' }),
       member({ id: 'second', lastname: 'ZOLA', firstname: 'Zoé' }),
       member({ id: 'legacy', lastname: 'MARTIN', firstname: 'Marc', lifecycleStatus: undefined }),
-    ]);
+    ], '2026/2027');
 
     expect(csv).not.toContain('ARCHIVE');
     expect(csv.indexOf('MARTIN')).toBeLessThan(csv.indexOf('ZOLA'));
@@ -37,6 +37,7 @@ describe('active members CSV export', () => {
     expect(csv).toContain('"memberStatus"');
     expect(csv).toContain('"CLUB_LICENSEE"');
     expect(csv).toContain('"Oui"');
+    expect(csv).toContain('"Adhésion 2026/2027 réglée"');
   });
 
   it('escapes quotes, flattens line breaks and neutralizes spreadsheet formulas', () => {
@@ -56,7 +57,55 @@ describe('active members CSV export', () => {
     expect(csv).toContain('"01 23 45 67 89"');
   });
 
+  it('exports the current external FFB license club and date', () => {
+    const csv = buildActiveMembersCsv([
+      member({
+        license_status: LicenseStatus.UNREGISTERED,
+        memberStatus: 'OUTSIDE_FFB_CLUB',
+        orga_license_name: 'Bridge Club de Toulouse',
+        register_date: '2026-10-03',
+      }),
+    ]);
+
+    expect(csv).toContain('"Licencié hors club"');
+    expect(csv).toContain('"Bridge Club de Toulouse"');
+    expect(csv).toContain('"2026-10-03"');
+  });
+
+  it('labels a licensed sympathisant as licensed outside the club', () => {
+    const csv = buildActiveMembersCsv([
+      member({
+        memberStatus: 'SYMPATHISANT',
+        license_status: LicenseStatus.DULY_REGISTERED,
+        license_taken_at: 'Bridge Club de Toulouse',
+      }),
+    ]);
+
+    expect(csv).toContain('"Licencié hors club"');
+    expect(csv).toContain('"Bridge Club de Toulouse"');
+  });
+
   it('builds a locally dated filename', () => {
     expect(activeMembersCsvFileName(new Date(2026, 9, 13))).toBe('membres-actifs-2026-10-13.csv');
+  });
+
+  it('identifies whether the membership was paid during the selected season', () => {
+    expect(hasMembershipForSeason('2026-07-01', '2026/2027')).toBeTrue();
+    expect(hasMembershipForSeason('2027-06-30', '2026/2027')).toBeTrue();
+    expect(hasMembershipForSeason('2026-06-30', '2026/2027')).toBeFalse();
+    expect(hasMembershipForSeason('', '2026/2027')).toBeFalse();
+  });
+
+  it('exports an explicit unpaid membership when the stored date belongs to a previous season', () => {
+    const csv = buildActiveMembersCsv([
+      member({
+        firstname: 'Jean François',
+        lastname: 'GROUT',
+        membership_date: '2025-08-31',
+      }),
+    ], '2026/2027');
+
+    const groutRow = csv.split('\r\n').find((row) => row.includes('"GROUT"'));
+    expect(groutRow).toContain('"2025-08-31";"Non"');
   });
 });

@@ -48,6 +48,7 @@ export class SystemDataService {
       ),
       online_payment_active: conf.online_payment_active ?? false,
       tpe_payment_active: conf.tpe_payment_active ?? false,
+      web_push_active: conf.web_push_active ?? false,
       minimum_cb_amount: conf.minimum_cb_amount ?? 0,
       membership_payment_warning_month: conf.membership_payment_warning_month ?? 11,
     } : conf;
@@ -77,6 +78,7 @@ export class SystemDataService {
         if (conf.remembered_auth_session_days == null) missing.push('remembered_auth_session_days');
         if (conf.online_payment_active == null) missing.push('online_payment_active');
         if (conf.tpe_payment_active == null) missing.push('tpe_payment_active');
+        if (conf.web_push_active == null) missing.push('web_push_active');
         if (conf.minimum_cb_amount == null) missing.push('minimum_cb_amount');
         if (conf.membership_payment_warning_month == null) missing.push('membership_payment_warning_month');
         if (missing.length) {
@@ -278,7 +280,9 @@ export class SystemDataService {
             footer: { bg: '#ffffff', text_color: '#222222' },
             club: { name: '', logo: '', image: '', font: 'Roboto, serif' }
           },
-          homepage: { tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 }, news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 } },
+          homepage: {
+            news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
+          },
           frontBannerEnabled: false,
           homepage_intro: '',
           email: { tagline: 'Votre club de bridge convivial et dynamique', ccEmail: '' },
@@ -351,7 +355,6 @@ export class SystemDataService {
         club: { name: '', logo: '', image: '', font: 'Roboto, serif' }
       },
       homepage: {
-        tournaments_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
         news_row_cols: { SM: 1, MD: 2, LG: 3, XL: 4 },
         featured_duration_days: 30,
       },
@@ -413,16 +416,11 @@ export class SystemDataService {
       const mergedRaw = { ...(this._ui_settings || {}), ...(ui || {}) } as any;
       mergedRaw.homepage = mergedRaw.homepage || {};
       // support legacy top-level keys or nested homepage keys
-      if ((ui as any)?.homepage?.tournaments_row_cols || (ui as any)?.tournaments_row_cols) {
-        const t = (ui as any)?.homepage?.tournaments_row_cols || (ui as any)?.tournaments_row_cols;
-        mergedRaw.homepage.tournaments_row_cols = normalizeBreakpoints(t);
-      }
       if ((ui as any)?.homepage?.news_row_cols || (ui as any)?.news_row_cols) {
         const n = (ui as any)?.homepage?.news_row_cols || (ui as any)?.news_row_cols;
         mergedRaw.homepage.news_row_cols = normalizeBreakpoints(n);
       }
       // delete legacy top-level keys if any
-      if (mergedRaw.tournaments_row_cols !== undefined) delete mergedRaw.tournaments_row_cols;
       if (mergedRaw.news_row_cols !== undefined) delete mergedRaw.news_row_cols;
       this._ui_settings = mergedRaw as UIConfiguration;
       try { this._ui_settings$.next(this._ui_settings); } catch (e) { /* ignore */ }

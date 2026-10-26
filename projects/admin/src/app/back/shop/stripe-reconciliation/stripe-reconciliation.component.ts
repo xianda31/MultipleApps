@@ -270,7 +270,9 @@ export class StripeReconciliationComponent {
     this.bookService.list_book_entries().subscribe(() => {
       this.membersService.listMembers().subscribe((members) => {
         this.members = members;
-        this.loadLines();
+        if (!this.processingPayout) {
+          void this.loadLines();
+        }
       });
     });
   }
@@ -836,12 +838,15 @@ export class StripeReconciliationComponent {
       this.expectedChargeCount = 0;
       this.isManualPayout = false;
       this.manualEntryMode = false;
-      await this.loadLines();
     } catch (error: any) {
       console.error('Erreur création payout:', error);
       this.toastService.showError('Rapprochement Stripe', 'Erreur lors de la comptabilisation du payout');
     } finally {
-      this.processingPayout = false;
+      try {
+        await this.loadLines();
+      } finally {
+        this.processingPayout = false;
+      }
     }
   }
 

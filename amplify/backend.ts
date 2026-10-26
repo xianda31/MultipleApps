@@ -28,6 +28,7 @@ import { surveyRespond } from "./functions/survey-respond/resource";
 import { processBookEntryActions } from "./functions/process-book-entry-actions/resource";
 import { processCmsImage } from "./functions/process-cms-image/resource";
 import { expireFeaturedSnippets } from "./functions/expire-featured-snippets/resource";
+import { sendWebPush } from "./functions/send-web-push/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -47,6 +48,7 @@ const backend = defineBackend({
   processBookEntryActions,
   processCmsImage,
   expireFeaturedSnippets,
+  sendWebPush,
 });
 
 const storageBucket = backend.storage.resources.bucket;
@@ -376,6 +378,41 @@ backend.processBookEntryActions.addEnvironment('MEMBER_TABLE_NAME', fulfillmentM
 backend.processBookEntryActions.addEnvironment('PLAYBOOK_TABLE_NAME', playBookTable.tableName);
 backend.processBookEntryActions.addEnvironment('FULFILLMENT_EXECUTION_TABLE_NAME', fulfillmentExecutionTable.tableName);
 backend.processBookEntryActions.addEnvironment('ASSISTANCE_REQUEST_TABLE_NAME', assistanceRequestTable.tableName);
+backend.processBookEntryActions.addEnvironment(
+  'APPSYNC_GRAPHQL_URL',
+  backend.data.resources.cfnResources.cfnGraphqlApi.attrGraphQlUrl,
+);
+
+const pushSubscriptionTable = backend.data.resources.tables['PushSubscription'];
+const sendWebPushLambda = backend.sendWebPush.resources.lambda;
+pushSubscriptionTable.grantReadWriteData(sendWebPushLambda);
+backend.sendWebPush.addEnvironment('PUSH_SUBSCRIPTION_TABLE_NAME', pushSubscriptionTable.tableName);
+backend.sendWebPush.addEnvironment(
+  'WEB_PUSH_VAPID_SUBJECT_PARAMETER',
+  '/multiple-apps/web-push/vapid-subject',
+);
+backend.sendWebPush.addEnvironment(
+  'WEB_PUSH_VAPID_PUBLIC_KEY_PARAMETER',
+  '/multiple-apps/web-push/vapid-public-key',
+);
+backend.sendWebPush.addEnvironment(
+  'WEB_PUSH_VAPID_PRIVATE_KEY_PARAMETER',
+  '/multiple-apps/web-push/vapid-private-key',
+);
+sendWebPushLambda.role?.addToPrincipalPolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ['ssm:GetParameters'],
+    resources: [
+      Stack.of(sendWebPushLambda).formatArn({
+        service: 'ssm',
+        resource: 'parameter',
+        resourceName: 'multiple-apps/web-push/*',
+        arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
+      }),
+    ],
+  }),
+);
 
 bookEntryTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 saleItemTable.grantReadData(backend.stripeWebhooks.resources.lambda);
@@ -389,6 +426,10 @@ backend.stripeWebhooks.addEnvironment('MEMBER_TABLE_NAME', fulfillmentMemberTabl
 backend.stripeWebhooks.addEnvironment('PLAYBOOK_TABLE_NAME', playBookTable.tableName);
 backend.stripeWebhooks.addEnvironment('FULFILLMENT_EXECUTION_TABLE_NAME', fulfillmentExecutionTable.tableName);
 backend.stripeWebhooks.addEnvironment('ASSISTANCE_REQUEST_TABLE_NAME', assistanceRequestTable.tableName);
+backend.stripeWebhooks.addEnvironment(
+  'APPSYNC_GRAPHQL_URL',
+  backend.data.resources.cfnResources.cfnGraphqlApi.attrGraphQlUrl,
+);
 
 // Grant stripeWebhooks write access to StripeTransaction table (data recording only)
 stripeTransactionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);

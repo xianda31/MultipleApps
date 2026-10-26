@@ -2,6 +2,17 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { normalizeMemberEmail, requiredMemberEmailValidator } from '../../services/member-email.util';
+
+export interface NewMemberFormValue {
+  gender: string;
+  firstname: string;
+  lastname: string;
+  email: string;
+  phone: string;
+  city: string;
+  acceptMailing: boolean;
+}
 
 @Component({
     selector: 'app-get-newbee',
@@ -19,17 +30,22 @@ export class GetNewbeeComponent {
       gender: ['', Validators.required],
       firstname: ['', Validators.required],
       lastname: ['', Validators.required],
-      email: ['', [Validators.email]],
+      email: ['', [requiredMemberEmailValidator]],
       phone: [''],
-      city: ['']
+      city: [''],
+      acceptMailing: [false],
     });
 
   }
 
 
   got_it() {
-
-    this.activeModal.close(this.newbee.value);
+    if (this.newbee.invalid) return;
+    const value = this.newbee.getRawValue() as NewMemberFormValue;
+    this.activeModal.close({
+      ...value,
+      email: normalizeMemberEmail(value.email),
+    } satisfies NewMemberFormValue);
   }
   close() {
     this.activeModal.close(null);

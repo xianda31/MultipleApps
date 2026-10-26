@@ -1,5 +1,6 @@
-import { canReconcilePayoutStatus, paymentCartSummary, refundsForCharge, StripeRefundItem } from './stripe-reconciliation.component';
+import { canReconcilePayoutStatus, paymentCartSummary, refundsForCharge, StripeReconciliationComponent, StripeRefundItem } from './stripe-reconciliation.component';
 import { BookEntry, TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
+import { of, Subject } from 'rxjs';
 
 describe('Stripe payment cart summary', () => {
   it('summarizes a shared product without exposing technical operation labels', () => {
@@ -83,5 +84,47 @@ describe('Stripe payout reconciliation status', () => {
     expect(canReconcilePayoutStatus('in_transit')).toBeFalse();
     expect(canReconcilePayoutStatus('canceled')).toBeFalse();
     expect(canReconcilePayoutStatus('failed')).toBeFalse();
+  });
+});
+
+describe('Stripe payout reconciliation refresh', () => {
+  it('ignores intermediate book updates while a payout is being reconciled', () => {
+    const component = Object.create(StripeReconciliationComponent.prototype) as StripeReconciliationComponent;
+    const bookEntries$ = new Subject<BookEntry[]>();
+    const bookService = jasmine.createSpyObj('BookService', ['list_book_entries']);
+    bookService.list_book_entries.and.returnValue(bookEntries$);
+    const membersService = jasmine.createSpyObj('MembersService', ['listMembers']);
+    membersService.listMembers.and.returnValue(of([]));
+    const stripeService = jasmine.createSpyObj('StripeService', ['getWebhookHealth', 'listPayouts']);
+    stripeService.getWebhookHealth.and.resolveTo({
+      windowDays: 30,
+      totalEvents: 0,
+      pendingEvents: 0,
+      deliveredEvents: 0,
+      status: 'ok',
+      events: [],
+    });
+    stripeService.listPayouts.and.resolveTo([]);
+    const systemDataService = jasmine.createSpyObj('SystemDataService', ['get_configuration']);
+    systemDataService.get_configuration.and.returnValue(of({ CB_fees_account: 'FRAIS_CB' }));
+    Object.assign(component as object, {
+      isDevMode: true,
+      stripeSource: 'test',
+      processingPayout: true,
+      bookService,
+      membersService,
+      stripeService,
+      systemDataService,
+      toastService: jasmine.createSpyObj('ToastService', ['showError']),
+    });
+    const loadLines = spyOn(component, 'loadLines').and.resolveTo();
+
+    component.ngOnInit();
+    bookEntries$.next([]);
+    expect(loadLines).not.toHaveBeenCalled();
+
+    component.processingPayout = false;
+    bookEntries$.next([]);
+    expect(loadLines).toHaveBeenCalledTimes(1);
   });
 });

@@ -103,12 +103,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
           ratio: [1.5]
         }),
       }),
-      tournaments_row_cols: this.fb.group({
-        SM: [1, [Validators.min(1), Validators.max(6)]],
-        MD: [2, [Validators.min(1), Validators.max(6)]],
-        LG: [4, [Validators.min(1), Validators.max(6)]],
-        XL: [6, [Validators.min(1), Validators.max(6)]]
-      }, { validators: this.breakpointsOrderValidator }),
       news_row_cols: this.fb.group({
         SM: [1, [Validators.min(1), Validators.max(6)]],
         MD: [2, [Validators.min(1), Validators.max(6)]],
@@ -402,9 +396,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
     ui = this.fixAllBrokenAccents(ui);
     // Patch form with defaults (support both legacy top-level keys and new `homepage` nesting)
     // homepage and breakpoints are required in the interface; use defaults if absent
-    const tournaments = (ui && ui.homepage && ui.homepage.tournaments_row_cols)
-      ? ui.homepage.tournaments_row_cols
-      : { SM: 1, MD: 2, LG: 4, XL: 6 };
     const news = (ui && ui.homepage && ui.homepage.news_row_cols)
       ? ui.homepage.news_row_cols
       : { SM: 1, MD: 2, LG: 4, XL: 6 };
@@ -450,12 +441,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
           imageMobile: template.club?.imageMobile ?? '',
           imageMobileLandscape: template.club?.imageMobileLandscape ?? ''
         }
-      },
-      tournaments_row_cols: {
-        SM: tournaments.SM ?? 1,
-        MD: tournaments.MD ?? 2,
-        LG: tournaments.LG ?? 4,
-        XL: tournaments.XL ?? 6
       },
       news_row_cols: {
         SM: news.SM ?? 1,
@@ -617,7 +602,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
           image_club_path: formVal.template?.club?.image || formVal.template?.image_club_path || ''
         },
         homepage: {
-          tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
           news_row_cols: formVal.news_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
           read_more_lines: formVal.read_more_lines ?? 3,
           unfold_on_hover: !!formVal.unfold_on_hover,
@@ -715,7 +699,6 @@ export class UiConfComponent implements OnInit, OnDestroy {
           image_club_path: formVal.template?.club?.image || formVal.template?.image_club_path || ''
         },
         homepage: {
-          tournaments_row_cols: formVal.tournaments_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
           news_row_cols: formVal.news_row_cols || { SM: 1, MD: 2, LG: 4, XL: 6 },
           read_more_lines: formVal.read_more_lines ?? 3,
           unfold_on_hover: !!formVal.unfold_on_hover,

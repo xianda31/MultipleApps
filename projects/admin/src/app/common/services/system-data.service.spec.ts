@@ -46,6 +46,29 @@ describe('SystemDataService accounting season', () => {
     expect(loaded.membership_payment_warning_month).toBe(11);
   });
 
+  it('keeps Web Push disabled when the configuration field is absent', async () => {
+    const fileService = jasmine.createSpyObj('FileService', ['download_json_file', 'upload_to_S3']);
+    const service = new SystemDataService(fileService, {} as any);
+    fileService.download_json_file.and.resolveTo(configuration(service.get_today_season()));
+
+    const loaded = await firstValueFrom(service.get_configuration());
+
+    expect(loaded.web_push_active).toBeFalse();
+  });
+
+  it('preserves an explicitly enabled Web Push configuration', async () => {
+    const fileService = jasmine.createSpyObj('FileService', ['download_json_file', 'upload_to_S3']);
+    const service = new SystemDataService(fileService, {} as any);
+    fileService.download_json_file.and.resolveTo({
+      ...configuration(service.get_today_season()),
+      web_push_active: true,
+    });
+
+    const loaded = await firstValueFrom(service.get_configuration());
+
+    expect(loaded.web_push_active).toBeTrue();
+  });
+
   it('blocks all writes when the next season is initialized before July', async () => {
     const fileService = jasmine.createSpyObj('FileService', ['download_json_file', 'upload_to_S3']);
     const service = new SystemDataService(fileService, {} as any);

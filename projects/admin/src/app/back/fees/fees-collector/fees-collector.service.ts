@@ -25,6 +25,8 @@ import { canSelectGameCard, checkInState, feeModeConfiguration, gamerFeePrice, r
   providedIn: 'root'
 })
 export class FeesCollectorService {
+  private readonly settlementPreflightTimeoutMs = 15_000;
+  private settlementInProgress = false;
   private tournament: club_tournament_extended | null = null;
   private checkInSubscription: Subscription | null = null;
   private feeConfigurationSubscription: Subscription | null = null;
@@ -151,6 +153,11 @@ export class FeesCollectorService {
       feesDoubled: this.game.fees_doubled,
       updatedBy: user?.username ?? user?.userId ?? 'unknown',
     };
+  }
+
+  private async currentSettlementOwner(): Promise<string> {
+    const user = await safeGetCurrentUserPromise();
+    return user?.username ?? user?.userId ?? 'unknown';
   }
 
   private async saveFeeConfiguration(
@@ -295,6 +302,26 @@ export class FeesCollectorService {
     const gameId = this.gameId;
     if (!gameId) return;
     this.applyCheckIns(await this.DBhandler.listGameCheckIns(gameId));
+  }
+
+  private async runSettlementPreflight(): Promise<void> {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([
+        (async () => {
+          await this.refreshFeeConfiguration();
+          await this.refreshGameCheckIns();
+        })(),
+        new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error('Settlement preflight timed out')),
+            this.settlementPreflightTimeoutMs,
+          );
+        }),
+      ]);
+    } finally {
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    }
   }
 
 
@@ -502,6 +529,7 @@ export class FeesCollectorService {
         this.update_members_debts();
         this.update_members_credits();
         this.update_members_assets();
+        this._game$.next(this.game);
         this.startSharedSync();
         // this.set_game(tournament);
       }
@@ -779,8 +807,30 @@ export class FeesCollectorService {
   }
 
   async save_fees(): Promise<boolean> {
-    await this.refreshFeeConfiguration();
-    await this.refreshGameCheckIns();
+    if (this.settlementInProgress) {
+      this.toastService.showWarning('droits de table', 'La clôture est déjà en cours sur cet appareil.');
+      return false;
+    }
+    this.settlementInProgress = true;
+
+    try {
+      return await this.saveFeesOnce();
+    } finally {
+      this.settlementInProgress = false;
+    }
+  }
+
+  private async saveFeesOnce(): Promise<boolean> {
+    try {
+      await this.runSettlementPreflight();
+    } catch (error) {
+      console.error('[FeesCollector] Settlement preflight failed:', error);
+      this.toastService.showError(
+        'Clôture impossible',
+        'Les données partagées n’ont pas pu être vérifiées. Aucune carte n’a été débitée.',
+      );
+      return false;
+    }
 
     // check if all non-members have been validated
     let non_members = this.game.gamers.filter((gamer) => !gamer.is_member && gamer.enabled);
@@ -800,8 +850,7 @@ export class FeesCollectorService {
 
     const gameId = this.gameId;
     if (!gameId) return false;
-    const user = await safeGetCurrentUserPromise();
-    const lockedBy = user?.username ?? user?.userId ?? 'unknown';
+    const lockedBy = await this.currentSettlementOwner();
     let settlementStatus: 'acquired' | 'closing' | 'completed' | 'failed';
     try {
       settlementStatus = await this.DBhandler.acquireGameSettlement(gameId, lockedBy);
@@ -821,8 +870,26 @@ export class FeesCollectorService {
     }
 
     try {
-      await this.refreshFeeConfiguration();
-      await this.refreshGameCheckIns();
+      try {
+        await this.runSettlementPreflight();
+      } catch (error) {
+        console.error('[FeesCollector] Settlement preflight failed after locking:', error);
+        try {
+          await this.DBhandler.deleteGameSettlement(gameId);
+        } catch (lockError) {
+          console.error('[FeesCollector] Unable to release unused settlement lock:', lockError);
+          try {
+            await this.DBhandler.failGameSettlement(gameId, 'Preflight failed before any financial operation');
+          } catch (statusError) {
+            console.error('[FeesCollector] Unable to mark unused settlement lock as failed:', statusError);
+          }
+        }
+        this.toastService.showError(
+          'Clôture impossible',
+          'Les données partagées n’ont pas pu être vérifiées. Aucune carte n’a été débitée.',
+        );
+        return false;
+      }
       non_members = this.game.gamers.filter((gamer) => !gamer.is_member && gamer.enabled);
       members = this.game.gamers.filter((gamer) => gamer.is_member && gamer.enabled);
       if (!non_members.every((gamer) => gamer.validated) || !members.every((gamer) => gamer.validated)) {

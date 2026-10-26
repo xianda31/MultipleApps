@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { generateClient } from 'aws-amplify/api';
-import { catchError, from, lastValueFrom, map, merge, Observable, of, switchMap, tap, filter } from 'rxjs';
+import { catchError, defer, from, lastValueFrom, map, merge, Observable, of, switchMap, tap, filter } from 'rxjs';
 import { safeGetCurrentUser$ } from '../authentification/safe-auth';
 import { Member, Member_input } from '../interfaces/member.interface';
 import { BookEntry } from '../interfaces/accounting.interface';
@@ -14,6 +14,7 @@ import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
 import { MailingList, MailingListInput } from '../../back/mailing/mailing-list.interface';
 import { classifyMemberLookupError, sanitizeGraphqlErrors } from '../authentification/member-lookup-diagnostics';
+import { collectStripeTransactionPages } from './stripe-transaction-pagination';
 
 @Injectable({
   providedIn: 'root'
@@ -1025,30 +1026,33 @@ export class DBhandler {
 
   // STRIPE TRANSACTION SERVICE
 
-  async listUnprocessedStripeTransactions(): Promise<any[]> {
+  private async listAllStripeTransactions(context: string): Promise<any[]> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors?.length) console.error('StripeTransaction.list (unprocessed) partial errors', errors);
+    return collectStripeTransactionPages(
+      async (nextToken) => client.models.StripeTransaction.list({
+        limit: 300,
+        nextToken,
+      }) as any,
+      (errors) => console.error(`StripeTransaction.list (${context}) partial errors`, errors),
+    );
+  }
+
+  async listUnprocessedStripeTransactions(): Promise<any[]> {
+    const transactions = await this.listAllStripeTransactions('unprocessed');
     // Filtrer les items null (violation de champ requis côté AppSync sur des
     // enregistrements corrompus) avant tout accès aux propriétés.
-    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => t.status === 'completed' && !t.processed);
+    return transactions.filter((t: any) => t.status === 'completed' && !t.processed);
   }
 
   async listUnpayoutedStripeTransactions(): Promise<any[]> {
-    const authMode = await lastValueFrom(this._authMode());
-    const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors?.length) console.error('StripeTransaction.list (unpayouted) partial errors', errors);
-    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => t.status === 'completed' && !t.payoutId);
+    const transactions = await this.listAllStripeTransactions('unpayouted');
+    return transactions.filter((t: any) => t.status === 'completed' && !t.payoutId);
   }
 
   async listAbandonedStripeTransactions(): Promise<any[]> {
-    const authMode = await lastValueFrom(this._authMode());
-    const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors?.length) console.error('StripeTransaction.list (abandoned) partial errors', errors);
-    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => ['abandoned', 'canceled', 'incomplete', 'expired'].includes(t.status));
+    const transactions = await this.listAllStripeTransactions('abandoned');
+    return transactions.filter((t: any) => ['abandoned', 'canceled', 'incomplete', 'expired'].includes(t.status));
   }
 
   async markStripeTransactionProcessed(id: string): Promise<void> {
@@ -1066,11 +1070,8 @@ export class DBhandler {
   }
 
   async listProcessedUnpayoutedStripeTransactions(): Promise<any[]> {
-    const authMode = await lastValueFrom(this._authMode());
-    const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.StripeTransaction.list({ limit: 300 });
-    if (errors?.length) console.error('StripeTransaction.list (processed/unpayouted) partial errors', errors);
-    return ((data as any[] | null) ?? []).filter(Boolean).filter((t: any) => t.processed === true && !t.payoutId);
+    const transactions = await this.listAllStripeTransactions('processed/unpayouted');
+    return transactions.filter((t: any) => t.processed === true && !t.payoutId);
   }
 
   async updateStripeTransactionPayout(id: string, payoutId: string, reconciledAt: string): Promise<void> {
@@ -1513,12 +1514,41 @@ export class DBhandler {
   queryPlayBooks(onlySynced: boolean = true): Observable<PlayBook[]> {
     return this._authMode().pipe(
       switchMap((authMode) => {
-        const client = generateClient<Schema>({ authMode: authMode });
-        const stream = (client.models.PlayBook as any).observeQuery();
-        return (onlySynced
-          ? stream.pipe(filter((payload: any) => payload?.isSynced === true))
-          : stream
-        ).pipe(map(({ items }: any) => items as PlayBook[])) as Observable<PlayBook[]>;
+        return defer(() => {
+          const client = generateClient<Schema>({ authMode: authMode });
+          const stream = (client.models.PlayBook as any).observeQuery();
+          let receivedSyncedSnapshot = false;
+
+          return stream.pipe(
+            filter((payload: any) => !onlySynced || payload?.isSynced === true),
+            switchMap((payload: any) => {
+              if (!payload?.isSynced || !receivedSyncedSnapshot) {
+                receivedSyncedSnapshot ||= payload?.isSynced === true;
+                return of(payload.items as PlayBook[]);
+              }
+
+              return from((async () => {
+                const playBooks: PlayBook[] = [];
+                let nextToken: string | null | undefined;
+
+                do {
+                  const page = await client.models.PlayBook.list({
+                    limit: 300,
+                    nextToken: nextToken || undefined,
+                  });
+                  if (page.errors?.length) {
+                    console.error('PlayBook.list refresh failed', page.errors);
+                    throw page.errors;
+                  }
+                  playBooks.push(...(page.data as unknown as PlayBook[]));
+                  nextToken = page.nextToken;
+                } while (nextToken);
+
+                return playBooks;
+              })());
+            }),
+          ) as Observable<PlayBook[]>;
+        });
       })
     );
   }

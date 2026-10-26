@@ -475,8 +475,23 @@ export class AuthentificationService {
       }
 
       return null;
-    } catch (err) {
-      return null;              // erreur "normale" si pas de user connecté
+    } catch (error) {
+      const name = error instanceof Error ? error.name : '';
+      const message = error instanceof Error ? error.message : String(error);
+      const invalidSession = name === 'NotAuthorizedException'
+        || name === 'UserUnAuthenticatedException'
+        || /access token has been revoked|token.*expired/i.test(message);
+
+      if (invalidSession) {
+        this._logged_member$.next(null);
+        await signOut({ global: false }).catch((signOutError) => {
+          console.warn('[Auth] Local cleanup after invalid session failed', signOutError);
+        });
+        clearAuthSessionPolicy();
+      } else {
+        console.error('[Auth] Failed to restore the authenticated member', error);
+      }
+      return null;
     }
   }
 

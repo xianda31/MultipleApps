@@ -6,6 +6,28 @@
   border-top-color: #007bff !important;
 }
 
+.members-sync-progress {
+  width: min(26rem, 55vw);
+  min-width: 16rem;
+}
+
+.members-sync-progress-label {
+  display: block;
+  margin-bottom: 0.2rem;
+  overflow: hidden;
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.members-sync-progress-bar {
+  height: 1rem;
+  font-size: 0.68rem;
+}
+
 /* Avatar images should not stretch row height */
 .table-avatar {
   width: 32px;
@@ -44,18 +66,75 @@ table.table.table-sm tbody tr td {
   table-layout: auto;
 }
 
+.members-table thead.sticky-top {
+  z-index: 2;
+}
+
+.members-table thead.sticky-top th {
+  box-shadow: inset 0 1px 0 var(--bs-border-color);
+}
+
 .member-avatar-column {
   width: 5.5rem;
   min-width: 5.5rem;
   white-space: nowrap;
 }
 
-.member-name-column {
+.member-player-column {
+  width: auto;
+}
+
+.member-player-lastname {
+  margin-right: 0.3rem;
+  font-weight: 700;
+}
+
+.member-license-detail-column {
+  white-space: nowrap;
+}
+
+.member-license-number-column {
+  width: 7rem;
+  min-width: 7rem;
+}
+
+.member-license-club {
+  display: block;
+  max-width: 10rem;
+  overflow: hidden;
+  color: var(--bs-secondary-color);
+  font-size: 0.7rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-license-date-column {
+  width: 8rem;
   min-width: 8rem;
 }
 
-.member-player-column {
-  display: none;
+.member-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.member-sort-button:hover,
+.member-sort-button:focus-visible {
+  color: var(--bs-primary);
+}
+
+.member-sort-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .member-status-column {
@@ -74,9 +153,15 @@ table.table.table-sm tbody tr td {
 }
 
 .members-stats-table-wrapper {
-  max-width: 44rem;
-  margin-inline: auto;
+  min-width: 0;
   overflow-x: auto;
+}
+
+.members-overview-layout {
+  display: grid;
+  grid-template-columns: minmax(20rem, 38rem);
+  justify-content: center;
+  align-items: start;
 }
 
 .members-stats-table {
@@ -172,6 +257,13 @@ table.table.table-sm tbody tr td {
     --bs-gutter-x: 0;
   }
 
+  .members-sync-progress {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.35rem;
+    margin-left: 0 !important;
+  }
+
   .members-table-scroll {
     margin-right: calc(-1 * var(--bs-card-spacer-x));
     margin-left: calc(-1 * var(--bs-card-spacer-x));
@@ -230,6 +322,10 @@ table.table.table-sm tbody tr td {
 }
 
 @media (max-width: 767.98px) and (orientation: portrait) {
+  .members-overview-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .members-table {
     table-layout: fixed;
   }
@@ -240,7 +336,7 @@ table.table.table-sm tbody tr td {
     font-size: 0.72rem;
   }
 
-  .member-name-column-desktop,
+  .member-license-detail-column,
   .member-info-column {
     display: none !important;
   }
@@ -255,6 +351,7 @@ table.table.table-sm tbody tr td {
 
   .member-player-lastname {
     display: block;
+    margin-right: 0;
     font-weight: 700;
   }
 
@@ -278,5 +375,39 @@ table.table.table-sm tbody tr td {
   .members-table-scroll {
     max-height: calc(100dvh - 11rem);
     min-height: 8rem;
+  }
+
+  .member-avatar-column {
+    width: 3.5rem;
+    min-width: 3.5rem;
+  }
+
+  .member-license-number-column {
+    width: 6.5rem;
+    min-width: 6.5rem;
+  }
+
+  .member-license-date-column {
+    width: 7rem;
+    min-width: 7rem;
+  }
+
+  .member-info-column {
+    min-width: 8rem;
+  }
+
+  .member-status-column {
+    width: 2.5rem;
+    min-width: 2.5rem;
+  }
+
+  .member-actions-column {
+    width: 6.5rem;
+    min-width: 6.5rem;
+  }
+
+  .member-actions-column .btn {
+    padding-right: 0.35rem;
+    padding-left: 0.35rem;
   }
 }

@@ -28,21 +28,6 @@
 	object-position: center;
 }
 
-.inline-image-frame img.ken-burns-image {
-	will-change: transform;
-	animation: recent-highlight-ken-burns 7s ease-in-out infinite alternate;
-}
-
-@keyframes recent-highlight-ken-burns {
-	from {
-		transform: scale(1.01) translateX(-1.5%);
-	}
-
-	to {
-		transform: scale(1.1) translateX(1.5%);
-	}
-}
-
 .snippet-heading-content {
 	display: flex;
 	flex-direction: column;
@@ -75,8 +60,64 @@
 	text-align: left;
 }
 
+.compact-news {
+	.snippet-subtitle {
+		font-size: 0.82rem;
+	}
+
+	.snippet-title {
+		font-size: 0.88rem;
+		line-height: 1.15;
+	}
+
+	.card-text {
+		font-size: 0.78rem;
+		line-height: 1.3;
+	}
+
+	.recent-highlight-badge {
+		font-size: 0.65rem;
+	}
+}
+
 .recent-highlight {
 	animation: recent-highlight-background 2.6s ease-in-out infinite;
+}
+
+.card-shine {
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		pointer-events: none;
+		border-radius: inherit;
+		background: linear-gradient(
+			110deg,
+			transparent 30%,
+			rgba(255, 255, 255, 0.15) 43%,
+			rgba(255, 255, 255, 0.65) 50%,
+			rgba(255, 255, 255, 0.15) 57%,
+			transparent 70%
+		);
+		transform: translateX(-150%);
+		animation: card-shine-sweep 8.2s ease-in-out infinite;
+	}
+}
+
+@keyframes card-shine-sweep {
+	0% {
+		transform: translateX(-150%);
+	}
+
+	25%,
+	100% {
+		transform: translateX(150%);
+	}
 }
 
 @keyframes recent-highlight-background {
@@ -115,19 +156,27 @@
 }
 
 .recent-highlight-badge i {
-	animation: recent-highlight-heartbeat 1.5s ease-in-out infinite;
+	animation: recent-highlight-shake 1.8s ease-in-out infinite;
+	transform-origin: 50% 15%;
 }
 
-@keyframes recent-highlight-heartbeat {
+@keyframes recent-highlight-shake {
 	0%,
-	45%,
+	40%,
 	100% {
-		transform: scale(1);
+		transform: translateX(0) rotate(0);
+	}
+
+	6%,
+	18%,
+	30% {
+		transform: translateX(-1px) rotate(-12deg);
 	}
 
 	12%,
-	28% {
-		transform: scale(1.25);
+	24%,
+	36% {
+		transform: translateX(1px) rotate(12deg);
 	}
 }
 
@@ -148,9 +197,8 @@
 		animation: none;
 	}
 
-	.inline-image-frame img.ken-burns-image {
-		animation: none;
-		transform: none;
+	.card-shine::after {
+		display: none;
 	}
 }
 
