@@ -190,13 +190,13 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
 
-  set_tournament(tournament: club_tournament_extended) {
+  async set_tournament(tournament: club_tournament_extended): Promise<void> {
     this.selected_tournament = tournament;
-    this.feesCollectorService.set_tournament(tournament);
+    await this.feesCollectorService.set_tournament(tournament);
     if (tournament.status === this.GAME_STATUS.RECOVERED) {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
       modalRef.componentInstance.title = 'Pointage existant';
-      modalRef.componentInstance.subtitle = 'Un pointage partiel a été retrouvé pour ce tournoi.';
+      modalRef.componentInstance.subtitle = 'Un pointage a été retrouvé pour ce tournoi.';
       modalRef.componentInstance.message = 'Que souhaitez-vous faire ?';
       modalRef.componentInstance.confirmLabel = 'Effacer et recommencer';
       modalRef.componentInstance.cancelLabel = 'Reprendre le pointage';
@@ -215,6 +215,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
           this.toastService.showSuccess('Gestion tournoi', 'Le pointage a été effacé. Vous pouvez recommencer.');
         } else {
           this.toastService.showInfo('Gestion tournoi', 'Le pointage existant a été restauré.');
+          this.check_status();
         }
       });
     }
