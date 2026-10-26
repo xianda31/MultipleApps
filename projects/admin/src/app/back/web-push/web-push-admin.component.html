@@ -1,0 +1,174 @@
+<div class="container-fluid py-3 py-lg-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-xl-9">
+      <div class="d-flex align-items-start gap-3 mb-4">
+        <div class="push-icon" aria-hidden="true"><i class="bi bi-bell-fill"></i></div>
+        <div>
+          <h4 class="mb-1">Envoi Web Push de test</h4>
+          <p class="text-muted mb-0">
+            Vérifiez la réception et la navigation d’une notification avant toute activation métier.
+          </p>
+        </div>
+      </div>
+
+      @if (loading) {
+        <div class="d-flex align-items-center gap-2 py-5 justify-content-center">
+          <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+          <span>Chargement de la configuration Web Push…</span>
+        </div>
+      } @else if (!webPushActive) {
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Web Push est désactivé. Activez <code>web_push_active</code> dans la configuration système
+          avant d’effectuer un envoi de test.
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="send()" novalidate>
+          <div class="card shadow-sm mb-3">
+            <div class="card-header fw-semibold">Destinataires</div>
+            <div class="card-body">
+              <div class="target-grid">
+                <label class="target-option" [class.selected]="target === 'current-browser'">
+                  <input class="form-check-input" type="radio" formControlName="target" value="current-browser">
+                  <span>
+                    <strong>Ce navigateur uniquement</strong>
+                    <small>Envoi vers l’abonnement associé à ce profil navigateur.</small>
+                  </span>
+                </label>
+                <label class="target-option collective" [class.selected]="target === 'topic'">
+                  <input class="form-check-input" type="radio" formControlName="target" value="topic">
+                  <span>
+                    <strong>Tous les abonnés du thème</strong>
+                    <small>Envoi collectif avec confirmation obligatoire.</small>
+                  </span>
+                </label>
+              </div>
+
+              @if (target === 'current-browser') {
+                @if (currentBrowserError) {
+                  <div class="alert alert-danger py-2 mt-3 mb-0">{{ currentBrowserError }}</div>
+                } @else if (!currentSubscriptionId) {
+                  <div class="alert alert-warning py-2 mt-3 mb-0">
+                    Ce navigateur ne possède pas d’abonnement Push actif.
+                  </div>
+                } @else if (!currentBrowserAcceptsTopic) {
+                  <div class="alert alert-warning py-2 mt-3 mb-0">
+                    Ce navigateur n’est pas abonné au thème sélectionné.
+                  </div>
+                } @else {
+                  <div class="text-success small mt-3">
+                    <i class="bi bi-check-circle-fill me-1"></i>Abonnement du navigateur disponible.
+                  </div>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-3">
+            <div class="card-header fw-semibold">Notification</div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label" for="pushTopic">Thème</label>
+                <select id="pushTopic" class="form-select" formControlName="topic">
+                  @for (item of topics; track item.value) {
+                    <option [value]="item.value">{{ item.label }} — {{ item.description }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between">
+                  <label class="form-label" for="pushTitle">Titre</label>
+                  <small class="text-muted">{{ form.controls.title.value.length }}/80</small>
+                </div>
+                <input id="pushTitle" class="form-control" formControlName="title" maxlength="80">
+                @if (form.controls.title.touched && form.controls.title.invalid) {
+                  <div class="invalid-feedback d-block">Le titre est obligatoire et limité à 80 caractères.</div>
+                }
+              </div>
+
+              <div class="mb-3">
+                <div class="d-flex justify-content-between">
+                  <label class="form-label" for="pushBody">Message</label>
+                  <small class="text-muted">{{ form.controls.body.value.length }}/240</small>
+                </div>
+                <textarea id="pushBody" class="form-control" rows="4" formControlName="body" maxlength="240"
+                  placeholder="Message de test affiché dans la notification"></textarea>
+                @if (form.controls.body.touched && form.controls.body.invalid) {
+                  <div class="invalid-feedback d-block">Le message est obligatoire et limité à 240 caractères.</div>
+                }
+              </div>
+
+              <div>
+                <label class="form-label" for="pushUrl">Page ouverte au clic</label>
+                <input id="pushUrl" class="form-control font-monospace" formControlName="url" maxlength="512"
+                  placeholder="/front/accueil">
+                <div class="form-text">Chemin interne commençant par un seul « / ».</div>
+                @if (form.controls.url.touched && form.controls.url.invalid) {
+                  <div class="invalid-feedback d-block">Saisissez un chemin interne valide.</div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-3">
+            <div class="card-header fw-semibold">Aperçu</div>
+            <div class="card-body">
+              <div class="notification-preview">
+                <div class="preview-logo"><i class="bi bi-suit-club-fill"></i></div>
+                <div class="min-w-0">
+                  <strong class="d-block text-truncate">{{ form.controls.title.value || 'Titre' }}</strong>
+                  <span class="d-block">{{ form.controls.body.value || 'Votre message apparaîtra ici.' }}</span>
+                  <small class="text-muted">{{ form.controls.url.value }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          @if (sendError) {
+            <div class="alert alert-danger"><i class="bi bi-x-octagon-fill me-2"></i>{{ sendError }}</div>
+          }
+
+          <button type="submit" class="btn btn-primary w-100" [disabled]="!canSend">
+            @if (sending) {
+              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              Envoi en cours…
+            } @else {
+              <i class="bi bi-send-fill me-2"></i>
+              {{ target === 'current-browser' ? 'Envoyer à ce navigateur' : 'Envoyer aux abonnés du thème' }}
+            }
+          </button>
+        </form>
+
+        @if (result; as summary) {
+          <div class="card shadow-sm mt-4" [class.border-success]="summary.failed === 0"
+            [class.border-warning]="summary.failed > 0">
+            <div class="card-header fw-semibold">Bilan du dernier envoi</div>
+            <div class="card-body">
+              <div class="result-grid">
+                <div><strong>{{ summary.selected }}</strong><span>Sélectionnés</span></div>
+                <div class="text-success"><strong>{{ summary.sent }}</strong><span>Envoyés</span></div>
+                <div class="text-secondary"><strong>{{ summary.expired }}</strong><span>Expirés supprimés</span></div>
+                <div [class.text-danger]="summary.failed > 0"><strong>{{ summary.failed }}</strong><span>Échecs</span></div>
+              </div>
+              @if (summary.failures.length > 0) {
+                <details class="mt-3">
+                  <summary class="text-danger">Détail des échecs</summary>
+                  <ul class="small mt-2 mb-0">
+                    @for (failure of summary.failures; track failure.subscriptionId) {
+                      <li>
+                        <span class="font-monospace">{{ failure.subscriptionId }}</span>
+                        @if (failure.statusCode) { — HTTP {{ failure.statusCode }} }
+                        — {{ failure.error }}
+                      </li>
+                    }
+                  </ul>
+                </details>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

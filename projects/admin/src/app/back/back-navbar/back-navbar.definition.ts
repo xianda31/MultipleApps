@@ -87,6 +87,7 @@ const MENU_DEFINITIONS: NavbarMenu[] = [
             { label: 'Assistance', route: BACK_ROUTE_PATHS.Assistance },
             { label: 'Mailing', route: BACK_ROUTE_PATHS.Mailing },
             { label: 'Breaking News', route: BACK_ROUTE_PATHS.BreakingNews },
+            { label: 'Test Web Push', route: BACK_ROUTE_PATHS.WebPushAdmin },
             { label: 'Sondage', route: BACK_ROUTE_PATHS.SondageList }
         ]
     },

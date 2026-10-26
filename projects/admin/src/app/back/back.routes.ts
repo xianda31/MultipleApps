@@ -47,6 +47,7 @@ import { BilletterieComponent } from './collecte/collecte-vente.component';
 import { ImageToolsComponent } from './image-tools/image-tools.component';
 import { ChequeExplorerComponent } from './books/cheque-explorer/cheque-explorer.component';
 import { devOnlyGuard } from '../dev-only.guard';
+import { WebPushAdminComponent } from './web-push/web-push-admin.component';
 
 function secureBackRoutes(childRoutes: Routes): Routes {
   return childRoutes.map((route) => {
@@ -144,6 +145,7 @@ export const routes: Routes = [
       { path: BACK_ROUTE_PATHS.Assistance, component: BackAssistanceComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.Mailing, component: MailingComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.BreakingNews, component: BreakingNewsDefineComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.WebPushAdmin, component: WebPushAdminComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.SondageList, component: SondageListComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.SondageEditor, component: SondageEditorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.SondageResultats, component: SondageResultatsComponent, canActivate: [AuthGuard] },
