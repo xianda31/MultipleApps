@@ -18,8 +18,10 @@ type DocumentTopic = {
     alt: string;
     source?: string;
   }[];
-  procedures?: {
+  blocks: {
     id: string;
+    type: string;
+    illustrationId?: string;
   }[];
   children?: DocumentTopic[];
 };
@@ -45,12 +47,39 @@ describe('back online help content', () => {
       .toBe(illustrationIds.length);
   });
 
-  it('uses unique procedure identifiers within each topic', () => {
+  it('uses unique stable block identifiers within each topic', () => {
     for (const topic of topics) {
-      const procedureIds = (topic.procedures ?? []).map((procedure) => procedure.id);
-      expect(new Set(procedureIds).size)
-        .withContext(`Duplicate procedure ID for ${topic.id}`)
-        .toBe(procedureIds.length);
+      const blockIds = topic.blocks.map((block) => block.id);
+      expect(new Set(blockIds).size)
+        .withContext(`Duplicate block ID for ${topic.id}`)
+        .toBe(blockIds.length);
+    }
+  });
+
+  it('uses supported block types and valid illustration references', () => {
+    const supportedTypes = new Set([
+      'text',
+      'list',
+      'procedure',
+      'illustration',
+      'table',
+      'attention',
+    ]);
+
+    for (const topic of topics) {
+      const illustrationIds = new Set(
+        (topic.illustrations ?? []).map((illustration) => illustration.id),
+      );
+      for (const block of topic.blocks) {
+        expect(supportedTypes.has(block.type))
+          .withContext(`Unsupported block type ${block.type} for ${topic.id}/${block.id}`)
+          .toBeTrue();
+        if (block.type === 'illustration') {
+          expect(illustrationIds.has(block.illustrationId ?? ''))
+            .withContext(`Unknown illustration for ${topic.id}/${block.id}`)
+            .toBeTrue();
+        }
+      }
     }
   });
 

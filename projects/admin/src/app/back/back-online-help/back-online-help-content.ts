@@ -17,10 +17,27 @@ export type HelpIllustration = {
   source?: string;
 };
 
-export type HelpProcedure = {
+export type HelpBlockType =
+  | 'text'
+  | 'list'
+  | 'procedure'
+  | 'illustration'
+  | 'table'
+  | 'attention';
+
+export type HelpContentBlock = {
   id: string;
-  title: string;
-  steps: string[];
+  type: HelpBlockType;
+  title?: string;
+  paragraphs?: string[];
+  items?: string[];
+  steps?: string[];
+  illustrationId?: string;
+  illustration?: HelpIllustration;
+  caption?: string;
+  columns?: string[];
+  rows?: string[][];
+  messages?: string[];
 };
 
 export type HelpTopic = {
@@ -32,18 +49,16 @@ export type HelpTopic = {
   manualChapterOrder?: number;
   route?: string;
   nav: HelpNavMeta;
-  functionalities: string[];
-  howTo: string[];
-  caution?: string[];
+  blocks: HelpContentBlock[];
   illustrations?: HelpIllustration[];
-  procedures?: HelpProcedure[];
   children?: HelpTopic[];
 };
 
 type BackRouteKey = keyof typeof BACK_ROUTE_PATHS;
 type HelpRouteKey = BackRouteKey | 'FrontHome';
-type HelpTopicDocument = Omit<HelpTopic, 'route' | 'children'> & {
+type HelpTopicDocument = Omit<HelpTopic, 'route' | 'blocks' | 'children'> & {
   routeKey?: HelpRouteKey;
+  blocks: Omit<HelpContentBlock, 'illustration'>[];
   children?: HelpTopicDocument[];
 };
 type HelpContentDocument = {
@@ -59,12 +74,27 @@ const HELP_CONTENT = helpContentDocument as HelpContentDocument;
 
 function resolveTopic(topic: HelpTopicDocument): HelpTopic {
   const { routeKey, children, ...content } = topic;
+  const illustrationById = new Map(
+    (content.illustrations ?? []).map((illustration) => [illustration.id, illustration]),
+  );
 
   return {
     ...content,
     scope: content.scope ?? 'application',
     contentStatus: content.contentStatus ?? 'published',
     route: routeKey ? HELP_ROUTES[routeKey] : undefined,
+    blocks: content.blocks.map((block) => {
+      if (block.type !== 'illustration') return block;
+      const illustration = block.illustrationId
+        ? illustrationById.get(block.illustrationId)
+        : undefined;
+      if (!illustration) {
+        throw new Error(
+          `Illustration ${block.illustrationId ?? '(sans identifiant)'} introuvable pour ${topic.id}`,
+        );
+      }
+      return { ...block, illustration };
+    }),
     children: children?.map(resolveTopic),
   };
 }

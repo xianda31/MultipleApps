@@ -122,55 +122,78 @@ test('includes every published topic in document order and reports planned topic
   assert.ok(chapterIds.filter((chapterId) => chapterId === 'comptabilite').length > 1);
 });
 
-test('restores functionalities and howTo without requiring procedures', () => {
+test('consumes ordered blocks and groups short blocks on the same slide', () => {
   const { document, config } = loadPresentationInputs();
   const model = buildPresentationModel(document, config);
-  const tournamentPages = model.pages.filter((page) => page.topic.id === 'tournois');
-  const overview = tournamentPages.find((page) => page.sourceFields?.includes('functionalities'));
-  const howTo = tournamentPages.find((page) => page.sourceFields?.includes('howTo'));
+  const tournamentPages = model.pages.filter(
+    (page) => page.kind === 'content' && page.topic.id === 'tournois',
+  );
   const source = document.topics.find((topic) => topic.id === 'tournois');
 
-  assert.deepEqual(overview.items, source.functionalities);
-  assert.deepEqual(howTo.items, source.howTo);
-  assert.equal(overview.procedures, undefined);
-  assert.equal(howTo.procedures, undefined);
+  assert.deepEqual(
+    tournamentPages.flatMap((page) => page.blocks.map((block) => block.id)),
+    source.blocks.map((block) => block.id),
+  );
+  assert.ok(tournamentPages.some((page) => page.blocks.length > 1));
 });
 
-test('reports exact cross-field duplicates instead of repeating them silently', () => {
+test('reports exact cross-block duplicates without removing them', () => {
   const { document, config } = loadPresentationInputs();
   const duplicatedDocument = clone(document);
   const tournament = duplicatedDocument.topics.find((topic) => topic.id === 'tournois');
-  tournament.howTo[0] = tournament.functionalities[0];
+  const list = tournament.blocks.find((block) => block.type === 'list');
+  const procedure = tournament.blocks.find((block) => block.type === 'procedure');
+  procedure.steps[0] = list.items[0];
 
   const model = buildPresentationModel(duplicatedDocument, config);
   assert.equal(model.coverage.ambiguities.length, 1);
   assert.equal(model.coverage.ambiguities[0].id, 'tournois');
-  assert.match(model.coverage.ambiguities[0].reason, /affichée une seule fois/);
+  assert.match(model.coverage.ambiguities[0].reason, /conservé pour relecture/);
 
-  const displayedItems = model.pages
-    .filter((page) => page.topic.id === 'tournois')
-    .flatMap((page) => page.items ?? []);
+  const displayedContent = model.pages
+    .filter((page) => page.kind === 'content' && page.topic.id === 'tournois')
+    .flatMap((page) => page.blocks)
+    .flatMap((block) => blockTextValues(block));
   assert.equal(
-    displayedItems.filter((item) => item === tournament.functionalities[0]).length,
-    1,
+    displayedContent.filter((item) => item === list.items[0]).length,
+    2,
   );
 });
 
-test('paginates long existing fields without reducing the configured body font', () => {
+function blockTextValues(block) {
+  return block.paragraphs
+    ?? block.items
+    ?? block.steps
+    ?? block.messages
+    ?? [];
+}
+
+test('paginates a long block without changing its order or body font', () => {
   const { document, config } = loadPresentationInputs();
   const paginatedDocument = clone(document);
   const tournament = paginatedDocument.topics.find((topic) => topic.id === 'tournois');
-  tournament.howTo = Array.from(
+  const procedure = tournament.blocks.find((block) => block.type === 'procedure');
+  procedure.steps = Array.from(
     { length: 24 },
     (_, index) => `Étape ${index + 1} de contrôle du tournoi avant validation.`,
   );
 
   const model = buildPresentationModel(paginatedDocument, config);
-  const howToPages = model.pages.filter(
-    (page) => page.topic.id === 'tournois' && page.sourceFields?.includes('howTo'),
+  const procedureFragments = model.pages
+    .filter((page) => page.kind === 'content' && page.topic.id === 'tournois')
+    .flatMap((page) => page.blocks)
+    .filter((block) => block.id === procedure.id);
+  assert.ok(procedureFragments.length > 1);
+  assert.deepEqual(
+    procedureFragments.flatMap((block) => block.steps),
+    procedure.steps,
   );
-  assert.ok(howToPages.length > 1);
-  assert.deepEqual(howToPages.flatMap((page) => page.items), tournament.howTo);
+  assert.deepEqual(
+    procedureFragments.map((block) => block.startIndex),
+    procedureFragments.map((_, index, fragments) => fragments
+      .slice(0, index)
+      .reduce((count, block) => count + block.steps.length, 0)),
+  );
 });
 
 test('reports an unsupported illustration with its reason', () => {
@@ -188,8 +211,58 @@ test('reports an unsupported illustration with its reason', () => {
   assert.match(exclusion.reason, /fichier d’illustration introuvable/);
 });
 
-test('creates a traceable complete PowerPoint with all supported field types', async () => {
+test('reports unsupported block types instead of ignoring them', () => {
   const { document, config } = loadPresentationInputs();
+  const unsupportedDocument = clone(document);
+  const tournament = unsupportedDocument.topics.find((topic) => topic.id === 'tournois');
+  tournament.blocks.push({ id: 'unknown', type: 'unknown' });
+
+  const model = buildPresentationModel(unsupportedDocument, config);
+  const exclusion = model.coverage.unsupported.find(
+    (entry) => entry.id === 'tournois' && entry.blockId === 'unknown',
+  );
+  assert.match(exclusion.reason, /type de bloc non pris en charge/);
+});
+
+test('creates a traceable PowerPoint containing every supported block type', async () => {
+  const { config } = loadPresentationInputs();
+  const illustrationPath = '/assets/documentation/images/carte-admissions-parcours.svg';
+  const document = {
+    version: 'block-test',
+    topics: [
+      {
+        id: 'block-chapter',
+        title: 'Chapitre blocs',
+        summary: 'Résumé de navigation',
+        blocks: [
+          { id: 'text', type: 'text', title: 'Texte', paragraphs: ['Paragraphe PPTX'] },
+          { id: 'list', type: 'list', title: 'Liste', items: ['Élément PPTX'] },
+          { id: 'procedure', type: 'procedure', title: 'Procédure', steps: ['Étape PPTX'] },
+          {
+            id: 'illustration',
+            type: 'illustration',
+            illustrationId: 'schema',
+            caption: 'Légende PPTX',
+          },
+          {
+            id: 'table',
+            type: 'table',
+            title: 'Tableau',
+            columns: ['Colonne A', 'Colonne B'],
+            rows: [['Cellule A', 'Cellule B']],
+          },
+          { id: 'attention', type: 'attention', title: 'Attention', messages: ['Message PPTX'] },
+        ],
+        illustrations: [
+          {
+            id: 'schema',
+            path: illustrationPath,
+            alt: 'Schéma test',
+          },
+        ],
+      },
+    ],
+  };
   const model = buildPresentationModel(document, config);
   const zip = await presentationZip(model);
   const entries = Object.keys(zip.files);
@@ -205,16 +278,17 @@ test('creates a traceable complete PowerPoint with all supported field types', a
       .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
       .map((name) => zip.file(name).async('string')),
   )).join('\n');
-  const tournament = document.topics.find((topic) => topic.id === 'tournois');
   for (const text of [
-    tournament.summary,
-    ...tournament.functionalities,
-    ...tournament.howTo,
-    ...tournament.caution,
+    'Paragraphe PPTX',
+    'Élément PPTX',
+    'Étape PPTX',
+    'Légende PPTX',
+    'Colonne A',
+    'Cellule B',
+    'Message PPTX',
   ]) {
     assert.ok(slideXml.includes(text), `Texte documentaire absent du PPTX: ${text}`);
   }
-  assert.equal(slideXml.includes('Structure du chapitre général consacré'), false);
 
   const notesXml = (await Promise.all(
     entries
@@ -222,13 +296,14 @@ test('creates a traceable complete PowerPoint with all supported field types', a
       .map((name) => zip.file(name).async('string')),
   )).join('\n');
   assert.ok(notesXml.includes(`Version documentaire: ${model.documentVersion}`));
-  assert.ok(notesXml.includes('Champs: functionalities'));
-  assert.ok(notesXml.includes('Champs: howTo'));
+  assert.ok(notesXml.includes('Blocs: text'));
+  assert.ok(notesXml.includes('procedure'));
+  assert.ok(notesXml.includes('illustration'));
 
   for (const page of model.pages.filter((candidate) => candidate.kind === 'content')) {
-    for (const illustration of page.illustrations ?? []) {
-      const extension = path.extname(illustration.filePath).toLowerCase().slice(1);
-      const sourceImage = fs.readFileSync(illustration.filePath);
+    for (const block of page.blocks.filter((candidate) => candidate.type === 'illustration')) {
+      const extension = path.extname(block.illustration.filePath).toLowerCase().slice(1);
+      const sourceImage = fs.readFileSync(block.illustration.filePath);
       const matchingMedia = await Promise.all(
         entries
           .filter((name) => name.startsWith('ppt/media/') && name.endsWith(`.${extension}`))
@@ -236,7 +311,7 @@ test('creates a traceable complete PowerPoint with all supported field types', a
       );
       assert.ok(
         matchingMedia.some((media) => sourceImage.equals(media)),
-        `Illustration absente du PPTX: ${illustration.id}`,
+        `Illustration absente du PPTX: ${block.illustrationId}`,
       );
     }
   }

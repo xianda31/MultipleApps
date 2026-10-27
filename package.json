@@ -23,7 +23,7 @@
     "cms:ownership:audit": "tsx scripts/migrate-snippet-ownership.ts",
     "cms:ownership:test": "tsx --test scripts/snippet-ownership-inventory.spec.ts",
     "documentation:pptx": "node scripts/documentation/generate-help-pptx.mjs",
-    "documentation:pptx:test": "node --test scripts/documentation/generate-help-pptx.test.mjs",
+    "documentation:pptx:test": "node --test scripts/documentation/*.test.mjs",
     "postinstall": "node scripts/link-amplify-deps.cjs && node scripts/patch-stripe-terminal-conditional.cjs && node scripts/copy-pdfjs-worker.cjs"
   },
   "build": {

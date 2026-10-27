@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-27.6",
+  "version": "2026-10-27.7",
   "topics": [
     {
       "id": "architecture",
@@ -12,8 +12,15 @@
         "icon": "bi-diagram-3",
         "groupLevel": "Membre"
       },
-      "functionalities": [],
-      "howTo": [],
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Structure du chapitre général consacré aux espaces, aux accès et aux composants de BCSTO."
+          ]
+        }
+      ],
       "children": [
         {
           "id": "architecture-presentation-vocabulaire",
@@ -25,8 +32,15 @@
             "icon": "bi-book",
             "groupLevel": "Membre"
           },
-          "functionalities": [],
-          "howTo": []
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Structure réservée aux notions générales et au vocabulaire du manuel de référence."
+              ]
+            }
+          ]
         },
         {
           "id": "architecture-espaces",
@@ -38,8 +52,15 @@
             "icon": "bi-layout-three-columns",
             "groupLevel": "Membre"
           },
-          "functionalities": [],
-          "howTo": []
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Structure réservée à la présentation des trois espaces de l’application."
+              ]
+            }
+          ]
         },
         {
           "id": "architecture-acces-droits",
@@ -51,8 +72,15 @@
             "icon": "bi-shield-lock",
             "groupLevel": "Membre"
           },
-          "functionalities": [],
-          "howTo": []
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Structure réservée aux accès, à l’authentification et aux niveaux de droits."
+              ]
+            }
+          ]
         },
         {
           "id": "architecture-systeme",
@@ -64,8 +92,15 @@
             "icon": "bi-diagram-2",
             "groupLevel": "Membre"
           },
-          "functionalities": [],
-          "howTo": []
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Structure réservée à l’architecture globale et aux systèmes externes."
+              ]
+            }
+          ]
         }
       ]
     },
@@ -79,20 +114,44 @@
         "icon": "bi-card-checklist",
         "groupLevel": "Contributeur"
       },
-      "functionalities": [
-        "Vérification de la présence effective des joueurs inscrits.",
-        "Pointage des droits de table par mode de règlement.",
-        "Préparation de l’enregistrement des droits de table du tournoi."
-      ],
-      "howTo": [
-        "Sélectionner le tournoi concerné pour afficher les joueurs inscrits.",
-        "Pour chaque joueur présent, pointer le mode de règlement choisi (carte, espèces) ou utiliser le bouton NP pour non présent ou non payant.",
-        "Quand tous les joueurs ont été pointés, accepter l’enregistrement des droits de table."
-      ],
-      "caution": [
-        "Le nombre de droits de table de la carte d’un joueur est affiché en bas à gauche.",
-        "L’icône chariot permet de lancer une vente rapide d’une nouvelle carte de droits d’entrée.",
-        "Les dettes et avoirs ne sont pas pris en compte par cette vente rapide ; pour en tenir compte, passer par le menu Boutique / vente adhérent."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "À l’ouverture d’un tournoi de régularité, cette page permet de vérifier la présence effective des joueurs inscrits et de pointer les droits de table (carte ou espèces)."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Vérification de la présence effective des joueurs inscrits.",
+            "Pointage des droits de table par mode de règlement.",
+            "Préparation de l’enregistrement des droits de table du tournoi."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Sélectionner le tournoi concerné pour afficher les joueurs inscrits.",
+            "Pour chaque joueur présent, pointer le mode de règlement choisi (carte, espèces) ou utiliser le bouton NP pour non présent ou non payant.",
+            "Quand tous les joueurs ont été pointés, accepter l’enregistrement des droits de table."
+          ]
+        },
+        {
+          "id": "points-vigilance",
+          "type": "attention",
+          "title": "Points de vigilance",
+          "messages": [
+            "Le nombre de droits de table de la carte d’un joueur est affiché en bas à gauche.",
+            "L’icône chariot permet de lancer une vente rapide d’une nouvelle carte de droits d’entrée.",
+            "Les dettes et avoirs ne sont pas pris en compte par cette vente rapide ; pour en tenir compte, passer par le menu Boutique / vente adhérent."
+          ]
+        }
       ],
       "children": [
         {
@@ -106,13 +165,32 @@
             "icon": "bi-card-checklist",
             "groupLevel": "Contributeur"
           },
-          "functionalities": [
-            "Saisie des montants par joueur.",
-            "Validation des encaissements evenementiels."
-          ],
-          "howTo": [
-            "Rechercher le participant dans la liste.",
-            "Saisir puis valider le montant de droit de table."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Enregistrement des droits de table pour les participants."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Saisie des montants par joueur.",
+                "Validation des encaissements evenementiels."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Rechercher le participant dans la liste.",
+                "Saisir puis valider le montant de droit de table."
+              ]
+            }
           ]
         }
       ]
@@ -127,18 +205,42 @@
         "icon": "bi-cart",
         "groupLevel": "Contributeur"
       },
-      "functionalities": [
-        "Création de paniers de vente.",
-        "Gestion des modes de paiement.",
-        "Suivi du catalogue des produits vendables."
-      ],
-      "howTo": [
-        "Ouvrir la boutique puis sélectionner l’acheteur.",
-        "Vérifier le panier, les montants et le mode de paiement.",
-        "Valider le paiement puis contrôler la confirmation."
-      ],
-      "caution": [
-        "En cas d’ambiguïté CB/Stripe, contrôler ensuite la section Stripe."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Gestion des ventes adhérents, de la billetterie et du catalogue produits."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Création de paniers de vente.",
+            "Gestion des modes de paiement.",
+            "Suivi du catalogue des produits vendables."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Ouvrir la boutique puis sélectionner l’acheteur.",
+            "Vérifier le panier, les montants et le mode de paiement.",
+            "Valider le paiement puis contrôler la confirmation."
+          ]
+        },
+        {
+          "id": "points-vigilance",
+          "type": "attention",
+          "title": "Points de vigilance",
+          "messages": [
+            "En cas d’ambiguïté CB/Stripe, contrôler ensuite la section Stripe."
+          ]
+        }
       ],
       "children": [
         {
@@ -152,19 +254,44 @@
             "icon": "bi-cart",
             "groupLevel": "Contributeur"
           },
-          "functionalities": [
-            "Selection de l acheteur et des payeurs.",
-            "Application des regles de panier."
-          ],
-          "howTo": [
-            "Verifier le membre avant validation.",
-            "Confirmer le recapitulatif avant enregistrement."
-          ],
           "illustrations": [
             {
               "id": "terminal-wisepad-3",
               "path": "/wisepad-3.jpg",
               "alt": "Terminal de paiement WisePad 3",
+              "caption": "Terminal de paiement utilis? pour les ventes par carte."
+            }
+          ],
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Vente standard rattachee a un membre."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Selection de l acheteur et des payeurs.",
+                "Application des regles de panier."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Verifier le membre avant validation.",
+                "Confirmer le recapitulatif avant enregistrement."
+              ]
+            },
+            {
+              "id": "illustration-terminal-wisepad-3",
+              "type": "illustration",
+              "illustrationId": "terminal-wisepad-3",
               "caption": "Terminal de paiement utilis? pour les ventes par carte."
             }
           ]
@@ -180,13 +307,32 @@
             "icon": "bi-cart",
             "groupLevel": "Contributeur"
           },
-          "functionalities": [
-            "Encaissement sur flux billetterie.",
-            "Verification des informations de vente."
-          ],
-          "howTo": [
-            "Ouvrir billetterie depuis Boutique.",
-            "Controler les donnees avant validation."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Suivi des ventes de billetterie."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Encaissement sur flux billetterie.",
+                "Verification des informations de vente."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Ouvrir billetterie depuis Boutique.",
+                "Controler les donnees avant validation."
+              ]
+            }
           ]
         },
         {
@@ -200,13 +346,32 @@
             "icon": "bi-cart",
             "groupLevel": "Contributeur"
           },
-          "functionalities": [
-            "Creation et mise a jour des produits.",
-            "Pilotage des categories visibles en caisse."
-          ],
-          "howTo": [
-            "Ajuster libelle, prix et categorie.",
-            "Verifier l apparition dans la boutique."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Maintenance du catalogue produits."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Creation et mise a jour des produits.",
+                "Pilotage des categories visibles en caisse."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Ajuster libelle, prix et categorie.",
+                "Verifier l apparition dans la boutique."
+              ]
+            }
           ]
         }
       ]
@@ -221,15 +386,34 @@
         "icon": "bi-people",
         "groupLevel": "Contributeur"
       },
-      "functionalities": [
-        "Consultation et mise a jour des fiches membres.",
-        "Gestion des cartes admission.",
-        "Controle des operations rattachees aux adherents."
-      ],
-      "howTo": [
-        "Rechercher le membre cible.",
-        "Appliquer les modifications necessaires.",
-        "Verifier les impacts sur cartes et ventes."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Base membres, cartes admission et controles associes."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Consultation et mise a jour des fiches membres.",
+            "Gestion des cartes admission.",
+            "Controle des operations rattachees aux adherents."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Rechercher le membre cible.",
+            "Appliquer les modifications necessaires.",
+            "Verifier les impacts sur cartes et ventes."
+          ]
+        }
       ],
       "children": [
         {
@@ -243,17 +427,39 @@
             "icon": "bi-people",
             "groupLevel": "Contributeur"
           },
-          "functionalities": [
-            "Consultation des membres actifs, anciens ou bannis, avec filtres par situation FFB et adhésion.",
-            "Tri par nom, date d’adhésion ou date de licence et choix de l’information complémentaire affichée.",
-            "Ajout d’une personne issue de la base FFB ou absente de cette base.",
-            "Mise à jour de la ville, du téléphone, du consentement aux communications et du portrait.",
-            "Archivage, bannissement, restauration et export CSV des membres actifs.",
-            "Synchronisation avec les membres FFB du club et les opérations d’adhésion de la saison."
+          "illustrations": [
+            {
+              "id": "schema-gestion-repertoire",
+              "path": "/assets/documentation/images/repertoire-gestion-membres.png",
+              "alt": "Schéma de référence reliant la base des joueurs FFB, la comptabilité et les services BCSTO au répertoire des membres.",
+              "caption": "Le Répertoire du Club rapproche les données FFB et comptables avant de les rendre disponibles aux autres services BCSTO.",
+              "source": "docs/documentation/sources/BCSTO_manuel_reference.pptx"
+            }
           ],
-          "procedures": [
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Répertoire local des personnes connues du club, enrichi par les données FFB et les opérations d’adhésion de la saison."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Consultation des membres actifs, anciens ou bannis, avec filtres par situation FFB et adhésion.",
+                "Tri par nom, date d’adhésion ou date de licence et choix de l’information complémentaire affichée.",
+                "Ajout d’une personne issue de la base FFB ou absente de cette base.",
+                "Mise à jour de la ville, du téléphone, du consentement aux communications et du portrait.",
+                "Archivage, bannissement, restauration et export CSV des membres actifs.",
+                "Synchronisation avec les membres FFB du club et les opérations d’adhésion de la saison."
+              ]
+            },
             {
               "id": "consulter-repertoire",
+              "type": "procedure",
               "title": "Rechercher et consulter",
               "steps": [
                 "Choisir Actifs, Anciens ou Bannis pour limiter le répertoire au cycle de vie recherché.",
@@ -265,6 +471,7 @@
             },
             {
               "id": "ajouter-personne-ffb",
+              "type": "procedure",
               "title": "Ajouter une personne répertoriée à la FFB",
               "steps": [
                 "Cliquer sur « Ajouter », puis conserver le mode « Répertoriée à la FFB ».",
@@ -276,6 +483,7 @@
             },
             {
               "id": "ajouter-personne-hors-ffb",
+              "type": "procedure",
               "title": "Ajouter une personne absente de la FFB",
               "steps": [
                 "Cliquer sur « Ajouter », puis choisir « Absente de la FFB ».",
@@ -287,6 +495,7 @@
             },
             {
               "id": "modifier-fiche-repertoire",
+              "type": "procedure",
               "title": "Modifier une fiche",
               "steps": [
                 "Cliquer sur l’icône œil « Voir la fiche » de la personne.",
@@ -298,6 +507,7 @@
             },
             {
               "id": "gerer-cycle-vie-repertoire",
+              "type": "procedure",
               "title": "Gérer le cycle de vie",
               "steps": [
                 "Archiver une personne qui ne doit plus figurer parmi les actifs, après confirmation.",
@@ -308,6 +518,7 @@
             },
             {
               "id": "synchronisation-repertoire",
+              "type": "procedure",
               "title": "Comprendre la synchronisation",
               "steps": [
                 "À l’ouverture du Répertoire, attendre la fin de la synchronisation signalée par la barre de progression.",
@@ -315,21 +526,23 @@
                 "La date d’adhésion est déterminée à partir des opérations ADH de la saison sélectionnée.",
                 "Un changement de saison relance la synchronisation et recalcule les rattachements FFB, les dates d’adhésion et les statuts affichés."
               ]
-            }
-          ],
-          "caution": [
-            "La création exige une adresse email unique ; ne pas créer une seconde fiche sans avoir vérifié les doublons proposés.",
-            "La synchronisation reflète les données FFB et les écritures ADH disponibles, mais ne corrige ni la base FFB, ni un paiement, ni une écriture comptable.",
-            "Le Répertoire est accessible à partir du niveau Contributeur. La suppression définitive d’une fiche bannie est réservée aux administrateurs.",
-            "Le bannissement bloque la connexion et les ventes. La suppression définitive est irréversible, même si l’historique comptable est conservé."
-          ],
-          "illustrations": [
+            },
             {
-              "id": "schema-gestion-repertoire",
-              "path": "/assets/documentation/images/repertoire-gestion-membres.png",
-              "alt": "Schéma de référence reliant la base des joueurs FFB, la comptabilité et les services BCSTO au répertoire des membres.",
-              "caption": "Le Répertoire du Club rapproche les données FFB et comptables avant de les rendre disponibles aux autres services BCSTO.",
-              "source": "docs/documentation/sources/BCSTO_manuel_reference.pptx"
+              "id": "points-vigilance",
+              "type": "attention",
+              "title": "Points de vigilance",
+              "messages": [
+                "La création exige une adresse email unique ; ne pas créer une seconde fiche sans avoir vérifié les doublons proposés.",
+                "La synchronisation reflète les données FFB et les écritures ADH disponibles, mais ne corrige ni la base FFB, ni un paiement, ni une écriture comptable.",
+                "Le Répertoire est accessible à partir du niveau Contributeur. La suppression définitive d’une fiche bannie est réservée aux administrateurs.",
+                "Le bannissement bloque la connexion et les ventes. La suppression définitive est irréversible, même si l’historique comptable est conservé."
+              ]
+            },
+            {
+              "id": "illustration-schema-gestion-repertoire",
+              "type": "illustration",
+              "illustrationId": "schema-gestion-repertoire",
+              "caption": "Le Répertoire du Club rapproche les données FFB et comptables avant de les rendre disponibles aux autres services BCSTO."
             }
           ]
         },
@@ -345,16 +558,36 @@
             "groupLevel": "Administrateur",
             "adminOnly": true
           },
-          "functionalities": [
-            "Création automatique d’une carte et de son crédit d’admissions lors d’une vente de carte en présentiel ou d’un achat en ligne.",
-            "Création manuelle exceptionnelle d’une carte avec justification.",
-            "Modification des titulaires et du crédit restant.",
-            "Consultation des cartes non vides et export Excel."
+          "illustrations": [
+            {
+              "id": "parcours-carte-admissions",
+              "path": "/assets/documentation/images/carte-admissions-parcours.svg",
+              "alt": "Schéma montrant qu’une vente ou une création manuelle produit une carte avec un crédit d’admissions restantes.",
+              "caption": "Deux modes de création alimentent la même carte d’admission ; chaque pointage diminue le crédit restant."
+            }
           ],
-          "howTo": [],
-          "procedures": [
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Création, modification et consultation des cartes d’admission aux tournois."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Création automatique d’une carte et de son crédit d’admissions lors d’une vente de carte en présentiel ou d’un achat en ligne.",
+                "Création manuelle exceptionnelle d’une carte avec justification.",
+                "Modification des titulaires et du crédit restant.",
+                "Consultation des cartes non vides et export Excel."
+              ]
+            },
             {
               "id": "creation-automatique",
+              "type": "procedure",
               "title": "Création automatique",
               "steps": [
                 "Effectuer normalement la vente de la carte en présentiel ou l’achat dans la boutique en ligne.",
@@ -364,6 +597,7 @@
             },
             {
               "id": "creation-manuelle",
+              "type": "procedure",
               "title": "Création manuelle",
               "steps": [
                 "Avant toute création, vérifier qu’une carte n’a pas déjà été créée automatiquement par la vente.",
@@ -375,6 +609,7 @@
             },
             {
               "id": "modification-carte",
+              "type": "procedure",
               "title": "Modification d’une carte",
               "steps": [
                 "Cliquer sur l’icône œil « Voir la carte ».",
@@ -385,22 +620,26 @@
             },
             {
               "id": "consultation-export",
+              "type": "procedure",
               "title": "Consultation et export",
               "steps": [
                 "Conserver le filtre « Cartes non vides uniquement » pour afficher les cartes disposant encore d’admissions.",
                 "Cliquer sur « Export Excel » pour exporter la liste des cartes."
               ]
-            }
-          ],
-          "caution": [
-            "Une création manuelle ne constitue pas l’enregistrement d’une vente.",
-            "Utiliser la création manuelle uniquement après avoir vérifié l’absence de carte créée automatiquement."
-          ],
-          "illustrations": [
+            },
             {
-              "id": "parcours-carte-admissions",
-              "path": "/assets/documentation/images/carte-admissions-parcours.svg",
-              "alt": "Schéma montrant qu’une vente ou une création manuelle produit une carte avec un crédit d’admissions restantes.",
+              "id": "points-vigilance",
+              "type": "attention",
+              "title": "Points de vigilance",
+              "messages": [
+                "Une création manuelle ne constitue pas l’enregistrement d’une vente.",
+                "Utiliser la création manuelle uniquement après avoir vérifié l’absence de carte créée automatiquement."
+              ]
+            },
+            {
+              "id": "illustration-parcours-carte-admissions",
+              "type": "illustration",
+              "illustrationId": "parcours-carte-admissions",
               "caption": "Deux modes de création alimentent la même carte d’admission ; chaque pointage diminue le crédit restant."
             }
           ]
@@ -416,18 +655,30 @@
             "icon": "bi-people",
             "groupLevel": "Contributeur"
           },
-          "functionalities": [
-            "Identification des licences perçues restant à déclarer à la FFB.",
-            "Identification des licenciés du club ou sympathisants sans adhésion réglée.",
-            "Identification des achats effectués sans adhésion à jour.",
-            "Identification des adhérents à éventuellement déclarer à la FFB.",
-            "Consultation mensuelle des paiements par compte de résultats.",
-            "Consultation du relevé d’achats, des avoirs et de la dette éventuelle d’un adhérent."
-          ],
-          "howTo": [],
-          "procedures": [
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Diagnostic de cohérence des licences, adhésions et achats, avec consultation des historiques comptables des adhérents."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Identification des licences perçues restant à déclarer à la FFB.",
+                "Identification des licenciés du club ou sympathisants sans adhésion réglée.",
+                "Identification des achats effectués sans adhésion à jour.",
+                "Identification des adhérents à éventuellement déclarer à la FFB.",
+                "Consultation mensuelle des paiements par compte de résultats.",
+                "Consultation du relevé d’achats, des avoirs et de la dette éventuelle d’un adhérent."
+              ]
+            },
             {
               "id": "controles-coherence",
+              "type": "procedure",
               "title": "Contrôles de cohérence",
               "steps": [
                 "Consulter « Licences perçues à enregistrer à la FFB » pour repérer les membres ayant réglé une licence mais dont le statut n’est pas encore déclaré.",
@@ -439,6 +690,7 @@
             },
             {
               "id": "historique-compte-resultats",
+              "type": "procedure",
               "title": "Historique par compte de résultats",
               "steps": [
                 "Sélectionner un compte de résultats dans la liste.",
@@ -448,6 +700,7 @@
             },
             {
               "id": "releve-adherent",
+              "type": "procedure",
               "title": "Relevé d’un adhérent",
               "steps": [
                 "Sélectionner un adhérent dans la zone « Paiements adhérent ».",
@@ -455,11 +708,16 @@
                 "Lire les mouvements de la saison puis le détail des achats, remboursements et règlements.",
                 "Utiliser le bouton avec une croix pour effacer la sélection."
               ]
+            },
+            {
+              "id": "points-vigilance",
+              "type": "attention",
+              "title": "Points de vigilance",
+              "messages": [
+                "Les alertes servent au diagnostic et ne corrigent pas automatiquement les déclarations FFB, les paiements ou les écritures comptables.",
+                "Cet écran ne propose aucune action de correction : il présente uniquement les écarts détectés et les historiques disponibles."
+              ]
             }
-          ],
-          "caution": [
-            "Les alertes servent au diagnostic et ne corrigent pas automatiquement les déclarations FFB, les paiements ou les écritures comptables.",
-            "Cet écran ne propose aucune action de correction : il présente uniquement les écarts détectés et les historiques disponibles."
           ]
         }
       ]
@@ -474,15 +732,34 @@
         "icon": "bi-calculator",
         "groupLevel": "Administrateur"
       },
-      "functionalities": [
-        "État de caisse et rapprochement bancaire.",
-        "Édition des écritures comptables.",
-        "Analyse des résultats, du bilan et de la synthèse."
-      ],
-      "howTo": [
-        "Vérifier d’abord l’état de caisse.",
-        "Rapprocher les mouvements bancaires.",
-        "Clore l’analyse sur les vues résultats, bilan et synthèse."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Saisie, rapprochement et analyse des écritures comptables."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "État de caisse et rapprochement bancaire.",
+            "Édition des écritures comptables.",
+            "Analyse des résultats, du bilan et de la synthèse."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Vérifier d’abord l’état de caisse.",
+            "Rapprocher les mouvements bancaires.",
+            "Clore l’analyse sur les vues résultats, bilan et synthèse."
+          ]
+        }
       ],
       "children": [
         {
@@ -496,13 +773,32 @@
             "icon": "bi-calculator",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Lecture des soldes courants.",
-            "Detection des ecarts de caisse."
-          ],
-          "howTo": [
-            "Comparer caisse et flux de vente.",
-            "Traiter les ecarts avant cloture."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Controle des soldes et mouvements de caisse."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Lecture des soldes courants.",
+                "Detection des ecarts de caisse."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Comparer caisse et flux de vente.",
+                "Traiter les ecarts avant cloture."
+              ]
+            }
           ]
         },
         {
@@ -516,13 +812,32 @@
             "icon": "bi-calculator",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Consultation des cheques rattaches a chaque bordereau.",
-            "Detection des ecarts entre cheques et depot bancaire."
-          ],
-          "howTo": [
-            "Selectionner le bordereau a controler.",
-            "Comparer le total des cheques avec le montant du depot."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Controle des cheques recus et de leur regroupement en bordereaux de depot."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Consultation des cheques rattaches a chaque bordereau.",
+                "Detection des ecarts entre cheques et depot bancaire."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Selectionner le bordereau a controler.",
+                "Comparer le total des cheques avec le montant du depot."
+              ]
+            }
           ]
         },
         {
@@ -536,13 +851,32 @@
             "icon": "bi-calculator",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Visualisation des transactions a rapprocher.",
-            "Validation des associations."
-          ],
-          "howTo": [
-            "Selectionner la periode.",
-            "Rapprocher puis valider le resultat global."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Association des mouvements caisse et banque."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Visualisation des transactions a rapprocher.",
+                "Validation des associations."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Selectionner la periode.",
+                "Rapprocher puis valider le resultat global."
+              ]
+            }
           ]
         },
         {
@@ -556,13 +890,32 @@
             "icon": "bi-calculator",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Modification des ecritures.",
-            "Verification de coherence comptable."
-          ],
-          "howTo": [
-            "Rechercher l ecriture cible.",
-            "Corriger puis controler l impact global."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Edition detaillee des ecritures comptables."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Modification des ecritures.",
+                "Verification de coherence comptable."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Rechercher l ecriture cible.",
+                "Corriger puis controler l impact global."
+              ]
+            }
           ]
         },
         {
@@ -576,13 +929,32 @@
             "icon": "bi-calculator",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Visualisation des revenus et depenses.",
-            "Suivi des variations par periode."
-          ],
-          "howTo": [
-            "Verifier la periode d analyse.",
-            "Comparer les postes critiques."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Analyse revenus/charges par periode."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Visualisation des revenus et depenses.",
+                "Suivi des variations par periode."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Verifier la periode d analyse.",
+                "Comparer les postes critiques."
+              ]
+            }
           ]
         },
         {
@@ -596,13 +968,32 @@
             "icon": "bi-calculator",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Lecture du bilan general.",
-            "Verification de coherence des soldes."
-          ],
-          "howTo": [
-            "Ouvrir le bilan sur la bonne saison.",
-            "Controler les postes majeurs."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Vue de synthese comptable globale."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Lecture du bilan general.",
+                "Verification de coherence des soldes."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Ouvrir le bilan sur la bonne saison.",
+                "Controler les postes majeurs."
+              ]
+            }
           ]
         },
         {
@@ -616,13 +1007,32 @@
             "icon": "bi-calculator",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Vue agregee des ecritures.",
-            "Navigation rapide dans la base comptable."
-          ],
-          "howTo": [
-            "Selectionner la vue de synthese.",
-            "Explorer les sections pour audit rapide."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Acces a la base comptable de synthese."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Vue agregee des ecritures.",
+                "Navigation rapide dans la base comptable."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Selectionner la vue de synthese.",
+                "Explorer les sections pour audit rapide."
+              ]
+            }
           ]
         }
       ]
@@ -637,13 +1047,32 @@
         "icon": "bi-credit-card",
         "groupLevel": "Administrateur"
       },
-      "functionalities": [
-        "Rapprochement des paiements Stripe.",
-        "Traitement des remboursements."
-      ],
-      "howTo": [
-        "Verifier les paiements a rapprocher.",
-        "Traiter les remboursements puis controler le statut."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Pilotage des paiements en ligne et des remboursements."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Rapprochement des paiements Stripe.",
+            "Traitement des remboursements."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Verifier les paiements a rapprocher.",
+            "Traiter les remboursements puis controler le statut."
+          ]
+        }
       ],
       "children": [
         {
@@ -657,13 +1086,32 @@
             "icon": "bi-credit-card",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Suivi des statuts de transaction.",
-            "Recherche des incoherences avec la comptabilite."
-          ],
-          "howTo": [
-            "Filtrer la periode.",
-            "Investiguer les statuts incoherents."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Controle des paiements Stripe et ecarts."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Suivi des statuts de transaction.",
+                "Recherche des incoherences avec la comptabilite."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Filtrer la periode.",
+                "Investiguer les statuts incoherents."
+              ]
+            }
           ]
         },
         {
@@ -677,13 +1125,32 @@
             "icon": "bi-credit-card",
             "groupLevel": "Administrateur"
           },
-          "functionalities": [
-            "Selection des paiements eligibles.",
-            "Suivi des remboursements emis."
-          ],
-          "howTo": [
-            "Identifier le paiement cible.",
-            "Lancer le remboursement et verifier le statut final."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Execution et suivi des remboursements Stripe."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Selection des paiements eligibles.",
+                "Suivi des remboursements emis."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Identifier le paiement cible.",
+                "Lancer le remboursement et verifier le statut final."
+              ]
+            }
           ]
         }
       ]
@@ -698,18 +1165,42 @@
         "icon": "bi-database-fill-gear",
         "groupLevel": "Systeme"
       },
-      "functionalities": [
-        "Reglages systeme.",
-        "Gestion des droits d acces.",
-        "Sauvegarde comptable et maintenance."
-      ],
-      "howTo": [
-        "Valider le niveau de droit necessaire avant action.",
-        "Appliquer le changement cible.",
-        "Verifier l impact metier apres execution."
-      ],
-      "caution": [
-        "Les operations techniques doivent etre precedees d une verification et d une sauvegarde."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Configuration, droits et operations administratives sensibles."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Reglages systeme.",
+            "Gestion des droits d acces.",
+            "Sauvegarde comptable et maintenance."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Valider le niveau de droit necessaire avant action.",
+            "Appliquer le changement cible.",
+            "Verifier l impact metier apres execution."
+          ]
+        },
+        {
+          "id": "points-vigilance",
+          "type": "attention",
+          "title": "Points de vigilance",
+          "messages": [
+            "Les operations techniques doivent etre precedees d une verification et d une sauvegarde."
+          ]
+        }
       ],
       "children": [
         {
@@ -723,13 +1214,32 @@
             "icon": "bi-database-fill-gear",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Acces aux listes de donnees back.",
-            "Verification technique des enregistrements."
-          ],
-          "howTo": [
-            "Ouvrir la base de donnees depuis Outils.",
-            "Rechercher l enregistrement cible."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Consultation de la base comptable/listes techniques."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Acces aux listes de donnees back.",
+                "Verification technique des enregistrements."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Ouvrir la base de donnees depuis Outils.",
+                "Rechercher l enregistrement cible."
+              ]
+            }
           ]
         },
         {
@@ -743,13 +1253,32 @@
             "icon": "bi-database-fill-gear",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Gestion des groupes et niveaux.",
-            "Controle des droits par ecran."
-          ],
-          "howTo": [
-            "Selectionner le groupe cible.",
-            "Modifier puis tester les acces."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Attribution et controle des permissions."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Gestion des groupes et niveaux.",
+                "Controle des droits par ecran."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Selectionner le groupe cible.",
+                "Modifier puis tester les acces."
+              ]
+            }
           ]
         },
         {
@@ -763,13 +1292,32 @@
             "icon": "bi-database-fill-gear",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Edition des parametres applicatifs.",
-            "Ajustement des options globales."
-          ],
-          "howTo": [
-            "Modifier un parametre a la fois.",
-            "Valider et controler l effet metier."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Configuration centrale de l application."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Edition des parametres applicatifs.",
+                "Ajustement des options globales."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Modifier un parametre a la fois.",
+                "Valider et controler l effet metier."
+              ]
+            }
           ]
         },
         {
@@ -783,13 +1331,32 @@
             "icon": "bi-database-fill-gear",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Lancement des sauvegardes comptables.",
-            "Verification du statut de sauvegarde."
-          ],
-          "howTo": [
-            "Declencher la sauvegarde.",
-            "Verifier que l operation est complete."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Sauvegarde et securisation des donnees comptables."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Lancement des sauvegardes comptables.",
+                "Verification du statut de sauvegarde."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Declencher la sauvegarde.",
+                "Verifier que l operation est complete."
+              ]
+            }
           ]
         }
       ]
@@ -804,15 +1371,34 @@
         "icon": "bi-globe2",
         "groupLevel": "Editeur"
       },
-      "functionalities": [
-        "Parametrage UI global.",
-        "Edition de la navigation dynamique.",
-        "Gestion des pages et competitions."
-      ],
-      "howTo": [
-        "Ajuster d abord les parametres UI.",
-        "Mettre a jour les menus.",
-        "Verifier le rendu front apres publication."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Gestion UI, menus et contenus dynamiques du front."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Parametrage UI global.",
+            "Edition de la navigation dynamique.",
+            "Gestion des pages et competitions."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Ajuster d abord les parametres UI.",
+            "Mettre a jour les menus.",
+            "Verifier le rendu front apres publication."
+          ]
+        }
       ],
       "children": [
         {
@@ -826,13 +1412,32 @@
             "icon": "bi-globe2",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Configuration des options d interface.",
-            "Controle des parametres d affichage front."
-          ],
-          "howTo": [
-            "Modifier le parametre cible.",
-            "Verifier le rendu sur les pages principales."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Reglages d apparence et comportement visuel du site."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Configuration des options d interface.",
+                "Controle des parametres d affichage front."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Modifier le parametre cible.",
+                "Verifier le rendu sur les pages principales."
+              ]
+            }
           ]
         },
         {
@@ -846,13 +1451,32 @@
             "icon": "bi-globe2",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Creation et edition des entrees de menu.",
-            "Regles de visibilite et ordre d affichage."
-          ],
-          "howTo": [
-            "Mettre a jour une entree.",
-            "Valider le rang et le comportement de navigation."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Edition de la barre de navigation et des routes dynamiques."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Creation et edition des entrees de menu.",
+                "Regles de visibilite et ordre d affichage."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Mettre a jour une entree.",
+                "Valider le rang et le comportement de navigation."
+              ]
+            }
           ]
         },
         {
@@ -866,13 +1490,32 @@
             "icon": "bi-globe2",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Mise a jour de pages et snippets.",
-            "Publication de contenus CMS."
-          ],
-          "howTo": [
-            "Modifier le contenu cible.",
-            "Verifier publication et navigation associee."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Edition des pages et articles CMS."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Mise a jour de pages et snippets.",
+                "Publication de contenus CMS."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Modifier le contenu cible.",
+                "Verifier publication et navigation associee."
+              ]
+            }
           ]
         },
         {
@@ -886,15 +1529,34 @@
             "icon": "bi-globe2",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Controle et maintenance des medias du site.",
-            "Traitement des images utilisees dans les contenus.",
-            "Optimisation des bannieres ordinateur, mobile portrait, mobile paysage et du logo du club."
-          ],
-          "howTo": [
-            "Choisir l'onglet correspondant au media a traiter.",
-            "Pour l'identite visuelle, controler les apercus et les poids avant publication.",
-            "Appliquer la correction puis verifier son rendu sur le site, notamment sur mobile."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Maintenance des images utilisees par les contenus du site."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Controle et maintenance des medias du site.",
+                "Traitement des images utilisees dans les contenus.",
+                "Optimisation des bannieres ordinateur, mobile portrait, mobile paysage et du logo du club."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Choisir l'onglet correspondant au media a traiter.",
+                "Pour l'identite visuelle, controler les apercus et les poids avant publication.",
+                "Appliquer la correction puis verifier son rendu sur le site, notamment sur mobile."
+              ]
+            }
           ]
         },
         {
@@ -908,13 +1570,32 @@
             "icon": "bi-globe2",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Creation/mise a jour des competitions.",
-            "Synchronisation des infos visibles front."
-          ],
-          "howTo": [
-            "Mettre a jour la competition cible.",
-            "Verifier la publication pour les utilisateurs."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Administration de la section competitions."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Creation/mise a jour des competitions.",
+                "Synchronisation des infos visibles front."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Mettre a jour la competition cible.",
+                "Verifier la publication pour les utilisateurs."
+              ]
+            }
           ]
         },
         {
@@ -928,13 +1609,32 @@
             "icon": "bi-globe2",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Ouverture du site front en navigation directe.",
-            "Verification du rendu public apres modifications back."
-          ],
-          "howTo": [
-            "Cliquer sur aller sur le site.",
-            "Controler le rendu des pages modifiees."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Acces direct vers le front public."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Ouverture du site front en navigation directe.",
+                "Verification du rendu public apres modifications back."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Cliquer sur aller sur le site.",
+                "Controler le rendu des pages modifiees."
+              ]
+            }
           ]
         }
       ]
@@ -949,15 +1649,34 @@
         "icon": "bi-envelope-paper",
         "groupLevel": "Editeur"
       },
-      "functionalities": [
-        "Traitement des demandes d’assistance front.",
-        "Diffusion d’informations via mailing et breaking news.",
-        "Création et suivi de sondages."
-      ],
-      "howTo": [
-        "Traiter d’abord les tickets prioritaires.",
-        "Planifier ensuite les communications.",
-        "Suivre les réponses des sondages actifs."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Tickets, mailing, breaking news et sondages."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Traitement des demandes d’assistance front.",
+            "Diffusion d’informations via mailing et breaking news.",
+            "Création et suivi de sondages."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Traiter d’abord les tickets prioritaires.",
+            "Planifier ensuite les communications.",
+            "Suivre les réponses des sondages actifs."
+          ]
+        }
       ],
       "children": [
         {
@@ -971,13 +1690,32 @@
             "icon": "bi-envelope-paper",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Filtrage des tickets par statut.",
-            "Mise a jour et cloture des demandes."
-          ],
-          "howTo": [
-            "Passer le ticket en En cours a la prise en charge.",
-            "Passer a Resolu apres verification de resolution."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Boite de traitement des tickets utilisateurs."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Filtrage des tickets par statut.",
+                "Mise a jour et cloture des demandes."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Passer le ticket en En cours a la prise en charge.",
+                "Passer a Resolu apres verification de resolution."
+              ]
+            }
           ]
         },
         {
@@ -991,13 +1729,32 @@
             "icon": "bi-envelope-paper",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Preparation des campagnes.",
-            "Validation du contenu avant diffusion."
-          ],
-          "howTo": [
-            "Construire le message.",
-            "Relire puis envoyer a la cible."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Preparation et envoi de messages cibles."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Preparation des campagnes.",
+                "Validation du contenu avant diffusion."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Construire le message.",
+                "Relire puis envoyer a la cible."
+              ]
+            }
           ]
         },
         {
@@ -1011,13 +1768,32 @@
             "icon": "bi-envelope-paper",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Creation et activation de messages urgents.",
-            "Pilotage de visibilite des annonces."
-          ],
-          "howTo": [
-            "Renseigner le message et sa priorite.",
-            "Activer puis verifier l affichage."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Publication d informations urgentes."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Creation et activation de messages urgents.",
+                "Pilotage de visibilite des annonces."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Renseigner le message et sa priorite.",
+                "Activer puis verifier l affichage."
+              ]
+            }
           ]
         },
         {
@@ -1031,13 +1807,32 @@
             "icon": "bi-envelope-paper",
             "groupLevel": "Editeur"
           },
-          "functionalities": [
-            "Creation/edition des sondages.",
-            "Consultation des resultats."
-          ],
-          "howTo": [
-            "Configurer le sondage.",
-            "Suivre les reponses puis ouvrir les resultats."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Creation, publication et analyse de sondages."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Creation/edition des sondages.",
+                "Consultation des resultats."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Configurer le sondage.",
+                "Suivre les reponses puis ouvrir les resultats."
+              ]
+            }
           ]
         }
       ]
@@ -1052,13 +1847,32 @@
         "icon": "bi-speedometer2",
         "groupLevel": "Contributeur"
       },
-      "functionalities": [
-        "Lecture des indicateurs de pilotage.",
-        "Acces rapide vers les ecrans prioritaires."
-      ],
-      "howTo": [
-        "Ouvrir le dashboard en debut de session.",
-        "Prioriser les actions selon les indicateurs."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Vue synthetique de suivi des indicateurs back-office."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Lecture des indicateurs de pilotage.",
+            "Acces rapide vers les ecrans prioritaires."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Ouvrir le dashboard en debut de session.",
+            "Prioriser les actions selon les indicateurs."
+          ]
+        }
       ],
       "children": [
         {
@@ -1072,13 +1886,32 @@
             "icon": "bi-speedometer2",
             "groupLevel": "Contributeur"
           },
-          "functionalities": [
-            "Analyse des alertes visibles.",
-            "Orientation rapide vers les modules cibles."
-          ],
-          "howTo": [
-            "Scanner les alertes du jour.",
-            "Basculer sur la section a traiter."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Controle quotidien des indicateurs principaux."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Analyse des alertes visibles.",
+                "Orientation rapide vers les modules cibles."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Scanner les alertes du jour.",
+                "Basculer sur la section a traiter."
+              ]
+            }
           ]
         }
       ]
@@ -1093,17 +1926,41 @@
         "icon": "bi-wrench",
         "groupLevel": "Systeme"
       },
-      "functionalities": [
-        "Acces S3/disque et import technique.",
-        "Operations clone DB/S3."
-      ],
-      "howTo": [
-        "Verifier le contexte avant action.",
-        "Executer uniquement l operation necessaire.",
-        "Controler les impacts apres execution."
-      ],
-      "caution": [
-        "Menu reserve a des actions a impact potentiellement fort."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Operations techniques réservées aux développeurs et administrateurs système."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Acces S3/disque et import technique.",
+            "Operations clone DB/S3."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Verifier le contexte avant action.",
+            "Executer uniquement l operation necessaire.",
+            "Controler les impacts apres execution."
+          ]
+        },
+        {
+          "id": "points-vigilance",
+          "type": "attention",
+          "title": "Points de vigilance",
+          "messages": [
+            "Menu reserve a des actions a impact potentiellement fort."
+          ]
+        }
       ],
       "children": [
         {
@@ -1117,13 +1974,32 @@
             "icon": "bi-wrench",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Exploration des volumes de donnees.",
-            "Verification de presence des fichiers."
-          ],
-          "howTo": [
-            "Ouvrir le volume cible.",
-            "Verifier les donnees attendues."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Acces technique aux donnees de stockage."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Exploration des volumes de donnees.",
+                "Verification de presence des fichiers."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Ouvrir le volume cible.",
+                "Verifier les donnees attendues."
+              ]
+            }
           ]
         },
         {
@@ -1137,13 +2013,32 @@
             "icon": "bi-wrench",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Chargement de fichiers d import.",
-            "Transformation/creation des enregistrements."
-          ],
-          "howTo": [
-            "Verifier le format du fichier.",
-            "Lancer l import puis controler le resultat."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Import technique de donnees depuis Excel."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Chargement de fichiers d import.",
+                "Transformation/creation des enregistrements."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Verifier le format du fichier.",
+                "Lancer l import puis controler le resultat."
+              ]
+            }
           ]
         },
         {
@@ -1157,13 +2052,32 @@
             "icon": "bi-wrench",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Declenchement d un clone de base.",
-            "Suivi de progression de clonage."
-          ],
-          "howTo": [
-            "Confirmer l environnement cible.",
-            "Lancer clone DB puis verifier l issue."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Operation de clonage base de donnees."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Declenchement d un clone de base.",
+                "Suivi de progression de clonage."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Confirmer l environnement cible.",
+                "Lancer clone DB puis verifier l issue."
+              ]
+            }
           ]
         },
         {
@@ -1177,13 +2091,32 @@
             "icon": "bi-wrench",
             "groupLevel": "Systeme"
           },
-          "functionalities": [
-            "Declenchement du clonage S3.",
-            "Verification des donnees clonees."
-          ],
-          "howTo": [
-            "Verifier source/cible.",
-            "Executer clone S3 puis controler le contenu."
+          "blocks": [
+            {
+              "id": "introduction",
+              "type": "text",
+              "paragraphs": [
+                "Operation de clonage de stockage S3."
+              ]
+            },
+            {
+              "id": "fonctionnalites",
+              "type": "list",
+              "title": "Fonctionnalités couvertes",
+              "items": [
+                "Declenchement du clonage S3.",
+                "Verification des donnees clonees."
+              ]
+            },
+            {
+              "id": "parcours-conseille",
+              "type": "procedure",
+              "title": "Parcours conseillé",
+              "steps": [
+                "Verifier source/cible.",
+                "Executer clone S3 puis controler le contenu."
+              ]
+            }
           ]
         }
       ]
@@ -1198,15 +2131,34 @@
         "icon": "bi-question-circle",
         "groupLevel": "Membre"
       },
-      "functionalities": [
-        "Consultation des chapitres d’aide.",
-        "Navigation par menus et sous-menus alignés sur la navbar.",
-        "Support de correction du contenu fonctionnel."
-      ],
-      "howTo": [
-        "Choisir un menu dans le sommaire à gauche.",
-        "Ouvrir un sous-sujet si besoin.",
-        "Utiliser Ouvrir l’écran pour accéder à la fonctionnalité."
+      "blocks": [
+        {
+          "id": "introduction",
+          "type": "text",
+          "paragraphs": [
+            "Aide en ligne du back-office et référence utilisateur."
+          ]
+        },
+        {
+          "id": "fonctionnalites",
+          "type": "list",
+          "title": "Fonctionnalités couvertes",
+          "items": [
+            "Consultation des chapitres d’aide.",
+            "Navigation par menus et sous-menus alignés sur la navbar.",
+            "Support de correction du contenu fonctionnel."
+          ]
+        },
+        {
+          "id": "parcours-conseille",
+          "type": "procedure",
+          "title": "Parcours conseillé",
+          "steps": [
+            "Choisir un menu dans le sommaire à gauche.",
+            "Ouvrir un sous-sujet si besoin.",
+            "Utiliser Ouvrir l’écran pour accéder à la fonctionnalité."
+          ]
+        }
       ]
     }
   ]

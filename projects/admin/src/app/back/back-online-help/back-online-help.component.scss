@@ -113,6 +113,31 @@
   gap: 1rem;
 }
 
+.back-help__blocks {
+  display: grid;
+  gap: 1rem;
+}
+
+.back-help__block {
+  padding: 1rem;
+  border: 1px solid #e6ded0;
+  border-radius: 0.75rem;
+  background: #fffdf8;
+}
+
+.back-help__block h4 {
+  color: #2b2418;
+  font-size: 1rem;
+}
+
+.back-help__block p:last-child {
+  margin-bottom: 0;
+}
+
+.back-help__block li + li {
+  margin-top: 0.4rem;
+}
+
 .back-help__procedure {
   padding: 1rem;
   border: 1px solid #e6ded0;
@@ -123,6 +148,19 @@
 .back-help__procedure h5 {
   color: #2b2418;
   font-size: 1rem;
+}
+
+.back-help__attention {
+  border-color: #e5c56c;
+  border-left: 0.3rem solid #d9a514;
+}
+
+.back-help__table {
+  max-width: 100%;
+}
+
+.back-help__table th {
+  white-space: nowrap;
 }
 
 .back-help__feature-btn {

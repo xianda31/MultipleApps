@@ -91,7 +91,8 @@ function normalizeContent(value) {
 }
 
 function hasPublishableContent(topic) {
-  return Boolean(topic.summary?.trim())
+  return hasItems(topic.blocks)
+    || Boolean(topic.summary?.trim())
     || hasItems(topic.functionalities)
     || hasItems(topic.howTo)
     || hasItems(topic.procedures)
@@ -100,7 +101,10 @@ function hasPublishableContent(topic) {
 }
 
 function hasDetailedContent(topic) {
-  return hasItems(topic.functionalities)
+  return (topic.blocks ?? []).some(
+    (block) => block.type !== 'text' || block.id !== 'introduction',
+  )
+    || hasItems(topic.functionalities)
     || hasItems(topic.howTo)
     || hasItems(topic.procedures)
     || hasItems(topic.caution)
@@ -362,7 +366,256 @@ function resolveTopicIllustrations(topic, projectRoot, coverage) {
   });
 }
 
+function blockTextEntries(block) {
+  switch (block.type) {
+    case 'text':
+      return block.paragraphs ?? [];
+    case 'list':
+      return block.items ?? [];
+    case 'procedure':
+      return block.steps ?? [];
+    case 'attention':
+      return block.messages ?? [];
+    case 'table':
+      return [...(block.columns ?? []), ...(block.rows ?? []).flat()];
+    case 'illustration':
+      return block.caption ? [block.caption] : [];
+    default:
+      return [];
+  }
+}
+
+function reportBlockAmbiguities(topic, coverage) {
+  const occurrences = new Map();
+  for (const block of topic.blocks ?? []) {
+    for (const content of blockTextEntries(block)) {
+      const key = normalizeContent(content);
+      if (!key) continue;
+      const values = occurrences.get(key) ?? [];
+      values.push({ blockId: block.id, content });
+      occurrences.set(key, values);
+    }
+  }
+  for (const values of occurrences.values()) {
+    if (new Set(values.map((value) => value.blockId)).size < 2) continue;
+    coverage.ambiguities.push({
+      id: topic.id,
+      blockIds: values.map((value) => value.blockId),
+      content: values[0].content,
+      reason: 'Texte identique présent dans plusieurs blocs ; contenu conservé pour relecture.',
+    });
+  }
+}
+
+function listFragmentHeight(items, title, fontSize, context) {
+  const { contentHeight } = calculateStepRows(
+    items,
+    CONTENT_AREA.full[0].w - 0.6,
+    4.45,
+    fontSize,
+    context,
+  );
+  return Math.max(1.15, contentHeight + (title ? 1.12 : 0.64));
+}
+
+function textFragmentHeight(paragraphs, title) {
+  const lineHeight = (THEME.fontSizes.body * 1.3) / 72;
+  const contentHeight = paragraphs.reduce(
+    (height, paragraph) => height
+      + estimateWrappedLineCount(
+        paragraph,
+        CONTENT_AREA.full[0].w - 0.6,
+        THEME.fontSizes.body,
+      ) * lineHeight
+      + 0.12,
+    0,
+  );
+  return Math.max(1.05, contentHeight + (title ? 0.92 : 0.46));
+}
+
+function splitParagraphBlock(block, topic) {
+  const fragments = [];
+  let paragraphs = [];
+  for (const paragraph of block.paragraphs ?? []) {
+    const candidate = [...paragraphs, paragraph];
+    if (textFragmentHeight(candidate, block.title) <= CONTENT_AREA.h) {
+      paragraphs = candidate;
+      continue;
+    }
+    if (paragraphs.length === 0) {
+      throw new Error(`Bloc ${topic.id}/${block.id}: paragraphe trop long pour une diapositive`);
+    }
+    fragments.push(paragraphs);
+    paragraphs = [paragraph];
+  }
+  if (paragraphs.length > 0) fragments.push(paragraphs);
+  return fragments.map((items, index) => ({
+    ...block,
+    title: index === 0 ? block.title : block.title ? `${block.title} — suite` : undefined,
+    paragraphs: items,
+    height: textFragmentHeight(items, block.title),
+  }));
+}
+
+function splitListBlock(block, topic, field, fontSize) {
+  const items = block[field] ?? [];
+  const pages = paginateItems(
+    items,
+    CONTENT_AREA.full[0].w - 0.6,
+    4.45,
+    fontSize,
+    `Bloc ${topic.id}/${block.id}`,
+  );
+  let itemIndex = 0;
+  return pages.map((pageItems, index) => {
+    const fragment = {
+      ...block,
+      title: index === 0 ? block.title : block.title ? `${block.title} — suite` : undefined,
+      [field]: pageItems,
+      startIndex: itemIndex,
+      height: listFragmentHeight(
+        pageItems,
+        block.title,
+        fontSize,
+        `Bloc ${topic.id}/${block.id}`,
+      ),
+    };
+    itemIndex += pageItems.length;
+    return fragment;
+  });
+}
+
+function splitTableBlock(block, topic) {
+  if (!hasItems(block.columns) || !hasItems(block.rows)) {
+    throw new Error(`Bloc ${topic.id}/${block.id}: tableau sans colonnes ou sans lignes`);
+  }
+  if (block.rows.some((row) => row.length !== block.columns.length)) {
+    throw new Error(`Bloc ${topic.id}/${block.id}: nombre de cellules incohérent`);
+  }
+  const titleHeight = block.title ? 0.55 : 0;
+  const rowsPerPage = Math.max(1, Math.floor((CONTENT_AREA.h - titleHeight - 0.65) / 0.48));
+  const fragments = [];
+  for (let index = 0; index < block.rows.length; index += rowsPerPage) {
+    const rows = block.rows.slice(index, index + rowsPerPage);
+    fragments.push({
+      ...block,
+      title: index === 0 ? block.title : block.title ? `${block.title} — suite` : undefined,
+      rows,
+      height: titleHeight + 0.65 + rows.length * 0.48,
+    });
+  }
+  return fragments;
+}
+
+function createBlockFragments(topic, projectRoot, coverage) {
+  const illustrationById = new Map(
+    resolveTopicIllustrations(topic, projectRoot, coverage)
+      .map((illustration) => [illustration.id, illustration]),
+  );
+  const fragments = [];
+  reportBlockAmbiguities(topic, coverage);
+
+  for (const block of topic.blocks ?? []) {
+    try {
+      switch (block.type) {
+        case 'text':
+          fragments.push(...splitParagraphBlock(block, topic));
+          break;
+        case 'list':
+          fragments.push(...splitListBlock(block, topic, 'items', THEME.fontSizes.body));
+          break;
+        case 'procedure':
+          fragments.push(...splitListBlock(block, topic, 'steps', THEME.fontSizes.body));
+          break;
+        case 'attention':
+          fragments.push(...splitListBlock(
+            block,
+            topic,
+            'messages',
+            THEME.fontSizes.cautionBody,
+          ));
+          break;
+        case 'table':
+          fragments.push(...splitTableBlock(block, topic));
+          break;
+        case 'illustration': {
+          const illustration = illustrationById.get(block.illustrationId);
+          if (!illustration) {
+            throw new Error(`illustration référencée introuvable ${block.illustrationId}`);
+          }
+          fragments.push({
+            ...block,
+            illustration: {
+              ...illustration,
+              caption: block.caption ?? illustration.caption,
+            },
+            height: CONTENT_AREA.h,
+          });
+          break;
+        }
+        default:
+          throw new Error(`type de bloc non pris en charge ${block.type}`);
+      }
+    } catch (error) {
+      coverage.unsupported.push({
+        id: topic.id,
+        title: topic.title,
+        blockId: block.id,
+        reason: error.message,
+      });
+    }
+  }
+  return fragments;
+}
+
+function packBlockFragments(topic, chapter, fragments) {
+  const pages = [];
+  const gap = 0.18;
+  let current = [];
+  let usedHeight = 0;
+  const flush = () => {
+    if (current.length === 0) return;
+    pages.push({
+      kind: 'content',
+      topic,
+      chapter,
+      layout: 'blocks',
+      title: pages.length === 0 ? topic.title : `${topic.title} — suite`,
+      blocks: current,
+    });
+    current = [];
+    usedHeight = 0;
+  };
+
+  for (const fragment of fragments) {
+    const standalone = fragment.type === 'illustration' || fragment.height >= CONTENT_AREA.h - 0.1;
+    const requiredHeight = fragment.height + (current.length > 0 ? gap : 0);
+    if (standalone) {
+      flush();
+      current = [fragment];
+      usedHeight = fragment.height;
+      flush();
+    } else if (usedHeight + requiredHeight <= CONTENT_AREA.h) {
+      current.push(fragment);
+      usedHeight += requiredHeight;
+    } else {
+      flush();
+      current = [fragment];
+      usedHeight = fragment.height;
+    }
+  }
+  flush();
+  return pages;
+}
+
 function createTopicPages(topic, chapter, projectRoot, coverage) {
+  if (Array.isArray(topic.blocks)) {
+    return packBlockFragments(
+      topic,
+      chapter,
+      createBlockFragments(topic, projectRoot, coverage),
+    );
+  }
   const pages = [];
   const chapterTopic = topic.id === chapter.id;
   const procedureSteps = new Set(
@@ -563,7 +816,7 @@ function buildCompletePresentationModel(document, config, projectRoot) {
     }
 
     const topicPages = createTopicPages(topic, chapter, projectRoot, coverage);
-    if (topicPages.length === 0 && topic.id !== chapter.id) {
+    if (topicPages.length === 0) {
       addExclusion(
         coverage,
         'unsupported',
@@ -597,7 +850,7 @@ function buildCompletePresentationModel(document, config, projectRoot) {
       ? paginateItems(
         childTopics.map((topic) => topic.title),
         11.25,
-        2.65,
+        3.9,
         THEME.fontSizes.compactBody,
         `Ouverture ${chapter.id}`,
       )
@@ -608,7 +861,6 @@ function buildCompletePresentationModel(document, config, projectRoot) {
         kind: 'chapter',
         topic: chapter,
         title: index === 0 ? chapter.title : `${chapter.title} — suite`,
-        summary: index === 0 ? chapter.summary : undefined,
         childTopics: childTopics.slice(childIndex, childIndex + titles.length),
       });
       childIndex += titles.length;
@@ -1085,6 +1337,219 @@ function addListCard(slide, title, items, x, y, w, h, fontSize, context) {
   );
 }
 
+function addTextFragment(slide, block, x, y, w, h) {
+  slide.addShape('roundRect', {
+    x,
+    y,
+    w,
+    h,
+    line: { color: THEME.colors.border, width: 1 },
+    fill: { color: THEME.colors.background },
+  });
+  const titleOffset = block.title ? 0.72 : 0.24;
+  if (block.title) {
+    addText(slide, block.title, {
+      x: x + 0.28,
+      y: y + 0.18,
+      w: w - 0.56,
+      h: 0.38,
+      bold: true,
+      fontSize: THEME.fontSizes.procedureTitle,
+      color: THEME.colors.greenDark,
+    });
+  }
+  addText(slide, block.paragraphs.join('\n\n'), {
+    x: x + 0.3,
+    y: y + titleOffset,
+    w: w - 0.6,
+    h: h - titleOffset - 0.18,
+    fontSize: THEME.fontSizes.body,
+    valign: 'top',
+    breakLine: true,
+  });
+}
+
+function addNumberedFragment(slide, block, x, y, w, h, pageNumber) {
+  const titleOffset = block.title ? 0.78 : 0.3;
+  slide.addShape('roundRect', {
+    x,
+    y,
+    w,
+    h,
+    line: { color: THEME.colors.border, width: 1 },
+    fill: { color: THEME.colors.background },
+  });
+  if (block.title) {
+    addText(slide, block.title, {
+      x: x + 0.28,
+      y: y + 0.2,
+      w: w - 0.56,
+      h: 0.4,
+      bold: true,
+      fontSize: THEME.fontSizes.procedureTitle,
+      color: THEME.colors.greenDark,
+    });
+  }
+  const { rowHeights, gap } = calculateStepRows(
+    block.steps,
+    w - 0.6,
+    h - titleOffset - 0.3,
+    THEME.fontSizes.body,
+    `Diapositive ${pageNumber}, bloc ${block.id}`,
+  );
+  let top = y + titleOffset;
+  block.steps.forEach((step, index) => {
+    const rowHeight = rowHeights[index];
+    slide.addShape('ellipse', {
+      x: x + 0.28,
+      y: top + 0.08,
+      w: 0.3,
+      h: 0.3,
+      line: { color: THEME.colors.green, transparency: 100 },
+      fill: { color: THEME.colors.green },
+    });
+    addText(slide, String((block.startIndex ?? 0) + index + 1), {
+      x: x + 0.28,
+      y: top + 0.08,
+      w: 0.3,
+      h: 0.3,
+      align: 'center',
+      bold: true,
+      fontSize: 10,
+      color: 'FFFFFF',
+    });
+    addText(slide, step, {
+      x: x + 0.7,
+      y: top,
+      w: w - 0.98,
+      h: rowHeight,
+      fontSize: THEME.fontSizes.body,
+      valign: 'top',
+      breakLine: true,
+    });
+    top += rowHeight + gap;
+  });
+}
+
+function addAttentionFragment(slide, block, x, y, w, h, pageNumber) {
+  const titleOffset = block.title ? 0.78 : 0.3;
+  slide.addShape('roundRect', {
+    x,
+    y,
+    w,
+    h,
+    line: { color: 'E5C56C', width: 1 },
+    fill: { color: THEME.colors.background },
+  });
+  slide.addShape('rect', {
+    x,
+    y: y + 0.14,
+    w: 0.07,
+    h: h - 0.28,
+    line: { color: 'D9A514', transparency: 100 },
+    fill: { color: 'D9A514' },
+  });
+  if (block.title) {
+    addText(slide, block.title, {
+      x: x + 0.28,
+      y: y + 0.2,
+      w: w - 0.56,
+      h: 0.4,
+      bold: true,
+      fontSize: THEME.fontSizes.procedureTitle,
+      color: '7A5700',
+    });
+  }
+  addStepList(
+    slide,
+    block.messages,
+    x + 0.3,
+    y + titleOffset,
+    w - 0.6,
+    h - titleOffset - 0.15,
+    THEME.fontSizes.cautionBody,
+    `Diapositive ${pageNumber}, bloc ${block.id}`,
+  );
+}
+
+function addTableFragment(slide, block, x, y, w) {
+  let tableY = y;
+  if (block.title) {
+    addText(slide, block.title, {
+      x,
+      y,
+      w,
+      h: 0.4,
+      bold: true,
+      fontSize: THEME.fontSizes.procedureTitle,
+      color: THEME.colors.greenDark,
+    });
+    tableY += 0.5;
+  }
+  const rows = [
+    block.columns.map((column) => ({
+      text: column,
+      options: { bold: true, fill: 'EEF5F0' },
+    })),
+    ...block.rows.map((row) => row.map((cell) => ({ text: cell }))),
+  ];
+  slide.addTable(rows, {
+    x,
+    y: tableY,
+    w,
+    colW: Array(block.columns.length).fill(w / block.columns.length),
+    rowH: 0.42,
+    border: { type: 'solid', color: THEME.colors.border, pt: 1 },
+    color: THEME.colors.text,
+    fill: THEME.colors.background,
+    fontFace: THEME.fontFamilies.body,
+    fontSize: 14,
+    margin: 0.06,
+    valign: 'mid',
+  });
+}
+
+function addBlocksPage(slide, content, pageNumber) {
+  const box = CONTENT_AREA.full[0];
+  const gap = 0.18;
+  let top = CONTENT_AREA.y;
+  for (const block of content.blocks) {
+    switch (block.type) {
+      case 'text':
+        addTextFragment(slide, block, box.x, top, box.w, block.height);
+        break;
+      case 'list':
+        addListCard(
+          slide,
+          block.title,
+          block.items,
+          box.x,
+          top,
+          box.w,
+          block.height,
+          THEME.fontSizes.body,
+          `Diapositive ${pageNumber}, bloc ${block.id}`,
+        );
+        break;
+      case 'procedure':
+        addNumberedFragment(slide, block, box.x, top, box.w, block.height, pageNumber);
+        break;
+      case 'attention':
+        addAttentionFragment(slide, block, box.x, top, box.w, block.height, pageNumber);
+        break;
+      case 'table':
+        addTableFragment(slide, block, box.x, top, box.w);
+        break;
+      case 'illustration':
+        addIllustration(slide, block.illustration, box.x, top, box.w, block.height);
+        break;
+      default:
+        throw new Error(`Diapositive ${pageNumber}: bloc non pris en charge ${block.type}`);
+    }
+    top += block.height + gap;
+  }
+}
+
 function addOverview(slide, content, pageNumber) {
   const box = CONTENT_AREA.full[0];
   let top = CONTENT_AREA.y;
@@ -1169,7 +1634,7 @@ function addChapterOpening(pptx, model, content, pageNumber, appIconPath) {
     );
   }
   addFooter(slide, pageNumber, model.documentVersion, appIconPath);
-  addTraceNotes(slide, model.documentVersion, [content.topic.id], [], [], ['summary']);
+  addTraceNotes(slide, model.documentVersion, [content.topic.id], [], [], ['navigation']);
 }
 
 function addTraceNotes(
@@ -1179,6 +1644,7 @@ function addTraceNotes(
   procedureIds = [],
   illustrationIds = [],
   sourceFields = [],
+  blockIds = [],
 ) {
   slide.addNotes([
     `Version documentaire: ${version}`,
@@ -1186,6 +1652,7 @@ function addTraceNotes(
     `Procédures: ${procedureIds.join(', ') || 'aucune'}`,
     `Illustrations: ${illustrationIds.join(', ') || 'aucune'}`,
     `Champs: ${sourceFields.join(', ') || 'aucun'}`,
+    `Blocs: ${blockIds.join(', ') || 'aucun'}`,
   ].join('\n'));
 }
 
@@ -1307,7 +1774,26 @@ function addContentSlide(pptx, model, content, pageNumber, appIconPath) {
   const slide = pptx.addSlide();
   slide.background = { color: THEME.colors.background };
   const title = contentSlideTitle(content);
-  addHeader(slide, title, content.topic.title);
+  addHeader(slide, title, content.chapter?.title ?? content.topic.title);
+
+  if (content.layout === 'blocks') {
+    addBlocksPage(slide, content, pageNumber);
+    addFooter(slide, pageNumber, model.documentVersion, appIconPath);
+    addTraceNotes(
+      slide,
+      model.documentVersion,
+      [content.topic.id],
+      content.blocks
+        .filter((block) => block.type === 'procedure')
+        .map((block) => block.id),
+      content.blocks
+        .filter((block) => block.type === 'illustration')
+        .map((block) => block.illustrationId),
+      ['blocks'],
+      content.blocks.map((block) => block.id),
+    );
+    return;
+  }
 
   if (content.layout === 'overview') {
     addOverview(slide, content, pageNumber);
