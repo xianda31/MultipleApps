@@ -3,8 +3,12 @@ import { BACK_ROUTE_PATHS } from '../routes/back-route-paths';
 
 type DocumentTopic = {
   id: string;
+  scope?: 'application' | 'general';
+  contentStatus?: 'published' | 'planned';
+  manualChapterOrder?: number;
   routeKey?: string;
   nav: {
+    menuTitle?: string;
     groupLevel: string;
     adminOnly?: boolean;
   };
@@ -12,6 +16,10 @@ type DocumentTopic = {
     id: string;
     path: string;
     alt: string;
+    source?: string;
+  }[];
+  procedures?: {
+    id: string;
   }[];
   children?: DocumentTopic[];
 };
@@ -37,6 +45,15 @@ describe('back online help content', () => {
       .toBe(illustrationIds.length);
   });
 
+  it('uses unique procedure identifiers within each topic', () => {
+    for (const topic of topics) {
+      const procedureIds = (topic.procedures ?? []).map((procedure) => procedure.id);
+      expect(new Set(procedureIds).size)
+        .withContext(`Duplicate procedure ID for ${topic.id}`)
+        .toBe(procedureIds.length);
+    }
+  });
+
   it('only references known route keys', () => {
     const routeKeys = new Set([...Object.keys(BACK_ROUTE_PATHS), 'FrontHome']);
 
@@ -46,6 +63,23 @@ describe('back online help content', () => {
         .withContext(`Unknown route key ${topic.routeKey} for ${topic.id}`)
         .toBeTrue();
     }
+  });
+
+  it('defines Architecture as the first general manual chapter without an application route', () => {
+    const architecture = helpContentDocument.topics[0] as DocumentTopic;
+
+    expect(architecture.id).toBe('architecture');
+    expect(architecture.scope).toBe('general');
+    expect(architecture.contentStatus).toBe('planned');
+    expect(architecture.manualChapterOrder).toBe(1);
+    expect(architecture.routeKey).toBeUndefined();
+    expect(architecture.nav.menuTitle).toBeUndefined();
+    expect(architecture.children?.map((topic) => topic.id)).toEqual([
+      'architecture-presentation-vocabulaire',
+      'architecture-espaces',
+      'architecture-acces-droits',
+      'architecture-systeme',
+    ]);
   });
 
   it('preserves the card administration topic identity and access metadata', () => {
@@ -63,6 +97,16 @@ describe('back online help content', () => {
     expect(topic).toBeDefined();
     expect(topic?.routeKey).toBe('MemberSales');
     expect(topic?.nav.groupLevel).toBe('Contributeur');
+  });
+
+  it('preserves the directory topic identity, access metadata and reference source', () => {
+    const topic = topics.find((candidate) => candidate.id === 'adherents-repertoire');
+
+    expect(topic).toBeDefined();
+    expect(topic?.routeKey).toBe('MembersDatabase');
+    expect(topic?.nav.groupLevel).toBe('Contributeur');
+    expect(topic?.illustrations?.[0]?.source)
+      .toBe('docs/documentation/sources/BCSTO_manuel_reference.pptx');
   });
 
   it('defines complete absolute illustration paths', () => {

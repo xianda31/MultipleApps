@@ -4,10 +4,62 @@
   "presentationSubtitle": "Guide pilote issu de l’aide en ligne",
   "sectionTitle": "Gestion des adhérents",
   "topicIds": [
+    "adherents-repertoire",
     "adherents-cartes",
     "adherents-controles"
   ],
   "slides": [
+    {
+      "topicId": "adherents-repertoire",
+      "procedureIds": [
+        "consulter-repertoire"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-repertoire",
+      "procedureIds": [
+        "ajouter-personne-ffb"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-repertoire",
+      "procedureIds": [
+        "ajouter-personne-hors-ffb"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-repertoire",
+      "procedureIds": [
+        "modifier-fiche-repertoire"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-repertoire",
+      "procedureIds": [
+        "gerer-cycle-vie-repertoire"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-repertoire",
+      "procedureIds": [
+        "synchronisation-repertoire"
+      ],
+      "illustrationIds": [
+        "schema-gestion-repertoire"
+      ],
+      "illustrationSlideTitle": "Gestion des membres — schéma de référence"
+    },
+    {
+      "topicId": "adherents-repertoire",
+      "procedureIds": [],
+      "illustrationIds": [],
+      "includeCautions": true
+    },
     {
       "topicId": "adherents-cartes",
       "procedureIds": [

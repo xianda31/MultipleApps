@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import pptxgen from 'pptxgenjs';
+import { imageSize } from 'image-size';
 import { HELP_PPTX_THEME as THEME } from './help-pptx-theme.mjs';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -181,7 +182,7 @@ function contentSlideTitle(content) {
 function procedureStepArea(layout) {
   const showTitle = layout === 'two-procedures';
   return showTitle
-    ? { showTitle, topOffset: 0.76, heightOffset: 0.96 }
+    ? { showTitle, topOffset: 1.02, heightOffset: 1.22 }
     : { showTitle, topOffset: 0.3, heightOffset: 0.55 };
 }
 
@@ -209,7 +210,7 @@ function validateSlideDensity(content, slideNumber) {
       validateTextBlock(
         procedure.title,
         boxes[index].w - 0.56,
-        0.42,
+        0.72,
         THEME.fontSizes.procedureTitle,
         `Diapositive ${slideNumber}, titre de procédure ${procedure.id}`,
       );
@@ -347,6 +348,7 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
     }
     const content = {
       topic,
+      title: slideConfig.slideTitle,
       procedures: selectedProcedures,
       illustrations: selectedIllustrations,
       cautions,
@@ -548,7 +550,7 @@ function addProcedureCard(
       x: x + 0.28,
       y: y + 0.2,
       w: w - 0.56,
-      h: 0.42,
+      h: 0.72,
       fontFace: THEME.fontFamilies.heading,
       fontSize: THEME.fontSizes.procedureTitle,
       bold: true,
@@ -567,14 +569,14 @@ function addProcedureCard(
   );
 }
 
-function svgContainBox(filePath, x, y, w, h) {
-  const svg = fs.readFileSync(filePath, 'utf8');
-  const viewBox = svg.match(/viewBox=["']\s*[\d.-]+\s+[\d.-]+\s+([\d.-]+)\s+([\d.-]+)\s*["']/i);
-  const sourceWidth = viewBox ? Number(viewBox[1]) : w;
-  const sourceHeight = viewBox ? Number(viewBox[2]) : h;
-  const scale = Math.min(w / sourceWidth, h / sourceHeight);
-  const targetWidth = sourceWidth * scale;
-  const targetHeight = sourceHeight * scale;
+export function calculateImageContainBox(filePath, x, y, w, h) {
+  const dimensions = imageSize(filePath);
+  if (!dimensions.width || !dimensions.height) {
+    throw new Error(`Dimensions intrinsèques introuvables pour l’illustration ${filePath}`);
+  }
+  const scale = Math.min(w / dimensions.width, h / dimensions.height);
+  const targetWidth = dimensions.width * scale;
+  const targetHeight = dimensions.height * scale;
   return {
     x: x + (w - targetWidth) / 2,
     y: y + (h - targetHeight) / 2,
@@ -584,9 +586,14 @@ function svgContainBox(filePath, x, y, w, h) {
 }
 
 function addIllustration(slide, illustration, x, y, w, h) {
-  const box = path.extname(illustration.filePath).toLowerCase() === '.svg'
-    ? svgContainBox(illustration.filePath, x, y, w, h - 0.5)
-    : { x, y, w, h: h - 0.5 };
+  const availableHeight = h - 0.5;
+  const box = calculateImageContainBox(
+    illustration.filePath,
+    x,
+    y,
+    w,
+    availableHeight,
+  );
   slide.addImage({
     path: illustration.filePath,
     ...box,
@@ -728,13 +735,25 @@ function addOpening(pptx, model, pageNumber, appIconPath) {
     bold: true,
     color: THEME.colors.title,
   });
+  const gap = 0.22;
+  const availableHeight = 5.05;
+  const cardHeight = Math.min(
+    1.65,
+    (availableHeight - gap * Math.max(0, model.openingTopics.length - 1))
+      / model.openingTopics.length,
+  );
+  if (cardHeight < 1.35) {
+    throw new Error(
+      `Ouverture: ${model.openingTopics.length} rubriques ne tiennent pas lisiblement sur une diapositive`,
+    );
+  }
   model.openingTopics.forEach((topic, index) => {
-    const y = 1.75 + index * 2.15;
+    const y = 1.55 + index * (cardHeight + gap);
     slide.addShape('roundRect', {
       x: 0.75,
       y,
       w: 11.85,
-      h: 1.65,
+      h: cardHeight,
       line: { color: THEME.colors.border, width: 1 },
       fill: { color: THEME.colors.background },
     });
@@ -742,7 +761,7 @@ function addOpening(pptx, model, pageNumber, appIconPath) {
       x: 0.75,
       y: y + 0.12,
       w: 0.07,
-      h: 1.41,
+      h: cardHeight - 0.24,
       line: { color: THEME.colors.green, transparency: 100 },
       fill: { color: THEME.colors.green },
     });
@@ -758,9 +777,9 @@ function addOpening(pptx, model, pageNumber, appIconPath) {
     });
     addText(slide, topic.summary, {
       x: 1.05,
-      y: y + 0.74,
+      y: y + 0.72,
       w: 10.9,
-      h: 0.62,
+      h: cardHeight - 0.88,
       fontSize: THEME.fontSizes.body,
       breakLine: true,
     });

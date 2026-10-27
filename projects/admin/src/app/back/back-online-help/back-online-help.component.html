@@ -45,12 +45,20 @@
           </div>
 
           <p class="text-muted mb-4">
-            <span class="fw-semibold">Menu:</span> {{ selectedMenuTopic.title }}
-            <span *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id"> • <span class="fw-semibold">Sous-menu:</span>
+            <span class="fw-semibold">
+              {{ selectedMenuTopic.scope === 'general' ? 'Rubrique générale :' : 'Menu :' }}
+            </span>
+            {{ selectedMenuTopic.title }}
+            <span *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id"> • <span class="fw-semibold">Section :</span>
               {{ selectedDetailTopic.title }}</span>
           </p>
 
           <p class="text-muted mb-4">{{ selectedDetailTopic.summary }}</p>
+
+          <div class="alert alert-light border mb-4" role="status"
+            *ngIf="selectedDetailTopic.contentStatus === 'planned'">
+            Le contenu de cette section est prévu dans un prochain lot documentaire.
+          </div>
 
           <div class="back-help__illustrations mb-4" *ngIf="selectedDetailTopic.illustrations?.length">
             <figure class="back-help__illustration mb-0" *ngFor="let illustration of selectedDetailTopic.illustrations">
@@ -71,8 +79,11 @@
             </div>
           </div>
 
-          <div class="back-help__section">
-            <h4 class="h6 text-uppercase back-help__section-title">Fonctionnalités couvertes</h4>
+          <div class="back-help__section"
+            *ngIf="selectedMenuTopic.children?.length || selectedMenuTopic.functionalities.length">
+            <h4 class="h6 text-uppercase back-help__section-title">
+              {{ selectedMenuTopic.scope === 'general' ? 'Sections du chapitre' : 'Fonctionnalités couvertes' }}
+            </h4>
             <ng-container *ngIf="selectedMenuTopic.children?.length; else noSubMenuFeatures">
               <div class="d-flex flex-column gap-2">
                 <button *ngFor="let child of selectedMenuTopic.children" class="btn text-start back-help__feature-btn"
@@ -83,7 +94,7 @@
                 </button>
               </div>
               <div class="back-help__selected-features mt-3"
-                *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id">
+                *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id && selectedDetailTopic.functionalities.length">
                 <h5 class="h6 mb-2">Fonctionnalités de « {{ selectedDetailTopic.title }} »</h5>
                 <ul class="mb-0">
                   <li *ngFor="let item of selectedDetailTopic.functionalities">{{ item }}</li>
@@ -97,7 +108,8 @@
             </ng-template>
           </div>
 
-          <div class="back-help__section mt-4">
+          <div class="back-help__section mt-4"
+            *ngIf="selectedDetailTopic.procedures?.length || selectedDetailTopic.howTo.length">
             <h4 class="h6 text-uppercase back-help__section-title">
               {{ selectedDetailTopic.procedures?.length ? 'Procédures' : 'Parcours conseillé' }}
             </h4>

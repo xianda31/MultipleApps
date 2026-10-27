@@ -5,6 +5,7 @@ import test from 'node:test';
 import JSZip from 'jszip';
 import {
   buildPresentationModel,
+  calculateImageContainBox,
   createPresentation,
   loadPresentationInputs,
   PROJECT_ROOT,
@@ -45,20 +46,75 @@ test('separates font families and sizes and enforces readable body sizes', () =>
   );
 });
 
+test('preserves and centers intrinsic illustration proportions', () => {
+  const images = [
+    {
+      path: path.join(
+        PROJECT_ROOT,
+        'projects',
+        'admin',
+        'src',
+        'assets',
+        'documentation',
+        'images',
+        'repertoire-gestion-membres.png',
+      ),
+      ratio: 805 / 627,
+    },
+    {
+      path: path.join(
+        PROJECT_ROOT,
+        'projects',
+        'admin',
+        'src',
+        'assets',
+        'documentation',
+        'images',
+        'carte-admissions-parcours.svg',
+      ),
+      ratio: 1200 / 560,
+    },
+  ];
+
+  for (const image of images) {
+    const area = { x: 0.7, y: 1.35, w: 11.93, h: 4.95 };
+    const box = calculateImageContainBox(
+      image.path,
+      area.x,
+      area.y,
+      area.w,
+      area.h,
+    );
+    assert.ok(Math.abs((box.w / box.h) - image.ratio) < 0.0001);
+    assert.ok(Math.abs((box.x + box.w / 2) - (area.x + area.w / 2)) < 0.0001);
+    assert.ok(Math.abs((box.y + box.h / 2) - (area.y + area.h / 2)) < 0.0001);
+    assert.ok(box.w <= area.w && box.h <= area.h);
+  }
+});
+
 test('resolves every configured topic, procedure and illustration', () => {
   const { document, config } = loadPresentationInputs();
   const model = buildPresentationModel(document, config);
 
-  assert.equal(model.openingTopics.length, 2);
-  assert.equal(model.slides.length, 8);
+  assert.equal(model.openingTopics.length, 3);
+  assert.equal(model.slides.length, 16);
   assert.deepEqual(
     model.openingTopics.map((topic) => topic.id),
-    ['adherents-cartes', 'adherents-controles'],
+    ['adherents-repertoire', 'adherents-cartes', 'adherents-controles'],
   );
   assert.ok(model.slides.flatMap((slide) => slide.illustrations).every(
     (illustration) => fs.existsSync(illustration.filePath),
   ));
-  const illustratedSlide = model.slides.find((slide) => slide.layout === 'illustration-only');
+  const directoryIllustrationSlide = model.slides.find(
+    (slide) => slide.illustrations[0]?.id === 'schema-gestion-repertoire',
+  );
+  assert.equal(directoryIllustrationSlide.topic.id, 'adherents-repertoire');
+  assert.equal(directoryIllustrationSlide.title, 'Gestion des membres — schéma de référence');
+  assert.deepEqual(directoryIllustrationSlide.traceProcedureIds, ['synchronisation-repertoire']);
+
+  const illustratedSlide = model.slides.find(
+    (slide) => slide.illustrations[0]?.id === 'parcours-carte-admissions',
+  );
   assert.equal(illustratedSlide.topic.id, 'adherents-cartes');
   assert.equal(illustratedSlide.title, 'Création des cartes — schéma');
   assert.deepEqual(illustratedSlide.traceProcedureIds, ['creation-automatique']);
@@ -76,7 +132,9 @@ test('resolves every configured topic, procedure and illustration', () => {
 test('reports missing configured references and illustration files', () => {
   const { document, config } = loadPresentationInputs();
   const missingProcedure = clone(config);
-  missingProcedure.slides[0].procedureIds[0] = 'procedure-absente';
+  const configuredCardSlide = missingProcedure.slides
+    .find((slide) => slide.topicId === 'adherents-cartes' && slide.procedureIds.length > 0);
+  configuredCardSlide.procedureIds[0] = 'procedure-absente';
   assert.throws(
     () => buildPresentationModel(document, missingProcedure),
     /procédure introuvable adherents-cartes\/procedure-absente/,
@@ -98,7 +156,7 @@ test('rejects combinations that could omit selected content', () => {
 
   const twoProceduresWithIllustration = clone(config);
   const illustratedSlide = twoProceduresWithIllustration.slides
-    .find((slide) => slide.illustrationIds.length > 0);
+    .find((slide) => slide.topicId === 'adherents-cartes' && slide.illustrationIds.length > 0);
   illustratedSlide.procedureIds.push('creation-manuelle');
   assert.throws(
     () => buildPresentationModel(document, twoProceduresWithIllustration),
@@ -117,7 +175,9 @@ test('rejects combinations that could omit selected content', () => {
   );
 
   const titleWithoutIllustration = clone(config);
-  titleWithoutIllustration.slides[0].illustrationIds = [];
+  const titledIllustrationSlide = titleWithoutIllustration.slides
+    .find((slide) => slide.illustrationSlideTitle);
+  titledIllustrationSlide.illustrationIds = [];
   assert.throws(
     () => buildPresentationModel(document, titleWithoutIllustration),
     /illustrationSlideTitle nécessite une illustration/,

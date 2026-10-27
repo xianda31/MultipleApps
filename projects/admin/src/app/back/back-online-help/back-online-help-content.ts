@@ -2,7 +2,7 @@ import helpContentDocument from '../../../assets/documentation/back-online-help.
 import { BACK_ROUTE_ABS_PATHS, BACK_ROUTE_PATHS } from '../routes/back-route-paths';
 
 export type HelpNavMeta = {
-  menuTitle: string;
+  menuTitle?: string;
   subMenuTitle?: string;
   icon: string;
   groupLevel: 'Membre' | 'Contributeur' | 'Editeur' | 'Administrateur' | 'Systeme';
@@ -14,6 +14,7 @@ export type HelpIllustration = {
   path: string;
   alt: string;
   caption?: string;
+  source?: string;
 };
 
 export type HelpProcedure = {
@@ -26,6 +27,9 @@ export type HelpTopic = {
   id: string;
   title: string;
   summary: string;
+  scope?: 'application' | 'general';
+  contentStatus?: 'published' | 'planned';
+  manualChapterOrder?: number;
   route?: string;
   nav: HelpNavMeta;
   functionalities: string[];
@@ -58,6 +62,8 @@ function resolveTopic(topic: HelpTopicDocument): HelpTopic {
 
   return {
     ...content,
+    scope: content.scope ?? 'application',
+    contentStatus: content.contentStatus ?? 'published',
     route: routeKey ? HELP_ROUTES[routeKey] : undefined,
     children: children?.map(resolveTopic),
   };

@@ -1,6 +1,74 @@
 {
-  "version": "2026-10-27.4",
+  "version": "2026-10-27.6",
   "topics": [
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "summary": "Structure du chapitre général consacré aux espaces, aux accès et aux composants de BCSTO.",
+      "scope": "general",
+      "contentStatus": "planned",
+      "manualChapterOrder": 1,
+      "nav": {
+        "icon": "bi-diagram-3",
+        "groupLevel": "Membre"
+      },
+      "functionalities": [],
+      "howTo": [],
+      "children": [
+        {
+          "id": "architecture-presentation-vocabulaire",
+          "title": "Présentation générale et vocabulaire",
+          "summary": "Structure réservée aux notions générales et au vocabulaire du manuel de référence.",
+          "scope": "general",
+          "contentStatus": "planned",
+          "nav": {
+            "icon": "bi-book",
+            "groupLevel": "Membre"
+          },
+          "functionalities": [],
+          "howTo": []
+        },
+        {
+          "id": "architecture-espaces",
+          "title": "Espaces public, adhérents et administration",
+          "summary": "Structure réservée à la présentation des trois espaces de l’application.",
+          "scope": "general",
+          "contentStatus": "planned",
+          "nav": {
+            "icon": "bi-layout-three-columns",
+            "groupLevel": "Membre"
+          },
+          "functionalities": [],
+          "howTo": []
+        },
+        {
+          "id": "architecture-acces-droits",
+          "title": "Accès, authentification et droits",
+          "summary": "Structure réservée aux accès, à l’authentification et aux niveaux de droits.",
+          "scope": "general",
+          "contentStatus": "planned",
+          "nav": {
+            "icon": "bi-shield-lock",
+            "groupLevel": "Membre"
+          },
+          "functionalities": [],
+          "howTo": []
+        },
+        {
+          "id": "architecture-systeme",
+          "title": "Application, backend, FFB et Stripe",
+          "summary": "Structure réservée à l’architecture globale et aux systèmes externes.",
+          "scope": "general",
+          "contentStatus": "planned",
+          "nav": {
+            "icon": "bi-diagram-2",
+            "groupLevel": "Membre"
+          },
+          "functionalities": [],
+          "howTo": []
+        }
+      ]
+    },
     {
       "id": "tournois",
       "title": "Tournois",
@@ -166,8 +234,8 @@
       "children": [
         {
           "id": "adherents-repertoire",
-          "title": "repertoire",
-          "summary": "Consultation et mise à jour des fiches adhérents, avec recalcul saisonnier des dates d’adhésion.",
+          "title": "Répertoire",
+          "summary": "Répertoire local des personnes connues du club, enrichi par les données FFB et les opérations d’adhésion de la saison.",
           "routeKey": "MembersDatabase",
           "nav": {
             "menuTitle": "Adherents",
@@ -176,23 +244,93 @@
             "groupLevel": "Contributeur"
           },
           "functionalities": [
-            "Recherche multicritère des membres.",
-            "Édition des données de contact et de statut.",
-            "Recalcul automatique des dates d’adhésion lors d’un changement de saison.",
-            "Régénération de l’état d’adhésion sur la saison sélectionnée à partir des écritures ADH.",
-            "Mise à jour du statut membre et de la couleur d’icône après recalcul."
+            "Consultation des membres actifs, anciens ou bannis, avec filtres par situation FFB et adhésion.",
+            "Tri par nom, date d’adhésion ou date de licence et choix de l’information complémentaire affichée.",
+            "Ajout d’une personne issue de la base FFB ou absente de cette base.",
+            "Mise à jour de la ville, du téléphone, du consentement aux communications et du portrait.",
+            "Archivage, bannissement, restauration et export CSV des membres actifs.",
+            "Synchronisation avec les membres FFB du club et les opérations d’adhésion de la saison."
           ],
-          "howTo": [
-            "Utiliser les filtres pour trouver le membre cible.",
-            "Changer la saison via la barre de navigation du back-office.",
-            "Attendre la synchronisation automatique des membres.",
-            "Vérifier la colonne Date d’adhésion puis l’icône de statut.",
-            "Sauvegarder après vérification des champs sensibles."
+          "procedures": [
+            {
+              "id": "consulter-repertoire",
+              "title": "Rechercher et consulter",
+              "steps": [
+                "Choisir Actifs, Anciens ou Bannis pour limiter le répertoire au cycle de vie recherché.",
+                "Utiliser le filtre de statut pour distinguer licence FFB au club, sympathisant, présence dans la base FFB du club, personne hors base ou sans adhésion.",
+                "Trier par nom, date d’adhésion ou date de licence ; choisir au besoin la colonne complémentaire : mail, date de naissance, téléphone, ville ou acceptation des communications.",
+                "Cliquer sur l’icône œil « Voir la fiche » pour consulter le détail d’une personne.",
+                "Pour la liste des actifs, utiliser « Export .csv » afin d’exporter le répertoire de la saison."
+              ]
+            },
+            {
+              "id": "ajouter-personne-ffb",
+              "title": "Ajouter une personne répertoriée à la FFB",
+              "steps": [
+                "Cliquer sur « Ajouter », puis conserver le mode « Répertoriée à la FFB ».",
+                "Rechercher la personne par son nom ou son prénom et la sélectionner dans la liste FFB.",
+                "Contrôler la licence, le club et la ville proposés.",
+                "Renseigner une adresse email obligatoire et unique, puis préciser l’acceptation des communications.",
+                "Cliquer sur « Ajouter au répertoire » et traiter, le cas échéant, la proposition de rapprochement avec une fiche homonyme."
+              ]
+            },
+            {
+              "id": "ajouter-personne-hors-ffb",
+              "title": "Ajouter une personne absente de la FFB",
+              "steps": [
+                "Cliquer sur « Ajouter », puis choisir « Absente de la FFB ».",
+                "Renseigner la civilité, le prénom, le nom et une adresse email obligatoire et unique.",
+                "Compléter si nécessaire le téléphone, la ville et l’acceptation des communications.",
+                "Cliquer sur « Ajouter au répertoire » ; un identifiant provisoire est attribué à la fiche.",
+                "Si une personne porte déjà les mêmes nom et prénom, vérifier les fiches proposées avant de confirmer une création distincte."
+              ]
+            },
+            {
+              "id": "modifier-fiche-repertoire",
+              "title": "Modifier une fiche",
+              "steps": [
+                "Cliquer sur l’icône œil « Voir la fiche » de la personne.",
+                "Mettre à jour la ville, le téléphone ou l’acceptation des communications.",
+                "Ajouter, remplacer ou retirer le portrait si nécessaire.",
+                "Contrôler l’adresse email affichée : elle n’est pas modifiable dans cette fenêtre.",
+                "Enregistrer les modifications."
+              ]
+            },
+            {
+              "id": "gerer-cycle-vie-repertoire",
+              "title": "Gérer le cycle de vie",
+              "steps": [
+                "Archiver une personne qui ne doit plus figurer parmi les actifs, après confirmation.",
+                "Pour bloquer sa connexion et toute vente, choisir « Bannir », saisir un motif puis confirmer.",
+                "Depuis les listes Anciens ou Bannis, restaurer la personne ou lever son bannissement.",
+                "Un administrateur peut supprimer définitivement une fiche bannie ; l’historique comptable est conservé et le compte de connexion éventuel doit être supprimé séparément dans Droits d’accès."
+              ]
+            },
+            {
+              "id": "synchronisation-repertoire",
+              "title": "Comprendre la synchronisation",
+              "steps": [
+                "À l’ouverture du Répertoire, attendre la fin de la synchronisation signalée par la barre de progression.",
+                "Les personnes et licences du club proviennent de la base FFB et sont rapprochées du répertoire local par identifiant, numéro de licence ou, en cas de doute, par contrôle d’homonymie.",
+                "La date d’adhésion est déterminée à partir des opérations ADH de la saison sélectionnée.",
+                "Un changement de saison relance la synchronisation et recalcule les rattachements FFB, les dates d’adhésion et les statuts affichés."
+              ]
+            }
           ],
           "caution": [
-            "Le recalcul utilise la saison locale active.",
-            "Si aucune écriture ADH n’est trouvée sur la saison sélectionnée, la date est conservée seulement si elle est antérieure à cette saison; sinon elle est vidée.",
-            "Une date vide peut faire passer le statut en NON_ADHERENT pour la saison affichée."
+            "La création exige une adresse email unique ; ne pas créer une seconde fiche sans avoir vérifié les doublons proposés.",
+            "La synchronisation reflète les données FFB et les écritures ADH disponibles, mais ne corrige ni la base FFB, ni un paiement, ni une écriture comptable.",
+            "Le Répertoire est accessible à partir du niveau Contributeur. La suppression définitive d’une fiche bannie est réservée aux administrateurs.",
+            "Le bannissement bloque la connexion et les ventes. La suppression définitive est irréversible, même si l’historique comptable est conservé."
+          ],
+          "illustrations": [
+            {
+              "id": "schema-gestion-repertoire",
+              "path": "/assets/documentation/images/repertoire-gestion-membres.png",
+              "alt": "Schéma de référence reliant la base des joueurs FFB, la comptabilité et les services BCSTO au répertoire des membres.",
+              "caption": "Le Répertoire du Club rapproche les données FFB et comptables avant de les rendre disponibles aux autres services BCSTO.",
+              "source": "docs/documentation/sources/BCSTO_manuel_reference.pptx"
+            }
           ]
         },
         {

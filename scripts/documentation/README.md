@@ -36,3 +36,9 @@ Une référence ou une illustration absente interrompt explicitement la
 génération.
 
 La charte graphique est centralisée dans `help-pptx-theme.mjs`.
+
+Une rubrique générale indépendante du menu admin utilise `scope: "general"`
+et peut omettre `routeKey` et `nav.menuTitle`. `manualChapterOrder` réserve sa
+position dans le futur manuel. Tant qu’elle porte `contentStatus: "planned"` et
+qu’elle n’est pas référencée dans `help-pptx.config.json`, elle reste visible
+comme structure dans l’aide sans être générée dans le pilote PowerPoint.
