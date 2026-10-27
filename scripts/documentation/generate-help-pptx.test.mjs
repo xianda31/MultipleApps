@@ -26,6 +26,8 @@ test('separates font families and sizes and enforces readable body sizes', () =>
   assert.equal(typeof HELP_PPTX_THEME.fontFamilies.heading, 'string');
   assert.equal(typeof HELP_PPTX_THEME.fontFamilies.body, 'string');
   assert.equal(typeof HELP_PPTX_THEME.fontSizes.body, 'number');
+  assert.equal(typeof HELP_PPTX_THEME.appIconPath, 'string');
+  assert.ok(fs.existsSync(path.resolve(PROJECT_ROOT, HELP_PPTX_THEME.appIconPath)));
   assert.equal('fonts' in HELP_PPTX_THEME, false);
   assert.doesNotThrow(() => validateTheme(HELP_PPTX_THEME));
 
@@ -35,6 +37,12 @@ test('separates font families and sizes and enforces readable body sizes', () =>
     () => validateTheme(invalidTheme),
     /Taille de corps compactBody inférieure au minimum/,
   );
+  const themeWithoutIcon = clone(HELP_PPTX_THEME);
+  themeWithoutIcon.appIconPath = '';
+  assert.throws(
+    () => validateTheme(themeWithoutIcon),
+    /Chemin de l’icône d’application invalide/,
+  );
 });
 
 test('resolves every configured topic, procedure and illustration', () => {
@@ -42,7 +50,7 @@ test('resolves every configured topic, procedure and illustration', () => {
   const model = buildPresentationModel(document, config);
 
   assert.equal(model.openingTopics.length, 2);
-  assert.equal(model.slides.length, 7);
+  assert.equal(model.slides.length, 8);
   assert.deepEqual(
     model.openingTopics.map((topic) => topic.id),
     ['adherents-cartes', 'adherents-controles'],
@@ -50,6 +58,18 @@ test('resolves every configured topic, procedure and illustration', () => {
   assert.ok(model.slides.flatMap((slide) => slide.illustrations).every(
     (illustration) => fs.existsSync(illustration.filePath),
   ));
+  const illustratedSlide = model.slides.find((slide) => slide.layout === 'illustration-only');
+  assert.equal(illustratedSlide.topic.id, 'adherents-cartes');
+  assert.deepEqual(illustratedSlide.traceProcedureIds, ['creation-automatique']);
+  assert.equal(illustratedSlide.illustrations[0].id, 'parcours-carte-admissions');
+  const manualCreation = model.slides.find(
+    (slide) => slide.procedures[0]?.id === 'creation-manuelle',
+  );
+  assert.ok(manualCreation.cautions.length > 0);
+  const consultation = model.slides.find(
+    (slide) => slide.procedures[0]?.id === 'consultation-export',
+  );
+  assert.equal(consultation.cautions.length, 0);
 });
 
 test('reports missing configured references and illustration files', () => {
@@ -78,7 +98,7 @@ test('rejects combinations that could omit selected content', () => {
   const twoProceduresWithIllustration = clone(config);
   const illustratedSlide = twoProceduresWithIllustration.slides
     .find((slide) => slide.illustrationIds.length > 0);
-  illustratedSlide.procedureIds.push('creation-automatique');
+  illustratedSlide.procedureIds.push('creation-manuelle');
   assert.throws(
     () => buildPresentationModel(document, twoProceduresWithIllustration),
     /deux procédures avec illustration ne sont pas prises en charge/,

@@ -29,21 +29,21 @@
   <path d="M355 168 C430 168 425 250 490 250" fill="none" stroke="#8a5a10" stroke-width="5" marker-end="url(#arrow)"/>
   <path d="M355 392 C430 392 425 310 490 310" fill="none" stroke="#8a5a10" stroke-width="5" marker-end="url(#arrow)"/>
 
-  <rect x="505" y="155" width="280" height="250" rx="24" fill="#fff" stroke="#7a4b00" stroke-width="4"/>
+  <rect x="505" y="155" width="280" height="300" rx="24" fill="#fff" stroke="#7a4b00" stroke-width="4"/>
   <rect x="540" y="190" width="210" height="48" rx="9" fill="#f4e2bf"/>
   <text x="645" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#2b2418">Carte d’admission</text>
   <text x="545" y="275" font-family="Arial, sans-serif" font-size="19" fill="#6d5a3b">1 ou 2 titulaires</text>
-  <text x="545" y="310" font-family="Arial, sans-serif" font-size="19" fill="#6d5a3b">Crédit initial</text>
-  <text x="545" y="345" font-family="Arial, sans-serif" font-size="19" fill="#6d5a3b">Admissions pointées</text>
-  <circle cx="728" cy="304" r="14" fill="#45845f"/>
-  <circle cx="693" cy="304" r="14" fill="#45845f"/>
-  <circle cx="658" cy="304" r="14" fill="#45845f"/>
-  <circle cx="728" cy="344" r="14" fill="#d9d3c9"/>
-  <circle cx="693" cy="344" r="14" fill="#d9d3c9"/>
-  <circle cx="658" cy="344" r="14" fill="#d9d3c9"/>
-  <text x="645" y="385" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#8a5a10">Chaque pointage met le crédit à jour</text>
+  <text x="545" y="310" font-family="Arial, sans-serif" font-size="18" fill="#6d5a3b">Crédit initial</text>
+  <circle cx="690" cy="330" r="13" fill="#45845f"/>
+  <circle cx="725" cy="330" r="13" fill="#45845f"/>
+  <circle cx="760" cy="330" r="13" fill="#45845f"/>
+  <text x="545" y="370" font-family="Arial, sans-serif" font-size="18" fill="#6d5a3b">Admissions pointées</text>
+  <circle cx="690" cy="395" r="13" fill="#d9d3c9"/>
+  <circle cx="725" cy="395" r="13" fill="#d9d3c9"/>
+  <circle cx="760" cy="395" r="13" fill="#d9d3c9"/>
+  <text x="645" y="435" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#8a5a10">Chaque pointage met le crédit à jour</text>
 
-  <path d="M785 280 H865" fill="none" stroke="#8a5a10" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M785 305 H865" fill="none" stroke="#8a5a10" stroke-width="5" marker-end="url(#arrow)"/>
 
   <rect x="885" y="155" width="260" height="250" rx="24" fill="#eef4fb" stroke="#4778a8" stroke-width="4"/>
   <text x="1015" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#294c6f">Admissions restantes</text>

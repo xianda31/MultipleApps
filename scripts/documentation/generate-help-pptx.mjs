@@ -26,9 +26,13 @@ const CONTENT_AREA = Object.freeze({
   withCautions: [{ x: 0.55, w: 8.1 }],
   cautionBox: { x: 8.9, w: 3.9 },
   illustrationBox: { x: 6.55, y: 1.55, w: 6.2, h: 4.95 },
+  fullIllustrationBox: { x: 0.7, y: 1.35, w: 11.93, h: 5.45 },
 });
 
 export function validateTheme(theme = THEME) {
+  if (typeof theme.appIconPath !== 'string' || !theme.appIconPath.trim()) {
+    throw new Error('Chemin de l’icône d’application invalide');
+  }
   for (const family of ['heading', 'body']) {
     if (typeof theme.fontFamilies?.[family] !== 'string' || !theme.fontFamilies[family].trim()) {
       throw new Error(`Famille de police invalide: ${family}`);
@@ -117,20 +121,25 @@ function calculateStepRows(steps, width, height, fontSize, context) {
     const lines = estimateWrappedLineCount(step, width - 0.36, fontSize);
     return Math.max(0.5, lines * lineHeight + 0.12);
   });
-  const requiredHeight = minimumRows.reduce((total, row) => total + row, 0);
+  const maximumGap = 0.16;
+  const gap = steps.length > 1 ? maximumGap : 0;
+  const requiredHeight = minimumRows.reduce((total, row) => total + row, 0)
+    + gap * Math.max(0, steps.length - 1);
   if (requiredHeight > height) {
     throw new Error(
       `${context}: diapositive trop chargée (${requiredHeight.toFixed(2)}" requis, `
       + `${height.toFixed(2)}" disponibles). Répartir le contenu.`,
     );
   }
-  const extraPerRow = (height - requiredHeight) / steps.length;
-  return minimumRows.map((row) => row + extraPerRow);
+  return { rowHeights: minimumRows, gap };
 }
 
 function determineSlideLayout(procedures, illustrations, cautions, slideNumber) {
   const context = `Diapositive ${slideNumber}`;
   if (procedures.length === 0) {
+    if (illustrations.length === 1 && cautions.length === 0) {
+      return 'illustration-only';
+    }
     if (cautions.length > 0 && illustrations.length === 0) {
       return 'cautions-only';
     }
@@ -158,13 +167,26 @@ function determineSlideLayout(procedures, illustrations, cautions, slideNumber) 
 }
 
 function procedureFontSize(layout) {
-  return layout === 'two-procedures' || layout === 'procedure-with-illustration'
+  return layout === 'two-procedures'
     ? THEME.fontSizes.compactBody
     : THEME.fontSizes.body;
 }
 
+function contentSlideTitle(content) {
+  return content.title
+    ?? (content.procedures.map((procedure) => procedure.title).join(' / ')
+      || 'Points de vigilance');
+}
+
+function procedureStepArea(layout) {
+  const showTitle = layout === 'two-procedures';
+  return showTitle
+    ? { showTitle, topOffset: 0.76, heightOffset: 0.96 }
+    : { showTitle, topOffset: 0.3, heightOffset: 0.55 };
+}
+
 function validateSlideDensity(content, slideNumber) {
-  const boxes = content.layout === 'cautions-only'
+  const boxes = content.layout === 'cautions-only' || content.layout === 'illustration-only'
     ? []
     : content.layout === 'two-procedures'
     ? CONTENT_AREA.twoColumns
@@ -175,24 +197,27 @@ function validateSlideDensity(content, slideNumber) {
         : CONTENT_AREA.full;
   const fontSize = procedureFontSize(content.layout);
   validateTextBlock(
-    content.procedures.map((procedure) => procedure.title).join(' / ') || 'Points de vigilance',
+    contentSlideTitle(content),
     12.1,
     0.52,
     THEME.fontSizes.slideTitle,
     `Diapositive ${slideNumber}, titre`,
   );
+  const stepArea = procedureStepArea(content.layout);
   content.procedures.forEach((procedure, index) => {
-    validateTextBlock(
-      procedure.title,
-      boxes[index].w - 0.56,
-      0.42,
-      THEME.fontSizes.procedureTitle,
-      `Diapositive ${slideNumber}, titre de procédure ${procedure.id}`,
-    );
+    if (stepArea.showTitle) {
+      validateTextBlock(
+        procedure.title,
+        boxes[index].w - 0.56,
+        0.42,
+        THEME.fontSizes.procedureTitle,
+        `Diapositive ${slideNumber}, titre de procédure ${procedure.id}`,
+      );
+    }
     calculateStepRows(
       procedure.steps,
       boxes[index].w - 0.6,
-      CONTENT_AREA.h - 0.96,
+      CONTENT_AREA.h - stepArea.heightOffset,
       fontSize,
       `Diapositive ${slideNumber}, procédure ${procedure.id}`,
     );
@@ -201,19 +226,23 @@ function validateSlideDensity(content, slideNumber) {
     const cautionWidth = content.layout === 'cautions-only'
       ? CONTENT_AREA.full[0].w - 0.56
       : CONTENT_AREA.cautionBox.w - 0.56;
+    const cautionHeightOffset = content.layout === 'cautions-only' ? 0.55 : 1;
     calculateStepRows(
       content.cautions,
       cautionWidth,
-      CONTENT_AREA.h - 1,
+      CONTENT_AREA.h - cautionHeightOffset,
       THEME.fontSizes.cautionBody,
       `Diapositive ${slideNumber}, précautions`,
     );
   }
   for (const illustration of content.illustrations) {
     if (illustration.caption) {
+      const illustrationBox = content.layout === 'illustration-only'
+        ? CONTENT_AREA.fullIllustrationBox
+        : CONTENT_AREA.illustrationBox;
       validateTextBlock(
         illustration.caption,
-        CONTENT_AREA.illustrationBox.w,
+        illustrationBox.w,
         0.42,
         THEME.fontSizes.caption,
         `Diapositive ${slideNumber}, légende ${illustration.id}`,
@@ -265,7 +294,7 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
     );
   });
 
-  const slides = config.slides.map((slideConfig, index) => {
+  const configuredSlides = config.slides.map((slideConfig, index) => {
     if (!Array.isArray(slideConfig.procedureIds) || !Array.isArray(slideConfig.illustrationIds)) {
       throw new Error(
         `Diapositive ${index + 1}: procedureIds et illustrationIds doivent être des tableaux`,
@@ -328,9 +357,32 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
         index + 1,
       ),
     };
-    validateSlideDensity(content, index + 1);
     return content;
   });
+  const slides = configuredSlides.flatMap((content) => {
+    if (content.layout !== 'procedure-with-illustration') {
+      return content;
+    }
+    const procedure = content.procedures[0];
+    const illustration = content.illustrations[0];
+    return [
+      {
+        ...content,
+        illustrations: [],
+        layout: 'single-procedure',
+        traceIllustrationIds: [illustration.id],
+      },
+      {
+        ...content,
+        title: `${procedure.title} — schéma explicatif`,
+        procedures: [],
+        cautions: [],
+        layout: 'illustration-only',
+        traceProcedureIds: [procedure.id],
+      },
+    ];
+  });
+  slides.forEach((content, index) => validateSlideDensity(content, index + 1));
 
   return {
     documentVersion: document.version,
@@ -354,7 +406,7 @@ function addText(slide, text, options = {}) {
   });
 }
 
-function addFooter(slide, pageNumber, version, logoPath) {
+function addFooter(slide, pageNumber, version, appIconPath) {
   slide.addShape('line', {
     x: 0.4,
     y: 6.96,
@@ -362,9 +414,16 @@ function addFooter(slide, pageNumber, version, logoPath) {
     h: 0,
     line: { color: THEME.colors.border, width: 1 },
   });
-  slide.addImage({ path: logoPath, x: 0.42, y: 7.04, w: 0.8, h: 0.3, altText: 'Logo BCSTO' });
+  slide.addImage({
+    path: appIconPath,
+    x: 0.42,
+    y: 7.01,
+    w: 0.32,
+    h: 0.32,
+    altText: 'Icône de l’application BCSTO',
+  });
   addText(slide, `Documentation ${version}`, {
-    x: 1.35,
+    x: 0.86,
     y: 7.04,
     w: 3.2,
     h: 0.28,
@@ -400,6 +459,7 @@ function addHeader(slide, title, topicTitle) {
     fontSize: THEME.fontSizes.slideTitle,
     bold: true,
     color: THEME.colors.title,
+    align: 'left',
   });
   addText(slide, topicTitle, {
     x: 0.57,
@@ -412,7 +472,7 @@ function addHeader(slide, title, topicTitle) {
 }
 
 function addStepList(slide, steps, x, y, w, h, fontSize, context) {
-  const rowHeights = calculateStepRows(steps, w, h, fontSize, context);
+  const { rowHeights, gap } = calculateStepRows(steps, w, h, fontSize, context);
   let top = y;
   steps.forEach((step, index) => {
     const rowHeight = rowHeights[index];
@@ -433,11 +493,21 @@ function addStepList(slide, steps, x, y, w, h, fontSize, context) {
       valign: 'top',
       breakLine: true,
     });
-    top += rowHeight;
+    top += rowHeight + gap;
   });
 }
 
-function addProcedureCard(slide, procedure, x, y, w, h, fontSize, slideNumber) {
+function addProcedureCard(
+  slide,
+  procedure,
+  x,
+  y,
+  w,
+  h,
+  fontSize,
+  slideNumber,
+  showTitle,
+) {
   slide.addShape('roundRect', {
     x,
     y,
@@ -445,25 +515,36 @@ function addProcedureCard(slide, procedure, x, y, w, h, fontSize, slideNumber) {
     h,
     rectRadius: 0.08,
     line: { color: THEME.colors.border, width: 1 },
-    fill: { color: THEME.colors.greenLight },
+    fill: { color: THEME.colors.background },
   });
-  addText(slide, procedure.title, {
-    x: x + 0.28,
-    y: y + 0.2,
-    w: w - 0.56,
-    h: 0.42,
-    fontFace: THEME.fontFamilies.heading,
-    fontSize: THEME.fontSizes.procedureTitle,
-    bold: true,
-    color: THEME.colors.greenDark,
+  slide.addShape('rect', {
+    x,
+    y: y + 0.14,
+    w: 0.07,
+    h: h - 0.28,
+    line: { color: THEME.colors.green, transparency: 100 },
+    fill: { color: THEME.colors.green },
   });
+  if (showTitle) {
+    addText(slide, procedure.title, {
+      x: x + 0.28,
+      y: y + 0.2,
+      w: w - 0.56,
+      h: 0.42,
+      fontFace: THEME.fontFamilies.heading,
+      fontSize: THEME.fontSizes.procedureTitle,
+      bold: true,
+      color: THEME.colors.greenDark,
+    });
+  }
+  const stepArea = procedureStepArea(showTitle ? 'two-procedures' : 'single-procedure');
   addStepList(
     slide,
     procedure.steps,
     x + 0.3,
-    y + 0.76,
+    y + stepArea.topOffset,
     w - 0.6,
-    h - 0.96,
+    h - stepArea.heightOffset,
     fontSize,
     `Diapositive ${slideNumber}, procédure ${procedure.id}`,
   );
@@ -508,31 +589,41 @@ function addIllustration(slide, illustration, x, y, w, h) {
   }
 }
 
-function addCautions(slide, cautions, x, y, w, h) {
+function addCautions(slide, cautions, x, y, w, h, showTitle = true) {
   slide.addShape('roundRect', {
     x,
     y,
     w,
     h,
     line: { color: 'E5C56C', width: 1 },
-    fill: { color: THEME.colors.amberLight },
+    fill: { color: THEME.colors.background },
   });
-  addText(slide, 'Points de vigilance', {
-    x: x + 0.25,
-    y: y + 0.2,
-    w: w - 0.5,
-    h: 0.4,
-    bold: true,
-    fontSize: THEME.fontSizes.procedureTitle,
-    color: '7A5700',
+  slide.addShape('rect', {
+    x,
+    y: y + 0.14,
+    w: 0.07,
+    h: h - 0.28,
+    line: { color: 'D9A514', transparency: 100 },
+    fill: { color: 'D9A514' },
   });
+  if (showTitle) {
+    addText(slide, 'Points de vigilance', {
+      x: x + 0.25,
+      y: y + 0.2,
+      w: w - 0.5,
+      h: 0.4,
+      bold: true,
+      fontSize: THEME.fontSizes.procedureTitle,
+      color: '7A5700',
+    });
+  }
   addStepList(
     slide,
     cautions,
     x + 0.28,
-    y + 0.78,
+    y + (showTitle ? 0.78 : 0.3),
     w - 0.56,
-    h - 1,
+    h - (showTitle ? 1 : 0.55),
     THEME.fontSizes.cautionBody,
     'Précautions',
   );
@@ -547,21 +638,28 @@ function addTraceNotes(slide, version, topicIds = [], procedureIds = [], illustr
   ].join('\n'));
 }
 
-function addCover(pptx, model, logoPath) {
+function addCover(pptx, model, appIconPath) {
   const slide = pptx.addSlide();
   slide.background = { color: THEME.colors.background };
   slide.addShape('rect', {
     x: 0,
     y: 0,
-    w: 1.05,
+    w: 0.18,
     h: THEME.height,
     line: { color: THEME.colors.green, transparency: 100 },
     fill: { color: THEME.colors.green },
   });
-  slide.addImage({ path: logoPath, x: 1.55, y: 0.75, w: 2.2, h: 0.83, altText: 'Logo BCSTO' });
+  slide.addImage({
+    path: appIconPath,
+    x: 0.75,
+    y: 0.7,
+    w: 1.4,
+    h: 1.4,
+    altText: 'Icône de l’application BCSTO',
+  });
   addText(slide, model.presentationTitle, {
-    x: 1.55,
-    y: 2,
+    x: 0.75,
+    y: 2.45,
     w: 10.8,
     h: 1.15,
     fontFace: THEME.fontFamilies.heading,
@@ -570,15 +668,15 @@ function addCover(pptx, model, logoPath) {
     color: THEME.colors.title,
   });
   addText(slide, model.presentationSubtitle, {
-    x: 1.58,
-    y: 3.25,
+    x: 0.78,
+    y: 3.7,
     w: 9.8,
     h: 0.55,
     fontSize: 19,
     color: THEME.colors.greenDark,
   });
   addText(slide, `Version documentaire ${model.documentVersion}`, {
-    x: 1.58,
+    x: 0.78,
     y: 6.45,
     w: 5.4,
     h: 0.4,
@@ -588,7 +686,7 @@ function addCover(pptx, model, logoPath) {
   addTraceNotes(slide, model.documentVersion);
 }
 
-function addOpening(pptx, model, pageNumber, logoPath) {
+function addOpening(pptx, model, pageNumber, appIconPath) {
   const slide = pptx.addSlide();
   slide.background = { color: THEME.colors.background };
   addText(slide, model.sectionTitle, {
@@ -609,7 +707,15 @@ function addOpening(pptx, model, pageNumber, logoPath) {
       w: 11.85,
       h: 1.65,
       line: { color: THEME.colors.border, width: 1 },
-      fill: { color: index % 2 === 0 ? THEME.colors.greenLight : 'F6F8F6' },
+      fill: { color: THEME.colors.background },
+    });
+    slide.addShape('rect', {
+      x: 0.75,
+      y: y + 0.12,
+      w: 0.07,
+      h: 1.41,
+      line: { color: THEME.colors.green, transparency: 100 },
+      fill: { color: THEME.colors.green },
     });
     addText(slide, topic.title, {
       x: 1.05,
@@ -630,15 +736,14 @@ function addOpening(pptx, model, pageNumber, logoPath) {
       breakLine: true,
     });
   });
-  addFooter(slide, pageNumber, model.documentVersion, logoPath);
+  addFooter(slide, pageNumber, model.documentVersion, appIconPath);
   addTraceNotes(slide, model.documentVersion, model.openingTopics.map((topic) => topic.id));
 }
 
-function addContentSlide(pptx, model, content, pageNumber, logoPath) {
+function addContentSlide(pptx, model, content, pageNumber, appIconPath) {
   const slide = pptx.addSlide();
   slide.background = { color: THEME.colors.background };
-  const title = content.procedures.map((procedure) => procedure.title).join(' / ')
-    || 'Points de vigilance';
+  const title = contentSlideTitle(content);
   addHeader(slide, title, content.topic.title);
   const verifiedLayout = determineSlideLayout(
     content.procedures,
@@ -663,6 +768,7 @@ function addContentSlide(pptx, model, content, pageNumber, logoPath) {
         CONTENT_AREA.h,
         fontSize,
         pageNumber,
+        false,
       );
       addIllustration(
         slide,
@@ -685,6 +791,7 @@ function addContentSlide(pptx, model, content, pageNumber, logoPath) {
         CONTENT_AREA.h,
         fontSize,
         pageNumber,
+        false,
       );
       addCautions(
         slide,
@@ -693,6 +800,7 @@ function addContentSlide(pptx, model, content, pageNumber, logoPath) {
         CONTENT_AREA.y,
         CONTENT_AREA.cautionBox.w,
         CONTENT_AREA.h,
+        true,
       );
       break;
     }
@@ -708,6 +816,7 @@ function addContentSlide(pptx, model, content, pageNumber, logoPath) {
           CONTENT_AREA.h,
           fontSize,
           pageNumber,
+          true,
         );
       });
       break;
@@ -722,6 +831,19 @@ function addContentSlide(pptx, model, content, pageNumber, logoPath) {
         CONTENT_AREA.h,
         fontSize,
         pageNumber,
+        false,
+      );
+      break;
+    }
+    case 'illustration-only': {
+      const box = CONTENT_AREA.fullIllustrationBox;
+      addIllustration(
+        slide,
+        content.illustrations[0],
+        box.x,
+        box.y,
+        box.w,
+        box.h,
       );
       break;
     }
@@ -734,6 +856,7 @@ function addContentSlide(pptx, model, content, pageNumber, logoPath) {
         CONTENT_AREA.y,
         box.w,
         CONTENT_AREA.h,
+        false,
       );
       break;
     }
@@ -741,20 +864,22 @@ function addContentSlide(pptx, model, content, pageNumber, logoPath) {
       throw new Error(`Diapositive ${pageNumber}: disposition non prise en charge ${content.layout}`);
   }
 
-  addFooter(slide, pageNumber, model.documentVersion, logoPath);
+  addFooter(slide, pageNumber, model.documentVersion, appIconPath);
   addTraceNotes(
     slide,
     model.documentVersion,
     [content.topic.id],
-    content.procedures.map((procedure) => procedure.id),
-    content.illustrations.map((illustration) => illustration.id),
+    content.traceProcedureIds
+      ?? content.procedures.map((procedure) => procedure.id),
+    content.traceIllustrationIds
+      ?? content.illustrations.map((illustration) => illustration.id),
   );
 }
 
 export function createPresentation(model) {
-  const logoPath = path.resolve(PROJECT_ROOT, THEME.logoPath);
-  if (!fs.existsSync(logoPath)) {
-    throw new Error(`Logo BCSTO introuvable: ${logoPath}`);
+  const appIconPath = path.resolve(PROJECT_ROOT, THEME.appIconPath);
+  if (!fs.existsSync(appIconPath)) {
+    throw new Error(`Icône de l’application BCSTO introuvable: ${appIconPath}`);
   }
 
   const pptx = new pptxgen();
@@ -770,10 +895,10 @@ export function createPresentation(model) {
     lang: 'fr-FR',
   };
 
-  addCover(pptx, model, logoPath);
-  addOpening(pptx, model, 2, logoPath);
+  addCover(pptx, model, appIconPath);
+  addOpening(pptx, model, 2, appIconPath);
   model.slides.forEach((content, index) => {
-    addContentSlide(pptx, model, content, index + 3, logoPath);
+    addContentSlide(pptx, model, content, index + 3, appIconPath);
   });
   return pptx;
 }

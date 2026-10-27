@@ -13,20 +13,6 @@
       "procedureIds": [
         "creation-automatique"
       ],
-      "illustrationIds": []
-    },
-    {
-      "topicId": "adherents-cartes",
-      "procedureIds": [
-        "creation-manuelle"
-      ],
-      "illustrationIds": []
-    },
-    {
-      "topicId": "adherents-cartes",
-      "procedureIds": [
-        "modification-carte"
-      ],
       "illustrationIds": [
         "parcours-carte-admissions"
       ]
@@ -34,10 +20,24 @@
     {
       "topicId": "adherents-cartes",
       "procedureIds": [
-        "consultation-export"
+        "creation-manuelle"
       ],
       "illustrationIds": [],
       "includeCautions": true
+    },
+    {
+      "topicId": "adherents-cartes",
+      "procedureIds": [
+        "modification-carte"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-cartes",
+      "procedureIds": [
+        "consultation-export"
+      ],
+      "illustrationIds": []
     },
     {
       "topicId": "adherents-controles",

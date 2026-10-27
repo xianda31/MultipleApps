@@ -9,8 +9,6 @@ export const HELP_PPTX_THEME = Object.freeze({
     muted: '65736A',
     green: '258348',
     greenDark: '176135',
-    greenLight: 'EAF5EE',
-    amberLight: 'FFF5DD',
     border: 'D7E2DA',
   },
   fontFamilies: {
@@ -29,5 +27,5 @@ export const HELP_PPTX_THEME = Object.freeze({
     small: 10,
   },
   minimumBodyFontSize: 15.5,
-  logoPath: 'projects/admin/public/bcsto.jpg',
+  appIconPath: 'projects/admin/public/assets/icons/android-chrome-192x192.png',
 });

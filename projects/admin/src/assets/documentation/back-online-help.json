@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-27.2",
+  "version": "2026-10-27.3",
   "topics": [
     {
       "id": "tournois",
@@ -197,7 +197,7 @@
         },
         {
           "id": "adherents-cartes",
-          "title": "cartes admission",
+          "title": "Cartes d’admission",
           "summary": "Création, modification et consultation des cartes d’admission aux tournois.",
           "routeKey": "GameCardsEditor",
           "nav": {
@@ -269,7 +269,7 @@
         },
         {
           "id": "adherents-controles",
-          "title": "controles",
+          "title": "Contrôles",
           "summary": "Diagnostic de cohérence des licences, adhésions et achats, avec consultation des historiques comptables des adhérents.",
           "routeKey": "MemberSales",
           "nav": {
