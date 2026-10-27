@@ -16,6 +16,11 @@ export type HelpIllustration = {
   caption?: string;
 };
 
+export type HelpProcedure = {
+  title: string;
+  steps: string[];
+};
+
 export type HelpTopic = {
   id: string;
   title: string;
@@ -26,6 +31,7 @@ export type HelpTopic = {
   howTo: string[];
   caution?: string[];
   illustrations?: HelpIllustration[];
+  procedures?: HelpProcedure[];
   children?: HelpTopic[];
 };
 

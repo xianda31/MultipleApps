@@ -91,10 +91,24 @@
           </div>
 
           <div class="back-help__section mt-4">
-            <h4 class="h6 text-uppercase back-help__section-title">Parcours conseillé</h4>
-            <ol class="mb-0">
-              <li *ngFor="let step of selectedDetailTopic.howTo">{{ step }}</li>
-            </ol>
+            <h4 class="h6 text-uppercase back-help__section-title">
+              {{ selectedDetailTopic.procedures?.length ? 'Procédures' : 'Parcours conseillé' }}
+            </h4>
+            <ng-container *ngIf="selectedDetailTopic.procedures?.length; else standardHowTo">
+              <div class="back-help__procedures">
+                <section class="back-help__procedure" *ngFor="let procedure of selectedDetailTopic.procedures">
+                  <h5>{{ procedure.title }}</h5>
+                  <ol class="mb-0">
+                    <li *ngFor="let step of procedure.steps">{{ step }}</li>
+                  </ol>
+                </section>
+              </div>
+            </ng-container>
+            <ng-template #standardHowTo>
+              <ol class="mb-0">
+                <li *ngFor="let step of selectedDetailTopic.howTo">{{ step }}</li>
+              </ol>
+            </ng-template>
           </div>
 
           <div class="back-help__section mt-4" *ngIf="selectedDetailTopic.caution?.length">

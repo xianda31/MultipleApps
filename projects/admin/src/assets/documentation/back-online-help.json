@@ -1,5 +1,5 @@
 {
-  "version": "2026-07-23.3",
+  "version": "2026-10-27.1",
   "topics": [
     {
       "id": "tournois",
@@ -198,7 +198,7 @@
         {
           "id": "adherents-cartes",
           "title": "cartes admission",
-          "summary": "Edition et generation des cartes.",
+          "summary": "Création, modification et consultation des cartes d’admission aux tournois.",
           "routeKey": "GameCardsEditor",
           "nav": {
             "menuTitle": "Adherents",
@@ -208,12 +208,59 @@
             "adminOnly": true
           },
           "functionalities": [
-            "Edition des attributs de carte.",
-            "Controle des informations imprimees."
+            "Création automatique d’une carte et de son crédit d’admissions lors d’une vente de carte en présentiel ou d’un achat en ligne.",
+            "Création manuelle exceptionnelle d’une carte avec justification.",
+            "Modification des titulaires et du crédit restant.",
+            "Consultation des cartes non vides et export Excel."
           ],
-          "howTo": [
-            "Selectionner le membre et verifier ses donnees.",
-            "Generer la carte puis controler le rendu."
+          "howTo": [],
+          "procedures": [
+            {
+              "title": "Création automatique",
+              "steps": [
+                "Effectuer normalement la vente de la carte en présentiel ou l’achat dans la boutique en ligne.",
+                "La validation de la vente crée normalement la carte, lui attribue son crédit d’admissions et l’associe à l’écriture de vente.",
+                "Contrôler ensuite la présence de la carte dans la liste."
+              ]
+            },
+            {
+              "title": "Création manuelle",
+              "steps": [
+                "Avant toute création, vérifier qu’une carte n’a pas déjà été créée automatiquement par la vente.",
+                "Cliquer sur « Créer une carte ».",
+                "Indiquer le nombre d’admissions, sélectionner le titulaire et, si nécessaire, un cotitulaire.",
+                "Saisir obligatoirement un commentaire explicitant le motif, par exemple : reprise d’un ancien solde, régularisation ou attribution offerte.",
+                "Valider la création."
+              ]
+            },
+            {
+              "title": "Modification d’une carte",
+              "steps": [
+                "Cliquer sur l’icône œil « Voir la carte ».",
+                "Ajouter ou retirer un titulaire si nécessaire ; une carte doit conserver un titulaire et peut en avoir deux au maximum.",
+                "Cliquer sur une case libre pour consommer une admission, ou sur une case déjà pointée pour restituer une admission.",
+                "Contrôler le crédit restant, puis cliquer sur « valider »."
+              ]
+            },
+            {
+              "title": "Consultation et export",
+              "steps": [
+                "Conserver le filtre « Cartes non vides uniquement » pour afficher les cartes disposant encore d’admissions.",
+                "Cliquer sur « Export Excel » pour exporter la liste des cartes."
+              ]
+            }
+          ],
+          "caution": [
+            "Une création manuelle ne constitue pas l’enregistrement d’une vente.",
+            "Utiliser la création manuelle uniquement après avoir vérifié l’absence de carte créée automatiquement."
+          ],
+          "illustrations": [
+            {
+              "id": "parcours-carte-admissions",
+              "path": "/assets/documentation/images/carte-admissions-parcours.svg",
+              "alt": "Schéma montrant qu’une vente ou une création manuelle produit une carte avec un crédit d’admissions restantes.",
+              "caption": "Deux modes de création alimentent la même carte d’admission ; chaque pointage diminue le crédit restant."
+            }
           ]
         },
         {

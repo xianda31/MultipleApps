@@ -108,6 +108,23 @@
   margin-top: 0.5rem;
 }
 
+.back-help__procedures {
+  display: grid;
+  gap: 1rem;
+}
+
+.back-help__procedure {
+  padding: 1rem;
+  border: 1px solid #e6ded0;
+  border-radius: 0.75rem;
+  background: #fffdf8;
+}
+
+.back-help__procedure h5 {
+  color: #2b2418;
+  font-size: 1rem;
+}
+
 .back-help__feature-btn {
   max-width: 24rem;
   width: 100%;

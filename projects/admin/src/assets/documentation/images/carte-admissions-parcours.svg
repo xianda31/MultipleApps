@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+  <title>Parcours de création et d’utilisation d’une carte d’admission</title>
+  <desc>Une vente ou une création manuelle produit une carte dont le crédit diminue à chaque admission pointée.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#8a5a10"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="560" rx="28" fill="#fffaf0"/>
+  <text x="600" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#2b2418">
+    Du mode de création au crédit d’admissions
+  </text>
+
+  <rect x="55" y="95" width="300" height="145" rx="18" fill="#e9f5ee" stroke="#45845f" stroke-width="3"/>
+  <circle cx="100" cy="140" r="23" fill="#45845f"/>
+  <path d="M89 140 L97 148 L113 130" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="140" y="133" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#244832">Création automatique</text>
+  <text x="85" y="180" font-family="Arial, sans-serif" font-size="19" fill="#244832">Vente en présentiel</text>
+  <text x="85" y="211" font-family="Arial, sans-serif" font-size="19" fill="#244832">ou achat en ligne</text>
+
+  <rect x="55" y="320" width="300" height="145" rx="18" fill="#fff3d9" stroke="#b37a16" stroke-width="3"/>
+  <circle cx="100" cy="365" r="23" fill="#b37a16"/>
+  <path d="M100 352 V378 M87 365 H113" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <text x="140" y="358" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#68460d">Création manuelle</text>
+  <text x="85" y="405" font-family="Arial, sans-serif" font-size="19" fill="#68460d">Titulaire(s) + crédit</text>
+  <text x="85" y="436" font-family="Arial, sans-serif" font-size="19" fill="#68460d">+ motif obligatoire</text>
+
+  <path d="M355 168 C430 168 425 250 490 250" fill="none" stroke="#8a5a10" stroke-width="5" marker-end="url(#arrow)"/>
+  <path d="M355 392 C430 392 425 310 490 310" fill="none" stroke="#8a5a10" stroke-width="5" marker-end="url(#arrow)"/>
+
+  <rect x="505" y="155" width="280" height="250" rx="24" fill="#fff" stroke="#7a4b00" stroke-width="4"/>
+  <rect x="540" y="190" width="210" height="48" rx="9" fill="#f4e2bf"/>
+  <text x="645" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#2b2418">Carte d’admission</text>
+  <text x="545" y="275" font-family="Arial, sans-serif" font-size="19" fill="#6d5a3b">1 ou 2 titulaires</text>
+  <text x="545" y="310" font-family="Arial, sans-serif" font-size="19" fill="#6d5a3b">Crédit initial</text>
+  <text x="545" y="345" font-family="Arial, sans-serif" font-size="19" fill="#6d5a3b">Admissions pointées</text>
+  <circle cx="728" cy="304" r="14" fill="#45845f"/>
+  <circle cx="693" cy="304" r="14" fill="#45845f"/>
+  <circle cx="658" cy="304" r="14" fill="#45845f"/>
+  <circle cx="728" cy="344" r="14" fill="#d9d3c9"/>
+  <circle cx="693" cy="344" r="14" fill="#d9d3c9"/>
+  <circle cx="658" cy="344" r="14" fill="#d9d3c9"/>
+  <text x="645" y="385" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#8a5a10">Chaque pointage met le crédit à jour</text>
+
+  <path d="M785 280 H865" fill="none" stroke="#8a5a10" stroke-width="5" marker-end="url(#arrow)"/>
+
+  <rect x="885" y="155" width="260" height="250" rx="24" fill="#eef4fb" stroke="#4778a8" stroke-width="4"/>
+  <text x="1015" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#294c6f">Admissions restantes</text>
+  <g fill="#45845f">
+    <circle cx="945" cy="255" r="18"/><circle cx="995" cy="255" r="18"/><circle cx="1045" cy="255" r="18"/><circle cx="1095" cy="255" r="18"/>
+    <circle cx="945" cy="305" r="18"/><circle cx="995" cy="305" r="18"/><circle cx="1045" cy="305" r="18"/><circle cx="1095" cy="305" r="18"/>
+    <circle cx="945" cy="355" r="18"/>
+  </g>
+  <g fill="#c6d3df">
+    <circle cx="995" cy="355" r="18"/><circle cx="1045" cy="355" r="18"/><circle cx="1095" cy="355" r="18"/>
+  </g>
+  <text x="1015" y="445" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" fill="#294c6f">
+    Exemple : 9 restantes sur 12
+  </text>
+</svg>
