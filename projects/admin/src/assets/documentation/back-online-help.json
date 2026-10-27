@@ -216,6 +216,7 @@
           "howTo": [],
           "procedures": [
             {
+              "id": "creation-automatique",
               "title": "Création automatique",
               "steps": [
                 "Effectuer normalement la vente de la carte en présentiel ou l’achat dans la boutique en ligne.",
@@ -224,6 +225,7 @@
               ]
             },
             {
+              "id": "creation-manuelle",
               "title": "Création manuelle",
               "steps": [
                 "Avant toute création, vérifier qu’une carte n’a pas déjà été créée automatiquement par la vente.",
@@ -234,6 +236,7 @@
               ]
             },
             {
+              "id": "modification-carte",
               "title": "Modification d’une carte",
               "steps": [
                 "Cliquer sur l’icône œil « Voir la carte ».",
@@ -243,6 +246,7 @@
               ]
             },
             {
+              "id": "consultation-export",
               "title": "Consultation et export",
               "steps": [
                 "Conserver le filtre « Cartes non vides uniquement » pour afficher les cartes disposant encore d’admissions.",
@@ -285,6 +289,7 @@
           "howTo": [],
           "procedures": [
             {
+              "id": "controles-coherence",
               "title": "Contrôles de cohérence",
               "steps": [
                 "Consulter « Licences perçues à enregistrer à la FFB » pour repérer les membres ayant réglé une licence mais dont le statut n’est pas encore déclaré.",
@@ -295,6 +300,7 @@
               ]
             },
             {
+              "id": "historique-compte-resultats",
               "title": "Historique par compte de résultats",
               "steps": [
                 "Sélectionner un compte de résultats dans la liste.",
@@ -303,6 +309,7 @@
               ]
             },
             {
+              "id": "releve-adherent",
               "title": "Relevé d’un adhérent",
               "steps": [
                 "Sélectionner un adhérent dans la zone « Paiements adhérent ».",

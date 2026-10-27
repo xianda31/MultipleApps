@@ -1,0 +1,59 @@
+{
+  "outputPath": "dist/documentation/bcsto-gestion-adherents-pilote.pptx",
+  "presentationTitle": "BCSTO — Gestion des adhérents",
+  "presentationSubtitle": "Guide pilote issu de l’aide en ligne",
+  "sectionTitle": "Gestion des adhérents",
+  "topicIds": [
+    "adherents-cartes",
+    "adherents-controles"
+  ],
+  "slides": [
+    {
+      "topicId": "adherents-cartes",
+      "procedureIds": [
+        "creation-automatique"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-cartes",
+      "procedureIds": [
+        "creation-manuelle"
+      ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-cartes",
+      "procedureIds": [
+        "modification-carte"
+      ],
+      "illustrationIds": [
+        "parcours-carte-admissions"
+      ]
+    },
+    {
+      "topicId": "adherents-cartes",
+      "procedureIds": [
+        "consultation-export"
+      ],
+      "illustrationIds": [],
+      "includeCautions": true
+    },
+    {
+      "topicId": "adherents-controles",
+      "procedureIds": [
+        "controles-coherence"
+      ],
+      "illustrationIds": [],
+      "includeCautions": true
+    },
+    {
+      "topicId": "adherents-controles",
+      "procedureIds": [
+        "historique-compte-resultats",
+        "releve-adherent"
+      ],
+      "illustrationIds": []
+    }
+  ]
+}

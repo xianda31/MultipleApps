@@ -17,6 +17,7 @@ export type HelpIllustration = {
 };
 
 export type HelpProcedure = {
+  id: string;
   title: string;
   steps: string[];
 };
