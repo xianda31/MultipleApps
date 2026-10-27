@@ -94,12 +94,12 @@ describe('back online help content', () => {
     }
   });
 
-  it('defines Architecture as the first general manual chapter without an application route', () => {
+  it('publishes Architecture as the first general manual chapter without an application route', () => {
     const architecture = helpContentDocument.topics[0] as DocumentTopic;
 
     expect(architecture.id).toBe('architecture');
     expect(architecture.scope).toBe('general');
-    expect(architecture.contentStatus).toBe('planned');
+    expect(architecture.contentStatus).toBe('published');
     expect(architecture.manualChapterOrder).toBe(1);
     expect(architecture.routeKey).toBeUndefined();
     expect(architecture.nav.menuTitle).toBeUndefined();
@@ -109,6 +109,9 @@ describe('back online help content', () => {
       'architecture-acces-droits',
       'architecture-systeme',
     ]);
+    expect(architecture.children?.every((topic) => topic.contentStatus === 'published')).toBeTrue();
+    expect(architecture.children?.flatMap((topic) => topic.blocks).some((block) => block.type === 'table')).toBeTrue();
+    expect(architecture.children?.flatMap((topic) => topic.blocks).some((block) => block.type === 'illustration')).toBeTrue();
   });
 
   it('preserves the card administration topic identity and access metadata', () => {

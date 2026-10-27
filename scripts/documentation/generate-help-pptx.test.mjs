@@ -139,6 +139,7 @@ test('consumes ordered blocks and groups short blocks on the same slide', () => 
 
 test('reports exact cross-block duplicates without removing them', () => {
   const { document, config } = loadPresentationInputs();
+  const baselineModel = buildPresentationModel(document, config);
   const duplicatedDocument = clone(document);
   const tournament = duplicatedDocument.topics.find((topic) => topic.id === 'tournois');
   const list = tournament.blocks.find((block) => block.type === 'list');
@@ -146,9 +147,15 @@ test('reports exact cross-block duplicates without removing them', () => {
   procedure.steps[0] = list.items[0];
 
   const model = buildPresentationModel(duplicatedDocument, config);
-  assert.equal(model.coverage.ambiguities.length, 1);
-  assert.equal(model.coverage.ambiguities[0].id, 'tournois');
-  assert.match(model.coverage.ambiguities[0].reason, /conservé pour relecture/);
+  assert.equal(
+    model.coverage.ambiguities.length,
+    baselineModel.coverage.ambiguities.length + 1,
+  );
+  const injectedAmbiguity = model.coverage.ambiguities.find(
+    (ambiguity) => ambiguity.id === 'tournois' && ambiguity.content === list.items[0],
+  );
+  assert.ok(injectedAmbiguity);
+  assert.match(injectedAmbiguity.reason, /conservé pour relecture/);
 
   const displayedContent = model.pages
     .filter((page) => page.kind === 'content' && page.topic.id === 'tournois')
@@ -289,6 +296,8 @@ test('creates a traceable PowerPoint containing every supported block type', asy
   ]) {
     assert.ok(slideXml.includes(text), `Texte documentaire absent du PPTX: ${text}`);
   }
+  assert.ok(slideXml.includes('anchor="ctr"'));
+  assert.equal(slideXml.includes('anchor="mid"'), false);
 
   const notesXml = (await Promise.all(
     entries

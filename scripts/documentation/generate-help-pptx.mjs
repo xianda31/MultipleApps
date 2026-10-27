@@ -1489,7 +1489,7 @@ function addTableFragment(slide, block, x, y, w) {
   const rows = [
     block.columns.map((column) => ({
       text: column,
-      options: { bold: true, fill: 'EEF5F0' },
+      options: { bold: true, fill: { color: 'EEF5F0' } },
     })),
     ...block.rows.map((row) => row.map((cell) => ({ text: cell }))),
   ];
@@ -1501,11 +1501,11 @@ function addTableFragment(slide, block, x, y, w) {
     rowH: 0.42,
     border: { type: 'solid', color: THEME.colors.border, pt: 1 },
     color: THEME.colors.text,
-    fill: THEME.colors.background,
+    fill: { color: THEME.colors.background },
     fontFace: THEME.fontFamilies.body,
     fontSize: 14,
     margin: 0.06,
-    valign: 'mid',
+    valign: 'middle',
   });
 }
 

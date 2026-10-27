@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Structure actuelle des pages et articles du CMS</title>
+  <desc id="desc">Une page référence une liste ordonnée d'articles et choisit leur modèle d'affichage. Les articles portent les textes, les règles de visibilité et les médias.</desc>
+  <defs>
+    <style>
+      .heading { font: 700 28px Aptos, Arial, sans-serif; fill: #173447; }
+      .label { font: 700 20px Aptos, Arial, sans-serif; fill: #173447; }
+      .body { font: 18px Aptos, Arial, sans-serif; fill: #173447; }
+      .small { font: 16px Aptos, Arial, sans-serif; fill: #173447; }
+      .panel { fill: #f7faf8; stroke: #4f965c; stroke-width: 3; }
+      .header { fill: #4f965c; }
+      .headerText { font: 700 24px Aptos, Arial, sans-serif; fill: #fff; }
+      .arrow { fill: none; stroke: #2f7f8f; stroke-width: 5; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2f7f8f"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="44" text-anchor="middle" class="heading">Pages, articles et modèles d'affichage</text>
+
+  <rect x="40" y="90" width="310" height="300" rx="16" class="panel"/>
+  <path d="M56 90 H334 Q350 90 350 106 V142 H40 V106 Q40 90 56 90" class="header"/>
+  <text x="195" y="126" text-anchor="middle" class="headerText">Page</text>
+  <text x="68" y="180" class="body">• id</text>
+  <text x="68" y="216" class="body">• titre</text>
+  <text x="68" y="252" class="body">• modèle</text>
+  <text x="68" y="288" class="body">• snippet_ids[]</text>
+  <text x="68" y="338" class="small">La liste snippet_ids ordonne</text>
+  <text x="68" y="364" class="small">les articles de la page.</text>
+
+  <path d="M350 240 C405 240 420 240 470 240" class="arrow"/>
+  <text x="410" y="218" text-anchor="middle" class="small">référence</text>
+
+  <rect x="480" y="90" width="330" height="500" rx="16" class="panel"/>
+  <path d="M496 90 H794 Q810 90 810 106 V142 H480 V106 Q480 90 496 90" class="header"/>
+  <text x="645" y="126" text-anchor="middle" class="headerText">Article</text>
+  <text x="508" y="180" class="body">• id, ownerPageId</text>
+  <text x="508" y="216" class="body">• titre, sous-titre, contenu</text>
+  <text x="508" y="252" class="body">• date de publication</text>
+  <text x="508" y="288" class="body">• visible sans connexion</text>
+  <text x="508" y="324" class="body">• à la une</text>
+  <text x="508" y="360" class="body">• image</text>
+  <text x="508" y="396" class="body">• fichier, chemin du document</text>
+  <text x="508" y="432" class="body">• répertoire d'album</text>
+  <text x="508" y="486" class="small">Le modèle de la page détermine</text>
+  <text x="508" y="512" class="small">les champs nécessaires et la façon</text>
+  <text x="508" y="538" class="small">d'afficher chaque article.</text>
+
+  <rect x="860" y="90" width="300" height="500" rx="16" class="panel"/>
+  <path d="M876 90 H1144 Q1160 90 1160 106 V142 H860 V106 Q860 90 876 90" class="header"/>
+  <text x="1010" y="126" text-anchor="middle" class="headerText">Modèles</text>
+  <text x="888" y="180" class="body">• séquentiel</text>
+  <text x="888" y="216" class="body">• publication</text>
+  <text x="888" y="252" class="body">• à la une</text>
+  <text x="888" y="288" class="body">• trombinoscope</text>
+  <text x="888" y="324" class="body">• téléchargement</text>
+  <text x="888" y="360" class="body">• fiches img haut</text>
+  <text x="888" y="396" class="body">• fiches img haut-gauche</text>
+  <text x="888" y="432" class="body">• fiches img bas</text>
+  <text x="888" y="468" class="body">• albums</text>
+  <text x="888" y="504" class="body">• livret</text>
+
+  <path d="M860 300 C835 300 835 300 810 300" class="arrow"/>
+  <text x="835" y="280" text-anchor="middle" class="small">rend</text>
+
+  <rect x="40" y="620" width="1120" height="42" rx="10" fill="#eaf4ec"/>
+  <text x="600" y="647" text-anchor="middle" class="label">La page d'accueil agrège automatiquement les articles marqués « à la une ».</text>
+</svg>

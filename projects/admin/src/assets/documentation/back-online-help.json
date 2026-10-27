@@ -1,12 +1,12 @@
 {
-  "version": "2026-10-27.7",
+  "version": "2026-10-27.8",
   "topics": [
     {
       "id": "architecture",
       "title": "Architecture",
-      "summary": "Structure du chapitre général consacré aux espaces, aux accès et aux composants de BCSTO.",
+      "summary": "Comprendre les espaces, les accès et les principaux composants techniques de BCSTO.",
       "scope": "general",
-      "contentStatus": "planned",
+      "contentStatus": "published",
       "manualChapterOrder": 1,
       "nav": {
         "icon": "bi-diagram-3",
@@ -17,7 +17,8 @@
           "id": "introduction",
           "type": "text",
           "paragraphs": [
-            "Structure du chapitre général consacré aux espaces, aux accès et aux composants de BCSTO."
+            "BCSTO est une application web unique qui réunit un espace destiné au public et aux adhérents, un espace de gestion et des services reliés à la FFB et à Stripe.",
+            "Ce chapitre présente le vocabulaire utilisé dans le manuel, les conditions d’accès et le rôle des principaux composants."
           ]
         }
       ],
@@ -25,9 +26,9 @@
         {
           "id": "architecture-presentation-vocabulaire",
           "title": "Présentation générale et vocabulaire",
-          "summary": "Structure réservée aux notions générales et au vocabulaire du manuel de référence.",
+          "summary": "Les termes utilisés pour décrire l’application web BCSTO et ses accès.",
           "scope": "general",
-          "contentStatus": "planned",
+          "contentStatus": "published",
           "nav": {
             "icon": "bi-book",
             "groupLevel": "Membre"
@@ -37,7 +38,54 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Structure réservée aux notions générales et au vocabulaire du manuel de référence."
+                "BCSTO s’utilise depuis un navigateur. Les termes ci-dessous distinguent ce qui s’exécute sur l’appareil de l’utilisateur, les services côté serveur et les conditions d’accès aux fonctions."
+              ]
+            },
+            {
+              "id": "glossaire-architecture",
+              "type": "table",
+              "title": "Quelques mots pour se comprendre",
+              "columns": [
+                "Terme",
+                "Signification dans BCSTO"
+              ],
+              "rows": [
+                [
+                  "Application web (web-app)",
+                  "Logiciel accessible depuis un navigateur, sans installation obligatoire."
+                ],
+                [
+                  "URL / Adresse web",
+                  "Adresse d’accès à BCSTO : https://bridgeclubsaintorens.fr."
+                ],
+                [
+                  "Frontend",
+                  "Partie technique exécutée dans le navigateur de l’utilisateur."
+                ],
+                [
+                  "Backend",
+                  "Services côté serveur : traitements, règles de gestion et données."
+                ],
+                [
+                  "Espace Club",
+                  "Informations et services accessibles anonymement ou après connexion."
+                ],
+                [
+                  "Espace Gestion",
+                  "Fonctions de gestion réservées aux membres authentifiés et habilités."
+                ],
+                [
+                  "Authentification",
+                  "Vérification de l’identité d’un membre connecté à son compte."
+                ],
+                [
+                  "Habilitation",
+                  "Droits déterminant les fonctions accessibles selon cinq groupes BCSTO."
+                ],
+                [
+                  "PWA",
+                  "Application web installable sur l’écran d’accueil d’un appareil."
+                ]
               ]
             }
           ]
@@ -45,9 +93,9 @@
         {
           "id": "architecture-espaces",
           "title": "Espaces public, adhérents et administration",
-          "summary": "Structure réservée à la présentation des trois espaces de l’application.",
+          "summary": "Une adresse unique dessert l’Espace Club et l’Espace Gestion.",
           "scope": "general",
-          "contentStatus": "planned",
+          "contentStatus": "published",
           "nav": {
             "icon": "bi-layout-three-columns",
             "groupLevel": "Membre"
@@ -57,17 +105,42 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Structure réservée à la présentation des trois espaces de l’application."
+                "L’adresse https://bridgeclubsaintorens.fr donne accès à deux espaces complémentaires de la même application."
               ]
+            },
+            {
+              "id": "roles-des-espaces",
+              "type": "list",
+              "title": "Deux espaces complémentaires",
+              "items": [
+                "L’Espace Club, sous /front, regroupe le site public et les services proposés aux membres : informations, actualités, résultats, inscriptions, achats ou albums selon la navigation publiée.",
+                "L’Espace Gestion, sous /back, regroupe les fonctions administratives accessibles à un membre connecté disposant des droits appropriés.",
+                "Lors d’un retour à la racine de l’application, BCSTO mémorise et rouvre le dernier espace utilisé ; l’Espace Club est utilisé par défaut."
+              ]
+            },
+            {
+              "id": "illustration-deux-espaces",
+              "type": "illustration",
+              "illustrationId": "architecture-deux-espaces",
+              "caption": "L’Espace Club sépare les contenus publics des services membres ; l’Espace Gestion applique les habilitations."
+            }
+          ],
+          "illustrations": [
+            {
+              "id": "architecture-deux-espaces",
+              "path": "/assets/documentation/images/architecture-deux-espaces.png",
+              "alt": "Schéma montrant une adresse BCSTO unique donnant accès à l’Espace Club sur /front et à l’Espace Gestion sur /back.",
+              "caption": "Une même application dessert l’Espace Club et l’Espace Gestion.",
+              "source": "docs/documentation/sources/BCSTO_manuel_reference.pptx, diapositive « BCSTO : une adresse, deux espaces »"
             }
           ]
         },
         {
           "id": "architecture-acces-droits",
           "title": "Accès, authentification et droits",
-          "summary": "Structure réservée aux accès, à l’authentification et aux niveaux de droits.",
+          "summary": "L’authentification identifie le membre ; l’habilitation limite les fonctions accessibles.",
           "scope": "general",
-          "contentStatus": "planned",
+          "contentStatus": "published",
           "nav": {
             "icon": "bi-shield-lock",
             "groupLevel": "Membre"
@@ -77,7 +150,47 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Structure réservée aux accès, à l’authentification et aux niveaux de droits."
+                "L’accès à une information publique ne demande pas de connexion. Les services membres et l’Espace Gestion exigent une authentification ; chaque écran de gestion impose ensuite un niveau minimal d’habilitation."
+              ]
+            },
+            {
+              "id": "niveaux-habilitation",
+              "type": "table",
+              "title": "Groupes d’habilitation",
+              "columns": [
+                "Groupe",
+                "Portée générale"
+              ],
+              "rows": [
+                [
+                  "Membre",
+                  "Accès aux fonctions ouvertes à tout membre authentifié."
+                ],
+                [
+                  "Contributeur",
+                  "Opérations courantes, notamment tournois, ventes et répertoire."
+                ],
+                [
+                  "Éditeur",
+                  "Gestion des contenus du site et des fonctions de communication."
+                ],
+                [
+                  "Administrateur",
+                  "Opérations comptables et fonctions administratives sensibles."
+                ],
+                [
+                  "Système",
+                  "Configuration et outils techniques réservés."
+                ]
+              ]
+            },
+            {
+              "id": "principes-acces",
+              "type": "attention",
+              "title": "Principe de moindre droit",
+              "messages": [
+                "Le groupe affiché ne remplace pas les contrôles propres à chaque écran : une route peut imposer un niveau minimal supérieur.",
+                "Les fonctions Système sont réservées aux opérations techniques et ne doivent pas être utilisées pour contourner un parcours métier."
               ]
             }
           ]
@@ -85,9 +198,9 @@
         {
           "id": "architecture-systeme",
           "title": "Application, backend, FFB et Stripe",
-          "summary": "Structure réservée à l’architecture globale et aux systèmes externes.",
+          "summary": "Le frontend communique avec le backend BCSTO et ses passerelles vers la FFB et Stripe.",
           "scope": "general",
-          "contentStatus": "planned",
+          "contentStatus": "published",
           "nav": {
             "icon": "bi-diagram-2",
             "groupLevel": "Membre"
@@ -97,8 +210,34 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Structure réservée à l’architecture globale et aux systèmes externes."
+                "Le frontend s’exécute dans le navigateur de chaque utilisateur. Il utilise une connexion sécurisée pour communiquer avec le backend BCSTO.",
+                "Le backend centralise les traitements, les règles de gestion, les données et les fichiers. Il expose aussi des passerelles spécifiques vers les services externes."
               ]
+            },
+            {
+              "id": "composants-externes",
+              "type": "list",
+              "title": "Plateformes reliées",
+              "items": [
+                "La FFB fournit ou reçoit les données nécessaires aux membres, tournois et compétitions selon les fonctions utilisées.",
+                "Stripe est le prestataire de services de paiement pour les parcours de paiement par carte.",
+                "Chaque plateforme dispose de sa propre console d’administration ; une confirmation dans BCSTO ne remplace pas les contrôles disponibles dans la plateforme concernée."
+              ]
+            },
+            {
+              "id": "illustration-architecture-globale",
+              "type": "illustration",
+              "illustrationId": "architecture-globale",
+              "caption": "Les deux espaces partagent le même backend et les mêmes passerelles externes."
+            }
+          ],
+          "illustrations": [
+            {
+              "id": "architecture-globale",
+              "path": "/assets/documentation/images/architecture-globale.png",
+              "alt": "Schéma de l’architecture globale reliant le frontend BCSTO, le backend, la plateforme FFB et Stripe.",
+              "caption": "Le backend BCSTO centralise les traitements et les échanges avec les plateformes externes.",
+              "source": "docs/documentation/sources/BCSTO_manuel_reference.pptx, diapositive « Architecture globale »"
             }
           ]
         }
@@ -143,13 +282,24 @@
           ]
         },
         {
+          "id": "acheter-carte-rapidement",
+          "type": "procedure",
+          "title": "Acheter rapidement une carte depuis le pointage",
+          "steps": [
+            "Sur la fiche d’un joueur dont le crédit restant est inférieur ou égal à quatre admissions, cliquer sur l’icône chariot. Le joueur est prérempli comme titulaire.",
+            "Pour une carte individuelle, désactiver « partagée avec ». Pour une carte partagée, laisser l’option activée et sélectionner le cotitulaire.",
+            "Choisir le mode de règlement : espèces, chèque, virement ou avance. Pour un chèque, renseigner la banque et le numéro.",
+            "Contrôler le titulaire, le cotitulaire éventuel et le règlement, puis valider la vente."
+          ]
+        },
+        {
           "id": "points-vigilance",
           "type": "attention",
           "title": "Points de vigilance",
           "messages": [
-            "Le nombre de droits de table de la carte d’un joueur est affiché en bas à gauche.",
-            "L’icône chariot permet de lancer une vente rapide d’une nouvelle carte de droits d’entrée.",
-            "Les dettes et avoirs ne sont pas pris en compte par cette vente rapide ; pour en tenir compte, passer par le menu Boutique / vente adhérent."
+            "Le crédit restant de la carte d’un joueur est affiché sur sa fiche de pointage.",
+            "La vente rapide applique le prix de carte configuré et ne permet pas de constituer un panier.",
+            "Si le joueur possède déjà un avoir ou une dette, BCSTO redirige vers Boutique / vente adhérent afin que ces montants puissent être traités dans le panier."
           ]
         }
       ],
@@ -246,7 +396,7 @@
         {
           "id": "boutique-vente-adherent",
           "title": "vente adherent",
-          "summary": "Vente standard rattachee a un membre.",
+          "summary": "Préparer une vente nominative, gérer les bénéficiaires du panier et enregistrer son règlement.",
           "routeKey": "Shop",
           "nav": {
             "menuTitle": "Boutique",
@@ -259,7 +409,7 @@
               "id": "terminal-wisepad-3",
               "path": "/wisepad-3.jpg",
               "alt": "Terminal de paiement WisePad 3",
-              "caption": "Terminal de paiement utilis? pour les ventes par carte."
+              "caption": "Terminal de paiement utilisé pour les ventes par carte."
             }
           ],
           "blocks": [
@@ -267,32 +417,110 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Vente standard rattachee a un membre."
+                "La vente en présentiel est nominative : le vendeur sélectionne un adhérent, prépare un panier et enregistre le règlement. Les produits proposés dépendent du catalogue du club.",
+                "La vente alimente le suivi des achats et la comptabilité du club."
               ]
             },
             {
-              "id": "fonctionnalites",
-              "type": "list",
-              "title": "Fonctionnalités couvertes",
-              "items": [
-                "Selection de l acheteur et des payeurs.",
-                "Application des regles de panier."
-              ]
-            },
-            {
-              "id": "parcours-conseille",
+              "id": "realiser-vente-presentiel",
               "type": "procedure",
-              "title": "Parcours conseillé",
+              "title": "Réaliser une vente en présentiel",
               "steps": [
-                "Verifier le membre avant validation.",
-                "Confirmer le recapitulatif avant enregistrement."
+                "Vérifier la date de vente, puis rechercher et sélectionner l’acheteur. Contrôler sa situation d’adhésion et de licence affichée à l’écran.",
+                "Cliquer sur les produits à ajouter au panier. Pour chaque ligne, contrôler le bénéficiaire ; un produit couplé exige un deuxième membre.",
+                "Contrôler le prix, la dette et l’avoir éventuellement inclus, puis choisir le mode de règlement.",
+                "Vérifier l’acheteur, les bénéficiaires, les produits et le total avant de confirmer le panier.",
+                "Attendre le message de résultat et vérifier l’enregistrement avant de commencer une autre vente."
+              ]
+            },
+            {
+              "id": "composer-panier",
+              "type": "list",
+              "title": "Composer et ajuster le panier",
+              "items": [
+                "La corbeille retire une ligne du panier.",
+                "Le nom affiché sous un article permet de choisir un bénéficiaire différent de l’acheteur.",
+                "La modification du prix dépend des droits du vendeur.",
+                "La dette augmente le total et l’avoir le réduit ; leurs interrupteurs permettent de les inclure ou de les écarter.",
+                "Si un avoir couvre tout le montant, le panier reste à confirmer avec le mode Espèces pour un total nul."
+              ]
+            },
+            {
+              "id": "modes-reglement",
+              "type": "table",
+              "title": "Modes de règlement",
+              "columns": [
+                "Mode",
+                "Action du vendeur et traitement"
+              ],
+              "rows": [
+                [
+                  "Espèces",
+                  "Recevoir le règlement, puis confirmer le panier."
+                ],
+                [
+                  "Chèque",
+                  "Renseigner la banque et le numéro de chèque, puis confirmer."
+                ],
+                [
+                  "Virement",
+                  "Enregistrer le virement annoncé. La dette reste à solder lors du rapprochement."
+                ],
+                [
+                  "Avance",
+                  "Enregistrer l’achat à crédit. Une dette reste à régler par l’adhérent."
+                ],
+                [
+                  "Carte",
+                  "Lancer le paiement sur le TPE disponible, puis attendre sa confirmation."
+                ]
+              ]
+            },
+            {
+              "id": "payer-par-carte-au-club",
+              "type": "procedure",
+              "title": "Payer par carte au club",
+              "steps": [
+                "Préparer le panier sur le PC, vérifier que le lecteur est disponible, puis choisir « Carte ».",
+                "Cliquer sur « Confirmer le panier ». Sur la tablette Android, ouvrir ppTPE et confirmer le montant demandé.",
+                "Faire régler l’adhérent sur le lecteur, puis attendre le résultat du paiement et la confirmation de la vente."
               ]
             },
             {
               "id": "illustration-terminal-wisepad-3",
               "type": "illustration",
-              "illustrationId": "terminal-wisepad-3",
-              "caption": "Terminal de paiement utilis? pour les ventes par carte."
+              "illustrationId": "terminal-wisepad-3"
+            },
+            {
+              "id": "corriger-cheque-avec-avoir",
+              "type": "procedure",
+              "title": "Si le chèque ne correspond pas au panier",
+              "steps": [
+                "Comparer le montant du chèque au total à régler avant de confirmer.",
+                "Si le chèque porte sur le montant avant déduction de l’avoir, désactiver la prise en compte de cet avoir.",
+                "Contrôler le nouveau total, puis confirmer seulement lorsqu’il correspond au règlement reçu."
+              ]
+            },
+            {
+              "id": "corriger-mode-reglement",
+              "type": "procedure",
+              "title": "Si le mode de règlement est incorrect",
+              "steps": [
+                "Vérifier si la vente incorrecte a déjà été enregistrée avant de recommencer.",
+                "Signaler l’erreur au trésorier afin qu’il contrôle puis supprime l’écriture incorrecte si nécessaire.",
+                "Ressaisir ensuite la vente avec le bon mode de règlement."
+              ]
+            },
+            {
+              "id": "validation-points-attention",
+              "type": "attention",
+              "title": "Validation et incidents",
+              "messages": [
+                "Un virement annoncé ou une avance ne constitue pas un encaissement reçu.",
+                "Lire le message affiché si la validation est bloquée : données du chèque manquantes, achat d’adhésion ou de licence en double, TPE indisponible ou saison non initialisée.",
+                "Si la connexion au TPE se coupe, vérifier le résultat du paiement et l’enregistrement de la vente avant de relancer.",
+                "Une correction comptable relève d’un administrateur ou du trésorier ; ne pas doubler une vente pour contourner un blocage."
+              ]
             }
           ]
         },
@@ -725,7 +953,7 @@
     {
       "id": "comptabilite",
       "title": "Comptabilite",
-      "summary": "Saisie, rapprochement et analyse des écritures comptables.",
+      "summary": "Contrôler les encaissements, préparer les dépôts, rapprocher la banque et analyser les écritures.",
       "routeKey": "BooksOverview",
       "nav": {
         "menuTitle": "Comptabilite",
@@ -737,7 +965,7 @@
           "id": "introduction",
           "type": "text",
           "paragraphs": [
-            "Saisie, rapprochement et analyse des écritures comptables."
+            "BCSTO enregistre les ventes et leurs écritures. Le trésorier contrôle ensuite la caisse, les chèques, les dépôts et les mouvements bancaires."
           ]
         },
         {
@@ -745,9 +973,10 @@
           "type": "list",
           "title": "Fonctionnalités couvertes",
           "items": [
-            "État de caisse et rapprochement bancaire.",
-            "Édition des écritures comptables.",
-            "Analyse des résultats, du bilan et de la synthèse."
+            "État de caisse, préparation des dépôts et référencement des bordereaux.",
+            "Exploration des chèques et détection des écarts.",
+            "Rapprochement bancaire et traitement des virements annoncés.",
+            "Consultation, correction et analyse des écritures selon les droits accordés."
           ]
         },
         {
@@ -755,9 +984,19 @@
           "type": "procedure",
           "title": "Parcours conseillé",
           "steps": [
-            "Vérifier d’abord l’état de caisse.",
-            "Rapprocher les mouvements bancaires.",
-            "Clore l’analyse sur les vues résultats, bilan et synthèse."
+            "Vérifier la concordance entre les encaissements physiques et l’état de caisse.",
+            "Préparer et enregistrer les sorties d’espèces et de chèques destinées au dépôt.",
+            "Compléter les références de bordereau.",
+            "Rapprocher les remises et autres mouvements avec le relevé bancaire."
+          ]
+        },
+        {
+          "id": "operations-manuelles",
+          "type": "attention",
+          "title": "Opérations qui restent manuelles",
+          "messages": [
+            "Le tamponnage des chèques, le comptage physique de la caisse et la remise effective à la banque ne sont pas réalisés par BCSTO.",
+            "L’application enregistre et rapproche les mouvements déclarés ; elle ne garantit pas à elle seule que les espèces ou chèques ont été physiquement déposés."
           ]
         }
       ],
@@ -765,7 +1004,7 @@
         {
           "id": "compta-etat-caisse",
           "title": "etat de caisse",
-          "summary": "Controle des soldes et mouvements de caisse.",
+          "summary": "Comparer la caisse physique aux encaissements enregistrés et préparer les dépôts.",
           "routeKey": "CashBoxStatus",
           "nav": {
             "menuTitle": "Comptabilite",
@@ -778,25 +1017,37 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Controle des soldes et mouvements de caisse."
+                "L’état de caisse présente les montants théoriques enregistrés et permet de déclarer le montant constaté, de préparer les retraits destinés à la banque et de référencer les remises de chèques."
               ]
             },
             {
-              "id": "fonctionnalites",
-              "type": "list",
-              "title": "Fonctionnalités couvertes",
-              "items": [
-                "Lecture des soldes courants.",
-                "Detection des ecarts de caisse."
-              ]
-            },
-            {
-              "id": "parcours-conseille",
+              "id": "controler-caisse",
               "type": "procedure",
-              "title": "Parcours conseillé",
+              "title": "Contrôler la caisse",
               "steps": [
-                "Comparer caisse et flux de vente.",
-                "Traiter les ecarts avant cloture."
+                "Tamponner les chèques reçus, puis compter séparément les espèces et les chèques présents.",
+                "Comparer les montants constatés aux encaissements théoriques affichés.",
+                "En cas d’écart de caisse, rechercher son origine avant d’utiliser l’action d’alignement."
+              ]
+            },
+            {
+              "id": "preparer-depots",
+              "type": "procedure",
+              "title": "Préparer les dépôts en banque",
+              "steps": [
+                "Saisir le montant d’espèces à retirer de la caisse pour le dépôt.",
+                "Sélectionner les chèques à inclure, puis créer le dépôt de chèques.",
+                "Après la remise, compléter la référence réelle du bordereau dans la zone « Bordereaux à référencer ».",
+                "Ouvrir la consolidation bancaire lorsque les dépôts apparaissent comme restant à rapprocher."
+              ]
+            },
+            {
+              "id": "limites-controle-caisse",
+              "type": "attention",
+              "title": "Avant de valider",
+              "messages": [
+                "Un alignement de caisse enregistre une correction : il ne remplace pas la recherche de la vente ou de l’écriture à l’origine de l’écart.",
+                "Ne valider un retrait ou un bordereau qu’à partir des montants et références réellement préparés."
               ]
             }
           ]
@@ -804,7 +1055,7 @@
         {
           "id": "compta-cheques",
           "title": "cheques",
-          "summary": "Controle des cheques recus et de leur regroupement en bordereaux de depot.",
+          "summary": "Explorer les remises de chèques, leurs références et les écarts associés.",
           "routeKey": "Cheques",
           "nav": {
             "menuTitle": "Comptabilite",
@@ -817,25 +1068,29 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Controle des cheques recus et de leur regroupement en bordereaux de depot."
+                "L’écran Chèques regroupe les remises, les chèques tracés et les éventuels écarts entre le détail des chèques et l’écriture de dépôt."
               ]
             },
             {
-              "id": "fonctionnalites",
-              "type": "list",
-              "title": "Fonctionnalités couvertes",
-              "items": [
-                "Consultation des cheques rattaches a chaque bordereau.",
-                "Detection des ecarts entre cheques et depot bancaire."
-              ]
-            },
-            {
-              "id": "parcours-conseille",
+              "id": "consulter-remises-cheques",
               "type": "procedure",
-              "title": "Parcours conseillé",
+              "title": "Consulter et contrôler une remise",
               "steps": [
-                "Selectionner le bordereau a controler.",
-                "Comparer le total des cheques avec le montant du depot."
+                "Rechercher par bordereau, chèque, banque ou adhérent, ou filtrer par état.",
+                "Déplier une remise pour consulter la date, la banque, le numéro, l’adhérent et le montant de chaque chèque.",
+                "Comparer le total détaillé au montant de l’écriture de remise.",
+                "Utiliser l’icône œil pour ouvrir l’écriture concernée lorsqu’un contrôle complémentaire est nécessaire."
+              ]
+            },
+            {
+              "id": "etats-remises",
+              "type": "list",
+              "title": "États disponibles",
+              "items": [
+                "En caisse.",
+                "Référence à compléter.",
+                "Déposés.",
+                "Écarts à contrôler."
               ]
             }
           ]
@@ -843,7 +1098,7 @@
         {
           "id": "compta-rapprochement",
           "title": "rapprochement bancaire",
-          "summary": "Association des mouvements caisse et banque.",
+          "summary": "Associer les dépôts, encaissements et virements annoncés aux mouvements du relevé bancaire.",
           "routeKey": "BankReconciliation",
           "nav": {
             "menuTitle": "Comptabilite",
@@ -856,25 +1111,28 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Association des mouvements caisse et banque."
+                "La consolidation bancaire rapproche les écritures encore non pointées avec les mouvements du relevé bancaire sélectionné."
               ]
             },
             {
-              "id": "fonctionnalites",
-              "type": "list",
-              "title": "Fonctionnalités couvertes",
-              "items": [
-                "Visualisation des transactions a rapprocher.",
-                "Validation des associations."
-              ]
-            },
-            {
-              "id": "parcours-conseille",
+              "id": "rapprocher-releve",
               "type": "procedure",
-              "title": "Parcours conseillé",
+              "title": "Rapprocher un relevé bancaire",
               "steps": [
-                "Selectionner la periode.",
-                "Rapprocher puis valider le resultat global."
+                "Sélectionner le relevé bancaire à traiter.",
+                "Examiner les opérations non pointées et leurs références.",
+                "Rattacher les dépôts d’espèces, remises de chèques et autres mouvements à la ligne bancaire correspondante.",
+                "Traiter les virements annoncés lorsque leur encaissement apparaît sur le relevé.",
+                "Contrôler le résultat global avant de considérer le rapprochement terminé."
+              ]
+            },
+            {
+              "id": "limites-rapprochement",
+              "type": "attention",
+              "title": "Contrôle du trésorier",
+              "messages": [
+                "Le rapprochement confirme une correspondance comptable ; il ne corrige pas automatiquement une référence erronée ou une vente mal enregistrée.",
+                "En l’absence de correspondance certaine, laisser l’opération non pointée et vérifier les pièces justificatives."
               ]
             }
           ]
@@ -882,7 +1140,7 @@
         {
           "id": "compta-ecriture",
           "title": "ecriture",
-          "summary": "Edition detaillee des ecritures comptables.",
+          "summary": "Consulter ou corriger une écriture comptable avec les droits administrateur.",
           "routeKey": "BooksEditor",
           "nav": {
             "menuTitle": "Comptabilite",
@@ -895,25 +1153,27 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Edition detaillee des ecritures comptables."
+                "L’éditeur d’écriture est réservé aux corrections comptables qui ne peuvent pas être résolues dans le parcours d’origine."
               ]
             },
             {
-              "id": "fonctionnalites",
-              "type": "list",
-              "title": "Fonctionnalités couvertes",
-              "items": [
-                "Modification des ecritures.",
-                "Verification de coherence comptable."
-              ]
-            },
-            {
-              "id": "parcours-conseille",
+              "id": "corriger-ecriture-erronee",
               "type": "procedure",
-              "title": "Parcours conseillé",
+              "title": "Traiter une vente ou une écriture erronée",
               "steps": [
-                "Rechercher l ecriture cible.",
-                "Corriger puis controler l impact global."
+                "Ouvrir l’écriture concernée et vérifier la date, le membre, les montants, le mode de paiement et les références.",
+                "Déterminer si l’écriture doit être corrigée ou supprimée. Une suppression est irréversible.",
+                "Après suppression d’une vente erronée, ressaisir la vente dans la Boutique avec les bonnes informations lorsque cela est nécessaire.",
+                "Contrôler de nouveau la caisse, la dette ou l’avoir du membre et le rapprochement bancaire concerné."
+              ]
+            },
+            {
+              "id": "precautions-correction-ecriture",
+              "type": "attention",
+              "title": "Correction sensible",
+              "messages": [
+                "Ne pas supprimer une écriture uniquement pour contourner un contrôle de doublon : vérifier d’abord qu’elle est réellement incorrecte.",
+                "Les écritures d’une saison dont les écritures sont verrouillées ne peuvent pas être modifiées."
               ]
             }
           ]
@@ -1364,7 +1624,7 @@
     {
       "id": "site-web",
       "title": "Site web",
-      "summary": "Gestion UI, menus et contenus dynamiques du front.",
+      "summary": "Gérer séparément la navigation publique et les pages composées d’articles.",
       "routeKey": "UiConf",
       "nav": {
         "menuTitle": "Site web",
@@ -1376,28 +1636,25 @@
           "id": "introduction",
           "type": "text",
           "paragraphs": [
-            "Gestion UI, menus et contenus dynamiques du front."
+            "Le site public utilise deux éditeurs distincts : l’un construit la barre de navigation et les actions des menus ; l’autre compose des pages à partir d’articles."
           ]
         },
         {
-          "id": "fonctionnalites",
+          "id": "relation-navigation-contenus",
           "type": "list",
-          "title": "Fonctionnalités couvertes",
+          "title": "Navigation, pages et articles",
           "items": [
-            "Parametrage UI global.",
-            "Edition de la navigation dynamique.",
-            "Gestion des pages et competitions."
+            "Une entrée de menu peut ouvrir une page CMS, une fonction interne, un document ou une adresse externe selon son type.",
+            "Une page regroupe une liste ordonnée d’articles et choisit leur modèle d’affichage.",
+            "Une page peut exister sans être reliée à la barre de navigation.",
+            "La page d’accueil est un écran spécifique qui agrège automatiquement les articles marqués « à la une »."
           ]
         },
         {
-          "id": "parcours-conseille",
-          "type": "procedure",
-          "title": "Parcours conseillé",
-          "steps": [
-            "Ajuster d abord les parametres UI.",
-            "Mettre a jour les menus.",
-            "Verifier le rendu front apres publication."
-          ]
+          "id": "illustration-relation-cms",
+          "type": "illustration",
+          "illustrationId": "cms-menus-pages-articles",
+          "caption": "Les liens du menu et le contenu éditorial sont indépendants, puis reliés lorsque la navigation ouvre une page."
         }
       ],
       "children": [
@@ -1443,7 +1700,7 @@
         {
           "id": "site-menus",
           "title": "barre de navigation",
-          "summary": "Edition de la barre de navigation et des routes dynamiques.",
+          "summary": "Préparer la navigation en sandbox, la prévisualiser puis la promouvoir en production.",
           "routeKey": "MenusEditor",
           "nav": {
             "menuTitle": "Site web",
@@ -1456,25 +1713,38 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Edition de la barre de navigation et des routes dynamiques."
+                "L’éditeur des menus gère les barres de navigation, leurs sous-menus, leur ordre, leur visibilité et l’action exécutée. Les modifications sont préparées dans une sandbox distincte de la production."
               ]
             },
             {
-              "id": "fonctionnalites",
-              "type": "list",
-              "title": "Fonctionnalités couvertes",
-              "items": [
-                "Creation et edition des entrees de menu.",
-                "Regles de visibilite et ordre d affichage."
-              ]
-            },
-            {
-              "id": "parcours-conseille",
+              "id": "modifier-navigation",
               "type": "procedure",
-              "title": "Parcours conseillé",
+              "title": "Modifier puis publier la navigation",
               "steps": [
-                "Mettre a jour une entree.",
-                "Valider le rang et le comportement de navigation."
+                "Si la sandbox est vide, copier la navigation de production vers la sandbox.",
+                "Activer la visualisation Sandbox, puis ajouter, modifier, déplacer ou supprimer les entrées nécessaires.",
+                "Contrôler les simulations de la barre de navigation et du pied de page, en mode utilisateur connecté puis non connecté.",
+                "Lorsque la navigation est validée, promouvoir la sandbox vers la production."
+              ]
+            },
+            {
+              "id": "parametres-entree-menu",
+              "type": "list",
+              "title": "Paramètres d’une entrée",
+              "items": [
+                "Position dans la barre, le pied de page ou la marque.",
+                "Libellé, chemin, rang et éventuel parent pour former les sous-menus.",
+                "Règle de visibilité selon la connexion et niveau de groupe minimal.",
+                "Type d’action : page CMS, fonction interne, appel direct ou redirection externe."
+              ]
+            },
+            {
+              "id": "precautions-menus",
+              "type": "attention",
+              "title": "Fonction sensible",
+              "messages": [
+                "La promotion remplace la navigation de production par la sandbox validée.",
+                "Prévisualiser les parcours connecté et non connecté avant publication ; une page CMS peut rester volontairement hors navigation."
               ]
             }
           ]
@@ -1482,7 +1752,7 @@
         {
           "id": "site-pages-datas",
           "title": "pages et articles",
-          "summary": "Edition des pages et articles CMS.",
+          "summary": "Composer des pages à partir d’articles, choisir leur modèle et contrôler leur rendu.",
           "routeKey": "CMSWrapper",
           "nav": {
             "menuTitle": "Site web",
@@ -1495,26 +1765,166 @@
               "id": "introduction",
               "type": "text",
               "paragraphs": [
-                "Edition des pages et articles CMS."
+                "Une page est un conteneur éditorial : son titre aide à l’identifier, son modèle détermine l’affichage et sa liste d’identifiants ordonne les articles.",
+                "Les onglets Contenu, Aperçu et Paramètres permettent respectivement de composer la page, contrôler son rendu et modifier ses informations."
               ]
             },
             {
-              "id": "fonctionnalites",
-              "type": "list",
-              "title": "Fonctionnalités couvertes",
-              "items": [
-                "Mise a jour de pages et snippets.",
-                "Publication de contenus CMS."
+              "id": "structure-page",
+              "type": "table",
+              "title": "Champs d’une page",
+              "columns": [
+                "Champ de page",
+                "Usage"
+              ],
+              "rows": [
+                [
+                  "id",
+                  "Identifiant stable de la page."
+                ],
+                [
+                  "title",
+                  "Titre utilisé pour identifier la page dans l’éditeur."
+                ],
+                [
+                  "template",
+                  "Modèle qui détermine le rendu et les champs d’article attendus."
+                ],
+                [
+                  "snippet_ids",
+                  "Liste ordonnée des identifiants d’articles."
+                ]
               ]
             },
             {
-              "id": "parcours-conseille",
+              "id": "structure-article",
+              "type": "table",
+              "title": "Champs principaux d’un article",
+              "columns": [
+                "Champ d’article",
+                "Fonction"
+              ],
+              "rows": [
+                [
+                  "title, subtitle, content",
+                  "Partie textuelle de l’article, selon le modèle."
+                ],
+                [
+                  "publishedAt",
+                  "Date de publication ; une date future n’est pas acceptée par l’éditeur."
+                ],
+                [
+                  "public",
+                  "Autorise la visibilité sans connexion."
+                ],
+                [
+                  "featured",
+                  "Ajoute l’article aux contenus « à la une » de la page d’accueil."
+                ],
+                [
+                  "image",
+                  "Image ou vignette utilisée par les modèles qui l’affichent."
+                ],
+                [
+                  "file, documentPath",
+                  "Fichier téléchargeable et chemin de document."
+                ],
+                [
+                  "folder",
+                  "Répertoire utilisé notamment par les albums."
+                ],
+                [
+                  "ownerPageId",
+                  "Page propriétaire de l’article."
+                ]
+              ]
+            },
+            {
+              "id": "modeles-pages",
+              "type": "table",
+              "title": "Modèles d’affichage disponibles",
+              "columns": [
+                "Modèle",
+                "Description"
+              ],
+              "rows": [
+                [
+                  "séquentiel",
+                  "Articles affichés séquentiellement."
+                ],
+                [
+                  "publication",
+                  "Publication avec navigation entre les articles."
+                ],
+                [
+                  "à la une",
+                  "Cartes éditoriales de mise en avant."
+                ],
+                [
+                  "trombinoscope",
+                  "Fiches de personnes avec portrait."
+                ],
+                [
+                  "téléchargement",
+                  "Liste de documents téléchargeables."
+                ],
+                [
+                  "fiches img haut",
+                  "Fiches avec image placée en haut."
+                ],
+                [
+                  "fiches img haut-gauche",
+                  "Cartes avec image en haut à gauche."
+                ],
+                [
+                  "fiches img bas",
+                  "Fiches avec image placée en bas."
+                ],
+                [
+                  "albums",
+                  "Albums et galeries de photos."
+                ],
+                [
+                  "livret",
+                  "Présentation sous forme de livret."
+                ]
+              ]
+            },
+            {
+              "id": "modifier-page-articles",
               "type": "procedure",
-              "title": "Parcours conseillé",
+              "title": "Modifier une page et ses articles",
               "steps": [
-                "Modifier le contenu cible.",
-                "Verifier publication et navigation associee."
+                "Sélectionner une page existante ou créer une nouvelle page.",
+                "Dans Paramètres, contrôler son titre et son modèle ; l’indicateur précise si elle est liée à la navigation.",
+                "Dans Contenu, créer un article ou faire glisser un article existant depuis le presse-papiers.",
+                "Renseigner les champs proposés par le modèle, notamment les textes, la visibilité, la mise à la une et les médias.",
+                "Réordonner les articles par glisser-déposer, puis utiliser Aperçu pour contrôler le rendu de la page entière."
               ]
+            },
+            {
+              "id": "illustration-structure-cms",
+              "type": "illustration",
+              "illustrationId": "cms-structure-pages-articles"
+            },
+            {
+              "id": "precautions-pages-articles",
+              "type": "attention",
+              "title": "Points de vigilance",
+              "messages": [
+                "Supprimer une page conserve ses articles dans le presse-papiers ; vérifier leur destination avant toute suppression définitive.",
+                "« Visible sans connexion » contrôle l’accès public ; « à la une » contrôle l’apparition sur la page d’accueil.",
+                "Le modèle détermine les champs nécessaires. Contrôler l’aperçu après un changement de modèle ou de média."
+              ]
+            }
+          ],
+          "illustrations": [
+            {
+              "id": "cms-structure-pages-articles",
+              "path": "/assets/documentation/images/cms-structure-pages-articles.png",
+              "alt": "Schéma des champs actuels d’une page, d’un article et des modèles d’affichage disponibles.",
+              "caption": "Une page ordonne ses articles ; son modèle détermine leurs champs utiles et leur rendu.",
+              "source": "Adapté de docs/documentation/sources/BCSTO_manuel_reference.pptx, diapositive « Éditeur de pages et articles — la structure de données », puis actualisé selon le code."
             }
           ]
         },
@@ -1636,6 +2046,15 @@
               ]
             }
           ]
+        }
+      ],
+      "illustrations": [
+        {
+          "id": "cms-menus-pages-articles",
+          "path": "/assets/documentation/images/cms-menus-pages-articles.png",
+          "alt": "Schéma montrant que la barre de navigation peut ouvrir des pages, qu’une page contient des articles et que certaines pages ne sont pas liées au menu.",
+          "caption": "La navigation et les contenus sont gérés par deux éditeurs distincts.",
+          "source": "docs/documentation/sources/BCSTO_manuel_reference.pptx, diapositive « Éditeur(s) site public — Menus, pages et articles »"
         }
       ]
     },
