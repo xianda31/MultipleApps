@@ -131,7 +131,7 @@ function calculateStepRows(steps, width, height, fontSize, context) {
       + `${height.toFixed(2)}" disponibles). Répartir le contenu.`,
     );
   }
-  return { rowHeights: minimumRows, gap };
+  return { rowHeights: minimumRows, gap, contentHeight: requiredHeight };
 }
 
 function determineSlideLayout(procedures, illustrations, cautions, slideNumber) {
@@ -350,6 +350,7 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
       procedures: selectedProcedures,
       illustrations: selectedIllustrations,
       cautions,
+      illustrationSlideTitle: slideConfig.illustrationSlideTitle,
       layout: determineSlideLayout(
         selectedProcedures,
         selectedIllustrations,
@@ -357,6 +358,11 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
         index + 1,
       ),
     };
+    if (content.illustrationSlideTitle && selectedIllustrations.length === 0) {
+      throw new Error(
+        `Diapositive ${index + 1}: illustrationSlideTitle nécessite une illustration`,
+      );
+    }
     return content;
   });
   const slides = configuredSlides.flatMap((content) => {
@@ -374,7 +380,7 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
       },
       {
         ...content,
-        title: `${procedure.title} — schéma explicatif`,
+        title: content.illustrationSlideTitle ?? `${procedure.title} — schéma explicatif`,
         procedures: [],
         cautions: [],
         layout: 'illustration-only',
@@ -508,11 +514,23 @@ function addProcedureCard(
   slideNumber,
   showTitle,
 ) {
+  const stepArea = procedureStepArea(showTitle ? 'two-procedures' : 'single-procedure');
+  const { contentHeight } = calculateStepRows(
+    procedure.steps,
+    w - 0.6,
+    h - stepArea.heightOffset,
+    fontSize,
+    `Diapositive ${slideNumber}, procédure ${procedure.id}`,
+  );
+  const cardHeight = Math.min(
+    h,
+    Math.max(showTitle ? 1.8 : 1.25, stepArea.topOffset + contentHeight + 0.3),
+  );
   slide.addShape('roundRect', {
     x,
     y,
     w,
-    h,
+    h: cardHeight,
     rectRadius: 0.08,
     line: { color: THEME.colors.border, width: 1 },
     fill: { color: THEME.colors.background },
@@ -521,7 +539,7 @@ function addProcedureCard(
     x,
     y: y + 0.14,
     w: 0.07,
-    h: h - 0.28,
+    h: cardHeight - 0.28,
     line: { color: THEME.colors.green, transparency: 100 },
     fill: { color: THEME.colors.green },
   });
@@ -537,14 +555,13 @@ function addProcedureCard(
       color: THEME.colors.greenDark,
     });
   }
-  const stepArea = procedureStepArea(showTitle ? 'two-procedures' : 'single-procedure');
   addStepList(
     slide,
     procedure.steps,
     x + 0.3,
     y + stepArea.topOffset,
     w - 0.6,
-    h - stepArea.heightOffset,
+    cardHeight - stepArea.heightOffset,
     fontSize,
     `Diapositive ${slideNumber}, procédure ${procedure.id}`,
   );
@@ -590,11 +607,23 @@ function addIllustration(slide, illustration, x, y, w, h) {
 }
 
 function addCautions(slide, cautions, x, y, w, h, showTitle = true) {
+  const heightOffset = showTitle ? 1 : 0.55;
+  const { contentHeight } = calculateStepRows(
+    cautions,
+    w - 0.56,
+    h - heightOffset,
+    THEME.fontSizes.cautionBody,
+    'Précautions',
+  );
+  const cardHeight = Math.min(
+    h,
+    Math.max(showTitle ? 1.8 : 1.25, (showTitle ? 0.78 : 0.3) + contentHeight + 0.3),
+  );
   slide.addShape('roundRect', {
     x,
     y,
     w,
-    h,
+    h: cardHeight,
     line: { color: 'E5C56C', width: 1 },
     fill: { color: THEME.colors.background },
   });
@@ -602,7 +631,7 @@ function addCautions(slide, cautions, x, y, w, h, showTitle = true) {
     x,
     y: y + 0.14,
     w: 0.07,
-    h: h - 0.28,
+    h: cardHeight - 0.28,
     line: { color: 'D9A514', transparency: 100 },
     fill: { color: 'D9A514' },
   });
@@ -623,7 +652,7 @@ function addCautions(slide, cautions, x, y, w, h, showTitle = true) {
     x + 0.28,
     y + (showTitle ? 0.78 : 0.3),
     w - 0.56,
-    h - (showTitle ? 1 : 0.55),
+    cardHeight - heightOffset,
     THEME.fontSizes.cautionBody,
     'Précautions',
   );

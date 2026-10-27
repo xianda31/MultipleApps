@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-27.3",
+  "version": "2026-10-27.4",
   "topics": [
     {
       "id": "tournois",
@@ -295,7 +295,7 @@
                 "Consulter « Licences perçues à enregistrer à la FFB » pour repérer les membres ayant réglé une licence mais dont le statut n’est pas encore déclaré.",
                 "Consulter « licenciés Club/sympathisants n’ayant pas réglé leur adhésion » pour repérer les membres présents dans la base FFB sans écriture d’adhésion à jour.",
                 "Consulter « membres achetant sans adhésion à jour » pour repérer les membres ayant d’autres achats mais aucune adhésion à jour.",
-                "Consulter « Adhérents à éventuellement déclarer à la FFB » pour repérer les adhérents payés qui ne figurent pas dans la base FFB du club ; les licences affichées en gras contribuent au compteur d’alerte.",
+                "Consulter « Adhérents à éventuellement déclarer à la FFB » pour repérer les adhérents payés qui ne figurent pas dans la base FFB du club ; les noms affichés en gras contribuent au compteur d’alerte.",
                 "Une coche verte indique qu’aucun écart n’a été détecté pour le contrôle concerné."
               ]
             },

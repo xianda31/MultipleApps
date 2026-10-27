@@ -60,6 +60,7 @@ test('resolves every configured topic, procedure and illustration', () => {
   ));
   const illustratedSlide = model.slides.find((slide) => slide.layout === 'illustration-only');
   assert.equal(illustratedSlide.topic.id, 'adherents-cartes');
+  assert.equal(illustratedSlide.title, 'Création des cartes — schéma');
   assert.deepEqual(illustratedSlide.traceProcedureIds, ['creation-automatique']);
   assert.equal(illustratedSlide.illustrations[0].id, 'parcours-carte-admissions');
   const manualCreation = model.slides.find(
@@ -113,6 +114,13 @@ test('rejects combinations that could omit selected content', () => {
   assert.throws(
     () => buildPresentationModel(document, twoProceduresWithCautions),
     /deux procédures avec précautions ne sont pas prises en charge/,
+  );
+
+  const titleWithoutIllustration = clone(config);
+  titleWithoutIllustration.slides[0].illustrationIds = [];
+  assert.throws(
+    () => buildPresentationModel(document, titleWithoutIllustration),
+    /illustrationSlideTitle nécessite une illustration/,
   );
 });
 

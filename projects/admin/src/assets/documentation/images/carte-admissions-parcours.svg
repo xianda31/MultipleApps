@@ -15,7 +15,7 @@
   <rect x="55" y="95" width="300" height="145" rx="18" fill="#e9f5ee" stroke="#45845f" stroke-width="3"/>
   <circle cx="100" cy="140" r="23" fill="#45845f"/>
   <path d="M89 140 L97 148 L113 130" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="140" y="133" font-family="Arial, sans-serif" font-size="23" font-weight="700" fill="#244832">Création automatique</text>
+  <text x="132" y="133" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#244832">Création automatique</text>
   <text x="85" y="180" font-family="Arial, sans-serif" font-size="19" fill="#244832">Vente en présentiel</text>
   <text x="85" y="211" font-family="Arial, sans-serif" font-size="19" fill="#244832">ou achat en ligne</text>
 
