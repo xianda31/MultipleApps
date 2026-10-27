@@ -57,6 +57,14 @@ describe('back online help content', () => {
     expect(topic?.nav.adminOnly).toBeTrue();
   });
 
+  it('preserves the member controls topic identity and access metadata', () => {
+    const topic = topics.find((candidate) => candidate.id === 'adherents-controles');
+
+    expect(topic).toBeDefined();
+    expect(topic?.routeKey).toBe('MemberSales');
+    expect(topic?.nav.groupLevel).toBe('Contributeur');
+  });
+
   it('defines complete absolute illustration paths', () => {
     for (const topic of topics) {
       for (const illustration of topic.illustrations ?? []) {
@@ -76,6 +84,9 @@ describe('back online help content', () => {
         const response = await fetch(illustration.path);
         expect(response.ok)
           .withContext(`Missing illustration ${illustration.path} for ${topic.id}`)
+          .toBeTrue();
+        expect(response.headers.get('content-type')?.toLowerCase().startsWith('image/'))
+          .withContext(`Non-image content type for ${illustration.path}`)
           .toBeTrue();
       }
     }

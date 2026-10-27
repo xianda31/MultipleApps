@@ -82,6 +82,13 @@
                   <div class="small">{{ child.summary }}</div>
                 </button>
               </div>
+              <div class="back-help__selected-features mt-3"
+                *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id">
+                <h5 class="h6 mb-2">Fonctionnalités de « {{ selectedDetailTopic.title }} »</h5>
+                <ul class="mb-0">
+                  <li *ngFor="let item of selectedDetailTopic.functionalities">{{ item }}</li>
+                </ul>
+              </div>
             </ng-container>
             <ng-template #noSubMenuFeatures>
               <ul class="mb-0">
