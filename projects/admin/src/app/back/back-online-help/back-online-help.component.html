@@ -52,6 +52,13 @@
 
           <p class="text-muted mb-4">{{ selectedDetailTopic.summary }}</p>
 
+          <div class="back-help__illustrations mb-4" *ngIf="selectedDetailTopic.illustrations?.length">
+            <figure class="back-help__illustration mb-0" *ngFor="let illustration of selectedDetailTopic.illustrations">
+              <img [src]="illustration.path" [alt]="illustration.alt" loading="lazy">
+              <figcaption *ngIf="illustration.caption">{{ illustration.caption }}</figcaption>
+            </figure>
+          </div>
+
           <div class="back-help__section mb-4">
             <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
               <h4 class="h6 text-uppercase back-help__section-title mb-0">Niveau d’habilitation</h4>
