@@ -8,7 +8,9 @@ import {
   createPresentation,
   loadPresentationInputs,
   PROJECT_ROOT,
+  validateTheme,
 } from './generate-help-pptx.mjs';
+import { HELP_PPTX_THEME } from './help-pptx-theme.mjs';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -20,12 +22,27 @@ async function presentationZip(model) {
   return JSZip.loadAsync(buffer);
 }
 
+test('separates font families and sizes and enforces readable body sizes', () => {
+  assert.equal(typeof HELP_PPTX_THEME.fontFamilies.heading, 'string');
+  assert.equal(typeof HELP_PPTX_THEME.fontFamilies.body, 'string');
+  assert.equal(typeof HELP_PPTX_THEME.fontSizes.body, 'number');
+  assert.equal('fonts' in HELP_PPTX_THEME, false);
+  assert.doesNotThrow(() => validateTheme(HELP_PPTX_THEME));
+
+  const invalidTheme = clone(HELP_PPTX_THEME);
+  invalidTheme.fontSizes.compactBody = invalidTheme.minimumBodyFontSize - 1;
+  assert.throws(
+    () => validateTheme(invalidTheme),
+    /Taille de corps compactBody inférieure au minimum/,
+  );
+});
+
 test('resolves every configured topic, procedure and illustration', () => {
   const { document, config } = loadPresentationInputs();
   const model = buildPresentationModel(document, config);
 
   assert.equal(model.openingTopics.length, 2);
-  assert.equal(model.slides.length, 6);
+  assert.equal(model.slides.length, 7);
   assert.deepEqual(
     model.openingTopics.map((topic) => topic.id),
     ['adherents-cartes', 'adherents-controles'],
@@ -52,6 +69,46 @@ test('reports missing configured references and illustration files', () => {
   assert.throws(
     () => buildPresentationModel(missingIllustrationDocument, config),
     /fichier d’illustration introuvable/,
+  );
+});
+
+test('rejects combinations that could omit selected content', () => {
+  const { document, config } = loadPresentationInputs();
+
+  const twoProceduresWithIllustration = clone(config);
+  const illustratedSlide = twoProceduresWithIllustration.slides
+    .find((slide) => slide.illustrationIds.length > 0);
+  illustratedSlide.procedureIds.push('creation-automatique');
+  assert.throws(
+    () => buildPresentationModel(document, twoProceduresWithIllustration),
+    /deux procédures avec illustration ne sont pas prises en charge/,
+  );
+
+  const twoProceduresWithCautions = clone(config);
+  const cautionSlide = twoProceduresWithCautions.slides
+    .find((slide) => slide.topicId === 'adherents-controles'
+      && slide.includeCautions
+      && slide.procedureIds.length === 0);
+  cautionSlide.procedureIds.push('controles-coherence', 'historique-compte-resultats');
+  assert.throws(
+    () => buildPresentationModel(document, twoProceduresWithCautions),
+    /deux procédures avec précautions ne sont pas prises en charge/,
+  );
+});
+
+test('rejects a slide that would require excessive text shrinking', () => {
+  const { document, config } = loadPresentationInputs();
+  const overloadedDocument = clone(document);
+  const cards = overloadedDocument.topics
+    .flatMap((topic) => topic.children ?? [])
+    .find((topic) => topic.id === 'adherents-cartes');
+  const automaticCreation = cards.procedures
+    .find((procedure) => procedure.id === 'creation-automatique');
+  automaticCreation.steps = ['Contenu volontairement trop long. '.repeat(180)];
+
+  assert.throws(
+    () => buildPresentationModel(overloadedDocument, config),
+    /diapositive trop chargée.*Répartir le contenu/,
   );
 });
 
@@ -94,9 +151,33 @@ test('creates a traceable PowerPoint with notes and all functional steps', async
       .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
       .map((name) => zip.file(name).async('string')),
   )).join('\n');
-  for (const step of model.slides.flatMap((slide) =>
-    slide.procedures.flatMap((procedure) => procedure.steps))) {
-    assert.ok(slideXml.includes(step), `Texte absent du PPTX: ${step}`);
+  for (const topic of model.openingTopics) {
+    assert.ok(slideXml.includes(topic.title), `Titre de rubrique absent du PPTX: ${topic.title}`);
+    assert.ok(slideXml.includes(topic.summary), `Résumé absent du PPTX: ${topic.summary}`);
+  }
+  for (const content of model.slides) {
+    for (const procedure of content.procedures) {
+      assert.ok(slideXml.includes(procedure.title), `Procédure absente du PPTX: ${procedure.title}`);
+      for (const step of procedure.steps) {
+        assert.ok(slideXml.includes(step), `Texte absent du PPTX: ${step}`);
+      }
+    }
+    for (const caution of content.cautions) {
+      assert.ok(slideXml.includes(caution), `Précaution absente du PPTX: ${caution}`);
+    }
+    for (const illustration of content.illustrations) {
+      const extension = path.extname(illustration.filePath).toLowerCase().slice(1);
+      const sourceImage = fs.readFileSync(illustration.filePath);
+      const matchingMedia = await Promise.all(
+        entries
+          .filter((name) => name.startsWith('ppt/media/') && name.endsWith(`.${extension}`))
+          .map((name) => zip.file(name).async('nodebuffer')),
+      );
+      assert.ok(
+        matchingMedia.some((media) => sourceImage.equals(media)),
+        `Illustration absente du PPTX: ${illustration.id}`,
+      );
+    }
   }
 
   const notesXml = (await Promise.all(
@@ -109,6 +190,9 @@ test('creates a traceable PowerPoint with notes and all functional steps', async
     assert.ok(notesXml.includes(content.topic.id));
     for (const procedure of content.procedures) {
       assert.ok(notesXml.includes(procedure.id));
+    }
+    for (const illustration of content.illustrations) {
+      assert.ok(notesXml.includes(illustration.id));
     }
   }
 });

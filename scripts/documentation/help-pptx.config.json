@@ -44,6 +44,11 @@
       "procedureIds": [
         "controles-coherence"
       ],
+      "illustrationIds": []
+    },
+    {
+      "topicId": "adherents-controles",
+      "procedureIds": [],
       "illustrationIds": [],
       "includeCautions": true
     },

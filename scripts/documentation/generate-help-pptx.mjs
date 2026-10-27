@@ -17,6 +17,49 @@ export const CONTENT_PATH = path.join(
 );
 export const CONFIG_PATH = path.join(SCRIPT_DIR, 'help-pptx.config.json');
 
+const CONTENT_AREA = Object.freeze({
+  y: 1.42,
+  h: 5.2,
+  full: [{ x: 0.55, w: 12.25 }],
+  twoColumns: [{ x: 0.55, w: 6.05 }, { x: 6.75, w: 6.05 }],
+  withIllustration: [{ x: 0.55, w: 5.7 }],
+  withCautions: [{ x: 0.55, w: 8.1 }],
+  cautionBox: { x: 8.9, w: 3.9 },
+  illustrationBox: { x: 6.55, y: 1.55, w: 6.2, h: 4.95 },
+});
+
+export function validateTheme(theme = THEME) {
+  for (const family of ['heading', 'body']) {
+    if (typeof theme.fontFamilies?.[family] !== 'string' || !theme.fontFamilies[family].trim()) {
+      throw new Error(`Famille de police invalide: ${family}`);
+    }
+  }
+  for (const size of [
+    'coverTitle',
+    'sectionTitle',
+    'slideTitle',
+    'procedureTitle',
+    'body',
+    'compactBody',
+    'cautionBody',
+    'caption',
+    'small',
+  ]) {
+    if (typeof theme.fontSizes?.[size] !== 'number' || theme.fontSizes[size] <= 0) {
+      throw new Error(`Taille de police invalide: ${size}`);
+    }
+  }
+  for (const bodySize of ['body', 'compactBody', 'cautionBody']) {
+    if (theme.fontSizes[bodySize] < theme.minimumBodyFontSize) {
+      throw new Error(
+        `Taille de corps ${bodySize} inférieure au minimum ${theme.minimumBodyFontSize}`,
+      );
+    }
+  }
+}
+
+validateTheme();
+
 function readJson(filePath) {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -37,6 +80,145 @@ function requireUniqueIds(items, label, context) {
   }
   if (ids.some((id) => !id)) {
     throw new Error(`${label} manquant dans ${context}`);
+  }
+}
+
+function requireUniqueReferences(ids, label, context) {
+  const duplicate = ids.find((id, index) => ids.indexOf(id) !== index);
+  if (duplicate) {
+    throw new Error(`${label} sélectionné plusieurs fois "${duplicate}" dans ${context}`);
+  }
+}
+
+function estimateWrappedLineCount(text, width, fontSize) {
+  const charactersPerLine = Math.max(18, Math.floor((width * 72) / (fontSize * 0.52)));
+  return String(text)
+    .split(/\r?\n/)
+    .reduce((total, paragraph) => total + Math.max(1, Math.ceil(paragraph.length / charactersPerLine)), 0);
+}
+
+function validateTextBlock(text, width, height, fontSize, context) {
+  const lines = estimateWrappedLineCount(text, width, fontSize);
+  const requiredHeight = lines * ((fontSize * 1.3) / 72);
+  if (requiredHeight > height) {
+    throw new Error(
+      `${context}: texte trop chargé (${requiredHeight.toFixed(2)}" requis, `
+      + `${height.toFixed(2)}" disponibles). Répartir le contenu.`,
+    );
+  }
+}
+
+function calculateStepRows(steps, width, height, fontSize, context) {
+  if (steps.length === 0) {
+    throw new Error(`${context}: aucune étape à afficher`);
+  }
+  const lineHeight = (fontSize * 1.3) / 72;
+  const minimumRows = steps.map((step) => {
+    const lines = estimateWrappedLineCount(step, width - 0.36, fontSize);
+    return Math.max(0.5, lines * lineHeight + 0.12);
+  });
+  const requiredHeight = minimumRows.reduce((total, row) => total + row, 0);
+  if (requiredHeight > height) {
+    throw new Error(
+      `${context}: diapositive trop chargée (${requiredHeight.toFixed(2)}" requis, `
+      + `${height.toFixed(2)}" disponibles). Répartir le contenu.`,
+    );
+  }
+  const extraPerRow = (height - requiredHeight) / steps.length;
+  return minimumRows.map((row) => row + extraPerRow);
+}
+
+function determineSlideLayout(procedures, illustrations, cautions, slideNumber) {
+  const context = `Diapositive ${slideNumber}`;
+  if (procedures.length === 0) {
+    if (cautions.length > 0 && illustrations.length === 0) {
+      return 'cautions-only';
+    }
+    throw new Error(`${context}: au moins une procédure doit être sélectionnée`);
+  }
+  if (procedures.length > 2) {
+    throw new Error(`${context}: plus de deux procédures ne sont pas prises en charge`);
+  }
+  if (illustrations.length > 1) {
+    throw new Error(`${context}: plus d’une illustration n’est pas prise en charge`);
+  }
+  if (illustrations.length > 0 && cautions.length > 0) {
+    throw new Error(`${context}: illustration et précautions ne peuvent pas partager une diapositive`);
+  }
+  if (procedures.length === 2 && illustrations.length > 0) {
+    throw new Error(`${context}: deux procédures avec illustration ne sont pas prises en charge`);
+  }
+  if (procedures.length === 2 && cautions.length > 0) {
+    throw new Error(`${context}: deux procédures avec précautions ne sont pas prises en charge`);
+  }
+  if (illustrations.length === 1) return 'procedure-with-illustration';
+  if (cautions.length > 0) return 'procedure-with-cautions';
+  if (procedures.length === 2) return 'two-procedures';
+  return 'single-procedure';
+}
+
+function procedureFontSize(layout) {
+  return layout === 'two-procedures' || layout === 'procedure-with-illustration'
+    ? THEME.fontSizes.compactBody
+    : THEME.fontSizes.body;
+}
+
+function validateSlideDensity(content, slideNumber) {
+  const boxes = content.layout === 'cautions-only'
+    ? []
+    : content.layout === 'two-procedures'
+    ? CONTENT_AREA.twoColumns
+    : content.layout === 'procedure-with-illustration'
+      ? CONTENT_AREA.withIllustration
+      : content.layout === 'procedure-with-cautions'
+        ? CONTENT_AREA.withCautions
+        : CONTENT_AREA.full;
+  const fontSize = procedureFontSize(content.layout);
+  validateTextBlock(
+    content.procedures.map((procedure) => procedure.title).join(' / ') || 'Points de vigilance',
+    12.1,
+    0.52,
+    THEME.fontSizes.slideTitle,
+    `Diapositive ${slideNumber}, titre`,
+  );
+  content.procedures.forEach((procedure, index) => {
+    validateTextBlock(
+      procedure.title,
+      boxes[index].w - 0.56,
+      0.42,
+      THEME.fontSizes.procedureTitle,
+      `Diapositive ${slideNumber}, titre de procédure ${procedure.id}`,
+    );
+    calculateStepRows(
+      procedure.steps,
+      boxes[index].w - 0.6,
+      CONTENT_AREA.h - 0.96,
+      fontSize,
+      `Diapositive ${slideNumber}, procédure ${procedure.id}`,
+    );
+  });
+  if (content.cautions.length > 0) {
+    const cautionWidth = content.layout === 'cautions-only'
+      ? CONTENT_AREA.full[0].w - 0.56
+      : CONTENT_AREA.cautionBox.w - 0.56;
+    calculateStepRows(
+      content.cautions,
+      cautionWidth,
+      CONTENT_AREA.h - 1,
+      THEME.fontSizes.cautionBody,
+      `Diapositive ${slideNumber}, précautions`,
+    );
+  }
+  for (const illustration of content.illustrations) {
+    if (illustration.caption) {
+      validateTextBlock(
+        illustration.caption,
+        CONTENT_AREA.illustrationBox.w,
+        0.42,
+        THEME.fontSizes.caption,
+        `Diapositive ${slideNumber}, légende ${illustration.id}`,
+      );
+    }
   }
 }
 
@@ -73,8 +255,32 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
     if (!topic) throw new Error(`Rubrique introuvable dans la configuration: ${topicId}`);
     return topic;
   });
+  openingTopics.forEach((topic) => {
+    validateTextBlock(
+      topic.summary,
+      10.9,
+      0.62,
+      THEME.fontSizes.body,
+      `Ouverture, résumé ${topic.id}`,
+    );
+  });
 
   const slides = config.slides.map((slideConfig, index) => {
+    if (!Array.isArray(slideConfig.procedureIds) || !Array.isArray(slideConfig.illustrationIds)) {
+      throw new Error(
+        `Diapositive ${index + 1}: procedureIds et illustrationIds doivent être des tableaux`,
+      );
+    }
+    requireUniqueReferences(
+      slideConfig.procedureIds,
+      'Procédure',
+      `la diapositive ${index + 1}`,
+    );
+    requireUniqueReferences(
+      slideConfig.illustrationIds,
+      'Illustration',
+      `la diapositive ${index + 1}`,
+    );
     const topic = topicById.get(slideConfig.topicId);
     if (!topic) {
       throw new Error(`Diapositive ${index + 1}: rubrique introuvable ${slideConfig.topicId}`);
@@ -106,12 +312,24 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
       return { ...illustration, filePath };
     });
 
-    return {
+    const cautions = slideConfig.includeCautions ? (topic.caution ?? []) : [];
+    if (slideConfig.includeCautions && cautions.length === 0) {
+      throw new Error(`Diapositive ${index + 1}: aucune précaution disponible pour ${topic.id}`);
+    }
+    const content = {
       topic,
       procedures: selectedProcedures,
       illustrations: selectedIllustrations,
-      cautions: slideConfig.includeCautions ? (topic.caution ?? []) : [],
+      cautions,
+      layout: determineSlideLayout(
+        selectedProcedures,
+        selectedIllustrations,
+        cautions,
+        index + 1,
+      ),
     };
+    validateSlideDensity(content, index + 1);
+    return content;
   });
 
   return {
@@ -127,7 +345,7 @@ export function buildPresentationModel(document, config, projectRoot = PROJECT_R
 
 function addText(slide, text, options = {}) {
   slide.addText(text, {
-    fontFace: THEME.fonts.body,
+    fontFace: THEME.fontFamilies.body,
     color: THEME.colors.text,
     margin: 0,
     breakLine: false,
@@ -150,7 +368,7 @@ function addFooter(slide, pageNumber, version, logoPath) {
     y: 7.04,
     w: 3.2,
     h: 0.28,
-    fontSize: THEME.fonts.small,
+    fontSize: THEME.fontSizes.small,
     color: THEME.colors.muted,
   });
   addText(slide, String(pageNumber), {
@@ -159,7 +377,7 @@ function addFooter(slide, pageNumber, version, logoPath) {
     w: 0.7,
     h: 0.28,
     align: 'right',
-    fontSize: THEME.fonts.small,
+    fontSize: THEME.fontSizes.small,
     color: THEME.colors.muted,
   });
 }
@@ -178,8 +396,8 @@ function addHeader(slide, title, topicTitle) {
     y: 0.38,
     w: 12.1,
     h: 0.52,
-    fontFace: THEME.fonts.heading,
-    fontSize: THEME.fonts.slideTitle,
+    fontFace: THEME.fontFamilies.heading,
+    fontSize: THEME.fontSizes.slideTitle,
     bold: true,
     color: THEME.colors.title,
   });
@@ -193,10 +411,11 @@ function addHeader(slide, title, topicTitle) {
   });
 }
 
-function addStepList(slide, steps, x, y, w, h, fontSize) {
-  const rowHeight = h / Math.max(steps.length, 1);
+function addStepList(slide, steps, x, y, w, h, fontSize, context) {
+  const rowHeights = calculateStepRows(steps, w, h, fontSize, context);
+  let top = y;
   steps.forEach((step, index) => {
-    const top = y + index * rowHeight;
+    const rowHeight = rowHeights[index];
     slide.addShape('ellipse', {
       x,
       y: top + 0.12,
@@ -212,13 +431,13 @@ function addStepList(slide, steps, x, y, w, h, fontSize) {
       h: rowHeight - 0.03,
       fontSize,
       valign: 'top',
-      fit: 'shrink',
       breakLine: true,
     });
+    top += rowHeight;
   });
 }
 
-function addProcedureCard(slide, procedure, x, y, w, h) {
+function addProcedureCard(slide, procedure, x, y, w, h, fontSize, slideNumber) {
   slide.addShape('roundRect', {
     x,
     y,
@@ -233,13 +452,21 @@ function addProcedureCard(slide, procedure, x, y, w, h) {
     y: y + 0.2,
     w: w - 0.56,
     h: 0.42,
-    fontFace: THEME.fonts.heading,
-    fontSize: THEME.fonts.procedureTitle,
+    fontFace: THEME.fontFamilies.heading,
+    fontSize: THEME.fontSizes.procedureTitle,
     bold: true,
     color: THEME.colors.greenDark,
   });
-  const fontSize = w < 6.2 ? 16 : THEME.fonts.body;
-  addStepList(slide, procedure.steps, x + 0.3, y + 0.76, w - 0.6, h - 0.96, fontSize);
+  addStepList(
+    slide,
+    procedure.steps,
+    x + 0.3,
+    y + 0.76,
+    w - 0.6,
+    h - 0.96,
+    fontSize,
+    `Diapositive ${slideNumber}, procédure ${procedure.id}`,
+  );
 }
 
 function svgContainBox(filePath, x, y, w, h) {
@@ -275,9 +502,8 @@ function addIllustration(slide, illustration, x, y, w, h) {
       h: 0.34,
       align: 'center',
       italic: true,
-      fontSize: 10,
+      fontSize: THEME.fontSizes.caption,
       color: THEME.colors.muted,
-      fit: 'shrink',
     });
   }
 }
@@ -297,10 +523,19 @@ function addCautions(slide, cautions, x, y, w, h) {
     w: w - 0.5,
     h: 0.4,
     bold: true,
-    fontSize: 18,
+    fontSize: THEME.fontSizes.procedureTitle,
     color: '7A5700',
   });
-  addStepList(slide, cautions, x + 0.28, y + 0.78, w - 0.56, h - 1, 15.5);
+  addStepList(
+    slide,
+    cautions,
+    x + 0.28,
+    y + 0.78,
+    w - 0.56,
+    h - 1,
+    THEME.fontSizes.cautionBody,
+    'Précautions',
+  );
 }
 
 function addTraceNotes(slide, version, topicIds = [], procedureIds = [], illustrationIds = []) {
@@ -329,8 +564,8 @@ function addCover(pptx, model, logoPath) {
     y: 2,
     w: 10.8,
     h: 1.15,
-    fontFace: THEME.fonts.heading,
-    fontSize: THEME.fonts.coverTitle,
+    fontFace: THEME.fontFamilies.heading,
+    fontSize: THEME.fontSizes.coverTitle,
     bold: true,
     color: THEME.colors.title,
   });
@@ -361,8 +596,8 @@ function addOpening(pptx, model, pageNumber, logoPath) {
     y: 0.72,
     w: 11.8,
     h: 0.7,
-    fontFace: THEME.fonts.heading,
-    fontSize: THEME.fonts.sectionTitle,
+    fontFace: THEME.fontFamilies.heading,
+    fontSize: THEME.fontSizes.sectionTitle,
     bold: true,
     color: THEME.colors.title,
   });
@@ -381,7 +616,7 @@ function addOpening(pptx, model, pageNumber, logoPath) {
       y: y + 0.22,
       w: 3.4,
       h: 0.42,
-      fontFace: THEME.fonts.heading,
+      fontFace: THEME.fontFamilies.heading,
       fontSize: 21,
       bold: true,
       color: THEME.colors.greenDark,
@@ -391,8 +626,7 @@ function addOpening(pptx, model, pageNumber, logoPath) {
       y: y + 0.74,
       w: 10.9,
       h: 0.62,
-      fontSize: 17,
-      fit: 'shrink',
+      fontSize: THEME.fontSizes.body,
       breakLine: true,
     });
   });
@@ -403,20 +637,108 @@ function addOpening(pptx, model, pageNumber, logoPath) {
 function addContentSlide(pptx, model, content, pageNumber, logoPath) {
   const slide = pptx.addSlide();
   slide.background = { color: THEME.colors.background };
-  const title = content.procedures.map((procedure) => procedure.title).join(' / ');
+  const title = content.procedures.map((procedure) => procedure.title).join(' / ')
+    || 'Points de vigilance';
   addHeader(slide, title, content.topic.title);
+  const verifiedLayout = determineSlideLayout(
+    content.procedures,
+    content.illustrations,
+    content.cautions,
+    pageNumber,
+  );
+  if (verifiedLayout !== content.layout) {
+    throw new Error(`Diapositive ${pageNumber}: disposition incohérente ${content.layout}`);
+  }
+  const fontSize = procedureFontSize(content.layout);
 
-  if (content.illustrations.length > 0) {
-    addProcedureCard(slide, content.procedures[0], 0.55, 1.42, 5.7, 5.2);
-    addIllustration(slide, content.illustrations[0], 6.55, 1.55, 6.2, 4.95);
-  } else if (content.cautions.length > 0) {
-    addProcedureCard(slide, content.procedures[0], 0.55, 1.42, 8.1, 5.2);
-    addCautions(slide, content.cautions, 8.9, 1.42, 3.9, 5.2);
-  } else if (content.procedures.length === 2) {
-    addProcedureCard(slide, content.procedures[0], 0.55, 1.42, 6.05, 5.2);
-    addProcedureCard(slide, content.procedures[1], 6.75, 1.42, 6.05, 5.2);
-  } else {
-    addProcedureCard(slide, content.procedures[0], 0.55, 1.42, 12.25, 5.2);
+  switch (content.layout) {
+    case 'procedure-with-illustration': {
+      const box = CONTENT_AREA.withIllustration[0];
+      addProcedureCard(
+        slide,
+        content.procedures[0],
+        box.x,
+        CONTENT_AREA.y,
+        box.w,
+        CONTENT_AREA.h,
+        fontSize,
+        pageNumber,
+      );
+      addIllustration(
+        slide,
+        content.illustrations[0],
+        CONTENT_AREA.illustrationBox.x,
+        CONTENT_AREA.illustrationBox.y,
+        CONTENT_AREA.illustrationBox.w,
+        CONTENT_AREA.illustrationBox.h,
+      );
+      break;
+    }
+    case 'procedure-with-cautions': {
+      const box = CONTENT_AREA.withCautions[0];
+      addProcedureCard(
+        slide,
+        content.procedures[0],
+        box.x,
+        CONTENT_AREA.y,
+        box.w,
+        CONTENT_AREA.h,
+        fontSize,
+        pageNumber,
+      );
+      addCautions(
+        slide,
+        content.cautions,
+        CONTENT_AREA.cautionBox.x,
+        CONTENT_AREA.y,
+        CONTENT_AREA.cautionBox.w,
+        CONTENT_AREA.h,
+      );
+      break;
+    }
+    case 'two-procedures':
+      content.procedures.forEach((procedure, index) => {
+        const box = CONTENT_AREA.twoColumns[index];
+        addProcedureCard(
+          slide,
+          procedure,
+          box.x,
+          CONTENT_AREA.y,
+          box.w,
+          CONTENT_AREA.h,
+          fontSize,
+          pageNumber,
+        );
+      });
+      break;
+    case 'single-procedure': {
+      const box = CONTENT_AREA.full[0];
+      addProcedureCard(
+        slide,
+        content.procedures[0],
+        box.x,
+        CONTENT_AREA.y,
+        box.w,
+        CONTENT_AREA.h,
+        fontSize,
+        pageNumber,
+      );
+      break;
+    }
+    case 'cautions-only': {
+      const box = CONTENT_AREA.full[0];
+      addCautions(
+        slide,
+        content.cautions,
+        box.x,
+        CONTENT_AREA.y,
+        box.w,
+        CONTENT_AREA.h,
+      );
+      break;
+    }
+    default:
+      throw new Error(`Diapositive ${pageNumber}: disposition non prise en charge ${content.layout}`);
   }
 
   addFooter(slide, pageNumber, model.documentVersion, logoPath);
@@ -443,8 +765,8 @@ export function createPresentation(model) {
   pptx.title = model.presentationTitle;
   pptx.lang = 'fr-FR';
   pptx.theme = {
-    headFontFace: THEME.fonts.heading,
-    bodyFontFace: THEME.fonts.body,
+    headFontFace: THEME.fontFamilies.heading,
+    bodyFontFace: THEME.fontFamilies.body,
     lang: 'fr-FR',
   };
 

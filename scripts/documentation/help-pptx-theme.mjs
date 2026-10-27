@@ -13,15 +13,21 @@ export const HELP_PPTX_THEME = Object.freeze({
     amberLight: 'FFF5DD',
     border: 'D7E2DA',
   },
-  fonts: {
+  fontFamilies: {
     heading: 'Aptos Display',
     body: 'Aptos',
+  },
+  fontSizes: {
     coverTitle: 30,
     sectionTitle: 28,
     slideTitle: 24,
     procedureTitle: 19,
     body: 17,
+    compactBody: 16,
+    cautionBody: 15.5,
+    caption: 10,
     small: 10,
   },
+  minimumBodyFontSize: 15.5,
   logoPath: 'projects/admin/public/bcsto.jpg',
 });
