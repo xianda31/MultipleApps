@@ -77,6 +77,36 @@ function flattenTopics(topics) {
   return topics.flatMap((topic) => [topic, ...flattenTopics(topic.children ?? [])]);
 }
 
+function hasItems(value) {
+  return Array.isArray(value) && value.length > 0;
+}
+
+function normalizeContent(value) {
+  return String(value)
+    .normalize('NFKD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^\p{Letter}\p{Number}]+/gu, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function hasPublishableContent(topic) {
+  return Boolean(topic.summary?.trim())
+    || hasItems(topic.functionalities)
+    || hasItems(topic.howTo)
+    || hasItems(topic.procedures)
+    || hasItems(topic.caution)
+    || hasItems(topic.illustrations);
+}
+
+function hasDetailedContent(topic) {
+  return hasItems(topic.functionalities)
+    || hasItems(topic.howTo)
+    || hasItems(topic.procedures)
+    || hasItems(topic.caution)
+    || hasItems(topic.illustrations);
+}
+
 function requireUniqueIds(items, label, context) {
   const ids = items.map((item) => item.id);
   const duplicate = ids.find((id, index) => ids.indexOf(id) !== index);
@@ -135,6 +165,27 @@ function calculateStepRows(steps, width, height, fontSize, context) {
   return { rowHeights: minimumRows, gap, contentHeight: requiredHeight };
 }
 
+function paginateItems(items, width, height, fontSize, context) {
+  const pages = [];
+  let page = [];
+
+  for (const item of items) {
+    const candidate = [...page, item];
+    try {
+      calculateStepRows(candidate, width, height, fontSize, context);
+      page = candidate;
+    } catch (error) {
+      if (page.length === 0) throw error;
+      pages.push(page);
+      page = [item];
+      calculateStepRows(page, width, height, fontSize, context);
+    }
+  }
+
+  if (page.length > 0) pages.push(page);
+  return pages;
+}
+
 function determineSlideLayout(procedures, illustrations, cautions, slideNumber) {
   const context = `Diapositive ${slideNumber}`;
   if (procedures.length === 0) {
@@ -175,7 +226,7 @@ function procedureFontSize(layout) {
 
 function contentSlideTitle(content) {
   return content.title
-    ?? (content.procedures.map((procedure) => procedure.title).join(' / ')
+    ?? ((content.procedures ?? []).map((procedure) => procedure.title).join(' / ')
       || 'Points de vigilance');
 }
 
@@ -272,9 +323,328 @@ export function loadPresentationInputs({
   };
 }
 
+function createCoverage(document) {
+  return {
+    documentVersion: document.version,
+    included: [],
+    planned: [],
+    empty: [],
+    unsupported: [],
+    ambiguities: [],
+  };
+}
+
+function addExclusion(coverage, category, topic, reason) {
+  coverage[category].push({
+    id: topic.id,
+    title: topic.title,
+    reason,
+  });
+}
+
+function resolveTopicIllustrations(topic, projectRoot, coverage) {
+  return (topic.illustrations ?? []).flatMap((illustration) => {
+    try {
+      const filePath = resolveIllustrationPath(illustration.path, projectRoot);
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`fichier d’illustration introuvable ${filePath}`);
+      }
+      return [{ ...illustration, filePath }];
+    } catch (error) {
+      addExclusion(
+        coverage,
+        'unsupported',
+        topic,
+        `Illustration ${illustration.id}: ${error.message}`,
+      );
+      return [];
+    }
+  });
+}
+
+function createTopicPages(topic, chapter, projectRoot, coverage) {
+  const pages = [];
+  const chapterTopic = topic.id === chapter.id;
+  const procedureSteps = new Set(
+    (topic.procedures ?? [])
+      .flatMap((procedure) => procedure.steps ?? [])
+      .map(normalizeContent),
+  );
+  const summaryKey = normalizeContent(topic.summary ?? '');
+  const functionalityKeys = new Set();
+  const functionalities = (topic.functionalities ?? []).filter((item) => {
+    const key = normalizeContent(item);
+    if (key && key === summaryKey) {
+      coverage.ambiguities.push({
+        id: topic.id,
+        field: 'functionalities',
+        reason: 'Élément identique au résumé, affiché uniquement dans le résumé.',
+        content: item,
+      });
+      return false;
+    }
+    functionalityKeys.add(key);
+    return true;
+  });
+  const howTo = (topic.howTo ?? []).filter((item) => {
+    const key = normalizeContent(item);
+    if (!key) return false;
+    const duplicateField = key === summaryKey
+      ? 'summary'
+      : functionalityKeys.has(key)
+        ? 'functionalities'
+        : procedureSteps.has(key)
+          ? 'procedures'
+          : undefined;
+    if (!duplicateField) return true;
+    coverage.ambiguities.push({
+      id: topic.id,
+      field: 'howTo',
+      reason: `Étape identique à ${duplicateField}, affichée une seule fois.`,
+      content: item,
+    });
+    return false;
+  });
+
+  const overviewSummary = chapterTopic ? undefined : topic.summary;
+  const overviewHeight = overviewSummary ? 2.65 : 4.1;
+  const functionalityPages = functionalities.length > 0
+    ? paginateItems(
+      functionalities,
+      CONTENT_AREA.full[0].w - 0.6,
+      overviewHeight,
+      THEME.fontSizes.body,
+      `Rubrique ${topic.id}, fonctionnalités`,
+    )
+    : [];
+  if (overviewSummary || functionalityPages.length > 0) {
+    if (functionalityPages.length === 0) {
+      pages.push({
+        kind: 'content',
+        topic,
+        chapter,
+        layout: 'overview',
+        title: topic.title,
+        summary: overviewSummary,
+        items: [],
+        sourceFields: ['summary'],
+      });
+    } else {
+      functionalityPages.forEach((items, index) => {
+        pages.push({
+          kind: 'content',
+          topic,
+          chapter,
+          layout: 'overview',
+          title: index === 0 ? topic.title : `${topic.title} — fonctionnalités (suite)`,
+          summary: index === 0 ? overviewSummary : undefined,
+          items,
+          sourceFields: [
+            ...(index === 0 && overviewSummary ? ['summary'] : []),
+            'functionalities',
+          ],
+        });
+      });
+    }
+  }
+
+  const howToPages = howTo.length > 0
+    ? paginateItems(
+      howTo,
+      CONTENT_AREA.full[0].w - 0.6,
+      CONTENT_AREA.h - 0.55,
+      THEME.fontSizes.body,
+      `Rubrique ${topic.id}, parcours conseillé`,
+    )
+    : [];
+  howToPages.forEach((items, index) => {
+    pages.push({
+      kind: 'content',
+      topic,
+      chapter,
+      layout: 'list-only',
+      title: index === 0 ? 'Parcours conseillé' : 'Parcours conseillé — suite',
+      items,
+      sourceFields: ['howTo'],
+    });
+  });
+
+  for (const procedure of topic.procedures ?? []) {
+    requireUniqueReferences(
+      procedure.steps ?? [],
+      'Étape de procédure',
+      `${topic.id}/${procedure.id}`,
+    );
+    const stepPages = paginateItems(
+      procedure.steps ?? [],
+      CONTENT_AREA.full[0].w - 0.6,
+      CONTENT_AREA.h - 0.55,
+      THEME.fontSizes.body,
+      `Rubrique ${topic.id}, procédure ${procedure.id}`,
+    );
+    stepPages.forEach((steps, index) => {
+      pages.push({
+        kind: 'content',
+        topic,
+        chapter,
+        layout: 'single-procedure',
+        title: index === 0 ? procedure.title : `${procedure.title} — suite`,
+        procedures: [{ ...procedure, steps }],
+        illustrations: [],
+        cautions: [],
+        sourceFields: ['procedures'],
+      });
+    });
+  }
+
+  const cautionPages = hasItems(topic.caution)
+    ? paginateItems(
+      topic.caution,
+      CONTENT_AREA.full[0].w - 0.56,
+      CONTENT_AREA.h - 0.55,
+      THEME.fontSizes.cautionBody,
+      `Rubrique ${topic.id}, précautions`,
+    )
+    : [];
+  cautionPages.forEach((cautions, index) => {
+    pages.push({
+      kind: 'content',
+      topic,
+      chapter,
+      layout: 'cautions-only',
+      title: index === 0 ? 'Points de vigilance' : 'Points de vigilance — suite',
+      procedures: [],
+      illustrations: [],
+      cautions,
+      sourceFields: ['caution'],
+    });
+  });
+
+  resolveTopicIllustrations(topic, projectRoot, coverage).forEach((illustration, index) => {
+    pages.push({
+      kind: 'content',
+      topic,
+      chapter,
+      layout: 'illustration-only',
+      title: `${topic.title} — illustration${topic.illustrations.length > 1 ? ` ${index + 1}` : ''}`,
+      procedures: [],
+      illustrations: [illustration],
+      cautions: [],
+      sourceFields: ['illustrations'],
+    });
+  });
+
+  return pages;
+}
+
+function buildCompletePresentationModel(document, config, projectRoot) {
+  const coverage = createCoverage(document);
+  const pages = [];
+  const allTopics = flattenTopics(document.topics);
+  requireUniqueIds(allTopics, 'Identifiant de rubrique', 'la base documentaire');
+
+  const visitTopic = (topic, chapter) => {
+    if (topic.contentStatus === 'planned') {
+      addExclusion(
+        coverage,
+        'planned',
+        topic,
+        hasDetailedContent(topic)
+          ? 'Rubrique explicitement planifiée, exclue du manuel publié.'
+          : 'Rubrique explicitement planifiée et sans contenu publiable.',
+      );
+      for (const child of topic.children ?? []) visitTopic(child, chapter);
+      return;
+    }
+    if (!hasPublishableContent(topic)) {
+      addExclusion(coverage, 'empty', topic, 'Aucun contenu documentaire publiable.');
+      for (const child of topic.children ?? []) visitTopic(child, chapter);
+      return;
+    }
+
+    const topicPages = createTopicPages(topic, chapter, projectRoot, coverage);
+    if (topicPages.length === 0 && topic.id !== chapter.id) {
+      addExclusion(
+        coverage,
+        'unsupported',
+        topic,
+        'Aucun champ compatible n’a pu être restitué.',
+      );
+    } else {
+      coverage.included.push({
+        id: topic.id,
+        title: topic.title,
+        chapterId: chapter.id,
+      });
+      pages.push(...topicPages);
+    }
+    for (const child of topic.children ?? []) visitTopic(child, chapter);
+  };
+
+  for (const chapter of document.topics) {
+    if (chapter.contentStatus === 'planned') {
+      visitTopic(chapter, chapter);
+      continue;
+    }
+    if (!hasPublishableContent(chapter)) {
+      visitTopic(chapter, chapter);
+      continue;
+    }
+    const childTopics = (chapter.children ?? []).filter(
+      (topic) => topic.contentStatus !== 'planned' && hasPublishableContent(topic),
+    );
+    const childTitlePages = childTopics.length > 0
+      ? paginateItems(
+        childTopics.map((topic) => topic.title),
+        11.25,
+        2.65,
+        THEME.fontSizes.compactBody,
+        `Ouverture ${chapter.id}`,
+      )
+      : [[]];
+    let childIndex = 0;
+    childTitlePages.forEach((titles, index) => {
+      pages.push({
+        kind: 'chapter',
+        topic: chapter,
+        title: index === 0 ? chapter.title : `${chapter.title} — suite`,
+        summary: index === 0 ? chapter.summary : undefined,
+        childTopics: childTopics.slice(childIndex, childIndex + titles.length),
+      });
+      childIndex += titles.length;
+    });
+    visitTopic(chapter, chapter);
+  }
+
+  coverage.totals = {
+    topics: allTopics.length,
+    included: coverage.included.length,
+    planned: coverage.planned.length,
+    empty: coverage.empty.length,
+    unsupported: coverage.unsupported.length,
+    ambiguities: coverage.ambiguities.length,
+  };
+
+  return {
+    documentVersion: document.version,
+    presentationTitle: config.presentationTitle,
+    presentationSubtitle: config.presentationSubtitle,
+    outputPath: path.resolve(projectRoot, config.outputPath),
+    coverageReportPath: path.resolve(projectRoot, config.coverageReportPath),
+    pages,
+    coverage,
+  };
+}
+
 export function buildPresentationModel(document, config, projectRoot = PROJECT_ROOT) {
   if (!document.version || !Array.isArray(document.topics)) {
     throw new Error('La base documentaire doit contenir une version et des rubriques');
+  }
+  if (config.includePublishedTopics === true) {
+    if (!config.coverageReportPath) {
+      throw new Error('coverageReportPath est obligatoire pour le manuel complet');
+    }
+    return buildCompletePresentationModel(document, config, projectRoot);
   }
   const allTopics = flattenTopics(document.topics);
   requireUniqueIds(allTopics, 'Identifiant de rubrique', 'la base documentaire');
@@ -586,7 +956,8 @@ export function calculateImageContainBox(filePath, x, y, w, h) {
 }
 
 function addIllustration(slide, illustration, x, y, w, h) {
-  const availableHeight = h - 0.5;
+  const captionHeight = illustration.caption ? 0.9 : 0;
+  const availableHeight = h - captionHeight - 0.08;
   const box = calculateImageContainBox(
     illustration.filePath,
     x,
@@ -602,9 +973,9 @@ function addIllustration(slide, illustration, x, y, w, h) {
   if (illustration.caption) {
     addText(slide, illustration.caption, {
       x,
-      y: y + h - 0.42,
+      y: y + h - captionHeight,
       w,
-      h: 0.34,
+      h: captionHeight,
       align: 'center',
       italic: true,
       fontSize: THEME.fontSizes.caption,
@@ -665,12 +1036,156 @@ function addCautions(slide, cautions, x, y, w, h, showTitle = true) {
   );
 }
 
-function addTraceNotes(slide, version, topicIds = [], procedureIds = [], illustrationIds = []) {
+function addListCard(slide, title, items, x, y, w, h, fontSize, context) {
+  const titleOffset = title ? 0.78 : 0.3;
+  const { contentHeight } = calculateStepRows(
+    items,
+    w - 0.6,
+    h - titleOffset - 0.3,
+    fontSize,
+    context,
+  );
+  const cardHeight = Math.min(h, Math.max(1.25, titleOffset + contentHeight + 0.3));
+  slide.addShape('roundRect', {
+    x,
+    y,
+    w,
+    h: cardHeight,
+    line: { color: THEME.colors.border, width: 1 },
+    fill: { color: THEME.colors.background },
+  });
+  slide.addShape('rect', {
+    x,
+    y: y + 0.14,
+    w: 0.07,
+    h: cardHeight - 0.28,
+    line: { color: THEME.colors.green, transparency: 100 },
+    fill: { color: THEME.colors.green },
+  });
+  if (title) {
+    addText(slide, title, {
+      x: x + 0.28,
+      y: y + 0.2,
+      w: w - 0.56,
+      h: 0.4,
+      bold: true,
+      fontSize: THEME.fontSizes.procedureTitle,
+      color: THEME.colors.greenDark,
+    });
+  }
+  addStepList(
+    slide,
+    items,
+    x + 0.3,
+    y + titleOffset,
+    w - 0.6,
+    cardHeight - titleOffset - 0.15,
+    fontSize,
+    context,
+  );
+}
+
+function addOverview(slide, content, pageNumber) {
+  const box = CONTENT_AREA.full[0];
+  let top = CONTENT_AREA.y;
+  if (content.summary) {
+    validateTextBlock(
+      content.summary,
+      box.w - 0.6,
+      1.05,
+      THEME.fontSizes.body,
+      `Diapositive ${pageNumber}, résumé`,
+    );
+    slide.addShape('roundRect', {
+      x: box.x,
+      y: top,
+      w: box.w,
+      h: 1.25,
+      line: { color: THEME.colors.border, width: 1 },
+      fill: { color: THEME.colors.background },
+    });
+    addText(slide, content.summary, {
+      x: box.x + 0.3,
+      y: top + 0.18,
+      w: box.w - 0.6,
+      h: 0.9,
+      fontSize: THEME.fontSizes.body,
+      valign: 'top',
+      breakLine: true,
+    });
+    top += 1.45;
+  }
+  if (content.items.length > 0) {
+    addListCard(
+      slide,
+      'Fonctionnalités',
+      content.items,
+      box.x,
+      top,
+      box.w,
+      CONTENT_AREA.y + CONTENT_AREA.h - top,
+      THEME.fontSizes.body,
+      `Diapositive ${pageNumber}, fonctionnalités`,
+    );
+  }
+}
+
+function addChapterOpening(pptx, model, content, pageNumber, appIconPath) {
+  const slide = pptx.addSlide();
+  slide.background = { color: THEME.colors.background };
+  addText(slide, content.title, {
+    x: 0.65,
+    y: 0.72,
+    w: 11.8,
+    h: 0.7,
+    fontFace: THEME.fontFamilies.heading,
+    fontSize: THEME.fontSizes.sectionTitle,
+    bold: true,
+    color: THEME.colors.title,
+  });
+  if (content.summary) {
+    addText(slide, content.summary, {
+      x: 0.75,
+      y: 1.62,
+      w: 11.8,
+      h: 1.05,
+      fontSize: THEME.fontSizes.body,
+      valign: 'top',
+      breakLine: true,
+    });
+  }
+  if (content.childTopics.length > 0) {
+    const listY = content.summary ? 2.8 : 1.6;
+    addListCard(
+      slide,
+      'Rubriques du chapitre',
+      content.childTopics.map((topic) => topic.title),
+      0.75,
+      listY,
+      11.85,
+      6.55 - listY,
+      THEME.fontSizes.compactBody,
+      `Ouverture ${content.topic.id}`,
+    );
+  }
+  addFooter(slide, pageNumber, model.documentVersion, appIconPath);
+  addTraceNotes(slide, model.documentVersion, [content.topic.id], [], [], ['summary']);
+}
+
+function addTraceNotes(
+  slide,
+  version,
+  topicIds = [],
+  procedureIds = [],
+  illustrationIds = [],
+  sourceFields = [],
+) {
   slide.addNotes([
     `Version documentaire: ${version}`,
     `Rubriques: ${topicIds.join(', ') || 'aucune'}`,
     `Procédures: ${procedureIds.join(', ') || 'aucune'}`,
     `Illustrations: ${illustrationIds.join(', ') || 'aucune'}`,
+    `Champs: ${sourceFields.join(', ') || 'aucun'}`,
   ].join('\n'));
 }
 
@@ -793,10 +1308,49 @@ function addContentSlide(pptx, model, content, pageNumber, appIconPath) {
   slide.background = { color: THEME.colors.background };
   const title = contentSlideTitle(content);
   addHeader(slide, title, content.topic.title);
+
+  if (content.layout === 'overview') {
+    addOverview(slide, content, pageNumber);
+    addFooter(slide, pageNumber, model.documentVersion, appIconPath);
+    addTraceNotes(
+      slide,
+      model.documentVersion,
+      [content.topic.id],
+      [],
+      [],
+      content.sourceFields,
+    );
+    return;
+  }
+  if (content.layout === 'list-only') {
+    const box = CONTENT_AREA.full[0];
+    addListCard(
+      slide,
+      undefined,
+      content.items,
+      box.x,
+      CONTENT_AREA.y,
+      box.w,
+      CONTENT_AREA.h,
+      THEME.fontSizes.body,
+      `Diapositive ${pageNumber}, ${content.sourceFields.join(', ')}`,
+    );
+    addFooter(slide, pageNumber, model.documentVersion, appIconPath);
+    addTraceNotes(
+      slide,
+      model.documentVersion,
+      [content.topic.id],
+      [],
+      [],
+      content.sourceFields,
+    );
+    return;
+  }
+
   const verifiedLayout = determineSlideLayout(
-    content.procedures,
-    content.illustrations,
-    content.cautions,
+    content.procedures ?? [],
+    content.illustrations ?? [],
+    content.cautions ?? [],
     pageNumber,
   );
   if (verifiedLayout !== content.layout) {
@@ -918,9 +1472,10 @@ function addContentSlide(pptx, model, content, pageNumber, appIconPath) {
     model.documentVersion,
     [content.topic.id],
     content.traceProcedureIds
-      ?? content.procedures.map((procedure) => procedure.id),
+      ?? (content.procedures ?? []).map((procedure) => procedure.id),
     content.traceIllustrationIds
-      ?? content.illustrations.map((illustration) => illustration.id),
+      ?? (content.illustrations ?? []).map((illustration) => illustration.id),
+    content.sourceFields ?? [],
   );
 }
 
@@ -944,10 +1499,21 @@ export function createPresentation(model) {
   };
 
   addCover(pptx, model, appIconPath);
-  addOpening(pptx, model, 2, appIconPath);
-  model.slides.forEach((content, index) => {
-    addContentSlide(pptx, model, content, index + 3, appIconPath);
-  });
+  if (model.pages) {
+    model.pages.forEach((content, index) => {
+      const pageNumber = index + 2;
+      if (content.kind === 'chapter') {
+        addChapterOpening(pptx, model, content, pageNumber, appIconPath);
+      } else {
+        addContentSlide(pptx, model, content, pageNumber, appIconPath);
+      }
+    });
+  } else {
+    addOpening(pptx, model, 2, appIconPath);
+    model.slides.forEach((content, index) => {
+      addContentSlide(pptx, model, content, index + 3, appIconPath);
+    });
+  }
   return pptx;
 }
 
@@ -957,6 +1523,14 @@ export async function generatePresentation(options = {}) {
   const pptx = createPresentation(model);
   fs.mkdirSync(path.dirname(model.outputPath), { recursive: true });
   await pptx.writeFile({ fileName: model.outputPath, compression: true });
+  if (model.coverageReportPath) {
+    fs.mkdirSync(path.dirname(model.coverageReportPath), { recursive: true });
+    fs.writeFileSync(
+      model.coverageReportPath,
+      `${JSON.stringify(model.coverage, null, 2)}\n`,
+      'utf8',
+    );
+  }
   return { outputPath: model.outputPath, model };
 }
 
@@ -967,7 +1541,16 @@ if (invokedAsScript) {
     .then(({ outputPath, model }) => {
       console.log(`PPTX généré: ${outputPath}`);
       console.log(`Version documentaire: ${model.documentVersion}`);
-      console.log(`Diapositives: ${model.slides.length + 2}`);
+      console.log(`Diapositives: ${model.pages ? model.pages.length + 1 : model.slides.length + 2}`);
+      if (model.coverage) {
+        console.log(`Rapport de couverture: ${model.coverageReportPath}`);
+        console.log(
+          `Couverture: ${model.coverage.totals.included} incluses, `
+          + `${model.coverage.totals.planned} planifiées, `
+          + `${model.coverage.totals.empty} vides, `
+          + `${model.coverage.totals.unsupported} non prises en charge`,
+        );
+      }
     })
     .catch((error) => {
       console.error(`Échec de génération: ${error.message}`);

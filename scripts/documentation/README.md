@@ -1,6 +1,6 @@
 # Génération du PowerPoint documentaire
 
-Le pilote PowerPoint est généré localement à partir de
+Le manuel PowerPoint est généré localement à partir de
 `projects/admin/src/assets/documentation/back-online-help.json`.
 Il ne lance ni Angular ni le backend.
 
@@ -12,9 +12,10 @@ Depuis la racine du dépôt :
 npm run documentation:pptx
 ```
 
-Le fichier est créé dans :
+Les fichiers sont créés dans :
 
-`dist/documentation/bcsto-gestion-adherents-pilote.pptx`
+- `dist/documentation/bcsto-manuel-complet.pptx`
+- `dist/documentation/bcsto-manuel-complet.couverture.json`
 
 Pour exécuter les contrôles automatisés :
 
@@ -22,23 +23,22 @@ Pour exécuter les contrôles automatisés :
 npm run documentation:pptx:test
 ```
 
-## Ajouter une rubrique
+## Ajouter une rubrique publiée
 
-1. Ajouter au JSON documentaire un `id` stable pour chaque procédure utilisée.
-2. Ajouter l’identifiant de la rubrique dans `help-pptx.config.json`.
-3. Ajouter une entrée dans `slides` avec `topicId`, `procedureIds` et
-   `illustrationIds`.
+1. Ajouter la rubrique dans le JSON documentaire à la position voulue.
+2. Utiliser des identifiants stables pour la rubrique, ses procédures et ses
+   illustrations.
+3. Renseigner les champs documentaires utiles.
 4. Relancer `npm run documentation:pptx`.
 
-Les textes fonctionnels, précautions et légendes restent dans le JSON
-documentaire. La configuration ne contient que l’ordre et les références.
-Une référence ou une illustration absente interrompt explicitement la
-génération.
+Le générateur restitue `summary`, `functionalities`, `howTo`, `procedures`,
+`caution` et `illustrations` dans l’ordre des chapitres et rubriques du JSON.
+Une rubrique `planned` est exclue du manuel publié et apparaît dans le rapport
+de couverture avec le motif de son exclusion.
 
 La charte graphique est centralisée dans `help-pptx-theme.mjs`.
 
 Une rubrique générale indépendante du menu admin utilise `scope: "general"`
 et peut omettre `routeKey` et `nav.menuTitle`. `manualChapterOrder` réserve sa
-position dans le futur manuel. Tant qu’elle porte `contentStatus: "planned"` et
-qu’elle n’est pas référencée dans `help-pptx.config.json`, elle reste visible
-comme structure dans l’aide sans être générée dans le pilote PowerPoint.
+position dans le manuel. Tant qu’elle porte `contentStatus: "planned"`, elle
+reste visible comme structure dans l’aide sans être publiée dans le PowerPoint.

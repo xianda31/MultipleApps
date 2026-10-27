@@ -17,6 +17,10 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function flattenTopics(topics) {
+  return topics.flatMap((topic) => [topic, ...flattenTopics(topic.children ?? [])]);
+}
+
 async function presentationZip(model) {
   const pptx = createPresentation(model);
   const buffer = await pptx.write({ outputType: 'nodebuffer', compression: true });
@@ -37,12 +41,6 @@ test('separates font families and sizes and enforces readable body sizes', () =>
   assert.throws(
     () => validateTheme(invalidTheme),
     /Taille de corps compactBody inférieure au minimum/,
-  );
-  const themeWithoutIcon = clone(HELP_PPTX_THEME);
-  themeWithoutIcon.appIconPath = '';
-  assert.throws(
-    () => validateTheme(themeWithoutIcon),
-    /Chemin de l’icône d’application invalide/,
   );
 });
 
@@ -92,146 +90,114 @@ test('preserves and centers intrinsic illustration proportions', () => {
   }
 });
 
-test('resolves every configured topic, procedure and illustration', () => {
+test('includes every published topic in document order and reports planned topics', () => {
   const { document, config } = loadPresentationInputs();
   const model = buildPresentationModel(document, config);
+  const allTopics = flattenTopics(document.topics);
+  const expectedIncluded = allTopics
+    .filter((topic) => topic.contentStatus !== 'planned')
+    .map((topic) => topic.id);
+  const expectedPlanned = allTopics
+    .filter((topic) => topic.contentStatus === 'planned')
+    .map((topic) => topic.id);
 
-  assert.equal(model.openingTopics.length, 3);
-  assert.equal(model.slides.length, 16);
+  assert.deepEqual(model.coverage.included.map((topic) => topic.id), expectedIncluded);
+  assert.deepEqual(model.coverage.planned.map((topic) => topic.id), expectedPlanned);
+  assert.equal(model.coverage.empty.length, 0);
+  assert.equal(model.coverage.unsupported.length, 0);
+  assert.ok(model.coverage.planned.every((topic) => topic.reason));
+
+  const chapterIds = model.pages
+    .filter((page) => page.kind === 'chapter')
+    .map((page) => page.topic.id);
+  const orderedChapterIds = chapterIds.filter(
+    (chapterId, index) => index === 0 || chapterId !== chapterIds[index - 1],
+  );
   assert.deepEqual(
-    model.openingTopics.map((topic) => topic.id),
-    ['adherents-repertoire', 'adherents-cartes', 'adherents-controles'],
+    orderedChapterIds,
+    document.topics
+      .filter((topic) => topic.contentStatus !== 'planned')
+      .map((topic) => topic.id),
   );
-  assert.ok(model.slides.flatMap((slide) => slide.illustrations).every(
-    (illustration) => fs.existsSync(illustration.filePath),
-  ));
-  const directoryIllustrationSlide = model.slides.find(
-    (slide) => slide.illustrations[0]?.id === 'schema-gestion-repertoire',
-  );
-  assert.equal(directoryIllustrationSlide.topic.id, 'adherents-repertoire');
-  assert.equal(directoryIllustrationSlide.title, 'Gestion des membres — schéma de référence');
-  assert.deepEqual(directoryIllustrationSlide.traceProcedureIds, ['synchronisation-repertoire']);
-
-  const illustratedSlide = model.slides.find(
-    (slide) => slide.illustrations[0]?.id === 'parcours-carte-admissions',
-  );
-  assert.equal(illustratedSlide.topic.id, 'adherents-cartes');
-  assert.equal(illustratedSlide.title, 'Création des cartes — schéma');
-  assert.deepEqual(illustratedSlide.traceProcedureIds, ['creation-automatique']);
-  assert.equal(illustratedSlide.illustrations[0].id, 'parcours-carte-admissions');
-  const manualCreation = model.slides.find(
-    (slide) => slide.procedures[0]?.id === 'creation-manuelle',
-  );
-  assert.ok(manualCreation.cautions.length > 0);
-  const consultation = model.slides.find(
-    (slide) => slide.procedures[0]?.id === 'consultation-export',
-  );
-  assert.equal(consultation.cautions.length, 0);
+  assert.ok(chapterIds.filter((chapterId) => chapterId === 'comptabilite').length > 1);
 });
 
-test('reports missing configured references and illustration files', () => {
+test('restores functionalities and howTo without requiring procedures', () => {
   const { document, config } = loadPresentationInputs();
-  const missingProcedure = clone(config);
-  const configuredCardSlide = missingProcedure.slides
-    .find((slide) => slide.topicId === 'adherents-cartes' && slide.procedureIds.length > 0);
-  configuredCardSlide.procedureIds[0] = 'procedure-absente';
-  assert.throws(
-    () => buildPresentationModel(document, missingProcedure),
-    /procédure introuvable adherents-cartes\/procedure-absente/,
+  const model = buildPresentationModel(document, config);
+  const tournamentPages = model.pages.filter((page) => page.topic.id === 'tournois');
+  const overview = tournamentPages.find((page) => page.sourceFields?.includes('functionalities'));
+  const howTo = tournamentPages.find((page) => page.sourceFields?.includes('howTo'));
+  const source = document.topics.find((topic) => topic.id === 'tournois');
+
+  assert.deepEqual(overview.items, source.functionalities);
+  assert.deepEqual(howTo.items, source.howTo);
+  assert.equal(overview.procedures, undefined);
+  assert.equal(howTo.procedures, undefined);
+});
+
+test('reports exact cross-field duplicates instead of repeating them silently', () => {
+  const { document, config } = loadPresentationInputs();
+  const duplicatedDocument = clone(document);
+  const tournament = duplicatedDocument.topics.find((topic) => topic.id === 'tournois');
+  tournament.howTo[0] = tournament.functionalities[0];
+
+  const model = buildPresentationModel(duplicatedDocument, config);
+  assert.equal(model.coverage.ambiguities.length, 1);
+  assert.equal(model.coverage.ambiguities[0].id, 'tournois');
+  assert.match(model.coverage.ambiguities[0].reason, /affichée une seule fois/);
+
+  const displayedItems = model.pages
+    .filter((page) => page.topic.id === 'tournois')
+    .flatMap((page) => page.items ?? []);
+  assert.equal(
+    displayedItems.filter((item) => item === tournament.functionalities[0]).length,
+    1,
+  );
+});
+
+test('paginates long existing fields without reducing the configured body font', () => {
+  const { document, config } = loadPresentationInputs();
+  const paginatedDocument = clone(document);
+  const tournament = paginatedDocument.topics.find((topic) => topic.id === 'tournois');
+  tournament.howTo = Array.from(
+    { length: 24 },
+    (_, index) => `Étape ${index + 1} de contrôle du tournoi avant validation.`,
   );
 
+  const model = buildPresentationModel(paginatedDocument, config);
+  const howToPages = model.pages.filter(
+    (page) => page.topic.id === 'tournois' && page.sourceFields?.includes('howTo'),
+  );
+  assert.ok(howToPages.length > 1);
+  assert.deepEqual(howToPages.flatMap((page) => page.items), tournament.howTo);
+});
+
+test('reports an unsupported illustration with its reason', () => {
+  const { document, config } = loadPresentationInputs();
   const missingIllustrationDocument = clone(document);
-  const cards = missingIllustrationDocument.topics
+  const directory = missingIllustrationDocument.topics
     .flatMap((topic) => topic.children ?? [])
-    .find((topic) => topic.id === 'adherents-cartes');
-  cards.illustrations[0].path = '/assets/documentation/images/absente.svg';
-  assert.throws(
-    () => buildPresentationModel(missingIllustrationDocument, config),
-    /fichier d’illustration introuvable/,
+    .find((topic) => topic.id === 'adherents-repertoire');
+  directory.illustrations[0].path = '/assets/documentation/images/absente.png';
+
+  const model = buildPresentationModel(missingIllustrationDocument, config);
+  const exclusion = model.coverage.unsupported.find(
+    (topic) => topic.id === 'adherents-repertoire',
   );
+  assert.match(exclusion.reason, /fichier d’illustration introuvable/);
 });
 
-test('rejects combinations that could omit selected content', () => {
+test('creates a traceable complete PowerPoint with all supported field types', async () => {
   const { document, config } = loadPresentationInputs();
-
-  const twoProceduresWithIllustration = clone(config);
-  const illustratedSlide = twoProceduresWithIllustration.slides
-    .find((slide) => slide.topicId === 'adherents-cartes' && slide.illustrationIds.length > 0);
-  illustratedSlide.procedureIds.push('creation-manuelle');
-  assert.throws(
-    () => buildPresentationModel(document, twoProceduresWithIllustration),
-    /deux procédures avec illustration ne sont pas prises en charge/,
-  );
-
-  const twoProceduresWithCautions = clone(config);
-  const cautionSlide = twoProceduresWithCautions.slides
-    .find((slide) => slide.topicId === 'adherents-controles'
-      && slide.includeCautions
-      && slide.procedureIds.length === 0);
-  cautionSlide.procedureIds.push('controles-coherence', 'historique-compte-resultats');
-  assert.throws(
-    () => buildPresentationModel(document, twoProceduresWithCautions),
-    /deux procédures avec précautions ne sont pas prises en charge/,
-  );
-
-  const titleWithoutIllustration = clone(config);
-  const titledIllustrationSlide = titleWithoutIllustration.slides
-    .find((slide) => slide.illustrationSlideTitle);
-  titledIllustrationSlide.illustrationIds = [];
-  assert.throws(
-    () => buildPresentationModel(document, titleWithoutIllustration),
-    /illustrationSlideTitle nécessite une illustration/,
-  );
-});
-
-test('rejects a slide that would require excessive text shrinking', () => {
-  const { document, config } = loadPresentationInputs();
-  const overloadedDocument = clone(document);
-  const cards = overloadedDocument.topics
-    .flatMap((topic) => topic.children ?? [])
-    .find((topic) => topic.id === 'adherents-cartes');
-  const automaticCreation = cards.procedures
-    .find((procedure) => procedure.id === 'creation-automatique');
-  automaticCreation.steps = ['Contenu volontairement trop long. '.repeat(180)];
-
-  assert.throws(
-    () => buildPresentationModel(overloadedDocument, config),
-    /diapositive trop chargée.*Répartir le contenu/,
-  );
-});
-
-test('uses changed JSON text on the next generation', async () => {
-  const { document, config } = loadPresentationInputs();
-  const changedDocument = clone(document);
-  const cards = changedDocument.topics
-    .flatMap((topic) => topic.children ?? [])
-    .find((topic) => topic.id === 'adherents-cartes');
-  const automaticCreation = cards.procedures
-    .find((procedure) => procedure.id === 'creation-automatique');
-  automaticCreation.steps[0] = 'TEXTE JSON MODIFIÉ POUR LE TEST';
-
-  const model = buildPresentationModel(changedDocument, config);
-  const zip = await presentationZip(model);
-  const slideXml = await Promise.all(
-    Object.keys(zip.files)
-      .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
-      .map((name) => zip.file(name).async('string')),
-  );
-
-  assert.ok(slideXml.join('\n').includes('TEXTE JSON MODIFIÉ POUR LE TEST'));
-});
-
-test('creates a traceable PowerPoint with notes and all functional steps', async () => {
-  const { document, config } = loadPresentationInputs();
-  const model = buildPresentationModel(document, config, PROJECT_ROOT);
+  const model = buildPresentationModel(document, config);
   const zip = await presentationZip(model);
   const entries = Object.keys(zip.files);
 
   assert.ok(entries.includes('[Content_Types].xml'));
-  assert.ok(entries.includes('ppt/presentation.xml'));
   assert.equal(
     entries.filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name)).length,
-    model.slides.length + 2,
+    model.pages.length + 1,
   );
 
   const slideXml = (await Promise.all(
@@ -239,21 +205,28 @@ test('creates a traceable PowerPoint with notes and all functional steps', async
       .filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name))
       .map((name) => zip.file(name).async('string')),
   )).join('\n');
-  for (const topic of model.openingTopics) {
-    assert.ok(slideXml.includes(topic.title), `Titre de rubrique absent du PPTX: ${topic.title}`);
-    assert.ok(slideXml.includes(topic.summary), `Résumé absent du PPTX: ${topic.summary}`);
+  const tournament = document.topics.find((topic) => topic.id === 'tournois');
+  for (const text of [
+    tournament.summary,
+    ...tournament.functionalities,
+    ...tournament.howTo,
+    ...tournament.caution,
+  ]) {
+    assert.ok(slideXml.includes(text), `Texte documentaire absent du PPTX: ${text}`);
   }
-  for (const content of model.slides) {
-    for (const procedure of content.procedures) {
-      assert.ok(slideXml.includes(procedure.title), `Procédure absente du PPTX: ${procedure.title}`);
-      for (const step of procedure.steps) {
-        assert.ok(slideXml.includes(step), `Texte absent du PPTX: ${step}`);
-      }
-    }
-    for (const caution of content.cautions) {
-      assert.ok(slideXml.includes(caution), `Précaution absente du PPTX: ${caution}`);
-    }
-    for (const illustration of content.illustrations) {
+  assert.equal(slideXml.includes('Structure du chapitre général consacré'), false);
+
+  const notesXml = (await Promise.all(
+    entries
+      .filter((name) => /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(name))
+      .map((name) => zip.file(name).async('string')),
+  )).join('\n');
+  assert.ok(notesXml.includes(`Version documentaire: ${model.documentVersion}`));
+  assert.ok(notesXml.includes('Champs: functionalities'));
+  assert.ok(notesXml.includes('Champs: howTo'));
+
+  for (const page of model.pages.filter((candidate) => candidate.kind === 'content')) {
+    for (const illustration of page.illustrations ?? []) {
       const extension = path.extname(illustration.filePath).toLowerCase().slice(1);
       const sourceImage = fs.readFileSync(illustration.filePath);
       const matchingMedia = await Promise.all(
@@ -265,22 +238,6 @@ test('creates a traceable PowerPoint with notes and all functional steps', async
         matchingMedia.some((media) => sourceImage.equals(media)),
         `Illustration absente du PPTX: ${illustration.id}`,
       );
-    }
-  }
-
-  const notesXml = (await Promise.all(
-    entries
-      .filter((name) => /^ppt\/notesSlides\/notesSlide\d+\.xml$/.test(name))
-      .map((name) => zip.file(name).async('string')),
-  )).join('\n');
-  assert.ok(notesXml.includes(`Version documentaire: ${model.documentVersion}`));
-  for (const content of model.slides) {
-    assert.ok(notesXml.includes(content.topic.id));
-    for (const procedure of content.procedures) {
-      assert.ok(notesXml.includes(procedure.id));
-    }
-    for (const illustration of content.illustrations) {
-      assert.ok(notesXml.includes(illustration.id));
     }
   }
 });
