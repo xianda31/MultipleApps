@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+### Fixed
+- Books editor: member cheque purchases support granting an asset (`avoir_out`, displayed as "Somme mise en avoir"). Customer balance fields use explicit labels ("Avoir utilisé", "Dette remboursée", "Reste dû", "Somme mise en avoir") in a separate payment section. The existing balance check remains the only balance indicator. No additional correction-description field is needed. Existing cheque labels, operation product codes and calculated totals are preserved when editing.
+- To regularize a 60 EUR cheque recorded for one 30 EUR card: first verify that the second card is missing, then correct the existing cheque receipt to 60 EUR with `CAR: 30` and "Somme mise en avoir": 30 for the payer. Purchase the missing card through the shop using the 30 EUR asset (zero additional payment); do not create it manually. Use the tag to cross-reference the entries if needed. Finally verify two cards, 60 EUR of card revenue, no residual asset from the correction, and the cheque deposit total. Editing the receipt does not update an already recorded deposit.
+
 ## [1.0.0] - 2025-11-10
 ### Added
 - Menu Manager (menus-editor): parent & child drag-and-drop with rank persistence, auto slug & path generation, page title enrichment, sandbox toggle.

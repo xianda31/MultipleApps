@@ -133,6 +133,7 @@
                 </div>
               </div>
               <div *ngIf="!selected_transaction.pure_financial" class="col-12 col-sm-10">
+                <div class="small fw-semibold mb-1">{{selected_transaction.revenue_account_to_show ? 'Achats' : 'Dépenses'}}</div>
                 <ng-container [ngTemplateOutlet]="costs_and_revenues"
                   [ngTemplateOutletContext]="{inputFormGroup: operation, transaction: selected_transaction}"></ng-container>
               </div>
@@ -152,7 +153,8 @@
                 </div>
               </div>
               <div class="row mx-0 mt-2" *ngIf="optional_accounts && optional_accounts.length > 0">
-                <div class="col-12">
+                <div class="col-12 border-top pt-2">
+                  <div class="small fw-semibold mb-2">Règlement et solde adhérent</div>
                   <div [ngTemplateOutlet]="optional_accounts_form"
                     [ngTemplateOutletContext]="{inputFormGroup: operation}">
                   </div>
@@ -300,10 +302,10 @@
       <ng-container [formGroup]="inputFormGroup">
         <ng-container *ngIf="optional_accounts && optional_accounts.length > 0">
           <div formArrayName="optional_accounts" class="d-flex flex-wrap" style="gap: 0.25rem;">
-            <div style="min-width: 60px; flex: 1 1 calc(6.66% - 0.25rem); max-width: 120px;"
+            <div style="flex: 0 1 180px; min-width: 150px;"
               *ngFor="let account of inputFormGroup.get('optional_accounts').controls ; let i = index">
               <label class="form-label mb-0"
-                style="font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                style="font-size: 0.875rem;"
                 [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
                 placement="top">{{optional_accounts[i].label}}</label>
               <input type="text"

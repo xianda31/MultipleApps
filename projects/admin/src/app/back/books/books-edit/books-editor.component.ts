@@ -157,9 +157,8 @@ export class BooksEditorComponent {
 
   operations_valueChanges_subscribe() { // operation change handler pour le calcul du total
 
-    if (this.operations.get('values') === undefined) {
-      return; // pas d'opérations à gérer
-    }
+    this.operations_valueChanges_subscription?.unsubscribe();
+    if (!this.selected_transaction) return;
     this.operations_valueChanges_subscription = this.operations.valueChanges.subscribe((op_values) => {
       op_values.forEach((values: Operation_initial_values, index: number) => {
         let total: number = this.sum_operation_values(this.selected_transaction!, values);
@@ -303,6 +302,7 @@ export class BooksEditorComponent {
         }
       };
     });
+    this.operations_valueChanges_subscribe();
   }
 
   sum_operation_values(transaction: Transaction, values: Operation_initial_values): number {
@@ -370,7 +370,8 @@ export class BooksEditorComponent {
     let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
     let operationForm: FormGroup = this.fb.group({
       'label': [operation_initial?.label ?? ''],
-      'total': { value: (operation_initial?.values ? this.sum_operation_values(transaction, operation_initial) : ''), disabled: true },
+      'productCodes': [operation_initial?.productCodes],
+      'total': { value: '', disabled: true },
     });
 
 
@@ -394,6 +395,7 @@ export class BooksEditorComponent {
         { validators: [this.atLeastOneFieldValidator] }));
     }
 
+    operationForm.controls['total'].setValue(this.sum_operation_values(transaction, operationForm.getRawValue()));
     this.operations.push(operationForm);
 
   }
@@ -445,6 +447,10 @@ export class BooksEditorComponent {
   private buildOperationLabel(transactionId: TRANSACTION_ID, label: string | undefined, member: string | undefined): string {
     const trimmedMember = (member ?? '').trim();
 
+    if (!this.creation && transactionId === TRANSACTION_ID.achat_adhérent_par_chèque && label?.trim()) {
+      return label.trim();
+    }
+
     if (transactionId === TRANSACTION_ID.attribution_avoir) {
       return trimmedMember ? `avoir attribué à ${trimmedMember}` : 'avoir attribué';
     }
@@ -485,6 +491,7 @@ export class BooksEditorComponent {
     const expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
     return this.operations.controls.map((operation) => {
       let op_values: operation_values = {};
+      const productCodes: unknown = operation.get('productCodes')?.value;
 
       expense_or_revenue_accounts.forEach((account: Account, index: number) => {
         let value = this.parse_to_float((operation as FormGroup).controls['values'].value[index]);
@@ -510,6 +517,7 @@ export class BooksEditorComponent {
           (operation as FormGroup).controls['member']?.value
         ),
         member: (operation as FormGroup).controls['member']?.value,
+        ...(typeof productCodes === 'string' ? { productCodes } : {}),
         values: op_values
       };
     });

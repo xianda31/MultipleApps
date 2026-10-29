@@ -37,9 +37,9 @@ export const financial_credits: Account_def[] = [
 
 ]
 export const customer_options: Account_def[] = [
-  { key: CUSTOMER_ACCOUNT.ASSET_debit, label: '-AVOIR', description: 'déduction d\'un avoir' },
-  { key: CUSTOMER_ACCOUNT.DEBT_credit, label: '+DETTE', description: 'remboursement d\'une dette' },
-  { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'CREDIT', description: 'montant du"crédit"' },
+  { key: CUSTOMER_ACCOUNT.ASSET_debit, label: 'Avoir utilisé', description: 'avoir existant utilisé pour payer cet achat' },
+  { key: CUSTOMER_ACCOUNT.DEBT_credit, label: 'Dette remboursée', description: 'part du règlement qui rembourse une dette antérieure' },
+  { key: CUSTOMER_ACCOUNT.DEBT_debit, label: 'Reste dû', description: 'part de cet achat restant à payer par l\'adhérent' },
 ]
 export const customer_asset_credit: Account_def[] = [
   { key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'AVOIR', description: 'attribution bon d\'achat' },
@@ -109,7 +109,10 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     tooltip: 'chèque d\'un adhérent reçu en caisse',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
-    optional_accounts: customer_options,
+    optional_accounts: [
+      ...customer_options,
+      { key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Somme mise en avoir', description: 'part du règlement conservée pour un prochain achat ; ce n\'est pas une vente' },
+    ],
     financial_accounts_to_charge: _CHEQUES_FIRST_IN_CASHBOX ? [FINANCIAL_ACCOUNT.CASHBOX_debit] : [FINANCIAL_ACCOUNT.BANK_debit],
     nominative: true,
     pure_financial: false,
