@@ -3,10 +3,13 @@ import { FormBuilder } from '@angular/forms';
 import { BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
 import { TRANSACTION_DIRECTORY } from '../../../common/interfaces/transaction.definition';
 import { BooksEditorComponent } from './books-editor.component';
+import { TransactionService } from '../../services/transaction.service';
 
 describe('BooksEditorComponent accounting validation', () => {
   function createComponent() {
-    const transactionService = jasmine.createSpyObj('TransactionService', ['get_transaction', 'class_to_ids']);
+    const transactionService = jasmine.createSpyObj('TransactionService', ['get_transaction', 'class_to_ids', 'get_entry_label']);
+    transactionService.get_entry_label.and.callFake((entry: BookEntry) =>
+      new TransactionService(jasmine.createSpyObj('ToastService', ['showError'])).get_entry_label(entry));
     transactionService.get_transaction.and.callFake((id: TRANSACTION_ID) => TRANSACTION_DIRECTORY[id]);
     transactionService.class_to_ids.and.returnValue([TRANSACTION_ID.virement_stripe_vers_banque]);
     return new BooksEditorComponent(
@@ -108,6 +111,64 @@ describe('BooksEditorComponent accounting validation', () => {
     component.valueChanges_subscribe();
     return component;
   }
+
+  for (const protectedMode of [true, false]) {
+    it(`loads a received transfer without dropping bank_in (protected=${protectedMode})`, () => {
+      const component = createComponent();
+      component.protected_mode = protectedMode;
+      component.products_accounts = [{ key: 'CAR', description: 'Cartes' }];
+      component.expenses_accounts = [];
+      component.init_form();
+      const entry: BookEntry = {
+        id: 'received-transfer', season: '2026/2027', date: '2026-10-08',
+        transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+        amounts: { [FINANCIAL_ACCOUNT.BANK_debit]: 133 },
+        operations: [{
+          label: 'règlement du virement annoncé', member: 'TEST Jean',
+          values: { [CUSTOMER_ACCOUNT.DEBT_credit]: 133 },
+        }],
+      };
+      component.set_form(entry);
+      component.valueChanges_subscribe();
+      const bankIndex = component.financial_accounts.findIndex(account => account.key === FINANCIAL_ACCOUNT.BANK_debit);
+      expect(bankIndex).toBeGreaterThanOrEqual(0);
+      expect(component.amounts.at(bankIndex).value).toBe(133);
+      expect(component.amounts.at(bankIndex).enabled).toBeTrue();
+      expect(component.form_balance_error).toBe(0);
+      expect(component.form.valid).toBeTrue();
+      expect(component.transaction_label(entry.transaction_id)).toBe('VIREMENT');
+      component.lock_unlock_financial_accounts();
+      component.lock_unlock_financial_accounts();
+      expect(component.amounts.at(bankIndex).enabled).toBeTrue();
+      const save = spyOn(component, 'save_book_entry');
+      component.onSubmit();
+      expect(save).toHaveBeenCalledOnceWith(entry.amounts, entry.operations);
+      component.amounts.at(bankIndex).setValue('130');
+      expect(component.form_balance_error).toBe(-3);
+    });
+  }
+
+  it('keeps an announced transfer as a debt without requiring a bank receipt', () => {
+    const component = createComponent();
+    component.protected_mode = true;
+    component.products_accounts = [{ key: 'CAR', description: 'Cartes' }];
+    component.expenses_accounts = [];
+    component.init_form();
+    const entry: BookEntry = {
+      id: 'announced-transfer', season: '2026/2027', date: '2026-10-08',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+      amounts: {},
+      operations: [{
+        label: 'achat adhérent TEST Jean', member: 'TEST Jean',
+        values: { CAR: 30, [CUSTOMER_ACCOUNT.DEBT_debit]: 30 },
+      }],
+    };
+    component.set_form(entry);
+    expect(component.financial_accounts.length).toBe(0);
+    expect(component.form_balance_error).toBe(0);
+    expect(component.form.valid).toBeTrue();
+    expect(component.transaction_label(entry.transaction_id)).toBe('virement annoncé');
+  });
 
   function correctCheque(component: BooksEditorComponent) {
     const assetIndex = component.optional_accounts.findIndex(account => account.key === CUSTOMER_ACCOUNT.ASSET_credit);

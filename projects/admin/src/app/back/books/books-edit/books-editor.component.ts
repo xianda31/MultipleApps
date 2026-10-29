@@ -191,6 +191,7 @@ export class BooksEditorComponent {
 
   set_form(book_entry: BookEntry) {
 
+    this.selected_book_entry = book_entry;
     this.selected_transaction = this.transactionService.get_transaction(book_entry.transaction_id);
     let transac_class = this.selected_transaction.class;
     this.financial_accounts = this.selected_transaction.financial_accounts;
@@ -392,7 +393,7 @@ export class BooksEditorComponent {
     if (expense_or_revenue_accounts.length !== 0) {
       operationForm.addControl('values', this.fb.array(
         expense_or_revenue_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])),
-        { validators: [this.atLeastOneFieldValidator] }));
+        { validators: this.is_received_member_transfer(transaction) ? [] : [this.atLeastOneFieldValidator] }));
     }
 
     operationForm.controls['total'].setValue(this.sum_operation_values(transaction, operationForm.getRawValue()));
@@ -400,18 +401,32 @@ export class BooksEditorComponent {
 
   }
 
+  private is_received_member_transfer(transaction: Transaction): boolean {
+    return !this.creation
+      && this.selected_book_entry?.transaction_id === TRANSACTION_ID.achat_adhérent_par_virement
+      && transaction === this.transactionService.get_transaction(TRANSACTION_ID.achat_adhérent_par_virement)
+      && (this.selected_book_entry.amounts[FINANCIAL_ACCOUNT.BANK_debit] ?? 0) > 0;
+  }
+
+  private financial_accounts_to_charge(transaction: Transaction) {
+    return this.is_received_member_transfer(transaction)
+      ? [FINANCIAL_ACCOUNT.BANK_debit]
+      : transaction.financial_accounts_to_charge;
+  }
+
   init_financial_accounts(transaction: Transaction, protected_mode: boolean) {
 
+    const accountsToCharge = this.financial_accounts_to_charge(transaction);
     if (protected_mode) {
       // Map keys to Account_def objects
       this.financial_accounts = transaction.financial_accounts.filter(account =>
-        (transaction.financial_accounts_to_charge as (FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)[]).includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)
+        accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)
       );
     } else {
       this.financial_accounts = transaction.financial_accounts;
     }
     this.financial_accounts.forEach((account) => {
-      if (transaction.financial_accounts_to_charge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)) {
+      if (accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)) {
         this.amounts.push(new FormControl('', [Validators.required, Validators.pattern(this.NumberRegexPattern)]));
       }
       else {
@@ -421,8 +436,9 @@ export class BooksEditorComponent {
   }
 
   handle_financial_accounts_enabling(transaction: Transaction) {
+    const accountsToCharge = this.financial_accounts_to_charge(transaction);
     this.financial_accounts.forEach((account, index) => {
-      if (transaction.financial_accounts_to_charge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)) {
+      if (accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)) {
         this.amounts.controls[index].setValidators([Validators.required, Validators.pattern(this.NumberRegexPattern)]);
         this.amounts.controls[index].enable();
       } else {
@@ -447,7 +463,10 @@ export class BooksEditorComponent {
   private buildOperationLabel(transactionId: TRANSACTION_ID, label: string | undefined, member: string | undefined): string {
     const trimmedMember = (member ?? '').trim();
 
-    if (!this.creation && transactionId === TRANSACTION_ID.achat_adhérent_par_chèque && label?.trim()) {
+    if (!this.creation
+      && (transactionId === TRANSACTION_ID.achat_adhérent_par_chèque
+        || transactionId === TRANSACTION_ID.achat_adhérent_par_virement)
+      && label?.trim()) {
       return label.trim();
     }
 
@@ -756,6 +775,9 @@ export class BooksEditorComponent {
   }
 
   transaction_label(transaction_id: TRANSACTION_ID): string {
+    if (!this.creation && this.selected_book_entry?.transaction_id === transaction_id) {
+      return this.transactionService.get_entry_label(this.selected_book_entry);
+    }
     return this.transactionService.get_transaction(transaction_id).label;
   }
 
