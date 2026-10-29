@@ -22,8 +22,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { CartItem, PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 import { BookService } from '../services/book.service';
-import { firstValueFrom, Subscription, take } from 'rxjs';
-import { MemberSyncService } from '../../common/services/member-sync.service';
+import { Subscription } from 'rxjs';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
  *
@@ -68,7 +67,8 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @Input() member_id: string | null = null;
   @Input() onlineMode !: boolean;
-  members!: Member[];
+  members: Member[] = [];
+  membersLoading = true;
 
   cart_is_valid = true;
   license_paied = false;
@@ -94,6 +94,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   private bookEntriesSubscription?: Subscription;
   private bookEntriesLoadingSubscription?: Subscription;
   private cartSubscription?: Subscription;
+  private membersSubscription?: Subscription;
   private successBannerTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSuccessSessionId: string | null = null;
   private bookEntriesReady = false;
@@ -169,7 +170,6 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     private stripeTerminal: StripeTerminalService,
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
     private bookService: BookService,
-    private memberSyncService: MemberSyncService,
   ) {}
 
   ngAfterViewInit(): void {
@@ -278,26 +278,19 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
         });
       }
 
-      // Online checkout should not trigger FFB synchronization.
-      // FFB sync is reserved for back-office (offline) sessions.
-      void (async () => {
-        if (this.onlineMode) {
-          this.members = (await firstValueFrom(this.membersService.listMembers().pipe(take(1))))
-            .filter((member) => this.membersService.canPurchase(member));
-          this.setupBuyerFromRoute();
-          return;
-        }
-
-        try {
-          await this.memberSyncService.ensureMembersSynchronized();
-        } catch (error) {
-          console.error('ShopComponent: failed to synchronize members before loading buyer list', error);
-        }
-
-        this.members = (await firstValueFrom(this.membersService.listMembers().pipe(take(1))))
-          .filter((member) => this.membersService.canPurchase(member));
-        this.setupBuyerFromRoute();
-      })();
+      this.membersSubscription = this.membersService.listMembers().subscribe({
+        next: (members) => {
+          const firstLoad = this.membersLoading;
+          this.members = members.filter((member) => this.membersService.canPurchase(member));
+          this.membersLoading = false;
+          if (firstLoad) this.setupBuyerFromRoute();
+        },
+        error: (error: unknown) => {
+          this.membersLoading = false;
+          console.error('ShopComponent: failed to load buyer list', error);
+          this.toastService.showError('Acheteurs', 'Impossible de charger la liste des membres.');
+        },
+      });
 
       // Watch logged member changes (auth)
       this.auth.logged_member$.subscribe((member) => {
@@ -331,6 +324,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     this.bookEntriesSubscription?.unsubscribe();
     this.bookEntriesLoadingSubscription?.unsubscribe();
     this.cartSubscription?.unsubscribe();
+    this.membersSubscription?.unsubscribe();
     this.clearSuccessBannerTimer();
     this.cardPaymentOrchestrator.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
@@ -502,11 +496,19 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     setTimeout(() => this.focusBuyerInput());
   }
 
-  date_change(date: any) {
-    this.session.date = new Date(date).toISOString().split('T')[0]; //new Date().toISOString().split('T')[0])
-    this.cartService.clearCart();
-    this.buyerForm.reset();
-    setTimeout(() => this.focusBuyerInput());
+  date_change(date: string): void {
+    if (this.isSaving || this.tpePaymentInProgress) return;
+    const parsedDate = new Date(date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)
+      || Number.isNaN(parsedDate.getTime())
+      || parsedDate.toISOString().split('T')[0] !== date) {
+      this.toastService.showWarning('Date de vente', 'Veuillez saisir une date valide.');
+      return;
+    }
+    this.session = {
+      date,
+      season: this.systemDataService.get_season(new Date(`${date}T12:00:00`)),
+    };
   }
 
   member_name(member_id: string) {

@@ -22,6 +22,7 @@ export class InputMemberComponent implements ControlValueAccessor {
   @ViewChild(CustomDropdownComponent) dropdown?: CustomDropdownComponent;
 
   @Input() members: Member[] = [];
+  @Input() loading = false;
   input!: string;
   searchInput: string = '';
 
@@ -66,4 +67,3 @@ export class InputMemberComponent implements ControlValueAccessor {
     this.onChange(member);
   }
 }
-

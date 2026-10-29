@@ -23,7 +23,8 @@
       }
       <div *ngIf="!onlineMode" class="d-flex align-items-center gap-2 ms-auto">
         <input type="date" class="form-control form-control-sm" style="max-width:160px;"
-          (ngModelChange)="date_change($event)" [(ngModel)]="session.date">
+          (ngModelChange)="date_change($event)" [ngModel]="session.date"
+          [disabled]="isSaving || tpePaymentInProgress">
       </div>
     </div>
 
@@ -94,6 +95,7 @@
         <div class="shop-buyer-header" [class.awaiting-buyer]="!buyer" [formGroup]="buyerForm">
           <i class="bi me-2" [class.bi-person-check-fill]="buyer" [class.bi-person-fill]="!buyer"></i>
           <app-input-member #buyerInput class="buyer-input" [members]="members" formControlName="buyer"
+            [loading]="membersLoading"
             placeholder="Sélectionner un adhérent"></app-input-member>
           <button type="button" class="btn btn-sm btn-link p-0 ms-2 text-secondary"
             (click)="clear_sale()" title="Nouvelle vente" aria-label="Réinitialiser et commencer une nouvelle vente">
