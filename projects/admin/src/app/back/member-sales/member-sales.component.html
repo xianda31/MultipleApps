@@ -1,5 +1,9 @@
 <div class="offset-xl-2 col-xl-8 px-2 mt-3">
-    @if (loaded) {
+    @if (loadingError) {
+    <div class="alert alert-danger nice_shadow" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{loadingError}}
+    </div>
+    } @else if (loaded) {
     <h5>Contrôle des paiements licences, adhésions et achats</h5>
 
     <div class="row row-cols-1 row-cols-md-3 g-3 mt-2">
@@ -190,5 +194,19 @@
         </div>
 
 
+    </div>
+    } @else {
+    <div class="card nice_shadow" aria-live="polite">
+        <div class="card-body">
+            <h5 class="card-title">Préparation de la synthèse</h5>
+            <div class="progress mt-3" role="progressbar" aria-label="Chargement de la synthèse"
+                [attr.aria-valuenow]="loadingProgress" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                    [style.width.%]="loadingProgress">
+                    {{loadingProgress}} %
+                </div>
+            </div>
+            <div class="text-muted mt-2">{{loadingMessage}}</div>
+        </div>
     </div>
     }

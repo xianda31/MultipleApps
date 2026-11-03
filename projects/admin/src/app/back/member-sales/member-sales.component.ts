@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { firstValueFrom, take } from 'rxjs';
 import { Expense, PurchaseStatementEntry, Revenue } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -23,8 +23,13 @@ interface Payment { [key: string]: number };
   templateUrl: './member-sales.component.html',
   styleUrl: './member-sales.component.scss'
 })
-export class MemberSalesComponent {
+export class MemberSalesComponent implements OnDestroy {
   loaded: boolean = false;
+  loadingProgress: number = 0;
+  loadingMessage: string = 'Préparation de la synthèse';
+  loadingError: string = '';
+  private loadingProgressLimit: number = 0;
+  private loadingAnimation?: ReturnType<typeof setInterval>;
   season: string = '';
   operations: (Revenue | Expense)[] = [];
   revenues: Revenue[] = [];
@@ -59,14 +64,30 @@ export class MemberSalesComponent {
   ) { }
   ngOnInit() {
     this.loaded = false;
+    this.loadingError = '';
+    this.updateLoading(5, 'Chargement initial : 0/3 sources disponibles', 84);
+    this.startLoadingAnimation();
 
     void (async () => {
       try {
+        let initialLoadsCompleted = 0;
+        const trackInitialLoad = async <T>(promise: Promise<T>): Promise<T> => {
+          const result = await promise;
+          initialLoadsCompleted += 1;
+          const completedProgress = [25, 45, 85][initialLoadsCompleted - 1];
+          this.updateLoading(
+            completedProgress,
+            `Chargement initial : ${initialLoadsCompleted}/3 sources disponibles`,
+          );
+          return result;
+        };
+
         const [members, conf, licensees] = await Promise.all([
-          this.memberSyncService.ensureMembersSynchronized(true),
-          firstValueFrom(this.systemDataService.get_configuration().pipe(take(1))),
-          firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1))),
+          trackInitialLoad(this.memberSyncService.ensureMembersSynchronized(true)),
+          trackInitialLoad(firstValueFrom(this.systemDataService.get_configuration().pipe(take(1)))),
+          trackInitialLoad(firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1)))),
         ]);
+        await this.allowProgressRendering(150);
 
         this.members = members;
         this.selected_member = null;
@@ -77,19 +98,68 @@ export class MemberSalesComponent {
         );
         this.ffbBaseReferences = this.memberService.buildFfbBaseReferences(licensees);
 
+        this.updateLoading(86, 'Chargement des écritures comptables', 90);
         await firstValueFrom(this.bookService.list_book_entries().pipe(take(1)));
 
+        this.updateLoading(91, 'Préparation des opérations adhérents', 93);
+        await this.allowProgressRendering();
         this.operations = this.bookService.get_revenues_from_members();
+
+        this.updateLoading(94, 'Contrôle des licences perçues');
+        await this.allowProgressRendering();
         this.checkLicenseDeclared();
+
+        this.updateLoading(96, 'Contrôle des adhésions');
+        await this.allowProgressRendering();
         this.checkMembershipPaid();
+
+        this.updateLoading(98, 'Contrôle des achats');
+        await this.allowProgressRendering();
         this.checkBuyWithoutMembership();
+
+        this.updateLoading(99, 'Comparaison avec les déclarations FFB');
+        await this.allowProgressRendering();
         this.checkMembersNotDeclaredAtFFB();
+        this.updateLoading(100, 'Synthèse terminée');
+        await this.allowProgressRendering(150);
+        this.stopLoadingAnimation();
+        this.loaded = true;
       } catch (err) {
         console.error('Error loading member sales data:', err);
-      } finally {
-        this.loaded = true;
+        this.stopLoadingAnimation();
+        this.loadingError = 'La synthèse n’a pas pu être chargée. Réessayez en rouvrant cette page.';
       }
     })();
+  }
+
+  ngOnDestroy(): void {
+    this.stopLoadingAnimation();
+  }
+
+  private updateLoading(progress: number, message: string, progressLimit: number = progress): void {
+    this.loadingProgress = Math.max(this.loadingProgress, progress);
+    this.loadingProgressLimit = Math.max(this.loadingProgressLimit, progressLimit);
+    this.loadingMessage = message;
+  }
+
+  private startLoadingAnimation(): void {
+    this.stopLoadingAnimation();
+    this.loadingAnimation = setInterval(() => {
+      if (this.loadingProgress < this.loadingProgressLimit) {
+        this.loadingProgress += 1;
+      }
+    }, 400);
+  }
+
+  private stopLoadingAnimation(): void {
+    if (this.loadingAnimation !== undefined) {
+      clearInterval(this.loadingAnimation);
+      this.loadingAnimation = undefined;
+    }
+  }
+
+  private allowProgressRendering(delay: number = 0): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, delay));
   }
 
   checkBuyWithoutMembership() {
