@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ChartOptions } from 'chart.js';
+import { ChartOptions, Plugin } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { BookService } from '../services/book.service';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -32,6 +32,55 @@ export class DashboardComponent {
   expensesAndRevenuesChartOptions!: ChartOptions<any>;
   balanceChartData: any = {};
   balanceChartOptions!: ChartOptions<any>;
+  balanceSheets: Balance_sheet[] = [];
+  balanceWaterfall = false;
+  balanceChartPlugins: Plugin<'bar'>[] = [{
+    id: 'balanceBarRelief',
+    beforeDatasetDraw: (chart, args) => {
+      const dataset = chart.data.datasets[args.index];
+      const meta = chart.getDatasetMeta(args.index);
+      if (meta.type !== 'bar' || !dataset.label) return;
+
+      const ctx = chart.ctx;
+      const isBalance = dataset.label === 'Bilan';
+      const depthX = isBalance ? 7 : 4;
+      const depthY = isBalance ? 5 : 3;
+      const sideColor = typeof dataset.borderColor === 'string' ? dataset.borderColor : 'rgba(0, 76, 105, 0.72)';
+      const topColor = typeof dataset.backgroundColor === 'string' ? dataset.backgroundColor : 'rgba(91, 201, 232, 0.9)';
+      ctx.save();
+      meta.data.forEach(element => {
+        const { x, y, base, width } = element.getProps(['x', 'y', 'base', 'width'], true) as {
+          x: number;
+          y: number;
+          base: number;
+          width: number;
+        };
+        const left = x - width / 2;
+        const right = x + width / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(right, y);
+        ctx.lineTo(right + depthX, y - depthY);
+        ctx.lineTo(right + depthX, base - depthY);
+        ctx.lineTo(right, base);
+        ctx.closePath();
+        ctx.globalAlpha = isBalance ? 0.72 : 0.55;
+        ctx.fillStyle = sideColor;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(left + depthX, y - depthY);
+        ctx.lineTo(right + depthX, y - depthY);
+        ctx.lineTo(right, y);
+        ctx.closePath();
+        ctx.globalAlpha = isBalance ? 0.9 : 0.7;
+        ctx.fillStyle = topColor;
+        ctx.fill();
+      });
+      ctx.restore();
+    },
+  }];
   playerChartData: any = {};
   playerChartOptions!: ChartOptions<any>;
   memberChartData: any = {};
@@ -75,6 +124,7 @@ export class DashboardComponent {
 
 
   ngOnInit() {
+    this.balanceWaterfall = false;
 
     this.systemDataService.get_configuration().subscribe((conf) => {
       // Générer tous les mois de la saison courante (juillet à juin)
@@ -100,9 +150,8 @@ export class DashboardComponent {
         ));
 
         this.initialize_balance_data(this.season).subscribe((balance_sheets) => {
-          ({ data: this.balanceChartData, options: this.balanceChartOptions } = this.graphService.buildBalanceChart(
-            balance_sheets
-          ));
+          this.balanceSheets = balance_sheets;
+          this.renderBalanceChart();
         });
 
 
@@ -221,10 +270,28 @@ export class DashboardComponent {
     return this.financialService.read_balance_sheets_from_S3().pipe(
       map((balance_sheets) => {
         const balance_board: Balance_board = this.financialService.compute_balance_board(season);
-        balance_sheets.push(balance_board.current);
-        return balance_sheets;
+        const historyBySeason = new Map(
+          balance_sheets
+            .filter(balance_sheet => balance_sheet.season < season)
+            .map(balance_sheet => [balance_sheet.season, balance_sheet] as const)
+        );
+        historyBySeason.set(season, balance_board.current);
+        return Array.from(historyBySeason.values());
       })
     );
+  }
+
+  setBalanceChartMode(waterfall: boolean): void {
+    if (this.balanceWaterfall === waterfall) return;
+    this.balanceWaterfall = waterfall;
+    this.renderBalanceChart();
+  }
+
+  private renderBalanceChart(): void {
+    ({ data: this.balanceChartData, options: this.balanceChartOptions } = this.graphService.buildBalanceChart(
+      this.balanceSheets,
+      this.balanceWaterfall,
+    ));
   }
 
   initialize_results_data(): {  per_section_revenues: { [section: string]: number }, per_section_expenses: { [section: string]: number } } {
@@ -511,4 +578,3 @@ export class DashboardComponent {
     return months;
   }
 }
-

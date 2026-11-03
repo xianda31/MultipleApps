@@ -128,16 +128,42 @@
         </div>
         <div class="col">
             <div class="card h-100">
-                <h5 class="card-header bg-light fw-bold">Historique des bilans</h5>
+                <div class="card-header bg-light d-flex align-items-center justify-content-between gap-2">
+                    <h5 class="fw-bold mb-0">Historique des bilans</h5>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Présentation de l'historique des bilans">
+                        <button type="button" class="btn"
+                            [class.btn-primary]="!balanceWaterfall"
+                            [class.btn-outline-primary]="balanceWaterfall"
+                            (click)="setBalanceChartMode(false)">
+                            Bilan
+                        </button>
+                        <button type="button" class="btn"
+                            [class.btn-primary]="balanceWaterfall"
+                            [class.btn-outline-primary]="!balanceWaterfall"
+                            (click)="setBalanceChartMode(true)">
+                            Détail waterfall
+                        </button>
+                    </div>
+                </div>
                 <div class="card-body p-4">
                     <div class="card-text text-center justify-content-center">
                         <div class="chart-container" style="position: relative;">
-                            <canvas baseChart [data]="balanceChartData" [options]="balanceChartOptions" [type]="'bar'">
+                            <canvas baseChart [data]="balanceChartData" [options]="balanceChartOptions"
+                                [plugins]="balanceChartPlugins" [type]="'bar'">
                             </canvas>
                         </div>
                     </div>
                 </div>
                 <div class="card-footer bg-light">
+                    @if (!balanceWaterfall) {
+                    <div class="d-flex justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol"
+                                [style.backgroundColor]="balanceChartData?.datasets?.[0]?.backgroundColor"></span>
+                            <span>Bilan</span>
+                        </span>
+                    </div>
+                    } @else {
                     <!-- Légende personnalisée -->
                     <div class="d-flex flex-wrap gap-3 justify-content-center">
                         <span class="legend-item">
@@ -168,9 +194,10 @@
                                 <circle cx="8" cy="8" r="3"
                                     [ngStyle]="{'fill': balanceChartData?.datasets?.[5]?.pointBackgroundColor}" />
                             </svg>
-                            <span>Total actif</span>
+                            <span>Bilan</span>
                         </span>
                     </div>
+                    }
                 </div>
             </div>
         </div>

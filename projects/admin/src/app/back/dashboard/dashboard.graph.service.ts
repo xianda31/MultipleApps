@@ -226,7 +226,8 @@ export class DashboardGraphService {
   }
 
   buildBalanceChart(
-    balanceSheets: Balance_sheet[]
+    balanceSheets: Balance_sheet[],
+    waterfall: boolean = false,
   ): { data: any, options: ChartOptions<any> } {
     const { primary, secondary, info } = this.getChartColors();
 
@@ -236,16 +237,78 @@ export class DashboardGraphService {
     });
 
     // Extraire les saisons et les données
-    const seasons = sortedSheets.map(sheet => sheet.season);
+    const seasons = sortedSheets.map(sheet => {
+      const years = sheet.season.match(/^(\d{4})\/(\d{4})$/);
+      return years ? `${years[1]}-${years[2].slice(-2)}` : sheet.season;
+    });
     const savingsData = sortedSheets.map(sheet => sheet.savings);
     const bankData = sortedSheets.map(sheet => sheet.bank);
     const cashboxData = sortedSheets.map(sheet => sheet.cashbox);
     const wipTotalData = sortedSheets.map(sheet => sheet.wip_total);
-
-    // Calculer l'offset invisible (hauteur = sum de Stack 0 + wip_total)
-    const invisibleOffsetData = sortedSheets.map(sheet =>
+    const balanceData = sortedSheets.map(sheet =>
       sheet.savings + sheet.bank + sheet.cashbox + sheet.wip_total
     );
+
+    if (!waterfall) {
+      return {
+        data: {
+          labels: seasons,
+          datasets: [{
+            label: 'Bilan',
+            data: balanceData,
+            backgroundColor: info + 'CC',
+            borderColor: info,
+            borderWidth: 2,
+            borderRadius: 2,
+            maxBarThickness: 52,
+            datalabels: {
+              display: true,
+              anchor: 'end',
+              align: 'end',
+              offset: 2,
+              color: '#333',
+              font: {
+                size: 14,
+                weight: 'bold',
+              },
+              formatter: (value: number | null) => {
+                if (value === null || value === undefined) return '';
+                return `${value.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
+              },
+            },
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: { padding: { top: 24 } },
+          plugins: {
+            legend: { display: false },
+            title: { display: false, text: 'Bilan par saison' },
+          },
+          scales: {
+            x: {
+              title: { display: false, text: 'Saison' },
+              ticks: {
+                minRotation: 45,
+                maxRotation: 45,
+                color: '#333',
+                font: { size: 13, weight: 'bold' },
+              },
+              grid: { display: false },
+            },
+            y: {
+              title: { display: true, text: 'Montant (€)' },
+              beginAtZero: true,
+              grace: '15%',
+            },
+          },
+        },
+      };
+    }
+
+    // Calculer l'offset invisible (hauteur = sum de Stack 0 + wip_total)
+    const invisibleOffsetData = balanceData;
 
     // Calculer la hauteur "En cours" (-wip_total pour l'effet waterfall)
     const wipDisplayData = sortedSheets.map(sheet => -sheet.wip_total);
@@ -322,7 +385,7 @@ export class DashboardGraphService {
           },
           {
             type: 'line',
-            label: 'Total actif',
+            label: 'Bilan',
             data: invisibleOffsetData,
             borderColor: info,
             backgroundColor: info + '1A',
@@ -370,7 +433,13 @@ export class DashboardGraphService {
           } as any
         },
         scales: {
-          x: { title: { display: false, text: 'Saison' } },
+          x: {
+            title: { display: false, text: 'Saison' },
+            ticks: {
+              color: '#333',
+              font: { size: 13, weight: 'bold' },
+            },
+          },
           y: { title: { display: true, text: 'Montant (€)' }, beginAtZero: true, stacked: true }
         }
       } as ChartOptions<any>
