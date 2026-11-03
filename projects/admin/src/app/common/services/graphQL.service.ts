@@ -9,12 +9,23 @@ import { Product, Product_input } from '../../back/products/product.interface';
 import { StripeProduct, StripeProductInput } from '../../back/products/stripe-product.interface';
 import { PlayBook, PlayBook_input } from '../../back/game-cards/game-card.interface';
 import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_snippet.interface';
-import { FEE_RATE, Game, GameCheckIn, GameFeeConfiguration, Game_input } from '../../back/fees/fees.interface';
+import {
+  FEE_RATE,
+  Game,
+  GameCheckIn,
+  GameFeeConfiguration,
+  Game_input,
+  GameSettlement,
+  GameSettlementAcquisition,
+  GameSettlementContext,
+  GameSettlementPhase,
+} from '../../back/fees/fees.interface';
 import { NavItem, NavItem_input } from '../interfaces/navitem.interface';
 import { AssistanceRequest, AssistanceRequestInput } from '../interfaces/assistance-request.interface';
 import { MailingList, MailingListInput } from '../../back/mailing/mailing-list.interface';
 import { classifyMemberLookupError, sanitizeGraphqlErrors } from '../authentification/member-lookup-diagnostics';
 import { collectStripeTransactionPages } from './stripe-transaction-pagination';
+import { canResumeGameSettlement } from '../../back/fees/fees-collector/fees-settlement.util';
 
 @Injectable({
   providedIn: 'root'
@@ -1388,35 +1399,138 @@ export class DBhandler {
     if (errors) throw errors;
   }
 
-  async readGameSettlementStatus(gameId: string): Promise<string | null> {
+  async readGameSettlement(gameId: string): Promise<GameSettlement | null> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const { data, errors } = await client.models.GameSettlement.get({ gameId });
     if (errors) throw errors;
-    return data?.status ?? null;
+    return data as unknown as GameSettlement | null;
+  }
+
+  async readGameSettlementStatus(gameId: string): Promise<string | null> {
+    return (await this.readGameSettlement(gameId))?.status ?? null;
   }
 
   async acquireGameSettlement(
     gameId: string,
-    lockedBy: string,
-  ): Promise<'acquired' | 'closing' | 'completed' | 'failed'> {
+    context: GameSettlementContext,
+  ): Promise<GameSettlementAcquisition> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
+    const resumeExisting = async (existing: GameSettlement): Promise<GameSettlementAcquisition> => {
+      if (existing.status !== 'closing') {
+        return { outcome: existing.status, settlement: existing };
+      }
+
+      if (!canResumeGameSettlement(existing, context)) {
+        return { outcome: 'closing', settlement: existing };
+      }
+
+      const heartbeatAt = new Date().toISOString();
+      const { data, errors } = await client.models.GameSettlement.update({
+        gameId,
+        lockedBy: context.lockedBy,
+        tabId: context.tabId,
+        clientBuild: context.clientBuild,
+        heartbeatAt,
+        error: null,
+        errorPhase: null,
+        errorAt: null,
+        errorDetails: null,
+      });
+      if (errors) throw errors;
+      return {
+        outcome: 'resumed',
+        settlement: data as unknown as GameSettlement,
+      };
+    };
+
     const { data: existing, errors: readErrors } = await client.models.GameSettlement.get({ gameId });
     if (readErrors) throw readErrors;
-    if (existing) return existing.status as 'closing' | 'completed' | 'failed';
+    if (existing) return resumeExisting(existing as unknown as GameSettlement);
 
+    const now = new Date().toISOString();
     const { data, errors } = await client.models.GameSettlement.create({
       gameId,
       status: 'closing',
-      lockedBy,
+      lockedBy: context.lockedBy,
+      phase: 'locked',
+      resumeToken: context.resumeToken,
+      tabId: context.tabId,
+      clientBuild: context.clientBuild,
+      startedAt: now,
+      heartbeatAt: now,
+      totalCardPayers: context.totalCardPayers,
+      processedCardPayers: 0,
+      processedLicenses: [],
     });
-    if (data && !errors) return 'acquired';
+    if (data && !errors) {
+      return {
+        outcome: 'acquired',
+        settlement: data as unknown as GameSettlement,
+      };
+    }
 
     const { data: winner, errors: retryErrors } = await client.models.GameSettlement.get({ gameId });
     if (retryErrors) throw retryErrors;
-    if (winner) return winner.status as 'closing' | 'completed' | 'failed';
+    if (winner) return resumeExisting(winner as unknown as GameSettlement);
     throw errors ?? new Error('Unable to acquire GameSettlement lock');
+  }
+
+  async updateGameSettlementProgress(
+    gameId: string,
+    progress: {
+      phase?: GameSettlementPhase;
+      processedCardPayers?: number;
+      processedLicenses?: string[];
+      activeLicense?: string | null;
+      activeStampCountBefore?: number | null;
+      activeStampsRequired?: number | null;
+    },
+  ): Promise<GameSettlement> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.models.GameSettlement.update({
+      gameId,
+      ...progress,
+      heartbeatAt: new Date().toISOString(),
+      error: null,
+      errorPhase: null,
+      errorAt: null,
+      errorDetails: null,
+    });
+    if (errors) throw errors;
+    return data as unknown as GameSettlement;
+  }
+
+  async touchGameSettlement(gameId: string, tabId: string): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.GameSettlement.update({
+      gameId,
+      tabId,
+      heartbeatAt: new Date().toISOString(),
+    });
+    if (errors) throw errors;
+  }
+
+  async recordGameSettlementError(
+    gameId: string,
+    phase: string,
+    error: string,
+    errorDetails: string,
+  ): Promise<void> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { errors } = await client.models.GameSettlement.update({
+      gameId,
+      error,
+      errorPhase: phase,
+      errorAt: new Date().toISOString(),
+      errorDetails,
+      heartbeatAt: new Date().toISOString(),
+    });
+    if (errors) throw errors;
   }
 
   async completeGameSettlement(gameId: string): Promise<void> {
@@ -1425,7 +1539,15 @@ export class DBhandler {
     const { errors } = await client.models.GameSettlement.update({
       gameId,
       status: 'completed',
+      phase: 'completed',
+      activeLicense: null,
+      activeStampCountBefore: null,
+      activeStampsRequired: null,
+      heartbeatAt: new Date().toISOString(),
       error: null,
+      errorPhase: null,
+      errorAt: null,
+      errorDetails: null,
     });
     if (errors) throw errors;
   }
@@ -1437,6 +1559,8 @@ export class DBhandler {
       gameId,
       status: 'failed',
       error,
+      errorAt: new Date().toISOString(),
+      heartbeatAt: new Date().toISOString(),
     });
     if (errors) throw errors;
   }

@@ -143,9 +143,18 @@ describe('FeesCollectorService settlement protection', () => {
       'acquireGameSettlement',
       'deleteGameSettlement',
       'failGameSettlement',
+      'touchGameSettlement',
     ]);
     dbHandler.create_custom_key.and.returnValue('2026/2027_338131');
-    dbHandler.acquireGameSettlement.and.resolveTo('acquired');
+    dbHandler.acquireGameSettlement.and.resolveTo({
+      outcome: 'acquired',
+      settlement: {
+        gameId: '2026/2027_338131',
+        status: 'closing',
+        lockedBy: 'operator',
+        phase: 'locked',
+      },
+    });
     dbHandler.deleteGameSettlement.and.resolveTo();
     const gameCardService = jasmine.createSpyObj('GameCardService', ['stamp_member_card']);
     const bookService = jasmine.createSpyObj('BookService', ['create_tournament_fees_entry']);
@@ -164,6 +173,10 @@ describe('FeesCollectorService settlement protection', () => {
       },
     });
     spyOn<any>(service, 'currentSettlementOwner').and.resolveTo('operator');
+    spyOn<any>(service, 'settlementBrowserIdentity').and.returnValue({
+      resumeToken: 'device',
+      tabId: 'tab',
+    });
     spyOn<any>(service, 'runSettlementPreflight').and.returnValues(
       Promise.resolve(),
       Promise.reject(new Error('Network unavailable')),
@@ -172,7 +185,15 @@ describe('FeesCollectorService settlement protection', () => {
     const saved = await service.save_fees();
 
     expect(saved).toBeFalse();
-    expect(dbHandler.acquireGameSettlement).toHaveBeenCalledOnceWith('2026/2027_338131', 'operator');
+    expect(dbHandler.acquireGameSettlement).toHaveBeenCalledOnceWith(
+      '2026/2027_338131',
+      jasmine.objectContaining({
+        lockedBy: 'operator',
+        resumeToken: 'device',
+        tabId: 'tab',
+        totalCardPayers: 0,
+      }),
+    );
     expect(dbHandler.deleteGameSettlement).toHaveBeenCalledOnceWith('2026/2027_338131');
     expect(dbHandler.failGameSettlement).not.toHaveBeenCalled();
     expect(gameCardService.stamp_member_card).not.toHaveBeenCalled();
@@ -181,5 +202,107 @@ describe('FeesCollectorService settlement protection', () => {
       'Clôture impossible',
       'Les données partagées n’ont pas pu être vérifiées. Aucune carte n’a été débitée.',
     );
+  });
+
+  it('resumes only the missing stamp after interruption during a doubled card debit', async () => {
+    const service = Object.create(FeesCollectorService.prototype) as FeesCollectorService;
+    const finalizationOrder: string[] = [];
+    const settlement = {
+      gameId: '2026/2027_338131',
+      status: 'closing' as const,
+      lockedBy: 'operator',
+      phase: 'cards' as const,
+      resumeToken: 'device',
+      tabId: 'previous-tab',
+      processedLicenses: [],
+      processedCardPayers: 0,
+      activeLicense: '00123456',
+      activeStampCountBefore: 0,
+      activeStampsRequired: 2,
+    };
+    const dbHandler = jasmine.createSpyObj('DBhandler', [
+      'create_custom_key',
+      'acquireGameSettlement',
+      'updateGameSettlementProgress',
+      'completeGameSettlement',
+      'recordGameSettlementError',
+      'failGameSettlement',
+      'touchGameSettlement',
+    ]);
+    dbHandler.create_custom_key.and.returnValue(settlement.gameId);
+    dbHandler.acquireGameSettlement.and.resolveTo({
+      outcome: 'resumed',
+      settlement,
+    });
+    dbHandler.updateGameSettlementProgress.and.callFake(
+      async (_gameId: string, progress: object) => Object.assign(settlement, progress),
+    );
+    dbHandler.completeGameSettlement.and.callFake(async () => {
+      finalizationOrder.push('complete');
+    });
+    const gameCardService = jasmine.createSpyObj('GameCardService', [
+      'countMemberStampsOnDate',
+      'stamp_member_card',
+    ]);
+    gameCardService.countMemberStampsOnDate.and.returnValues(1, 2);
+    gameCardService.stamp_member_card.and.resolveTo({});
+    const bookService = jasmine.createSpyObj('BookService', [
+      'whenBookEntriesLoaded',
+      'search_tournament_fees_entry',
+      'create_tournament_fees_entry',
+    ]);
+    bookService.whenBookEntriesLoaded.and.resolveTo();
+    bookService.search_tournament_fees_entry.and.returnValue({ id: 'existing-entry' });
+    const toastService = jasmine.createSpyObj('ToastService', ['showError', 'showWarning', 'showSuccess']);
+    Object.assign(service as object, {
+      DBhandler: dbHandler,
+      gameCardService,
+      BookService: bookService,
+      toastService,
+      settlementInProgress: false,
+      members: [{ license_number: '00123456' }],
+      game: {
+        season: '2026/2027',
+        fees_doubled: true,
+        tournament: {
+          id: 338131,
+          date: '2026-11-02',
+          name: 'ACCESSION',
+        },
+        gamers: [{
+          license: '00123456',
+          is_member: true,
+          enabled: true,
+          validated: true,
+          in_euro: false,
+          price: 4,
+        }],
+      },
+    });
+    spyOn<any>(service, 'currentSettlementOwner').and.resolveTo('operator');
+    spyOn<any>(service, 'settlementBrowserIdentity').and.returnValue({
+      resumeToken: 'device',
+      tabId: 'new-tab',
+    });
+    spyOn<any>(service, 'runSettlementPreflight').and.resolveTo();
+    const generateSummary = jasmine.createSpy('generateSummary').and.callFake(() => {
+      finalizationOrder.push('pdf');
+    });
+
+    const saved = await service.save_fees(generateSummary);
+
+    expect(saved).toBeTrue();
+    expect(gameCardService.stamp_member_card).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({ license_number: '00123456' }),
+      '2026-11-02',
+      false,
+      { stampsRequired: 1, silent: true },
+    );
+    expect(bookService.create_tournament_fees_entry).not.toHaveBeenCalled();
+    expect(generateSummary).toHaveBeenCalledTimes(1);
+    expect(dbHandler.completeGameSettlement).toHaveBeenCalledOnceWith(settlement.gameId);
+    expect(finalizationOrder).toEqual(['pdf', 'complete']);
+    expect(dbHandler.recordGameSettlementError).not.toHaveBeenCalled();
+    expect(dbHandler.failGameSettlement).not.toHaveBeenCalled();
   });
 });

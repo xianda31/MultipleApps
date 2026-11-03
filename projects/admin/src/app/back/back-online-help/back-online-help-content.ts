@@ -21,7 +21,7 @@ export type HelpTopic = {
 };
 
 // Base editable: suivre l'ordre et les libelles de back-navbar.definition.ts
-export const HELP_CONTENT_VERSION = '2026-07-23.3';
+export const HELP_CONTENT_VERSION = '2026-11-03.1';
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
@@ -43,11 +43,14 @@ export const HELP_TOPICS: HelpTopic[] = [
       'Sélectionner le tournoi concerné pour afficher les joueurs inscrits.',
       'Pour chaque joueur présent, pointer le mode de règlement choisi (carte, espèces) ou utiliser le bouton NP pour non présent ou non payant.',
       'Quand tous les joueurs ont été pointés, accepter l’enregistrement des droits de table.',
+      'Suivre la progression dans la fenêtre de clôture et attendre sa confirmation finale.',
+      'Après une interruption, relancer la clôture depuis le même navigateur : les cartes et l’écriture déjà enregistrées sont contrôlées puis ignorées, et le PDF manquant est régénéré.',
     ],
     caution: [
       'Le nombre de droits de table de la carte d’un joueur est affiché en bas à gauche.',
       'L’icône chariot permet de lancer une vente rapide d’une nouvelle carte de droits d’entrée.',
       'Les dettes et avoirs ne sont pas pris en compte par cette vente rapide ; pour en tenir compte, passer par le menu Boutique / vente adhérent.',
+      'Une reprise depuis un autre navigateur ou après suppression de son stockage reste volontairement bloquée et nécessite une intervention administrative.',
     ],
     children: [
       {

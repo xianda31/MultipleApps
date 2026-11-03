@@ -79,4 +79,44 @@ export interface GameFeeConfiguration {
     updatedAt?: string;
 }
 
+export type GameSettlementPhase = 'locked' | 'cards' | 'accounting' | 'document' | 'completing' | 'completed';
+
+export interface GameSettlement {
+    gameId: string;
+    status: 'closing' | 'completed' | 'failed';
+    lockedBy: string;
+    error?: string | null;
+    phase?: GameSettlementPhase | null;
+    resumeToken?: string | null;
+    tabId?: string | null;
+    clientBuild?: string | null;
+    startedAt?: string | null;
+    heartbeatAt?: string | null;
+    totalCardPayers?: number | null;
+    processedCardPayers?: number | null;
+    processedLicenses?: (string | null)[] | null;
+    activeLicense?: string | null;
+    activeStampCountBefore?: number | null;
+    activeStampsRequired?: number | null;
+    errorPhase?: string | null;
+    errorAt?: string | null;
+    errorDetails?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface GameSettlementContext {
+    lockedBy: string;
+    resumeToken: string;
+    tabId: string;
+    clientBuild: string;
+    totalCardPayers: number;
+    staleAfterMs: number;
+}
+
+export interface GameSettlementAcquisition {
+    outcome: 'acquired' | 'resumed' | 'closing' | 'completed' | 'failed';
+    settlement: GameSettlement;
+}
+
 export type Game_input = Omit<Schema['Game']['type'], 'id' | 'createdAt' | 'updatedAt'> ;

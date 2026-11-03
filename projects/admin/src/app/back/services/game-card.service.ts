@@ -145,7 +145,12 @@ export class GameCardService {
 
 
 
-  async stamp_member_card(member: Member, stamp_date: string, double: boolean): Promise<GameCardDebitResult> {
+  async stamp_member_card(
+    member: Member,
+    stamp_date: string,
+    double: boolean,
+    options: { stampsRequired?: number; silent?: boolean } = {},
+  ): Promise<GameCardDebitResult> {
     const normalizedStampDate = this.normalizeStampDate(stamp_date);
     const memberCardsBefore = this.memberCards(member.license_number).map(card => ({
       ...card,
@@ -154,7 +159,7 @@ export class GameCardService {
     const creditBefore = this.totalCredits(memberCardsBefore);
     const effectiveCreditBefore = this.effectiveCredits(memberCardsBefore);
     const debitedCards = new Map<string, GameCard>();
-    const stampsRequired = double ? 2 : 1;
+    const stampsRequired = options.stampsRequired ?? (double ? 2 : 1);
 
     for (let stampIndex = 0; stampIndex < stampsRequired; stampIndex++) {
       const availableCards = this.memberCards(member.license_number)
@@ -170,7 +175,7 @@ export class GameCardService {
       const updatedCard = await this.updateCard({
         ...card,
         stamps: [...card.stamps, normalizedStampDate],
-      });
+      }, { silent: options.silent });
       debitedCards.set(updatedCard.id, updatedCard);
     }
 
@@ -200,6 +205,12 @@ export class GameCardService {
     };
     result.notificationDelivery = this.notifyCardDebit(member, result);
     return result;
+  }
+
+  countMemberStampsOnDate(memberLicense: string, stampDate: string): number {
+    const normalizedStampDate = this.normalizeStampDate(stampDate);
+    return this.memberCards(memberLicense)
+      .reduce((count, card) => count + card.stamps.filter(stamp => stamp === normalizedStampDate).length, 0);
   }
 
   private memberCards(memberLicense: string): GameCard[] {
@@ -426,7 +437,7 @@ export class GameCardService {
     }
   }
 
-  async updateCard(card: GameCard): Promise<GameCard> {
+  async updateCard(card: GameCard, options: { silent?: boolean } = {}): Promise<GameCard> {
     try {
       // Keep backend payload aligned with edited owners regardless of caller-provided licenses.
       const cardToPersist: GameCard = {
@@ -456,7 +467,9 @@ export class GameCardService {
 
       this.gameCards$.next(this._gameCards);
       let ownersNames = updatedGameCard.owners.map(owner => `${owner.firstname} ${owner.lastname}`).join(', ');
-      this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' mise à jour');
+      if (!options.silent) {
+        this.toastService.showSuccess('Gestion des cartes', 'Carte de ' + ownersNames + ' mise à jour');
+      }
       return updatedGameCard;
 
     } catch (errors) {

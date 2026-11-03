@@ -25,6 +25,7 @@ import { normalizeGender } from '../../../common/utils/gender.util';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { feeModeFromConfiguration, membershipPaymentWarningActive, membershipPaymentWarningLevel, TournamentFeeMode } from './fees-check-in.util';
+import { SettlementProgressComponent } from './settlement-progress.component';
 
 
 
@@ -328,9 +329,19 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   async validate_fees(): Promise<boolean> {
-    const saved = await this.feesCollectorService.save_fees();
+    const progressModal = this.modalService.open(SettlementProgressComponent, {
+      backdrop: 'static',
+      centered: true,
+      keyboard: false,
+    });
+    progressModal.componentInstance.progress$ = this.feesCollectorService.settlementProgress$;
+    let saved = false;
+    try {
+      saved = await this.feesCollectorService.save_fees(() => this.tables_to_pdf());
+    } finally {
+      progressModal.close();
+    }
     if (!saved) return false;
-    this.tables_to_pdf();
     this.next_tournaments.forEach(t => {
       if (t.id === this.selected_tournament?.id) t.status = Game_status.COMPLETED;
     });

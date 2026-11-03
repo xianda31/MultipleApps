@@ -270,6 +270,21 @@ const schema = a.schema({
     status: a.string().required(),
     lockedBy: a.string().required(),
     error: a.string(),
+    phase: a.string(),
+    resumeToken: a.string(),
+    tabId: a.string(),
+    clientBuild: a.string(),
+    startedAt: a.datetime(),
+    heartbeatAt: a.datetime(),
+    totalCardPayers: a.integer(),
+    processedCardPayers: a.integer(),
+    processedLicenses: a.string().array(),
+    activeLicense: a.string(),
+    activeStampCountBefore: a.integer(),
+    activeStampsRequired: a.integer(),
+    errorPhase: a.string(),
+    errorAt: a.datetime(),
+    errorDetails: a.string(),
   })
     .identifier(['gameId'])
     .authorization((allow) => [

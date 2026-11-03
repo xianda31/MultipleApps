@@ -4,10 +4,22 @@ import { TournamentTeams } from '../../../common/ffb/interface/tournament.interf
 import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
-import { club_tournament_extended, FEE_RATE, Game, GameCheckIn, GameCheckInMode, GameCheckInSource, GameFeeConfiguration, Game_status, Gamer } from '../fees.interface';
+import {
+  club_tournament_extended,
+  FEE_RATE,
+  Game,
+  GameCheckIn,
+  GameCheckInMode,
+  GameCheckInSource,
+  GameFeeConfiguration,
+  GameSettlement,
+  GameSettlementPhase,
+  Game_status,
+  Gamer,
+} from '../fees.interface';
 import { club_tournament } from '../../../common/ffb/interface/club_tournament.interface';
 import { BookService } from '../../services/book.service';
-import { GameCardDebitResult, GameCardService } from '../../services/game-card.service';
+import { GameCardService } from '../../services/game-card.service';
 import { Fee_rate, SystemConfiguration } from '../../../common/interfaces/system-conf.interface';
 import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { MembersService } from '../../../common/services/members.service';
@@ -17,16 +29,26 @@ import { MemberSettingsService } from '../../../common/services/member-settings.
 import { PaymentMode } from '../../shop/cart/cart.interface';
 import { safeGetCurrentUserPromise } from '../../../common/authentification/safe-auth';
 import { canSelectGameCard, checkInState, feeModeConfiguration, gamerFeePrice, requiredGameCredits, TournamentFeeMode, tournamentFeeMode } from './fees-check-in.util';
+import { environment } from '../../../../environments/environment';
 
+export interface SettlementProgress {
+  message: string;
+  percent: number;
+}
 
-
+class SettlementRecoveryInvariantError extends Error {}
 
 @Injectable({
   providedIn: 'root'
 })
 export class FeesCollectorService {
   private readonly settlementPreflightTimeoutMs = 15_000;
+  private readonly settlementHeartbeatIntervalMs = 10_000;
+  private readonly settlementHeartbeatStaleMs = 30_000;
+  private readonly settlementResumeTokenKey = 'fees-collector.settlement.resume-token';
+  private readonly settlementTabIdKey = 'fees-collector.settlement.tab-id';
   private settlementInProgress = false;
+  private settlementProgressSubject?: BehaviorSubject<SettlementProgress>;
   private tournament: club_tournament_extended | null = null;
   private checkInSubscription: Subscription | null = null;
   private feeConfigurationSubscription: Subscription | null = null;
@@ -65,6 +87,25 @@ export class FeesCollectorService {
 
   get game$(): Observable<Game> {
     return this._game$.asObservable();
+  }
+
+  get settlementProgress$(): Observable<SettlementProgress> {
+    return this.getSettlementProgressSubject().asObservable();
+  }
+
+  private getSettlementProgressSubject(): BehaviorSubject<SettlementProgress> {
+    this.settlementProgressSubject ??= new BehaviorSubject<SettlementProgress>({
+      message: 'Préparation de la clôture…',
+      percent: 0,
+    });
+    return this.settlementProgressSubject;
+  }
+
+  private reportSettlementProgress(message: string, percent: number): void {
+    this.getSettlementProgressSubject().next({
+      message,
+      percent: Math.max(0, Math.min(100, Math.round(percent))),
+    });
   }
 
   private get gameId(): string | null {
@@ -158,6 +199,50 @@ export class FeesCollectorService {
   private async currentSettlementOwner(): Promise<string> {
     const user = await safeGetCurrentUserPromise();
     return user?.username ?? user?.userId ?? 'unknown';
+  }
+
+  private randomSettlementId(): string {
+    return globalThis.crypto?.randomUUID?.()
+      ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private storedSettlementId(storage: Storage, key: string): string {
+    const existing = storage.getItem(key);
+    if (existing) return existing;
+    const created = this.randomSettlementId();
+    storage.setItem(key, created);
+    return created;
+  }
+
+  private settlementBrowserIdentity(): { resumeToken: string; tabId: string } {
+    try {
+      return {
+        resumeToken: this.storedSettlementId(localStorage, this.settlementResumeTokenKey),
+        tabId: this.storedSettlementId(sessionStorage, this.settlementTabIdKey),
+      };
+    } catch (error) {
+      console.warn('[FeesCollector] Browser storage unavailable; settlement recovery will require intervention.', error);
+      return {
+        resumeToken: this.randomSettlementId(),
+        tabId: this.randomSettlementId(),
+      };
+    }
+  }
+
+  private startSettlementHeartbeat(gameId: string, tabId: string): ReturnType<typeof setInterval> {
+    return setInterval(() => {
+      void this.DBhandler.touchGameSettlement(gameId, tabId).catch((error) => {
+        console.error('[FeesCollector] Settlement heartbeat failed:', error);
+      });
+    }, this.settlementHeartbeatIntervalMs);
+  }
+
+  private settlementErrorDetails(error: unknown): string {
+    return JSON.stringify({
+      name: error instanceof Error ? error.name : typeof error,
+      message: error instanceof Error ? error.message : String(error),
+      clientBuild: environment.buildInfo.commitHash,
+    });
   }
 
   private async saveFeeConfiguration(
@@ -786,15 +871,6 @@ export class FeesCollectorService {
     });
   }
 
-  private card_notification_message(member: Member, result: GameCardDebitResult) {
-    if (!result.notificationDelivery) return;
-    const fullname = this.membersService.full_name(member);
-    const message = result.notificationDelivery === 'email'
-      ? `un mail a été envoyé à ${fullname}`
-      : `le mail destiné à ${fullname} est visible dans la console du navigateur`;
-    this.toastService.showInfo('Notification carte', message);
-  }
-
   euros_collected(): number {
     return this.game.gamers
       .filter((gamer) => gamer.in_euro && gamer.enabled && gamer.validated)
@@ -806,7 +882,7 @@ export class FeesCollectorService {
       .reduce((acc, gamer) => acc + (this.game.fees_doubled ? 2 : 1), 0);
   }
 
-  async save_fees(): Promise<boolean> {
+  async save_fees(generateSummary: () => void | Promise<void> = () => undefined): Promise<boolean> {
     if (this.settlementInProgress) {
       this.toastService.showWarning('droits de table', 'La clôture est déjà en cours sur cet appareil.');
       return false;
@@ -814,13 +890,121 @@ export class FeesCollectorService {
     this.settlementInProgress = true;
 
     try {
-      return await this.saveFeesOnce();
+      return await this.saveFeesOnce(generateSummary);
     } finally {
       this.settlementInProgress = false;
     }
   }
 
-  private async saveFeesOnce(): Promise<boolean> {
+  private settlementLicenses(settlement: GameSettlement): string[] {
+    return (settlement.processedLicenses ?? [])
+      .filter((license): license is string => typeof license === 'string');
+  }
+
+  private async debitSettlementCards(
+    gameId: string,
+    settlement: GameSettlement,
+    cardPayers: Gamer[],
+  ): Promise<GameSettlement> {
+    const processedLicenses = new Set(this.settlementLicenses(settlement));
+    const activeGamer = settlement.activeLicense
+      ? cardPayers.find(gamer => gamer.license === settlement.activeLicense)
+      : undefined;
+    if (settlement.activeLicense && !activeGamer) {
+      throw new SettlementRecoveryInvariantError(
+        `Active license ${settlement.activeLicense} is no longer part of the settlement`,
+      );
+    }
+    const orderedCardPayers = activeGamer
+      ? [activeGamer, ...cardPayers.filter(gamer => gamer !== activeGamer)]
+      : cardPayers;
+
+    for (const gamer of orderedCardPayers) {
+      if (processedLicenses.has(gamer.license)) continue;
+      const member = this.members.find(candidate => candidate.license_number === gamer.license);
+      if (!member) {
+        throw new SettlementRecoveryInvariantError(`Member not found for license ${gamer.license}`);
+      }
+
+      const requiredStamps = settlement.activeLicense === gamer.license
+        ? settlement.activeStampsRequired
+        : (this.game.fees_doubled ? 2 : 1);
+      if (!requiredStamps || requiredStamps < 1) {
+        throw new SettlementRecoveryInvariantError(`Invalid stamp count for license ${gamer.license}`);
+      }
+
+      let stampsBefore = settlement.activeLicense === gamer.license
+        ? settlement.activeStampCountBefore
+        : null;
+      if (stampsBefore === null || stampsBefore === undefined) {
+        stampsBefore = this.gameCardService.countMemberStampsOnDate(
+          member.license_number,
+          this.game.tournament!.date,
+        );
+        settlement = await this.DBhandler.updateGameSettlementProgress(gameId, {
+          phase: 'cards',
+          processedCardPayers: processedLicenses.size,
+          processedLicenses: Array.from(processedLicenses),
+          activeLicense: gamer.license,
+          activeStampCountBefore: stampsBefore,
+          activeStampsRequired: requiredStamps,
+        });
+      }
+
+      const currentStampCount = this.gameCardService.countMemberStampsOnDate(
+        member.license_number,
+        this.game.tournament!.date,
+      );
+      const alreadyApplied = currentStampCount - stampsBefore;
+      if (alreadyApplied < 0 || alreadyApplied > requiredStamps) {
+        throw new SettlementRecoveryInvariantError(
+          `Unexpected stamp delta ${alreadyApplied}/${requiredStamps} for license ${gamer.license}`,
+        );
+      }
+
+      const remainingStamps = requiredStamps - alreadyApplied;
+      if (remainingStamps > 0) {
+        await this.gameCardService.stamp_member_card(
+          member,
+          this.game.tournament!.date,
+          false,
+          { stampsRequired: remainingStamps, silent: true },
+        );
+      }
+
+      const finalStampCount = this.gameCardService.countMemberStampsOnDate(
+        member.license_number,
+        this.game.tournament!.date,
+      );
+      if (finalStampCount - stampsBefore !== requiredStamps) {
+        throw new SettlementRecoveryInvariantError(
+          `Unable to verify ${requiredStamps} stamp(s) for license ${gamer.license}`,
+        );
+      }
+
+      processedLicenses.add(gamer.license);
+      settlement = await this.DBhandler.updateGameSettlementProgress(gameId, {
+        phase: 'cards',
+        processedCardPayers: processedLicenses.size,
+        processedLicenses: Array.from(processedLicenses),
+        activeLicense: null,
+        activeStampCountBefore: null,
+        activeStampsRequired: null,
+      });
+      const cardProgress = cardPayers.length === 0
+        ? 80
+        : 5 + (processedLicenses.size / cardPayers.length) * 75;
+      this.reportSettlementProgress(
+        `Cartes débitées : ${processedLicenses.size}/${cardPayers.length}`,
+        cardProgress,
+      );
+    }
+
+    return settlement;
+  }
+
+  private async saveFeesOnce(generateSummary: () => void | Promise<void>): Promise<boolean> {
+    this.reportSettlementProgress('Vérification des pointages partagés…', 0);
     try {
       await this.runSettlementPreflight();
     } catch (error) {
@@ -850,50 +1034,73 @@ export class FeesCollectorService {
 
     const gameId = this.gameId;
     if (!gameId) return false;
+    const cardPayers = members.filter(gamer => !gamer.in_euro);
     const lockedBy = await this.currentSettlementOwner();
-    let settlementStatus: 'acquired' | 'closing' | 'completed' | 'failed';
+    const browserIdentity = this.settlementBrowserIdentity();
+    let acquisition;
     try {
-      settlementStatus = await this.DBhandler.acquireGameSettlement(gameId, lockedBy);
+      acquisition = await this.DBhandler.acquireGameSettlement(gameId, {
+        lockedBy,
+        ...browserIdentity,
+        clientBuild: environment.buildInfo.commitHash,
+        totalCardPayers: cardPayers.length,
+        staleAfterMs: this.settlementHeartbeatStaleMs,
+      });
     } catch (error) {
       console.error('[FeesCollector] Unable to acquire settlement lock:', error);
       this.toastService.showError('droits de table', 'Impossible de sécuriser la clôture. Réessayez après vérification de la connexion.');
       return false;
     }
-    if (settlementStatus !== 'acquired') {
-      const message = settlementStatus === 'completed'
+    if (acquisition.outcome !== 'acquired' && acquisition.outcome !== 'resumed') {
+      const message = acquisition.outcome === 'completed'
         ? 'Les droits de ce tournoi ont déjà été enregistrés.'
-        : settlementStatus === 'failed'
+        : acquisition.outcome === 'failed'
           ? 'Une erreur grave a interrompu une clôture précédente. Une intervention est requise.'
-          : 'La clôture est déjà en cours sur un autre appareil.';
+          : acquisition.settlement.resumeToken === browserIdentity.resumeToken
+            ? 'La clôture est encore active dans un autre onglet de ce navigateur.'
+            : 'La clôture est déjà en cours sur un autre appareil.';
       this.toastService.showWarning('droits de table', message);
       return false;
     }
 
+    let settlement = acquisition.settlement;
+    let phase: GameSettlementPhase = settlement.phase ?? 'locked';
+    const heartbeat = this.startSettlementHeartbeat(gameId, browserIdentity.tabId);
     try {
       try {
         await this.runSettlementPreflight();
       } catch (error) {
         console.error('[FeesCollector] Settlement preflight failed after locking:', error);
-        try {
-          await this.DBhandler.deleteGameSettlement(gameId);
-        } catch (lockError) {
-          console.error('[FeesCollector] Unable to release unused settlement lock:', lockError);
+        if (acquisition.outcome === 'acquired' && phase === 'locked') {
           try {
-            await this.DBhandler.failGameSettlement(gameId, 'Preflight failed before any financial operation');
-          } catch (statusError) {
-            console.error('[FeesCollector] Unable to mark unused settlement lock as failed:', statusError);
+            await this.DBhandler.deleteGameSettlement(gameId);
+          } catch (lockError) {
+            console.error('[FeesCollector] Unable to release unused settlement lock:', lockError);
           }
+        } else {
+          await this.DBhandler.recordGameSettlementError(
+            gameId,
+            phase,
+            error instanceof Error ? error.message : String(error),
+            this.settlementErrorDetails(error),
+          );
         }
         this.toastService.showError(
           'Clôture impossible',
-          'Les données partagées n’ont pas pu être vérifiées. Aucune carte n’a été débitée.',
+          acquisition.outcome === 'acquired'
+            ? 'Les données partagées n’ont pas pu être vérifiées. Aucune carte n’a été débitée.'
+            : 'Les données partagées n’ont pas pu être vérifiées. La reprise reste disponible sur ce navigateur.',
         );
         return false;
       }
       non_members = this.game.gamers.filter((gamer) => !gamer.is_member && gamer.enabled);
       members = this.game.gamers.filter((gamer) => gamer.is_member && gamer.enabled);
       if (!non_members.every((gamer) => gamer.validated) || !members.every((gamer) => gamer.validated)) {
-        await this.DBhandler.deleteGameSettlement(gameId);
+        if (acquisition.outcome === 'acquired' && phase === 'locked') {
+          await this.DBhandler.deleteGameSettlement(gameId);
+        } else {
+          throw new SettlementRecoveryInvariantError('Tournament check-ins changed during settlement recovery');
+        }
         this.toastService.showWarning('droits de table', 'Le pointage a changé sur un autre appareil. Vérifiez-le avant de clôturer.');
         return false;
       }
@@ -902,38 +1109,74 @@ export class FeesCollectorService {
       let non_members_euros = non_members.reduce((acc, gamer) => acc + gamer.price, 0);
       let members_euros = members.reduce((acc, gamer) => acc + (gamer.in_euro ? gamer.price : 0), 0);
 
-      // charge members game_credits
-      for (const gamer of members) {
-        if (!gamer.in_euro) {
-          let member = this.members.find((member) => member.license_number === gamer.license);
-          if (member) {
-            const debitResult = await this.gameCardService.stamp_member_card(member, this.game.tournament!.date, this.game.fees_doubled);
-            this.card_notification_message(member, debitResult);
-          } else {
-            throw new Error(`Member not found for license ${gamer.license}`);
-          }
-        }
-      }
+      phase = 'cards';
+      settlement = await this.DBhandler.updateGameSettlementProgress(gameId, {
+        phase,
+        processedCardPayers: this.settlementLicenses(settlement).length,
+        processedLicenses: this.settlementLicenses(settlement),
+      });
+      this.reportSettlementProgress(
+        acquisition.outcome === 'resumed' ? 'Reprise du débit des cartes…' : 'Débit des cartes…',
+        5,
+      );
+      settlement = await this.debitSettlementCards(gameId, settlement, cardPayers);
 
       // create bookEntry for tournament fees
       let total = non_members_euros + members_euros;
-      await this.BookService.create_tournament_fees_entry(this.game.tournament!.date, this.game.tournament!.name, total);
+      phase = 'accounting';
+      await this.DBhandler.updateGameSettlementProgress(gameId, { phase });
+      this.reportSettlementProgress('Vérification de l’écriture comptable…', 85);
+      await this.BookService.whenBookEntriesLoaded();
+      const existingEntry = this.BookService.search_tournament_fees_entry(
+        this.game.tournament!.date,
+        this.game.tournament!.name,
+      );
+      if (!existingEntry) {
+        await this.BookService.create_tournament_fees_entry(
+          this.game.tournament!.date,
+          this.game.tournament!.name,
+          total,
+        );
+      }
+
+      phase = 'document';
+      await this.DBhandler.updateGameSettlementProgress(gameId, { phase });
+      this.reportSettlementProgress('Génération du PDF de synthèse…', 92);
+      await generateSummary();
+
+      phase = 'completing';
+      await this.DBhandler.updateGameSettlementProgress(gameId, { phase });
+      this.reportSettlementProgress('Finalisation de la clôture…', 98);
       await this.DBhandler.completeGameSettlement(gameId);
+      this.reportSettlementProgress('Clôture terminée.', 100);
       this.toastService.showSuccess('droits de table', total + ' € de droits de table enregistrés');
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error('[FeesCollector] Tournament settlement failed:', error);
       try {
-        await this.DBhandler.failGameSettlement(gameId, message);
+        if (error instanceof SettlementRecoveryInvariantError) {
+          await this.DBhandler.failGameSettlement(gameId, message);
+        } else {
+          await this.DBhandler.recordGameSettlementError(
+            gameId,
+            phase,
+            message,
+            this.settlementErrorDetails(error),
+          );
+        }
       } catch (lockError) {
-        console.error('[FeesCollector] Unable to mark settlement as failed:', lockError);
+        console.error('[FeesCollector] Unable to persist settlement failure diagnostics:', lockError);
       }
       this.toastService.showError(
         'Clôture interrompue',
-        'Une erreur grave est survenue. Aucun nouvel essai automatique ne sera effectué.',
+        error instanceof SettlementRecoveryInvariantError
+          ? 'Les données ne permettent pas une reprise sûre. Une intervention est requise.'
+          : 'La progression a été conservée. Relancez la clôture sur ce navigateur pour la reprendre.',
       );
       return false;
+    } finally {
+      clearInterval(heartbeat);
     }
   }
 
