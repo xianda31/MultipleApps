@@ -64,7 +64,7 @@
     </div>
 
     <!-- Finance Section -->
-    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+    <div class="row row-cols-1 row-cols-md-2 g-4 mb-5">
         <div class="col">
             <div class="card h-100">
                 <h5 class="card-header bg-light fw-bold">Recettes et dépenses {{season}} par section</h5>
@@ -198,6 +198,39 @@
                         </span>
                     </div>
                     }
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100">
+                <h5 class="card-header bg-light fw-bold">Historique des comptes de résultat</h5>
+                <div class="card-body p-4">
+                    <div class="chart-container" style="position: relative;">
+                        <canvas baseChart [data]="profitAndLossHistoryChartData"
+                            [options]="profitAndLossHistoryChartOptions"
+                            [plugins]="balanceChartPlugins" [type]="'bar'">
+                        </canvas>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex flex-wrap gap-3 justify-content-center">
+                        <span class="legend-item">
+                            <span class="legend-symbol" style="background-color: #43A82FCC"></span>
+                            <span>Recettes</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol" style="background-color: #55BDE0CC"></span>
+                            <span>Charges</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol" style="background-color: #058DBFCC"></span>
+                            <span>Bénéfice</span>
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-symbol" style="background-color: #F59E0BCC"></span>
+                            <span>Déficit</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>

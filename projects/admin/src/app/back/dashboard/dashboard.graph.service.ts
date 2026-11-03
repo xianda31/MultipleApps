@@ -446,6 +446,94 @@ export class DashboardGraphService {
     };
   }
 
+  buildProfitAndLossHistoryChart(
+    balanceSheets: Balance_sheet[],
+  ): { data: any, options: ChartOptions<any> } {
+    const sheetsWithResults = [...balanceSheets]
+      .filter(sheet => sheet.revenues !== undefined && sheet.expenses !== undefined)
+      .sort((a, b) => a.season.localeCompare(b.season));
+    const labels = sheetsWithResults.map(sheet => {
+      const years = sheet.season.match(/^(\d{4})\/(\d{4})$/);
+      return years ? `${years[1]}-${years[2].slice(-2)}` : sheet.season;
+    });
+    const datalabels = {
+      display: true,
+      anchor: 'end' as const,
+      align: 'end' as const,
+      offset: 2,
+      color: '#333',
+      font: { size: 12, weight: 'bold' as const },
+      formatter: (value: number | null) => {
+        if (value === null || value === undefined) return '';
+        return value.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+      },
+    };
+
+    return {
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Recettes',
+            data: sheetsWithResults.map(sheet => sheet.revenues),
+            backgroundColor: '#43A82FCC',
+            borderColor: '#2E7D20',
+            borderWidth: 2,
+            borderRadius: 2,
+            datalabels,
+          },
+          {
+            label: 'Charges',
+            data: sheetsWithResults.map(sheet => sheet.expenses),
+            backgroundColor: '#55BDE0CC',
+            borderColor: '#2789AA',
+            borderWidth: 2,
+            borderRadius: 2,
+            datalabels,
+          },
+          {
+            label: 'Bénéfice / déficit',
+            data: sheetsWithResults.map(sheet =>
+              sheet.trading_result ?? (sheet.revenues! - sheet.expenses!)
+            ),
+            backgroundColor: (context: any) =>
+              Number(context.raw) < 0 ? '#F59E0BCC' : '#058DBFCC',
+            borderColor: (context: any) =>
+              Number(context.raw) < 0 ? '#C65D00' : '#006D95',
+            borderWidth: 2,
+            borderRadius: 2,
+            datalabels,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 24 } },
+        plugins: {
+          legend: { display: false },
+          title: { display: false, text: 'Évolution des comptes de résultat' },
+        },
+        scales: {
+          x: {
+            title: { display: false, text: 'Saison' },
+            ticks: {
+              minRotation: 45,
+              maxRotation: 45,
+              color: '#333',
+              font: { size: 13, weight: 'bold' },
+            },
+            grid: { display: false },
+          },
+          y: {
+            title: { display: true, text: 'Montant (€)' },
+            grace: '15%',
+          },
+        },
+      },
+    };
+  }
+
   getDefaultFinancialChartData() {
     return {};
   }

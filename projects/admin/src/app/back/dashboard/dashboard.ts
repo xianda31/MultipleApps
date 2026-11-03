@@ -32,6 +32,8 @@ export class DashboardComponent {
   expensesAndRevenuesChartOptions!: ChartOptions<any>;
   balanceChartData: any = {};
   balanceChartOptions!: ChartOptions<any>;
+  profitAndLossHistoryChartData: any = {};
+  profitAndLossHistoryChartOptions!: ChartOptions<any>;
   balanceSheets: Balance_sheet[] = [];
   balanceWaterfall = false;
   balanceChartPlugins: Plugin<'bar'>[] = [{
@@ -45,10 +47,8 @@ export class DashboardComponent {
       const isBalance = dataset.label === 'Bilan';
       const depthX = isBalance ? 7 : 4;
       const depthY = isBalance ? 5 : 3;
-      const sideColor = typeof dataset.borderColor === 'string' ? dataset.borderColor : 'rgba(0, 76, 105, 0.72)';
-      const topColor = typeof dataset.backgroundColor === 'string' ? dataset.backgroundColor : 'rgba(91, 201, 232, 0.9)';
       ctx.save();
-      meta.data.forEach(element => {
+      meta.data.forEach((element, dataIndex) => {
         const { x, y, base, width } = element.getProps(['x', 'y', 'base', 'width'], true) as {
           x: number;
           y: number;
@@ -57,6 +57,14 @@ export class DashboardComponent {
         };
         const left = x - width / 2;
         const right = x + width / 2;
+        const isDeficit = dataset.label === 'Bénéfice / déficit'
+          && Number(dataset.data[dataIndex]) < 0;
+        const sideColor = isDeficit
+          ? '#B45309'
+          : typeof dataset.borderColor === 'string' ? dataset.borderColor : 'rgba(0, 76, 105, 0.72)';
+        const topColor = isDeficit
+          ? '#FDBA74'
+          : typeof dataset.backgroundColor === 'string' ? dataset.backgroundColor : 'rgba(91, 201, 232, 0.9)';
 
         ctx.beginPath();
         ctx.moveTo(right, y);
@@ -152,6 +160,10 @@ export class DashboardComponent {
         this.initialize_balance_data(this.season).subscribe((balance_sheets) => {
           this.balanceSheets = balance_sheets;
           this.renderBalanceChart();
+          ({
+            data: this.profitAndLossHistoryChartData,
+            options: this.profitAndLossHistoryChartOptions,
+          } = this.graphService.buildProfitAndLossHistoryChart(balance_sheets));
         });
 
 

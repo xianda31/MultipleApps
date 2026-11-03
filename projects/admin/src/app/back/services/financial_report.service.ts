@@ -206,6 +206,8 @@ export class FinancialReportService {
     let cashbox = cash + client_debts + client_assets + uncashed_cheques + stripe_pending;
     let wip_total = outstanding_expenses + gift_vouchers;
     let actif_total = in_bank_total + cashbox + wip_total;
+    const revenues = this.bookService.get_total_revenues();
+    const expenses = this.bookService.get_total_expenses();
 
     let current_balance_sheet = {
       season: season,
@@ -221,7 +223,10 @@ export class FinancialReportService {
       in_bank_total: bank + savings,
       cashbox: cashbox,
       wip_total: wip_total,
-      actif_total: actif_total
+      actif_total: actif_total,
+      revenues,
+      expenses,
+      trading_result: this.bookService.Round(revenues - expenses),
     } as Balance_sheet;
 
     const balance_board: Balance_board = {

@@ -9,6 +9,9 @@ export interface Balance_record {
     gift_vouchers: number; // chèques cadeaux
     client_debts: number; // dettes clients
     stripe_pending: number; // encours Stripe non encore virés en banque (persisté pour report en N+1)
+    revenues?: number; // total des recettes de la saison
+    expenses?: number; // total des charges de la saison
+    trading_result?: number; // bénéfice (> 0) ou déficit (< 0)
     // client_assets: number; // créances clients
   }
 export interface Balance_sheet  extends Balance_record {
