@@ -154,7 +154,9 @@
               </div>
               <div class="row mx-0 mt-2" *ngIf="optional_accounts && optional_accounts.length > 0">
                 <div class="col-12 border-top pt-2">
-                  <div class="small fw-semibold mb-2">Règlement et solde adhérent</div>
+                  <div class="small fw-semibold mb-2">
+                    {{transaction_id === 'achat_adhérent_par_virement' ? 'Ajustements du solde adhérent' : 'Règlement et solde adhérent'}}
+                  </div>
                   <div [ngTemplateOutlet]="optional_accounts_form"
                     [ngTemplateOutletContext]="{inputFormGroup: operation}">
                   </div>

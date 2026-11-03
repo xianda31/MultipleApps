@@ -34,11 +34,11 @@ describe('BankReconciliationComponent', () => {
       season: '2026/2027',
       date: '2026-10-01',
       transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
-      amounts: {},
+      amounts: { [CUSTOMER_ACCOUNT.DEBT_debit]: 30 },
       operations: [{
         label: 'vente',
         member: 'TEST Jean',
-        values: { ADH: 30, [CUSTOMER_ACCOUNT.DEBT_debit]: 30 },
+        values: { ADH: 30 },
       }],
     } as BookEntry;
     const bookService = (component as any).bookService;
@@ -73,13 +73,12 @@ describe('BankReconciliationComponent', () => {
       season: '2026/2027',
       date: '2026-11-03',
       transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
-      amounts: {},
+      amounts: { [CUSTOMER_ACCOUNT.DEBT_debit]: 60 },
       operations: [{
         label: 'vente',
         member: 'TEST Jean',
         values: {
           ADH: 30,
-          [CUSTOMER_ACCOUNT.DEBT_debit]: 60,
           [CUSTOMER_ACCOUNT.ASSET_credit]: 30,
         },
       }],
@@ -98,6 +97,39 @@ describe('BankReconciliationComponent', () => {
         label: 'règlement du virement annoncé',
         member: 'TEST Jean',
         values: { [CUSTOMER_ACCOUNT.DEBT_credit]: 60 },
+      }],
+    }));
+  });
+
+  it('keeps reconciling legacy transfers with operation-level debt', async () => {
+    const promise = {
+      id: 'legacy-promise',
+      season: '2026/2027',
+      date: '2026-11-03',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+      amounts: {},
+      operations: [{
+        label: 'vente',
+        member: 'TEST Jean',
+        values: { ADH: 30, [CUSTOMER_ACCOUNT.DEBT_debit]: 30 },
+      }],
+    } as BookEntry;
+    const bookService = (component as any).bookService;
+    spyOn(bookService, 'create_book_entry').and.resolveTo({ id: 'legacy-settlement' });
+    component.current_season = '2026/2027';
+    component.transfer_receipt_dates[promise.id] = '2026-11-03';
+    component.transfer_reports[promise.id] = '26-11';
+
+    await component.settle_transfer(promise);
+
+    expect(component.transfer_amount(promise)).toBe(30);
+    expect(component.transfer_member(promise)).toBe('TEST Jean');
+    expect(bookService.create_book_entry).toHaveBeenCalledWith(jasmine.objectContaining({
+      amounts: { [FINANCIAL_ACCOUNT.BANK_debit]: 30 },
+      operations: [{
+        label: 'règlement du virement annoncé',
+        member: 'TEST Jean',
+        values: { [CUSTOMER_ACCOUNT.DEBT_credit]: 30 },
       }],
     }));
   });

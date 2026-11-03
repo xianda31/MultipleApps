@@ -256,7 +256,9 @@ export class BooksExportExcelService {
             const creance_out_col = this.columnLetterToIndex(this.dynamic_extra_customer_out.creance_out as string);
             const avoir_out_col = this.columnLetterToIndex(this.dynamic_extra_customer_out.avoir_out as string);
             
-            row.getCell(creance_in_col).value = op.values['creance_in'] ?? '';
+            row.getCell(creance_in_col).value = op.values['creance_in']
+              ?? (index === 0 ? entry.amounts[CUSTOMER_ACCOUNT.DEBT_debit] : undefined)
+              ?? '';
             row.getCell(avoir_in_col).value = op.values['avoir_in'] ?? '';
             row.getCell(creance_out_col).value = op.values['creance_out'] ?? '';
             row.getCell(avoir_out_col).value = op.values['avoir_out'] ?? '';

@@ -336,9 +336,9 @@ export class CartService {
           }
         }
       });
-      // paiement différé : crédit explicite ou virement annoncé
+      // paiement différé : crédit explicite
       if (payee === this._cart.buyer_name
-        && (this.payment.mode === PaymentMode.CREDIT || this.payment.mode === PaymentMode.TRANSFER)) {
+        && this.payment.mode === PaymentMode.CREDIT) {
         ops[0].values[CUSTOMER_ACCOUNT.DEBT_debit] = this.getCartAmount();
       }
       // console.log('operation', operation);
@@ -348,6 +348,16 @@ export class CartService {
     }
 
     cobuyer_ops.forEach(op => operations.push(op));
+    if (this.payment.mode === PaymentMode.TRANSFER) {
+      const payerIndex = operations.findIndex(operation => operation.member === this._cart.buyer_name);
+      if (payerIndex < 0) {
+        throw new Error('The announced transfer payer must have an operation');
+      }
+      if (payerIndex > 0) {
+        const [payerOperation] = operations.splice(payerIndex, 1);
+        operations.unshift(payerOperation);
+      }
+    }
     return operations;
   }
 
@@ -378,6 +388,9 @@ export class CartService {
   payments2fValue(payment_mode: PaymentMode): AMOUNTS {
     if (payment_mode === PaymentMode.CREDIT) {
       return { [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 };
+    }
+    if (payment_mode === PaymentMode.TRANSFER) {
+      return { [CUSTOMER_ACCOUNT.DEBT_debit]: this.getCartAmount() };
     }
     let f_amounts: AMOUNTS = {};
     if (Object.values(FINANCIAL_ACCOUNT).includes(SALE_ACCOUNTS[payment_mode] as FINANCIAL_ACCOUNT)) {

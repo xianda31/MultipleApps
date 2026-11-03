@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
+import { announcedTransferAmount, announcedTransferPayer, BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { BookService } from '../services/book.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -145,13 +145,11 @@ highlight(book_entry: BookEntry) {
   }
 
   transfer_amount(book_entry: BookEntry): number {
-    return book_entry.operations.reduce((total, operation) =>
-      total + (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0), 0);
+    return announcedTransferAmount(book_entry);
   }
 
   transfer_member(book_entry: BookEntry): string {
-    return book_entry.operations.find(operation =>
-      (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0)?.member ?? '';
+    return announcedTransferPayer(book_entry)?.member ?? '';
   }
 
   async settle_transfer(book_entry: BookEntry): Promise<void> {
@@ -176,14 +174,26 @@ highlight(book_entry: BookEntry) {
       return;
     }
 
-    const settlement_operations = book_entry.operations
-      .filter(operation => (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0)
-      .map(operation => ({
-        label: 'règlement du virement annoncé',
-        member: operation.member,
-        values: { [CUSTOMER_ACCOUNT.DEBT_credit]: operation.values[CUSTOMER_ACCOUNT.DEBT_debit] },
-      }));
     const amount = this.transfer_amount(book_entry);
+    const globalAmount = book_entry.amounts[CUSTOMER_ACCOUNT.DEBT_debit];
+    const payer = announcedTransferPayer(book_entry);
+    const payerMember = payer?.member;
+    if (globalAmount !== undefined && !payerMember) {
+      throw new Error('The announced transfer payer is missing from the first operation');
+    }
+    const settlement_operations = globalAmount !== undefined
+      ? [{
+        label: 'règlement du virement annoncé',
+        member: payerMember,
+        values: { [CUSTOMER_ACCOUNT.DEBT_credit]: amount },
+      }]
+      : book_entry.operations
+        .filter(operation => (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0)
+        .map(operation => ({
+          label: 'règlement du virement annoncé',
+          member: operation.member,
+          values: { [CUSTOMER_ACCOUNT.DEBT_credit]: operation.values[CUSTOMER_ACCOUNT.DEBT_debit] },
+        }));
     this.settling_transfer_ids.add(book_entry.id);
     try {
       await this.bookService.create_book_entry({

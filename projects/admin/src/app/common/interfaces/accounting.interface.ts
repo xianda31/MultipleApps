@@ -138,7 +138,7 @@ export interface Expense extends Operation {
 }; // comptes de charges
 
 
-export type AMOUNTS = { [key in BALANCE_ACCOUNT | FINANCIAL_ACCOUNT]?: number; };
+export type AMOUNTS = { [key in BALANCE_ACCOUNT | FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT]?: number; };
 
 
 export interface BookEntry {
@@ -162,6 +162,26 @@ export interface BookEntry {
   operations: Operation[];
 }
 
+export function announcedTransferAmount(bookEntry: BookEntry): number {
+  const globalAmount = bookEntry.amounts[CUSTOMER_ACCOUNT.DEBT_debit];
+  if (globalAmount !== undefined) return globalAmount;
+
+  return bookEntry.operations.reduce(
+    (total, operation) => total + (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0),
+    0,
+  );
+}
+
+export function announcedTransferPayer(bookEntry: BookEntry): Operation | undefined {
+  if (bookEntry.amounts[CUSTOMER_ACCOUNT.DEBT_debit] !== undefined) {
+    return bookEntry.operations[0];
+  }
+
+  return bookEntry.operations.find(
+    operation => (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0,
+  ) ?? bookEntry.operations[0];
+}
+
 
 export interface PurchaseStatementEntry {
   id: string;
@@ -178,4 +198,3 @@ export interface PurchaseStatementEntry {
     beneficiary?: string;
   }>;
 }
-

@@ -90,11 +90,11 @@ describe('BookService', () => {
       season: '2026/2027',
       date: '2026-10-02',
       transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
-      amounts: {},
+      amounts: { [CUSTOMER_ACCOUNT.DEBT_debit]: 50 },
       operations: [{
         label: 'vente',
         member: 'TEST Jean',
-        values: { ADH: 50, [CUSTOMER_ACCOUNT.DEBT_debit]: 50 },
+        values: { ADH: 50 },
       }],
     };
     const unpointedSettlement: BookEntry = {

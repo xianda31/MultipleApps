@@ -148,9 +148,16 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
      invoice_required: false,
     tooltip: 'virement annoncé par un adhérent, à confirmer au rapprochement bancaire',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
-    financial_accounts: financial_debits,
+    financial_accounts: [
+      ...financial_debits,
+      {
+        key: CUSTOMER_ACCOUNT.DEBT_debit,
+        label: 'Virement annoncé',
+        description: 'montant total annoncé, y compris une éventuelle somme mise en avoir',
+      },
+    ],
     optional_accounts: [
-      ...customer_options,
+      ...customer_options.filter(account => account.key !== CUSTOMER_ACCOUNT.DEBT_debit),
       { key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Somme mise en avoir', description: 'part du virement conservée pour un prochain achat ; ce n\'est pas une vente' },
     ],
     financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],

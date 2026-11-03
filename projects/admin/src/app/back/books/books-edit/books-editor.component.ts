@@ -4,7 +4,7 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { Location } from '@angular/common';
 import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { BookService } from '../../services/book.service';
-import { BookEntry, operation_values, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ID, BALANCE_ACCOUNT } from '../../../common/interfaces/accounting.interface';
+import { announcedTransferAmount, BookEntry, operation_values, Operation, FINANCIAL_ACCOUNT, TRANSACTION_ID, BALANCE_ACCOUNT, CUSTOMER_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Transaction, Account_def, TRANSACTION_CLASS } from '../../../common/interfaces/transaction.definition';
@@ -218,7 +218,15 @@ export class BooksEditorComponent {
     this.init_financial_accounts(this.selected_transaction, this.protected_mode);
 
     this.financial_accounts.forEach((account) => {
-      let value = book_entry.amounts[account.key as FINANCIAL_ACCOUNT] ?? '';
+      let value = book_entry.amounts[account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT] ?? '';
+      if (
+        account.key === CUSTOMER_ACCOUNT.DEBT_debit
+        && book_entry.transaction_id === TRANSACTION_ID.achat_adhérent_par_virement
+        && this.selected_transaction !== undefined
+        && !this.is_received_member_transfer(this.selected_transaction)
+      ) {
+        value = announcedTransferAmount(book_entry) || '';
+      }
       (this.form.controls['amounts'] as FormArray).controls[this.financial_accounts.indexOf(account)].setValue(value);
     });
 
@@ -420,13 +428,13 @@ export class BooksEditorComponent {
     if (protected_mode) {
       // Map keys to Account_def objects
       this.financial_accounts = transaction.financial_accounts.filter(account =>
-        accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)
+        accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT | BALANCE_ACCOUNT)
       );
     } else {
       this.financial_accounts = transaction.financial_accounts;
     }
     this.financial_accounts.forEach((account) => {
-      if (accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)) {
+      if (accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT | BALANCE_ACCOUNT)) {
         this.amounts.push(new FormControl('', [Validators.required, Validators.pattern(this.NumberRegexPattern)]));
       }
       else {
@@ -438,7 +446,7 @@ export class BooksEditorComponent {
   handle_financial_accounts_enabling(transaction: Transaction) {
     const accountsToCharge = this.financial_accounts_to_charge(transaction);
     this.financial_accounts.forEach((account, index) => {
-      if (accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | BALANCE_ACCOUNT)) {
+      if (accountsToCharge.includes(account.key as FINANCIAL_ACCOUNT | CUSTOMER_ACCOUNT | BALANCE_ACCOUNT)) {
         this.amounts.controls[index].setValidators([Validators.required, Validators.pattern(this.NumberRegexPattern)]);
         this.amounts.controls[index].enable();
       } else {

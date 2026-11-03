@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, PurchaseStatementEntry, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
+import { announcedTransferAmount, announcedTransferPayer, BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, PurchaseStatementEntry, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 // import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, filter, firstValueFrom, from, map, Observable, of, race, skipWhile, Subscription, switchMap, tap, timer } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -386,21 +386,30 @@ export class BookService {
       )
       .map(entry => {
         const transactionClass = this.transactionService.transaction_class(entry.transaction_id);
-        const payerOperation = entry.operations.find(operation =>
-          (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0
-        ) ?? entry.operations[0];
+        const hasGlobalAnnouncedTransfer = entry.amounts[CUSTOMER_ACCOUNT.DEBT_debit] !== undefined;
+        const payerOperation = announcedTransferPayer(entry);
         const selectedMemberIsPayer = payerOperation?.member === member_full_name;
         const relevantOperations = selectedMemberIsPayer && !options.memberOperationsOnly
           ? entry.operations
           : entry.operations.filter(operation => operation.member === member_full_name);
-        const detailAmounts = relevantOperations
-          .flatMap(operation => Object.entries(operation.values).map(([key, amount]) => ({
-            key,
-            amount,
-            beneficiary: selectedMemberIsPayer && operation.member !== member_full_name
-              ? operation.member
-              : undefined,
-          })))
+        const operationDetails = relevantOperations
+          .flatMap(operation => Object.entries(operation.values)
+            .filter(([key]) => !hasGlobalAnnouncedTransfer || key !== CUSTOMER_ACCOUNT.DEBT_debit)
+            .map(([key, amount]) => ({
+              key,
+              amount,
+              beneficiary: selectedMemberIsPayer && operation.member !== member_full_name
+                ? operation.member
+                : undefined,
+            })));
+        if (hasGlobalAnnouncedTransfer && selectedMemberIsPayer) {
+          operationDetails.push({
+            key: CUSTOMER_ACCOUNT.DEBT_debit,
+            amount: announcedTransferAmount(entry),
+            beneficiary: undefined,
+          });
+        }
+        const detailAmounts = operationDetails
           .reduce((amounts, detail) => {
             const aggregationKey = `${detail.key}\u0000${detail.beneficiary ?? ''}`;
             const current = amounts.get(aggregationKey);
@@ -755,8 +764,17 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     }
 
     this._book_entries.forEach((book_entry) => {
+      const globalDebt = book_entry.amounts[CUSTOMER_ACCOUNT.DEBT_debit];
+      if (globalDebt) {
+        const name = announcedTransferPayer(book_entry)?.member;
+        if (!name) throw new Error('no member name found for announced transfer payer');
+        debt.set(name, {
+          total: (debt.get(name)?.total || 0) + globalDebt,
+          entries: [...(debt.get(name)?.entries || []), book_entry]
+        });
+      }
       book_entry.operations.forEach((op) => {
-        if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
+        if (globalDebt === undefined && op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
           let name = op.member;   // member is the name of the debt owner & payee
           if (!name) throw new Error('no member name found');
           debt.set(name, {
@@ -788,8 +806,10 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
     let value = 0;
     // console.log(':::', this._book_entries);
     this._book_entries.forEach((book_entry) => {
+      const globalDebt = book_entry.amounts[CUSTOMER_ACCOUNT.DEBT_debit];
+      if (globalDebt) value += globalDebt;
       book_entry.operations.forEach((op) => {
-        if (op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
+        if (globalDebt === undefined && op.values[CUSTOMER_ACCOUNT.DEBT_debit]) {
           value += op.values[CUSTOMER_ACCOUNT.DEBT_debit];
         }
         if (op.values[CUSTOMER_ACCOUNT.DEBT_credit]) {
@@ -1294,13 +1314,13 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       .filter(entry => !entry.amounts[FINANCIAL_ACCOUNT.BANK_debit])
       .filter(entry => !settled_transfer_ids.has(entry.id))
       .forEach(entry => {
-        entry.operations
-          .filter(operation => operation.member && (operation.values[CUSTOMER_ACCOUNT.DEBT_debit] ?? 0) > 0)
-          .forEach(operation => {
-            const member = operation.member!;
+        const transferAmount = announcedTransferAmount(entry);
+        const payer = announcedTransferPayer(entry);
+        if (transferAmount > 0 && payer?.member) {
+            const member = payer.member;
             const remaining_debt = remaining_debts.get(member) ?? 0;
             const amount = this.Round(Math.min(
-              operation.values[CUSTOMER_ACCOUNT.DEBT_debit],
+              transferAmount,
               remaining_debt
             ));
             if (amount <= 0) return;
@@ -1318,7 +1338,7 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
               }],
             });
             remaining_debts.set(member, this.Round(remaining_debt - amount));
-          });
+        }
       });
 
     if (Array.from(debts).length !== 0) {

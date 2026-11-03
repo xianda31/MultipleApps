@@ -178,6 +178,9 @@ describe('CartService', () => {
     const member = {
       id: 'member-1', firstname: 'Jean', lastname: 'TEST', license_number: '00000001',
     } as Member;
+    const beneficiary = {
+      id: 'member-2', firstname: 'Marie', lastname: 'AUTRE', license_number: '00000002',
+    } as Member;
     const bookService = jasmine.createSpyObj('BookService', ['create_book_entry', 'process_book_entry_actions']);
     bookService.create_book_entry.and.resolveTo(sale);
     bookService.process_book_entry_actions.and.resolveTo({ completed: 0, failed: 0 });
@@ -187,7 +190,10 @@ describe('CartService', () => {
     gameCardService.refreshCards.and.resolveTo();
     const service = new CartService(bookService, productService, gameCardService);
     service.setBuyer('TEST Jean');
-    service.payment = { mode: PaymentMode.TRANSFER, amount: 30, payer_id: member.id, bank: '', cheque_no: '' };
+    service.payment = { mode: PaymentMode.TRANSFER, amount: 60, payer_id: member.id, bank: '', cheque_no: '' };
+    service.addToCart({
+      product_id: 'other-membership', product_account: 'ADH', payee: beneficiary, payee_name: 'AUTRE Marie', paied: 30,
+    });
     service.addToCart({
       product_id: 'membership', product_account: 'ADH', payee: member, payee_name: 'TEST Jean', paied: 30,
     });
@@ -196,7 +202,10 @@ describe('CartService', () => {
 
     const createdEntry = bookService.create_book_entry.calls.mostRecent().args[0];
     expect(createdEntry.amounts[FINANCIAL_ACCOUNT.BANK_debit]).toBeUndefined();
-    expect(createdEntry.operations[0].values[CUSTOMER_ACCOUNT.DEBT_debit]).toBe(30);
+    expect(createdEntry.amounts[CUSTOMER_ACCOUNT.DEBT_debit]).toBe(60);
+    expect(createdEntry.operations[0].member).toBe('TEST Jean');
+    expect(createdEntry.operations[1].member).toBe('AUTRE Marie');
+    expect(createdEntry.operations[0].values[CUSTOMER_ACCOUNT.DEBT_debit]).toBeUndefined();
     expect(createdEntry.operations[0].values['ADH']).toBe(30);
   });
 

@@ -164,7 +164,9 @@ describe('BooksEditorComponent accounting validation', () => {
       }],
     };
     component.set_form(entry);
-    expect(component.financial_accounts.length).toBe(0);
+    expect(component.financial_accounts.length).toBe(1);
+    expect(component.financial_accounts[0].key).toBe(CUSTOMER_ACCOUNT.DEBT_debit);
+    expect(component.amounts.at(0).value).toBe(30);
     expect(component.form_balance_error).toBe(0);
     expect(component.form.valid).toBeTrue();
     expect(component.transaction_label(entry.transaction_id)).toBe('virement annoncé');
@@ -193,6 +195,12 @@ describe('BooksEditorComponent accounting validation', () => {
       expect(TRANSACTION_DIRECTORY[id].optional_accounts?.map(account => account.key))
         .not.toContain(CUSTOMER_ACCOUNT.ASSET_credit);
     }
+    expect(TRANSACTION_DIRECTORY[TRANSACTION_ID.achat_adhérent_par_virement].optional_accounts
+      ?.map(account => account.key))
+      .not.toContain(CUSTOMER_ACCOUNT.DEBT_debit);
+    expect(TRANSACTION_DIRECTORY[TRANSACTION_ID.achat_adhérent_par_virement].financial_accounts
+      .find(account => account.key === CUSTOMER_ACCOUNT.DEBT_debit)?.label)
+      .toBe('Virement annoncé');
   });
 
   it('balances an announced 60 EUR transfer with a 30 EUR purchase and a 30 EUR asset grant', () => {
@@ -206,13 +214,12 @@ describe('BooksEditorComponent accounting validation', () => {
       season: '2026/2027',
       date: '2026-11-03',
       transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
-      amounts: {},
+      amounts: { [CUSTOMER_ACCOUNT.DEBT_debit]: 60 },
       operations: [{
         label: 'achat adhérent TEST Jean',
         member: 'TEST Jean',
         values: {
           CAR: 30,
-          [CUSTOMER_ACCOUNT.DEBT_debit]: 60,
           [CUSTOMER_ACCOUNT.ASSET_credit]: 30,
         },
       }],
@@ -222,6 +229,7 @@ describe('BooksEditorComponent accounting validation', () => {
 
     expect(component.form_balance_error).toBe(0);
     expect(component.form.valid).toBeTrue();
+    expect(component.amounts.at(0).value).toBe(60);
     const assetIndex = component.optional_accounts.findIndex(account => account.key === CUSTOMER_ACCOUNT.ASSET_credit);
     expect(assetIndex).toBeGreaterThanOrEqual(0);
     expect(component.operations.at(0).get(['optional_accounts', assetIndex])?.value).toBe('30');
