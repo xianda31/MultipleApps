@@ -149,7 +149,10 @@ export const TRANSACTION_DIRECTORY: { [key in TRANSACTION_ID]: Transaction } = {
     tooltip: 'virement annoncé par un adhérent, à confirmer au rapprochement bancaire',
     class: TRANSACTION_CLASS.REVENUE_FROM_MEMBER,
     financial_accounts: financial_debits,
-    optional_accounts: customer_options,
+    optional_accounts: [
+      ...customer_options,
+      { key: CUSTOMER_ACCOUNT.ASSET_credit, label: 'Somme mise en avoir', description: 'part du virement conservée pour un prochain achat ; ce n\'est pas une vente' },
+    ],
     financial_accounts_to_charge: [CUSTOMER_ACCOUNT.DEBT_debit],
     nominative: true,
     pure_financial: false,

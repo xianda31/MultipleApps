@@ -66,4 +66,39 @@ describe('BankReconciliationComponent', () => {
     const settlement = bookService.create_book_entry.calls.mostRecent().args[0] as BookEntry;
     expect(component.transaction_label(settlement)).toBe('VIREMENT');
   });
+
+  it('settles the full announced amount when an overpayment was granted as a member asset', async () => {
+    const promise = {
+      id: 'promise-overpayment',
+      season: '2026/2027',
+      date: '2026-11-03',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+      amounts: {},
+      operations: [{
+        label: 'vente',
+        member: 'TEST Jean',
+        values: {
+          ADH: 30,
+          [CUSTOMER_ACCOUNT.DEBT_debit]: 60,
+          [CUSTOMER_ACCOUNT.ASSET_credit]: 30,
+        },
+      }],
+    } as BookEntry;
+    const bookService = (component as any).bookService;
+    spyOn(bookService, 'create_book_entry').and.resolveTo({ id: 'settlement-overpayment' });
+    component.current_season = '2026/2027';
+    component.transfer_receipt_dates[promise.id] = '2026-11-03';
+    component.transfer_reports[promise.id] = '26-11';
+
+    await component.settle_transfer(promise);
+
+    expect(bookService.create_book_entry).toHaveBeenCalledWith(jasmine.objectContaining({
+      amounts: { [FINANCIAL_ACCOUNT.BANK_debit]: 60 },
+      operations: [{
+        label: 'règlement du virement annoncé',
+        member: 'TEST Jean',
+        values: { [CUSTOMER_ACCOUNT.DEBT_credit]: 60 },
+      }],
+    }));
+  });
 });

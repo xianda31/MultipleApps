@@ -178,17 +178,53 @@ describe('BooksEditorComponent accounting validation', () => {
     component.operations.at(0).get('label')?.setValue('  Correction : chèque de 60 EUR, carte manquante à acheter avec avoir  ');
   }
 
-  it('only adds the asset grant option to member cheque purchases', () => {
-    expect(TRANSACTION_DIRECTORY[TRANSACTION_ID.achat_adhérent_par_chèque].optional_accounts?.map(account => account.key))
-      .toContain(CUSTOMER_ACCOUNT.ASSET_credit);
+  it('adds the asset grant option to member cheque and transfer payments', () => {
+    for (const id of [
+      TRANSACTION_ID.achat_adhérent_par_chèque,
+      TRANSACTION_ID.achat_adhérent_par_virement,
+    ]) {
+      expect(TRANSACTION_DIRECTORY[id].optional_accounts?.map(account => account.key))
+        .toContain(CUSTOMER_ACCOUNT.ASSET_credit);
+    }
     for (const id of [
       TRANSACTION_ID.achat_adhérent_en_espèces,
       TRANSACTION_ID.achat_adhérent_par_carte,
-      TRANSACTION_ID.achat_adhérent_par_virement,
     ]) {
       expect(TRANSACTION_DIRECTORY[id].optional_accounts?.map(account => account.key))
         .not.toContain(CUSTOMER_ACCOUNT.ASSET_credit);
     }
+  });
+
+  it('balances an announced 60 EUR transfer with a 30 EUR purchase and a 30 EUR asset grant', () => {
+    const component = createComponent();
+    component.protected_mode = true;
+    component.products_accounts = [{ key: 'CAR', description: 'Cartes' }];
+    component.expenses_accounts = [];
+    component.init_form();
+    const entry: BookEntry = {
+      id: 'announced-transfer-overpayment',
+      season: '2026/2027',
+      date: '2026-11-03',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_virement,
+      amounts: {},
+      operations: [{
+        label: 'achat adhérent TEST Jean',
+        member: 'TEST Jean',
+        values: {
+          CAR: 30,
+          [CUSTOMER_ACCOUNT.DEBT_debit]: 60,
+          [CUSTOMER_ACCOUNT.ASSET_credit]: 30,
+        },
+      }],
+    };
+
+    component.set_form(entry);
+
+    expect(component.form_balance_error).toBe(0);
+    expect(component.form.valid).toBeTrue();
+    const assetIndex = component.optional_accounts.findIndex(account => account.key === CUSTOMER_ACCOUNT.ASSET_credit);
+    expect(assetIndex).toBeGreaterThanOrEqual(0);
+    expect(component.operations.at(0).get(['optional_accounts', assetIndex])?.value).toBe('30');
   });
 
   it('balances a 60 EUR cheque with one 30 EUR card and a 30 EUR asset grant', () => {
