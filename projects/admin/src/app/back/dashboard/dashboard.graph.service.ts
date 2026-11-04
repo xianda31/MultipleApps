@@ -281,6 +281,7 @@ export class DashboardGraphService {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          devicePixelRatio: 3,
           layout: { padding: { top: 24 } },
           plugins: {
             legend: { display: false },
@@ -406,6 +407,7 @@ export class DashboardGraphService {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        devicePixelRatio: 3,
         plugins: {
           legend: { display: false },
           title: { display: false, text: 'Bilan par saison' },
@@ -509,6 +511,7 @@ export class DashboardGraphService {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        devicePixelRatio: 3,
         layout: { padding: { top: 24 } },
         plugins: {
           legend: { display: false },

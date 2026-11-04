@@ -130,25 +130,33 @@
             <div class="card h-100">
                 <div class="card-header bg-light d-flex align-items-center justify-content-between gap-2">
                     <h5 class="fw-bold mb-0">Historique des bilans</h5>
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Présentation de l'historique des bilans">
-                        <button type="button" class="btn"
-                            [class.btn-primary]="!balanceWaterfall"
-                            [class.btn-outline-primary]="balanceWaterfall"
-                            (click)="setBalanceChartMode(false)">
-                            Bilan
-                        </button>
-                        <button type="button" class="btn"
-                            [class.btn-primary]="balanceWaterfall"
-                            [class.btn-outline-primary]="!balanceWaterfall"
-                            (click)="setBalanceChartMode(true)">
-                            Détail waterfall
+                    <div class="d-flex gap-2">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Présentation de l'historique des bilans">
+                            <button type="button" class="btn"
+                                [class.btn-primary]="!balanceWaterfall"
+                                [class.btn-outline-primary]="balanceWaterfall"
+                                (click)="setBalanceChartMode(false)">
+                                Bilan
+                            </button>
+                            <button type="button" class="btn"
+                                [class.btn-primary]="balanceWaterfall"
+                                [class.btn-outline-primary]="!balanceWaterfall"
+                                (click)="setBalanceChartMode(true)">
+                                Détail waterfall
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                            (click)="copyHistoryChart(balanceHistoryChart, 'Historique des bilans')"
+                            title="Copier une image haute résolution">
+                            <i class="bi bi-clipboard"></i> Copier en HD
                         </button>
                     </div>
                 </div>
                 <div class="card-body p-4">
                     <div class="card-text text-center justify-content-center">
                         <div class="chart-container" style="position: relative;">
-                            <canvas baseChart [data]="balanceChartData" [options]="balanceChartOptions"
+                            <canvas baseChart #balanceHistoryChart="base-chart"
+                                [data]="balanceChartData" [options]="balanceChartOptions"
                                 [plugins]="balanceChartPlugins" [type]="'bar'">
                             </canvas>
                         </div>
@@ -203,10 +211,18 @@
         </div>
         <div class="col">
             <div class="card h-100">
-                <h5 class="card-header bg-light fw-bold">Historique des comptes de résultat</h5>
+                <div class="card-header bg-light d-flex align-items-center justify-content-between gap-2">
+                    <h5 class="fw-bold mb-0">Historique des comptes de résultat</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                        (click)="copyHistoryChart(profitAndLossHistoryChart, 'Historique des comptes de résultat')"
+                        title="Copier une image haute résolution">
+                        <i class="bi bi-clipboard"></i> Copier en HD
+                    </button>
+                </div>
                 <div class="card-body p-4">
                     <div class="chart-container" style="position: relative;">
-                        <canvas baseChart [data]="profitAndLossHistoryChartData"
+                        <canvas baseChart #profitAndLossHistoryChart="base-chart"
+                            [data]="profitAndLossHistoryChartData"
                             [options]="profitAndLossHistoryChartOptions"
                             [plugins]="balanceChartPlugins" [type]="'bar'">
                         </canvas>

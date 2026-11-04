@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ChartOptions, Plugin } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -14,6 +14,7 @@ import { Balance_board, Balance_sheet } from '../../common/interfaces/balance.in
 import { Revenue_and_expense_definition } from '../../common/interfaces/system-conf.interface';
 import { PageViewService, PageViewStats } from '../../common/services/page-view.service';
 import { normalizeGender } from '../../common/utils/gender.util';
+import { ToastService } from '../../common/services/toast.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,6 +24,8 @@ import { normalizeGender } from '../../common/utils/gender.util';
   styleUrl: './dashboard.scss'
 })
 export class DashboardComponent {
+  @ViewChild('balanceHistoryChart') balanceHistoryChart?: BaseChartDirective;
+  @ViewChild('profitAndLossHistoryChart') profitAndLossHistoryChart?: BaseChartDirective;
 
   allMonths: string[] = [];
   visitMonths: string[] = [];
@@ -126,6 +129,7 @@ export class DashboardComponent {
     private memberService: MembersService,
     private financialService: FinancialReportService,
     private pageViewService: PageViewService,
+    private toastService: ToastService,
   ) {
     this.ivSuffixColorMap = this.graphService.getIVSuffixColorMap();
   }
@@ -304,6 +308,45 @@ export class DashboardComponent {
       this.balanceSheets,
       this.balanceWaterfall,
     ));
+  }
+
+  async copyHistoryChart(chart: BaseChartDirective | undefined, title: string): Promise<void> {
+    const sourceCanvas = chart?.chart?.canvas;
+    if (!sourceCanvas) {
+      this.toastService.showError('copie du graphique', 'Le graphique n’est pas encore disponible.');
+      return;
+    }
+    if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') {
+      this.toastService.showError('copie du graphique', 'La copie d’image n’est pas prise en charge par ce navigateur.');
+      return;
+    }
+
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = sourceCanvas.width;
+    exportCanvas.height = sourceCanvas.height;
+    const context = exportCanvas.getContext('2d');
+    if (!context) {
+      this.toastService.showError('copie du graphique', 'Impossible de préparer l’image.');
+      return;
+    }
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+    context.drawImage(sourceCanvas, 0, 0);
+
+    try {
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        exportCanvas.toBlob(
+          result => result ? resolve(result) : reject(new Error('PNG generation failed')),
+          'image/png',
+        );
+      });
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      this.toastService.showSuccess('graphique copié en HD', `${title} peut être collé dans PowerPoint.`);
+    } catch (error) {
+      console.error('High-resolution chart copy failed:', error);
+      this.toastService.showError('copie du graphique', 'Le navigateur a refusé l’accès au presse-papiers.');
+    }
   }
 
   initialize_results_data(): {  per_section_revenues: { [section: string]: number }, per_section_expenses: { [section: string]: number } } {
