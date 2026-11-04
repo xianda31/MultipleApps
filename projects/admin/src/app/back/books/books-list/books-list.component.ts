@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BackNavigationService } from '../../services/back-navigation.service';
 import { BookEntry } from '../../../common/interfaces/accounting.interface';
@@ -22,6 +22,7 @@ import { ToastService } from '../../../common/services/toast.service';
   styleUrl: './books-list.component.scss'
 })
 export class BooksListComponent {
+  @ViewChild('tableScroll') tableScroll?: ElementRef<HTMLElement>;
 
   slice_start!: number; // pour le slice des opérations
 
@@ -30,6 +31,7 @@ export class BooksListComponent {
   book_entries!: BookEntry[];
   truncature = '1.2-2';  // '1.0-0';// '1.2-2';  //
   isMobilePortrait: boolean = false;
+  private scrollPositionToRestore: number | null = null;
   constructor(
     private bookService: BookService,
     private transactionService: TransactionService,
@@ -53,6 +55,7 @@ export class BooksListComponent {
   }
 
   ngOnInit() {
+    this.scrollPositionToRestore = this.backNavigationService.takeBooksListScrollPosition();
     this.slice_start = this.bookService.get_slice_back();
     this.loaded = false;
     this.checkMobilePortrait();
@@ -67,6 +70,7 @@ export class BooksListComponent {
           this.book_entries = [...book_entries];
           this.apply_sorts();
           this.loaded = true;
+          this.restoreScrollPosition();
         }),
       (err: any) => {
         console.error('Error loading book entries:', err);
@@ -162,7 +166,22 @@ export class BooksListComponent {
 
 
   show_book_entry(book_entry_id: string) {
+    this.backNavigationService.rememberBooksListScrollPosition(
+      this.tableScroll?.nativeElement.scrollTop ?? 0
+    );
     this.backNavigationService.goToBooksEditorFull(book_entry_id);
+  }
+
+  private restoreScrollPosition(): void {
+    if (this.scrollPositionToRestore === null) return;
+
+    const scrollTop = this.scrollPositionToRestore;
+    this.scrollPositionToRestore = null;
+    setTimeout(() => {
+      if (this.tableScroll) {
+        this.tableScroll.nativeElement.scrollTop = scrollTop;
+      }
+    });
   }
 
   async delete_book_entry(book_entry: BookEntry) {

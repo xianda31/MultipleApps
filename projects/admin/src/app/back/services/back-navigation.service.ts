@@ -4,7 +4,19 @@ import { BACK_ROUTE_ABS_PATHS } from '../routes/back-route-paths';
 
 @Injectable({ providedIn: 'root' })
 export class BackNavigationService {
+  private booksListScrollPosition: number | null = null;
+
   constructor(private router: Router) {}
+
+  rememberBooksListScrollPosition(scrollTop: number): void {
+    this.booksListScrollPosition = scrollTop;
+  }
+
+  takeBooksListScrollPosition(): number | null {
+    const scrollTop = this.booksListScrollPosition;
+    this.booksListScrollPosition = null;
+    return scrollTop;
+  }
 
   goToShop() {
   this.router.navigate([BACK_ROUTE_ABS_PATHS['Shop']]);
