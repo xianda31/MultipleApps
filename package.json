@@ -122,7 +122,8 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "sass": "^1.90.0",
     "tsx": "^4.16.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "zod": "3.25.17"
   },
   "overrides": {
     "@aws-sdk/checksums": "3.1000.21",
