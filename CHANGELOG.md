@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 ### Fixed
+- Confirmation dialogs: preserve button identity and focus during Angular refreshes, including the fees-collector settlement confirmation.
 - Amplify sandbox: pin Zod to 3.25.17 so `amplify_outputs.json` can be generated.
 - Shop: changing the sale date preserves the buyer and cart, updates the session season, rejects invalid dates, and is disabled during payment/save.
 - Present sales: buyer search uses the local member list without triggering FFB synchronization (including external-license lookups). Full synchronization remains in member management. The list continues receiving member updates, displays its loading state, and reports loading failures; accounting checks remain unchanged.

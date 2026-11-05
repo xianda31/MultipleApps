@@ -21,7 +21,7 @@ interface ConfirmationAction {
       <p *ngIf="message" class="mb-0">{{ message }}</p>
     </div>
     <div class="modal-footer">
-      <button *ngFor="let action of actions" type="button"
+      <button *ngFor="let action of actions; trackBy: trackAction" type="button"
         class="btn" [ngClass]="action.buttonClass" (click)="respond(action.result)">
         {{ action.label }}
       </button>
@@ -52,6 +52,10 @@ export class GetConfirmationComponent {
       result: false,
     };
     return this.confirmFirst ? [confirm, cancel] : [cancel, confirm];
+  }
+
+  trackAction(_index: number, action: ConfirmationAction): boolean {
+    return action.result;
   }
 
   respond(answer: boolean): void {
