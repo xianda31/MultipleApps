@@ -198,27 +198,18 @@ export class TournamentService {
     // C(RU)DL Team
 
     async createTeam(tteams_id: string, player_pair: number[]): Promise<boolean> {
-        try {
-            if (player_pair.length !== 2 || player_pair.some(id => !Number.isFinite(id))) {
-                console.warn(`[TournamentService] createTeam: Exactly 2 valid player IDs are required`);
-                this.toastService.showError('Création d\'équipe', 'Une équipe doit contenir exactement 2 joueurs valides');
-                return false;
-            }
-
-            if (player_pair[0] === player_pair[1]) {
-                this.toastService.showError('Création d\'équipe', 'Les deux joueurs doivent être différents');
-                return false;
-            }
-
-            const success = await this.ffbService.postTeam(tteams_id, player_pair);
-            if (!success) {
-                return false;
-            }
-            return true;
-        } catch (error) {
-            console.error('Error creating team:', error);
+        if (player_pair.length !== 2 || player_pair.some(id => !Number.isFinite(id))) {
+            console.warn(`[TournamentService] createTeam: Exactly 2 valid player IDs are required`);
+            this.toastService.showError('Création d\'équipe', 'Une équipe doit contenir exactement 2 joueurs valides');
             return false;
         }
+
+        if (player_pair[0] === player_pair[1]) {
+            this.toastService.showError('Création d\'équipe', 'Les deux joueurs doivent être différents');
+            return false;
+        }
+
+        return this.ffbService.postTeam(tteams_id, player_pair);
     }
 
     async deleteTeam(tteams_id: string, tournamentRegistrationId: string): Promise<boolean> {

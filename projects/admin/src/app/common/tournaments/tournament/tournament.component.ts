@@ -33,7 +33,9 @@ export class TournamentComponent implements OnInit {
   whoAmI: Member | null = null;
   already_subscribed = false;
   is_member$!: Observable<boolean>;
-  player2!: FormControl;
+  player2!: FormControl<ClubMember | null>;
+  registeringTeam = false;
+  registrationError = '';
 
   constructor(
     private TournamentService: TournamentService,
@@ -43,6 +45,7 @@ export class TournamentComponent implements OnInit {
     private route: ActivatedRoute,
     private location: Location) { }
   ngOnInit(): void {
+    this.player2 = this.fb.control<ClubMember | null>(null, [Validators.required, this.player2_validator]);
 
     this.route.paramMap.subscribe(params => {
       this.tteam_tournament_id = params.get('tournament_id') || '';
@@ -52,6 +55,7 @@ export class TournamentComponent implements OnInit {
           this.tournament_date = tteams.tournament.date;
           this.tournament_name = tteams.tournament.title;
           this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
+          this.player2.updateValueAndValidity();
         });
 
       this.TournamentService.getIsolatedPlayers(this.tteam_tournament_id)
@@ -66,8 +70,6 @@ export class TournamentComponent implements OnInit {
       this.whoAmI = member;
       this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
     });
-
-    this.player2 = this.fb.control(null, [Validators.required, this.player2_validator]);
 
     this.is_member$ = this.auth.logged_member$.pipe(
       map((member) => { return member !== null; })
@@ -132,11 +134,22 @@ export class TournamentComponent implements OnInit {
   //   this.createTeam(player_pair);
   // }
   subscribeWithPlayer2() {
+    if (this.registeringTeam) return;
+    this.registrationError = '';
     const me = this.whoAmI?.person_id;
-    if (me === undefined || me === null) return;
-    const partner: ClubMember = this.player2.value;
+    if (typeof me !== 'number' || !Number.isInteger(me) || me <= 0) {
+      this.registrationError = 'Identifiant FFB introuvable. Veuillez contacter le club pour compléter votre fiche membre.';
+      return;
+    }
+    this.player2.updateValueAndValidity();
+    this.player2.markAsTouched();
+    const partner = this.player2.value;
     if (!partner?.id) {
-      this.toastService.showError('tournoi', 'Merci de sélectionner un partenaire.');
+      this.registrationError = 'Merci de sélectionner un partenaire.';
+      return;
+    }
+    if (this.player2.invalid) {
+      this.registrationError = 'Ce joueur est déjà inscrit.';
       return;
     }
     const player_pair: number[] = [me, partner.id];
@@ -144,11 +157,12 @@ export class TournamentComponent implements OnInit {
   }
 
   createTeam(player_pair: number[]) {
-
+    this.registrationError = '';
+    this.registeringTeam = true;
     this.TournamentService.createTeam(this.tteam_tournament_id.toString(), player_pair)
       .then((created) => {
         if (!created) {
-          this.toastService.showError('tournoi', "L'inscription de l'équipe a été refusée");
+          this.registrationError = "L'inscription de l'équipe a été refusée";
           return;
         }
 
@@ -159,6 +173,7 @@ export class TournamentComponent implements OnInit {
           next: (tteams) => {
             this.teams = Array.isArray(tteams.items) ? tteams.items : [];
             this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
+            this.player2.updateValueAndValidity();
           },
           error: (error) => {
             console.warn('[TournamentComponent] Équipe créée, mais actualisation impossible', error);
@@ -166,9 +181,19 @@ export class TournamentComponent implements OnInit {
           }
         });
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         console.error('[TournamentComponent] Inscription équipe impossible', error);
-        this.toastService.showError('tournoi', "L'inscription de l'équipe a échoué");
+        const reason = error instanceof Error ? error.message.trim()
+          : typeof error === 'string' ? error.trim() : '';
+        const uniqueReasons = [...new Set(reason.split(/\r?\n/)
+          .map(line => line.replace(/^\s*\d+\s*:\s*/, '').trim())
+          .filter(line => line.length > 0))].join(' ');
+        this.registrationError = uniqueReasons
+          ? `L'inscription de l'équipe a échoué : ${uniqueReasons}`
+          : "L'inscription de l'équipe a échoué";
+      })
+      .finally(() => {
+        this.registeringTeam = false;
       });
   }
 
@@ -217,6 +242,7 @@ export class TournamentComponent implements OnInit {
             (registeredTeam) => registeredTeam.tournamentRegistrationId !== tournamentRegistrationId
           );
           this.already_subscribed = this.has_subscribed(this.whoAmI?.person_id);
+          this.player2.updateValueAndValidity();
           this.toastService.showSuccess("tournoi", "vous êtes désinscrit(s) !");
         } else {
           this.toastService.showError("tournoi", "la désinscription a été refusée");

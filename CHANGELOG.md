@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 ### Fixed
+- Tournament registration: report missing member FFB IDs, show pending team submissions, revalidate partners when registered teams change, and display FFB rejection reasons directly in the page (including registrations managed by the organizer).
+- Team registration stops at the first failed POST (no automatic retries), logs the error once, and groups identical per-player rejection reasons in the page.
 - Confirmation dialogs: preserve button identity and focus during Angular refreshes, including the fees-collector settlement confirmation.
 - Amplify sandbox: pin Zod to 3.25.17 so `amplify_outputs.json` can be generated.
 - Shop: changing the sale date preserves the buyer and cart, updates the session season, rejects invalid dates, and is disabled during payment/save.

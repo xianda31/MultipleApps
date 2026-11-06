@@ -393,25 +393,21 @@ export class FFB_proxyService {
     const captainId = personIds[0]; // First player is captain
     const playersAsNumbers = personIds;
 
-    try {
-      await this.ensureConfigReady();
+    await this.ensureConfigReady();
 
-      const restOperation = post({
-        apiName: this.API_NAME,
-        path: this.buildPath(`${FFB_ENDPOINTS.teamCreate}/${groupSessionId}/createTeam`),
-        options: this.withTraceHeaders({
-          body: {
-            players: playersAsNumbers,
-            captainId: captainId
-          }
-        })
-      });
-      await restOperation.response;
-      return true;
-    } catch (error) {
-      console.error('[FFB Service] postTeam failed: ', error);
-      return false;
-    }
+    const restOperation = post({
+      apiName: this.API_NAME,
+      path: this.buildPath(`${FFB_ENDPOINTS.teamCreate}/${groupSessionId}/createTeam`),
+      options: this.withTraceHeaders({
+        retryStrategy: { strategy: 'no-retry' as const },
+        body: {
+          players: playersAsNumbers,
+          captainId: captainId
+        }
+      })
+    });
+    await restOperation.response;
+    return true;
   }
 
   async getIsolatedPlayers(groupSessionId: string): Promise<IsolatedPlayersResponse> {

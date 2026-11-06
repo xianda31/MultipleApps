@@ -100,13 +100,17 @@
                     </div>
                 </div>
                 <!-- Boutons -->
+                <div *ngIf="registrationError" class="alert alert-danger" role="alert">
+                    {{ registrationError }}
+                </div>
                 <div class="d-flex gap-2 justify-content-around">
                     <button *ngIf="canCreateIsolatedPlayer" class="btn btn-sm btn-outline-primary" (click)="createIsolatedPlayer()"
                         [disabled]="am_i_isolated_player">
                         <i class="bi bi-person me-1"></i>{{am_i_isolated_player ? 'Déjà inscrit(e) seul(e)' : "M'inscrire seul(e)"}}
                     </button>
-                    <button class="btn btn-sm btn-primary" (click)="subscribeWithPlayer2()" [disabled]="!player2.valid">
-                        <i class="bi bi-people me-1"></i>Inscrire l'équipe
+                    <button type="button" class="btn btn-sm btn-primary" (click)="subscribeWithPlayer2()"
+                        [disabled]="!player2.valid || registeringTeam" [attr.aria-busy]="registeringTeam">
+                        <i class="bi bi-people me-1"></i>{{registeringTeam ? 'Inscription en cours...' : "Inscrire l'équipe"}}
                     </button>
                 </div>
             </div>
