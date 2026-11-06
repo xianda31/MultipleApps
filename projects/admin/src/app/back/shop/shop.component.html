@@ -34,6 +34,19 @@
     </div>
     }
 
+    @if (buyerBalanceLoading) {
+    <div class="alert alert-info my-3" role="status">Chargement de votre dette et de vos avoirs...</div>
+    }
+    @if (buyerBalanceMessage) {
+    <div class="alert alert-warning my-3" role="alert">
+      {{buyerBalanceMessage}}
+      @if (!buyerBalanceReady) {
+      <button type="button" class="btn btn-sm btn-outline-primary ms-2"
+        [disabled]="buyerBalanceLoading" (click)="retryBuyerBalance()">Réessayer</button>
+      }
+    </div>
+    }
+
     @if (shouldShowSpinner$ | async) {
     <div class="alert alert-info d-flex align-items-center my-3" role="alert">
       <div class="spinner-border spinner-border-sm me-2" role="status"></div>
@@ -119,8 +132,8 @@
 
       <!-- Panel: Products (scrollable) -->
       <div class="shop-panel-products" [class.buyer-required]="!onlineMode && !buyer"
-        [class.pe-none]="accountingCheckoutBlocked || (onlineMode && !onlinePaymentActive)"
-        [class.opacity-50]="accountingCheckoutBlocked || (onlineMode && !onlinePaymentActive)">
+        [class.pe-none]="!buyerBalanceReady || buyerBalanceLoading || isSaving || tpePaymentInProgress || accountingCheckoutBlocked || (onlineMode && !onlinePaymentActive)"
+        [class.opacity-50]="!buyerBalanceReady || buyerBalanceLoading || isSaving || tpePaymentInProgress || accountingCheckoutBlocked || (onlineMode && !onlinePaymentActive)">
         @if (!onlineMode) {
         <div class="shop-step-heading products-heading" [class.completed]="buyer">
           <span class="shop-step-number">2</span>

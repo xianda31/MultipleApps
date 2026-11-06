@@ -95,6 +95,13 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   private bookEntriesLoadingSubscription?: Subscription;
   private cartSubscription?: Subscription;
   private membersSubscription?: Subscription;
+  private buyerFormSubscription?: Subscription;
+  private loggedMemberSubscription?: Subscription;
+  private buyerRevision = 0;
+  buyerBalanceLoading = false;
+  buyerBalanceReady = false;
+  buyerBalanceMessage = '';
+  private buyerBalance = { debtAmount: 0, assetAmount: 0 };
   private successBannerTimer: ReturnType<typeof setTimeout> | null = null;
   private lastSuccessSessionId: string | null = null;
   private bookEntriesReady = false;
@@ -107,11 +114,12 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   accountingCheckoutWarning = '';
 
   get checkoutBlocked(): boolean {
-    return this.accountingCheckoutBlocked || this.membershipCheckoutBlocked;
+    return !this.buyerBalanceReady || this.buyerBalanceLoading
+      || this.accountingCheckoutBlocked || this.membershipCheckoutBlocked;
   }
 
   get checkoutWarning(): string {
-    return this.accountingCheckoutWarning || this.membershipCheckoutWarning;
+    return this.buyerBalanceMessage || this.accountingCheckoutWarning || this.membershipCheckoutWarning;
   }
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
@@ -243,20 +251,6 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.buyer && this.bookEntriesReady) {
           this.updateBuyerPaymentFlags(this.buyer, this.shouldNotifyBuyerFlagsAfterSync);
           this.shouldNotifyBuyerFlagsAfterSync = false;
-          // Rafraîchit l'avoir en mode online (chargé avant les book entries au premier render)
-          if (this.onlineMode) {
-            const updatedAsset = this.buyerContext.loadAssets(this.buyer);
-            updatedAsset.then((assetAmount) => {
-              if (assetAmount !== this.asset_amount) {
-                this.asset_amount = assetAmount;
-                const buyerName = this.buyer!.lastname + ' ' + this.buyer!.firstname;
-                this.cartService.setAsset(buyerName, assetAmount);
-                if (assetAmount > 0) {
-                  this.toastService.showInfo('avoir', `cette personne a un avoir de ${assetAmount.toFixed(2)} €`);
-                }
-              }
-            });
-          }
         }
       });
 
@@ -278,6 +272,10 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
         });
       }
 
+      this.buyerFormSubscription = this.buyerForm.valueChanges.subscribe((value) => {
+        void this.onBuyerChange(value['buyer']);
+      });
+
       this.membersSubscription = this.membersService.listMembers().subscribe({
         next: (members) => {
           const firstLoad = this.membersLoading;
@@ -293,14 +291,9 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       });
 
       // Watch logged member changes (auth)
-      this.auth.logged_member$.subscribe((member) => {
+      this.loggedMemberSubscription = this.auth.logged_member$.subscribe((member) => {
         this.logged_member = member;
         this.handleLoggedMemberChange(member);
-      });
-
-      // Watch buyer form changes
-      this.buyerForm.valueChanges.subscribe((value) => {
-        this.onBuyerChange(value['buyer']);
       });
 
       // Snapshot du panier pour détecter les doublons avant enregistrement.
@@ -325,6 +318,9 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     this.bookEntriesLoadingSubscription?.unsubscribe();
     this.cartSubscription?.unsubscribe();
     this.membersSubscription?.unsubscribe();
+    this.buyerFormSubscription?.unsubscribe();
+    this.loggedMemberSubscription?.unsubscribe();
+    ++this.buyerRevision;
     this.clearSuccessBannerTimer();
     this.cardPaymentOrchestrator.cancelRemotePayment();
     // shopInit (singleton root) gère sa propre subscription TPESession
@@ -369,29 +365,21 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       // En mode retour Stripe (BookEntry-first), le panier est déjà sauvegardé — on ne le recharge pas.
       // En mode normal, on configure l'acheteur seulement si pas encore fait (!this.buyer).
       const isStripeReturnMode = this.stripeCheckout.getCurrentPhase() !== 'idle';
+      if (!isStripeReturnMode && !member) {
+        this.buyerForm.patchValue({ buyer: null }, { emitEvent: false });
+        void this.onBuyerChange(null);
+      }
       if (!isStripeReturnMode && member && this.members?.length && !this.buyer) {
         const m = this.buyerContext.findBuyerById(member.id, this.members);
         if (m) {
-          this.buyerForm.patchValue({ buyer: m });
-          this.setupBuyerAssets(m);
+          this.buyerForm.patchValue({ buyer: m }, { emitEvent: false });
+          void this.onBuyerChange(m);
         }
       }
       // Toujours tenter de compléter le checkout Stripe si en attente
       this.tryCompleteStripeCheckout();
     } else {
       this.cartService.setSeller(member?.firstname ?? 'unknown');
-    }
-  }
-
-  /**
-   * Configure les avoirs pour un acheteur en mode en ligne
-   */
-  private async setupBuyerAssets(buyer: Member): Promise<void> {
-    const assetAmount = await this.buyerContext.loadAssets(buyer);
-    if (assetAmount > 0) {
-      this.asset_amount = assetAmount;
-      const buyerName = buyer.lastname + ' ' + buyer.firstname;
-      this.cartService.setAsset(buyerName, assetAmount);
     }
   }
 
@@ -428,6 +416,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   on_product_click(product: Product) {
+    if (this.buyerBalanceLoading || !this.buyerBalanceReady || this.isSaving || this.tpePaymentInProgress) return;
 
     if (!this.buyerForm.valid || !this.ensureBuyerCanPurchase(this.buyer)) {
       this.toastService.showWarning('saisie achat', 'selectionner un acheteur');
@@ -446,6 +435,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   on_paired_confirmed() {
+    if (this.buyerBalanceLoading || !this.buyerBalanceReady || this.isSaving || this.tpePaymentInProgress) return;
     if (!this.pendingPairedProduct || !this.pairedSecondMember) return;
     if (!this.ensureBuyerCanPurchase(this.buyer) || !this.ensureBuyerCanPurchase(this.pairedSecondMember)) return;
     const item = this.cartService.build_cart_item(
@@ -466,6 +456,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   cart_confirmed(): void {
+    if (this.checkoutBlocked || this.isSaving) return;
     if (!this.ensureBuyerCanPurchase(this.buyer)) return;
     let full_name = this.membersService.first_then_last_name(this.buyer!);
     if (!this.validateMembershipGuardrailBeforeCheckout()) {
@@ -584,8 +575,13 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
    * Gère les changements d'acheteur dans le formulaire
    */
   private async onBuyerChange(buyer: Member | null): Promise<void> {
+    const revision = ++this.buyerRevision;
+    this.buyerBalanceReady = false;
+    this.buyerBalanceLoading = !!buyer;
+    this.buyerBalanceMessage = '';
     if (!buyer) {
-      this.cartService.clearCart();
+      await this.buyerContext.setupBuyer(null);
+      if (revision !== this.buyerRevision) return;
       this.debt_amount = 0;
       this.asset_amount = 0;
       this.message = '';
@@ -596,25 +592,67 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (!this.ensureBuyerCanPurchase(buyer)) {
       this.buyerForm.patchValue({ buyer: null }, { emitEvent: false });
-      this.cartService.clearCart();
+      await this.buyerContext.setupBuyer(null);
+      this.buyerBalanceLoading = false;
       return;
     }
 
     // Setup buyer context (dettes, avoirs)
-    const state = await this.buyerContext.setupBuyer(buyer);
-    this.debt_amount = state.debtAmount;
-    this.asset_amount = state.assetAmount;
+    try {
+      const state = await this.buyerContext.setupBuyer(buyer);
+      if (revision !== this.buyerRevision) return;
+      this.debt_amount = state.debtAmount;
+      this.asset_amount = state.assetAmount;
+      this.buyerBalance = { debtAmount: state.debtAmount, assetAmount: state.assetAmount };
+      this.buyerBalanceReady = true;
 
-    // Affichage immédiat: on calcule déjà le message à partir du profil membre.
-    // Quand les écritures sont prêtes, on recalculera avec l'historique comptable.
-    this.updateBuyerPaymentFlags(buyer, this.bookEntriesReady);
-    if (!this.bookEntriesReady) {
-      this.shouldNotifyBuyerFlagsAfterSync = true;
+      this.updateBuyerPaymentFlags(buyer, this.bookEntriesReady);
+      if (!this.bookEntriesReady) {
+        this.shouldNotifyBuyerFlagsAfterSync = true;
+      }
+
+      if (this.asset_amount > 0) {
+        this.toastService.showInfo('avoir', `cette personne a un avoir de ${this.asset_amount.toFixed(2)} €`);
+      }
+    } catch (error: unknown) {
+      if (revision !== this.buyerRevision) return;
+      console.error('[ShopComponent] Impossible de charger le solde', error);
+      this.buyerBalanceMessage = 'Impossible de charger votre dette et vos avoirs. Réessayez avant de payer.';
+    } finally {
+      if (revision === this.buyerRevision) this.buyerBalanceLoading = false;
     }
+  }
 
-    // Add asset info if available
-    if (this.asset_amount > 0) {
-      this.toastService.showInfo('avoir', `cette personne a un avoir de ${this.asset_amount.toFixed(2)} €`);
+  async retryBuyerBalance(): Promise<void> {
+    await this.onBuyerChange(this.buyer);
+  }
+
+  private async verifyOnlineBalance(member: Member): Promise<boolean> {
+    const revision = this.buyerRevision;
+    this.buyerBalanceLoading = true;
+    try {
+      const state = await this.buyerContext.loadBalance(member, true);
+      if (revision !== this.buyerRevision || this.buyer?.id !== member.id) return false;
+      const changed = state.debtAmount !== this.buyerBalance.debtAmount
+        || state.assetAmount !== this.buyerBalance.assetAmount;
+      this.buyerBalance = { debtAmount: state.debtAmount, assetAmount: state.assetAmount };
+      this.debt_amount = state.debtAmount;
+      this.asset_amount = state.assetAmount;
+      const name = `${member.lastname} ${member.firstname}`;
+      this.cartService.setDebt(name, state.debtAmount);
+      this.cartService.setAsset(name, state.assetAmount);
+      this.buyerBalanceMessage = changed
+        ? 'Votre solde a changé. Vérifiez le panier actualisé, puis confirmez à nouveau le paiement.'
+        : '';
+      return !changed;
+    } catch (error: unknown) {
+      if (revision === this.buyerRevision) {
+        console.error('[ShopComponent] Impossible de vérifier le solde avant paiement', error);
+        this.buyerBalanceMessage = 'Impossible de vérifier votre solde. Aucun paiement lancé ; réessayez.';
+      }
+      return false;
+    } finally {
+      if (revision === this.buyerRevision) this.buyerBalanceLoading = false;
     }
   }
 
@@ -667,6 +705,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       const m = this.buyerContext.findBuyerById(this.logged_member.id, this.members);
       if (m) {
         this.buyerForm.patchValue({ buyer: m }, { emitEvent: false });
+        void this.onBuyerChange(m);
       }
     }
     this.router.navigate([], { relativeTo: this.route, queryParams: {} });
@@ -689,12 +728,11 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async on_stripe_checkout(): Promise<void> {
-    if (this.isSaving) {
+    if (this.isSaving || this.checkoutBlocked) {
       return;
     }
 
     const member = this.onlineMode ? this.logged_member : this.buyer;
-    const cartItems = this.cartService.getCartItems();
 
     if (!this.ensureBuyerCanPurchase(member)) {
       return;
@@ -703,6 +741,8 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.validateMembershipGuardrailBeforeCheckout()) {
       return;
     }
+    if (this.onlineMode && !await this.verifyOnlineBalance(member!)) return;
+    const cartItems = this.cartService.getCartItems();
 
     // Calculer la ristourne globale (mode offline uniquement)
     // = différence entre prix DB et prix saisis dans le cart
@@ -828,7 +868,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async onPayByCard(): Promise<void> {
-    if (this.tpePaymentInProgress) {
+    if (this.tpePaymentInProgress || this.checkoutBlocked || this.isSaving) {
       return;
     }
 

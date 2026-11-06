@@ -116,6 +116,7 @@ export class CartService {
   getCartAmount(): number {
     // console.log('getCartAmount', this._cart.debt, this._cart.asset);
     let due = this._cart.items.reduce((total, item) => total + item.paied, 0) + (this._cart.take_debt ? (this._cart.debt?.amount  || 0) : 0);
+    this._cart.asset_used = null;
 
     if (this._cart.take_asset && this._cart.asset_available && this._cart.asset_available.amount > 0) {
       let asset_available = this._cart.asset_available.amount;

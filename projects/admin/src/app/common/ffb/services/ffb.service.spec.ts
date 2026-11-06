@@ -6,7 +6,6 @@ import { FFB_proxyService } from './ffb.service';
 
 describe('FFB team registration requests', () => {
   const originalConfig = Amplify.getConfig();
-  const originalOptions = Amplify.libraryOptions;
   let service: FFB_proxyService;
   let fetchSpy: jasmine.Spy<typeof fetch>;
 
@@ -29,7 +28,7 @@ describe('FFB team registration requests', () => {
   });
 
   afterEach(() => {
-    Amplify.configure(originalConfig, originalOptions);
+    Amplify.configure(originalConfig);
   });
 
   it('sends only one POST on HTTP 500 and propagates the FFB error without logging again', async () => {

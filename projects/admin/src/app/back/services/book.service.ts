@@ -756,14 +756,14 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       !book_entry.bank_report || book_entry.bank_report === null && this._is_bankable(book_entry));
   }
 
-  get_debts(): Map<string, { total: number, entries: BookEntry[] }> {
+  get_debts(entries: BookEntry[] | undefined = this._book_entries): Map<string, { total: number, entries: BookEntry[] }> {
     let debt = new Map<string, { total: number, entries: BookEntry[] }>();
 
-    if (this._book_entries === undefined) { // if no book entries are loaded yet
+    if (entries === undefined) { // if no book entries are loaded yet
       return debt;
     }
 
-    this._book_entries.forEach((book_entry) => {
+    entries.forEach((book_entry) => {
       const globalDebt = book_entry.amounts[CUSTOMER_ACCOUNT.DEBT_debit];
       if (globalDebt) {
         const name = announcedTransferPayer(book_entry)?.member;
@@ -881,18 +881,18 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
 
   }
 
-  find_member_debt(member_full_name: string): number {
-    let debts = this.get_debts();
+  find_member_debt(member_full_name: string, entries?: BookEntry[]): number {
+    let debts = this.get_debts(entries);
 
     // console.log('%s debt is : ', member_full_name, debt.get(member_full_name) || 0);
     return debts.get(member_full_name)?.total || 0;
 
   }
 
-  find_assets(member_full_name: string): number {
-    if (!this._book_entries) return 0;
+  find_assets(member_full_name: string, entries: BookEntry[] | undefined = this._book_entries): number {
+    if (!entries) return 0;
     let assets = new Map<string, number>();
-    this._book_entries.forEach((book_entry) => {
+    entries.forEach((book_entry) => {
       book_entry.operations.forEach((op) => {
         if (op.values[CUSTOMER_ACCOUNT.ASSET_debit]) {
           let name = op.member;

@@ -1,10 +1,57 @@
 import { Member } from '../../../common/interfaces/member.interface';
 import { CartItem } from '../cart/cart.interface';
 import { StripeCheckoutOrchestrator } from './stripe-checkout.orchestrator';
+import { CartService } from '../cart/cart.service';
 
 describe('StripeCheckoutOrchestrator', () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => sessionStorage.clear());
+
+  for (const buyCard of [false, true]) {
+    it(`charges debt with correct purchased items (new card=${buyCard})`, async () => {
+      const member = { id: 'buyer', firstname: 'Jean', lastname: 'TEST', license_number: '00000001' } as Member;
+      const books = jasmine.createSpyObj('BookService', ['create_book_entry', 'process_book_entry_actions']);
+      books.create_book_entry.and.callFake(async (entry: object) => ({ ...entry, id: 'debt-payment' }));
+      const products = jasmine.createSpyObj('ProductService', ['getProduct']);
+      products.getProduct.and.returnValue({ fulfillmentAction: 'CREATE_PLAYBOOK', productCode: 'CAR12' });
+      const cards = jasmine.createSpyObj('GameCardService', ['createCard', 'refreshCards']);
+      const cart = new CartService(books, products, cards);
+      cart.setBuyer('TEST Jean');
+      cart.setDebt('TEST Jean', 30);
+      if (buyCard) cart.addToCart({
+        product_id: 'card-product', product_account: 'CAR', payee: member,
+        payee_name: 'TEST Jean', paied: 30,
+      });
+      const stripe = jasmine.createSpyObj('StripeService', ['createCheckoutSession', 'associateBookEntry']);
+      stripe.createCheckoutSession.and.resolveTo({
+        data: { sessionId: 'cs_test_debt123456789', sessionUrl: 'https://checkout.stripe.test/session' },
+      });
+      stripe.associateBookEntry.and.resolveTo();
+      const members = jasmine.createSpyObj('MembersService', ['canPurchase']);
+      members.canPurchase.and.returnValue(true);
+      const orchestrator = new StripeCheckoutOrchestrator(
+        cart, stripe, jasmine.createSpyObj('DBhandler', ['deleteBookEntry']),
+        jasmine.createSpyObj('ToastService', ['showError']), members,
+      );
+      await orchestrator.initiateCheckout(
+        cart.getCartItems(), member, 30, 0, { season: '2026/2027', date: '2026-11-06' },
+        true, 'https://example.test/success', 'https://example.test/cancel',
+      );
+      expect(stripe.createCheckoutSession).toHaveBeenCalledWith(jasmine.objectContaining({
+        productIds: buyCard ? ['card-product'] : [],
+        quantities: buyCard ? [1] : [],
+        debtAmountCents: 3000,
+      }));
+      const entry = books.create_book_entry.calls.mostRecent().args[0];
+      expect(entry.amounts.stripe_in).toBe(buyCard ? 60 : 30);
+      expect(entry.purchasedItems).toEqual(buyCard
+        ? [{ productId: 'card-product', beneficiaryMemberIds: ['buyer'], quantity: 1 }] : []);
+      expect(entry.operations[0].values.creance_out).toBe(30);
+      expect(entry.operations[0].values.CAR).toBe(buyCard ? 30 : undefined);
+      expect(cards.createCard).not.toHaveBeenCalled();
+      expect(books.process_book_entry_actions).not.toHaveBeenCalled();
+    });
+  }
 
   it('associates the pending BookEntry before returning the Stripe URL', async () => {
     const member = {

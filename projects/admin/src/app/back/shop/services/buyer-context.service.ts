@@ -4,6 +4,8 @@ import { CartService } from '../cart/cart.service';
 import { BookService } from '../../services/book.service';
 import { MembersService } from '../../../common/services/members.service';
 import { ToastService } from '../../../common/services/toast.service';
+import { DBhandler } from '../../../common/services/graphQL.service';
+import { firstValueFrom, timeout } from 'rxjs';
 
 export interface BuyerState {
   buyer: Member | null;
@@ -20,12 +22,14 @@ export interface BuyerState {
   providedIn: 'root'
 })
 export class BuyerContextService {
+  private setupRevision = 0;
 
   constructor(
     private cartService: CartService,
     private bookService: BookService,
     private membersService: MembersService,
     private toastService: ToastService,
+    private dbHandler: DBhandler,
   ) {}
 
   /**
@@ -60,6 +64,23 @@ export class BuyerContextService {
     return this.bookService.find_assets(name);
   }
 
+  async loadBalance(buyer: Member, refresh = false): Promise<BuyerState> {
+    await this.bookService.whenBookEntriesLoaded();
+    if (!this.bookService.is_book_entries_loaded()) {
+      throw new Error('La synchronisation comptable est indisponible.');
+    }
+    const entries = refresh
+      ? await firstValueFrom(this.dbHandler.listBookEntries(this.bookService.season).pipe(timeout(15000)))
+      : undefined;
+    const name = `${buyer.lastname} ${buyer.firstname}`;
+    return {
+      buyer,
+      debtAmount: Math.max(0, this.bookService.find_member_debt(name, entries)),
+      assetAmount: Math.max(0, this.bookService.find_assets(name, entries)),
+      message: '',
+    };
+  }
+
   /**
    * Détermine le message de license/adhésion
    */
@@ -81,6 +102,7 @@ export class BuyerContextService {
    * Configure le contexte de l'acheteur dans le panier
    */
   async setupBuyer(buyer: Member | null): Promise<BuyerState> {
+    const revision = ++this.setupRevision;
     if (!buyer) {
       this.cartService.clearCart();
       return {
@@ -97,8 +119,9 @@ export class BuyerContextService {
     this.cartService.setBuyer(buyerName);
 
     // Chargement des données
-    const debtAmount = await this.loadDebt(buyer);
-    const assetAmount = await this.loadAssets(buyer);
+    const state = await this.loadBalance(buyer);
+    const { debtAmount, assetAmount } = state;
+    if (revision !== this.setupRevision) return state;
 
     // Configuration du panier
     if (debtAmount > 0) {

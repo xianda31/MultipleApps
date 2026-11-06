@@ -4,6 +4,23 @@ import { CartService } from './cart.service';
 import { PaymentMode } from './cart.interface';
 
 describe('CartService', () => {
+  it('does not retain an asset debit after a refreshed balance removes the available asset', () => {
+    const service = new CartService(
+      jasmine.createSpyObj('BookService', ['create_book_entry']),
+      jasmine.createSpyObj('ProductService', ['getProduct']),
+      jasmine.createSpyObj('GameCardService', ['createCard']),
+    );
+    service.payment = { mode: PaymentMode.CARD, amount: 30, payer_id: 'buyer', bank: '', cheque_no: '' };
+    service.setDebt('TEST Jean', 30);
+    service.setAsset('TEST Jean', 10);
+    expect(service.getCartAmount()).toBe(20);
+    expect(service.cart2Operations()[0].values[CUSTOMER_ACCOUNT.ASSET_debit]).toBe(10);
+
+    service.setAsset('TEST Jean', 0);
+    expect(service.getCartAmount()).toBe(30);
+    expect(service.cart2Operations()[0].values[CUSTOMER_ACCOUNT.ASSET_debit]).toBeUndefined();
+    expect(service.cart2Operations()[0].values[CUSTOMER_ACCOUNT.DEBT_credit]).toBe(30);
+  });
   it('waits for both game cards before completing a two-card sale', async () => {
     const sale = {
       id: '0382e17b-70af-47a0-b380-8aa09002f313',
