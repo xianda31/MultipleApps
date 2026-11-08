@@ -1,4 +1,4 @@
-import { FormBuilder } from '@angular/forms';
+import { FormArray, FormBuilder } from '@angular/forms';
 
 import { BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
 import { TRANSACTION_DIRECTORY } from '../../../common/interfaces/transaction.definition';
@@ -66,7 +66,9 @@ describe('BooksEditorComponent accounting validation', () => {
     books.update_book_entry_documentation.and.callFake(async entry => entry);
     const component = createComponent(true, books);
     component.can_edit_documentation = canEdit;
-    component.products_accounts = [{ key: 'CAR', description: 'Cartes' }];
+    component.products_accounts = [
+      { key: 'CAR', description: 'Cartes' }, { key: 'LIC', description: 'Licence' },
+    ];
     component.expenses_accounts = [];
     component.init_form();
     component.set_form(structuredClone(historical));
@@ -154,7 +156,9 @@ describe('BooksEditorComponent accounting validation', () => {
       const fixture = TestBed.createComponent(BooksEditorComponent);
       const component = fixture.componentInstance;
       component.can_edit_documentation = canEdit;
-      component.products_accounts = [{ key: 'CAR', description: 'Cartes' }];
+      component.products_accounts = [
+        { key: 'CAR', description: 'Cartes' }, { key: 'LIC', description: 'Licence' },
+      ];
       component.expenses_accounts = [];
       component.members = [];
       component.init_form();
@@ -172,6 +176,47 @@ describe('BooksEditorComponent accounting validation', () => {
       expect(!!root.querySelector('app-custom-dropdown')).toBe(!pastSeason);
       expect(!!root.querySelector('button[aria-label="Déverrouiller les montants"]')).toBe(!pastSeason);
       expect(root.querySelector('.account-cell label')?.textContent?.trim()).toBe('CAR');
+      expect(root.querySelector('#value1')).toBeNull();
+      const addAccount = root.querySelector<HTMLSelectElement>('select[aria-label="Compte à ajouter"]');
+      expect(!!addAccount).toBe(!pastSeason);
+      if (!pastSeason) {
+        expect(root.querySelector('input[aria-label="Rechercher un compte"]')).toBeNull();
+        const choice = root.querySelector<HTMLSelectElement>('select[aria-label="Compte à ajouter"]')!;
+        expect(choice.options[0].textContent?.trim()).toBe('＋');
+        const placeholder = choice.parentElement?.querySelector<HTMLInputElement>('.account-placeholder')!;
+        expect(placeholder.value).toBe('autre compte');
+        expect(placeholder.disabled).toBeTrue();
+        expect(choice.parentElement?.parentElement).toBe(root.querySelector('.account-cell')?.parentElement);
+        expect(getComputedStyle(choice.parentElement!).alignSelf).toBe('flex-start');
+        expect(choice.options.length).toBe(2);
+        expect(choice.options[1].textContent).toContain('LIC');
+        choice.value = '1';
+        choice.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+        expect(choice.value).toBe('');
+        expect(choice.disabled).toBeTrue();
+        const licence = root.querySelector<HTMLInputElement>('#value1')!;
+        expect(licence).not.toBeNull();
+        licence.value = '10';
+        licence.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        licence.value = '';
+        licence.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(root.querySelector('#value1')).not.toBeNull();
+        expect(root.querySelector('button[aria-label="Masquer le compte vide LIC"]')).toBeNull();
+        const allAccounts = Array.from(root.querySelectorAll<HTMLButtonElement>('button'))
+          .find(button => button.textContent?.includes('Tous les comptes'))!;
+        allAccounts.click();
+        fixture.detectChanges();
+        expect(root.querySelector('#value1')).not.toBeNull();
+        expect(root.querySelector('select[aria-label="Compte à ajouter"]')).toBeNull();
+        expect(root.querySelector('.account-placeholder')).toBeNull();
+        allAccounts.click();
+        fixture.detectChanges();
+        expect(root.querySelector('#value1')).toBeNull();
+        expect(root.querySelector('select[aria-label="Compte à ajouter"]')).not.toBeNull();
+      }
       expect(root.querySelector('input[formControlName="label"]')).toBeNull();
       const accountCell = root.querySelector<HTMLElement>('.account-cell')!;
       expect(getComputedStyle(accountCell).minWidth).toBe('60px');
@@ -237,6 +282,76 @@ describe('BooksEditorComponent accounting validation', () => {
     component.reset_changes();
     expect(component.form.get('tag')?.value).toBe(component.selected_book_entry.tag);
     expect(component.form.get('date')?.enabled).toBeTrue();
+  });
+
+  it('keeps all accounts available in creation and separates visibility between operations', () => {
+    const { component } = loadHistorical();
+    const first = component.operations.at(0).get('values') as FormArray;
+    component.creation = true;
+    expect(component.account_visible(first, first.at(1))).toBeTrue();
+    component.creation = false;
+    expect(component.account_visible(first, first.at(1))).toBeFalse();
+    component.documentary_mode = false;
+    component.show_account(first, 1);
+    expect(component.account_visible(first, first.at(1))).toBeTrue();
+    component.add_operation(component.selected_transaction!);
+    const second = component.operations.at(1).get('values') as FormArray;
+    expect(component.account_visible(second, second.at(1))).toBeFalse();
+    component.documentary_mode = true;
+    component.show_account(second, 1);
+    expect(component.account_visible(second, second.at(1))).toBeFalse();
+  });
+
+  it('appends selected accounts without changing the financial account mapping', () => {
+    const { component } = loadHistorical();
+    component.documentary_mode = false;
+    component.products_accounts = [
+      { key: 'CAR', description: 'Cartes' },
+      { key: 'LIC', description: 'Licence' },
+      { key: 'BIB', description: 'Livres' },
+    ];
+    component.init_form();
+    component.set_form({
+      ...historical,
+      operations: [{ ...historical.operations[0], values: { LIC: 30 } }],
+    });
+    component.documentary_mode = false;
+    const values = component.operations.at(0).get('values') as FormArray;
+    expect(component.displayed_accounts(values).map(account => account.index)).toEqual([1]);
+    component.show_account(values, 2);
+    component.show_account(values, 0);
+    expect(component.displayed_accounts(values).map(account => account.index)).toEqual([1, 2, 0]);
+    values.at(0).setValue('10');
+    expect(values.at(1).value).toBe('30');
+    expect(component.displayed_accounts(values)[2].control).toBe(values.at(0));
+    component.toggle_all_accounts(values);
+    component.toggle_all_accounts(values);
+    expect(component.displayed_accounts(values).map(account => account.index)).toEqual([1, 0]);
+  });
+
+  it('compacts non-successive used accounts without losing amounts or invalid inputs', () => {
+    const { component } = loadHistorical();
+    component.products_accounts = [
+      { key: 'CAR', description: 'Cartes' },
+      { key: 'LIC', description: 'Licence' },
+      { key: 'PER', description: 'Cours' },
+      { key: 'ADH', description: 'Adhésion' },
+    ];
+    component.init_form();
+    component.set_form(historical);
+    const values = component.operations.at(0).get('values') as FormArray;
+    values.enable();
+    component.toggle_all_accounts(values);
+    values.at(1).setValue('0');
+    values.at(3).setValue('40');
+    component.toggle_all_accounts(values);
+    expect(component.displayed_accounts(values).map(account => account.index)).toEqual([0, 3]);
+    expect(values.at(0).value).toBe('30');
+    expect(values.at(3).value).toBe('40');
+    component.toggle_all_accounts(values);
+    values.at(2).setValue('incorrect');
+    component.toggle_all_accounts(values);
+    expect(component.displayed_accounts(values).map(account => account.index)).toEqual([0, 3, 2]);
   });
 
   it('uses documentation-only saving for a current-season entry', async () => {

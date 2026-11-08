@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 ### Fixed
+- Used-account filtering: returning from the full grid removes empty/zero fields, keeps non-successive used accounts adjacent in display order, and retains invalid inputs for correction without changing accounting values.
+- Additional-account selector: show a plus above a read-only “autre compte” placeholder; hide the selector and return no available accounts while the full grid is displayed.
+- Accounting editor: append newly selected accounts to the right in selection order, without changing their underlying accounting indices.
+- Accounting editor: existing operations show only non-zero expense/revenue accounts, with an inline account selector aligned with account codes and a full-grid toggle. Added or cleared fields remain visible during editing without a removal button; empty accounts are hidden when reopening. Creation is unchanged and closed-season accounts stay read-only.
 - Accounting operation identity: use the same top-aligned column for the member of nominative transactions and the label of non-nominative transactions.
 - BookEntry JSON: display compact JSON by default, with a switch to enable or disable indentation on demand.
 - Nominative accounting entries: keep the automatically populated operation label hidden in the editor for both current and closed seasons; retain the stored trace and its visibility in the raw JSON.

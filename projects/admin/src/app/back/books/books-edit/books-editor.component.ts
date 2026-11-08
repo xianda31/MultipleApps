@@ -51,6 +51,9 @@ export class BooksEditorComponent {
   saving_documentation = false;
   correction_review = false;
   pretty_json = false;
+  private visible_accounts = new WeakSet<AbstractControl>();
+  private account_order = new WeakMap<FormArray, number[]>();
+  private expanded_accounts = new WeakSet<AbstractControl>();
   private initial_values = new WeakMap<AbstractControl, string>();
   private initial_lengths = new WeakMap<FormArray, number>();
 
@@ -420,6 +423,63 @@ export class BooksEditorComponent {
 
   trackByOperationControl = (_index: number, control: AbstractControl) => control;
 
+  account_visible(array: AbstractControl, account: AbstractControl): boolean {
+    if (!this.account_empty(account)) this.visible_accounts.add(account);
+    return this.creation || this.expanded_accounts.has(array) || this.visible_accounts.has(account);
+  }
+
+  displayed_accounts(array: FormArray): Array<{ control: AbstractControl; index: number }> {
+    const order = this.account_order.get(array) || [];
+    const indices = this.creation
+      ? array.controls.map((_control, index) => index)
+      : [...order, ...array.controls.map((_control, index) => index).filter(index => !order.includes(index))];
+    return indices
+      .filter(index => this.account_visible(array, array.at(index)))
+      .map(index => ({ control: array.at(index), index }));
+  }
+
+  trackByDisplayedAccount = (_index: number, account: { control: AbstractControl; index: number }) => account.control;
+
+  toggle_all_accounts(array: FormArray): void {
+    if (this.expanded_accounts.has(array)) {
+      this.expanded_accounts.delete(array);
+      array.controls.forEach(account => {
+        if (this.account_empty(account)) this.visible_accounts.delete(account);
+        else this.visible_accounts.add(account);
+      });
+      const order = this.account_order.get(array) || [];
+      this.account_order.set(array, [
+        ...order.filter(index => !this.account_empty(array.at(index))),
+        ...array.controls.map((_account, index) => index)
+          .filter(index => !order.includes(index) && !this.account_empty(array.at(index))),
+      ]);
+    } else {
+      this.expanded_accounts.add(array);
+    }
+  }
+
+  all_accounts_visible(array: AbstractControl): boolean {
+    return this.expanded_accounts.has(array);
+  }
+
+  available_accounts(array: FormArray, transaction: Transaction): Array<Account & { index: number }> {
+    if (this.all_accounts_visible(array)) return [];
+    return this.expense_or_revenue_accounts(transaction)
+      .map((account, index) => ({ ...account, index }))
+      .filter(account => !this.visible_accounts.has(array.at(account.index)));
+  }
+
+  show_account(array: FormArray, index: number): void {
+    if (this.documentary_mode || this.correction_review) return;
+    this.visible_accounts.add(array.at(index));
+    const order = this.account_order.get(array) || [];
+    if (!order.includes(index)) this.account_order.set(array, [...order, index]);
+  }
+
+  account_empty(account: AbstractControl): boolean {
+    return !account.invalid && (!account.value || this.parse_to_float(account.value) === 0);
+  }
+
   add_operation(transaction: Transaction, operation_initial?: Operation) {
 
     let expense_or_revenue_accounts = this.expense_or_revenue_accounts(transaction);
@@ -448,6 +508,13 @@ export class BooksEditorComponent {
       operationForm.addControl('values', this.fb.array(
         expense_or_revenue_accounts.map((account_def) => new FormControl<string>((operation_initial?.values?.[account_def.key]?.toString() ?? ''), [Validators.pattern(this.NumberRegexPattern)])),
         { validators: this.is_received_member_transfer(transaction) ? [] : [this.atLeastOneFieldValidator] }));
+      (operationForm.get('values') as FormArray).controls.forEach(account => {
+        if (!this.account_empty(account)) this.visible_accounts.add(account);
+      });
+      const values = operationForm.get('values') as FormArray;
+      this.account_order.set(values, values.controls
+        .map((_control, index) => index)
+        .filter(index => this.visible_accounts.has(values.at(index))));
     }
 
     operationForm.controls['total'].setValue(this.sum_operation_values(transaction, operationForm.getRawValue()));

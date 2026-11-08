@@ -35,6 +35,27 @@
         max-width: 120px;
     }
 
+    .account-add {
+        flex: 0 0 120px;
+        align-self: flex-start;
+    }
+
+    .account-selector {
+        width: 100%;
+        font-size: 0.7rem;
+        line-height: 1.5;
+        color: var(--bs-primary);
+        background-color: var(--bs-body-bg);
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+    }
+
+    .account-placeholder {
+        padding: 0.25rem 0.35rem;
+        font-size: 0.875rem;
+    }
+
     .account-cell input,
     input[id^="amount"],
     input[id^="customer_account"] {

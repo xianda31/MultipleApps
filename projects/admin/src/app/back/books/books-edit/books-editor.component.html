@@ -305,19 +305,38 @@
     <ng-template #costs_and_revenues let-inputFormGroup="inputFormGroup" let-transaction="transaction">
       <ng-container [formGroup]="inputFormGroup">
         <div formArrayName="values" class="d-flex flex-wrap" style="gap: 0.25rem;">
-          <div class="account-cell"
-            *ngFor="let account of inputFormGroup.get('values').controls ; let i = index">
+          <ng-container *ngFor="let cell of displayed_accounts(inputFormGroup.get('values')); trackBy: trackByDisplayedAccount">
+          <div class="account-cell">
             <label class="form-label mb-0"
               style="font-size: 0.7rem;"
-              [ngbTooltip]="expense_or_revenue_accounts(transaction)[i].description" tooltipClass="my-custom-class"
-              placement="top">{{expense_or_revenue_accounts(transaction)[i].key}}</label>
+              [ngbTooltip]="expense_or_revenue_accounts(transaction)[cell.index].description" tooltipClass="my-custom-class"
+              placement="top">{{expense_or_revenue_accounts(transaction)[cell.index].key}}</label>
             <input type="text"
-              inputmode="decimal" [class.field-modified]="is_modified(account)"
-              inputmode="decimal" [class.field-modified]="is_modified(account)"
-              [attr.aria-label]="expense_or_revenue_accounts(transaction)[i].description"
-              [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
-              [formControlName]="i" [id]="'value' + i" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
-            <small *ngIf="account.invalid && account.touched" class="text-danger">Nombre invalide</small>
+              inputmode="decimal" [class.field-modified]="is_modified(cell.control)"
+              [attr.aria-label]="expense_or_revenue_accounts(transaction)[cell.index].description"
+              [class]="cell.control.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
+              [formControlName]="cell.index" [id]="'value' + cell.index" style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">
+            <small *ngIf="cell.control.invalid && cell.control.touched" class="text-danger">Nombre invalide</small>
+          </div>
+          </ng-container>
+          <div *ngIf="!creation && !documentary_mode && !all_accounts_visible(inputFormGroup.get('values'))" class="account-add">
+            <select #accountChoice class="account-selector" aria-label="Compte à ajouter"
+              [disabled]="available_accounts(inputFormGroup.get('values'), transaction).length === 0"
+              (change)="show_account(inputFormGroup.get('values'), +accountChoice.value); accountChoice.value = ''">
+              <option value="">＋</option>
+              <option *ngFor="let available of available_accounts(inputFormGroup.get('values'), transaction)" [value]="available.index">
+                {{available.key}} — {{available.description}}
+              </option>
+            </select>
+            <input type="text" class="form-control form-control-sm account-placeholder"
+              value="autre compte" disabled aria-label="Autre compte">
+          </div>
+          <div *ngIf="!creation && !documentary_mode" class="align-self-end">
+            <button type="button" class="btn btn-sm btn-link"
+              [attr.aria-pressed]="all_accounts_visible(inputFormGroup.get('values'))"
+              (click)="toggle_all_accounts(inputFormGroup.get('values'))">
+              {{all_accounts_visible(inputFormGroup.get('values')) ? 'Comptes utilisés' : 'Tous les comptes'}}
+            </button>
           </div>
         </div>
       </ng-container>
