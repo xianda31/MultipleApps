@@ -46,6 +46,9 @@ export class BooksEditorComponent {
   // NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
 
   protected_mode: boolean = false; // pour le mode protégé
+  documentary_mode = false;
+  can_edit_documentation = false;
+  saving_documentation = false;
 
   book_entry_id!: string;
   banks !: Bank[];
@@ -129,9 +132,11 @@ export class BooksEditorComponent {
         this.book_entry_id = params['id'];
         this.creation = (this.book_entry_id === undefined);
         if (!this.creation) {
-          return from(this.bookService.read_book_entry(this.book_entry_id)).pipe(
-            map((book_entry) => ({ book_entry }))
-          );
+          return from(this.bookService.read_book_entry(this.book_entry_id).then(async book_entry => ({
+            book_entry,
+            canEditDocumentation: this.systemDataService.can_write_accounting_season(book_entry.season)
+              ? false : await this.bookService.can_edit_book_entry_documentation(book_entry),
+          })));
         } else {
           return of({ book_entry: null });
         }
@@ -139,6 +144,7 @@ export class BooksEditorComponent {
     ).subscribe({
       next: (result: any) => {
         if (result.book_entry) {
+          this.can_edit_documentation = result.canEditDocumentation;
           this.selected_book_entry = result.book_entry;
           console.log('book entry loaded:', result.book_entry);
           this.set_form(result.book_entry);
@@ -192,6 +198,8 @@ export class BooksEditorComponent {
   set_form(book_entry: BookEntry) {
 
     this.selected_book_entry = book_entry;
+    this.documentary_mode = !this.systemDataService.can_write_accounting_season(book_entry.season);
+    this.season = book_entry.season;
     this.selected_transaction = this.transactionService.get_transaction(book_entry.transaction_id);
     let transac_class = this.selected_transaction.class;
     this.financial_accounts = this.selected_transaction.financial_accounts;
@@ -236,11 +244,18 @@ export class BooksEditorComponent {
     book_entry.operations.forEach((operation) => {
       this.add_operation(this.selected_transaction!, operation);
     });
-    if (book_entry.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque && this.operations.length === 0) {
+    if (!this.documentary_mode && book_entry.transaction_id === TRANSACTION_ID.virement_stripe_vers_banque && this.operations.length === 0) {
       this.add_operation(this.selected_transaction, { label: 'frais PSP', values: {} });
     }
     this.operations_valueChanges_subscribe();
-
+    if (this.documentary_mode) {
+      this.form.disable({ emitEvent: false });
+      if (this.can_edit_documentation) {
+        this.form.controls['tag'].enable({ emitEvent: false });
+        this.form.controls['invoice_ref'].enable({ emitEvent: false });
+        this.operations.controls.forEach(operation => operation.get('label')?.enable({ emitEvent: false }));
+      }
+    }
 
   };
 
@@ -359,6 +374,7 @@ export class BooksEditorComponent {
   }
 
   delete_operation(index: number) {
+    if (this.documentary_mode) return;
     this.operations.removeAt(index);
     const reindexedSearchInput: { [key: number]: string } = {};
     Object.keys(this.memberSearchInput)
@@ -495,11 +511,39 @@ export class BooksEditorComponent {
   }
 
   onSubmit() {
+    if (this.documentary_mode) {
+      void this.save_documentation();
+      return;
+    }
     let transaction = this.transactionService.get_transaction(this.transaction_id);
     const amounts = this.buildAmounts();
     const operations = this.buildOperations(transaction);
 
     this.save_book_entry(amounts, operations);
+  }
+
+  async save_documentation(): Promise<void> {
+    if (!this.can_edit_documentation || this.saving_documentation) return;
+    this.saving_documentation = true;
+    try {
+      const entry: BookEntry = {
+        ...this.selected_book_entry,
+        tag: this.form.controls['tag'].value ?? undefined,
+        invoice_ref: this.form.controls['invoice_ref'].value || undefined,
+        operations: this.selected_book_entry.operations.map((operation, index) => ({
+          ...operation,
+          label: this.operations.at(index).get('label')?.value ?? '',
+        })),
+      };
+      this.selected_book_entry = await this.bookService.update_book_entry_documentation(entry);
+      this.toastService.showSuccess('Documentation', 'Libellés et références mis à jour ; données comptables inchangées.');
+      this.location.back();
+    } catch (error: unknown) {
+      console.error('[BooksEditorComponent] Documentation non enregistrée', error);
+      this.toastService.showError('Documentation', 'Les modifications documentaires n’ont pas été enregistrées.');
+    } finally {
+      this.saving_documentation = false;
+    }
   }
 
   private buildAmounts(): { [key: string]: number } {
@@ -613,6 +657,7 @@ export class BooksEditorComponent {
   // dynamoDB operations
 
   save_book_entry(amounts: { [key: string]: number }, operations: Operation[]) {
+    if (this.documentary_mode) return;
 
     const stripeTag = this.form.controls['stripeTag'].value?.toString()?.trim();
 
@@ -670,6 +715,7 @@ export class BooksEditorComponent {
   }
 
   async delete_book_entry() {
+    if (this.documentary_mode) return;
     try {
       this.bookService.delete_book_entry(this.selected_book_entry);
       this.toastService.showSuccess('écriture BD', 'écriture supprimée');
@@ -681,6 +727,7 @@ export class BooksEditorComponent {
   }
 
   async duplicate_book_entry() {
+    if (this.documentary_mode) return;
     try {
       const today = formatDate(new Date(), 'yyyy-MM-dd', 'en');
       let new_book_entry: BookEntry = {
@@ -833,6 +880,7 @@ export class BooksEditorComponent {
   }
 
   add_invoice_ref() {
+    if (this.documentary_mode && !this.can_edit_documentation) return;
     const modalRef = this.modalService.open(InvoiceSelectComponent, { size: 'lg' });
     modalRef.componentInstance.directory = this.season;
     modalRef.componentInstance.invoiceSelected.subscribe(async (filename: string) => {
@@ -840,8 +888,7 @@ export class BooksEditorComponent {
         modalRef.close();
         this.form.controls['invoice_ref'].setValue(filename);
         if (!this.creation && this.selected_book_entry) {
-          this.selected_book_entry.invoice_ref = filename;
-          await this.bookService.update_book_entry(this.selected_book_entry);
+          await this.save_invoice_reference(filename);
           this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
         } else {
           this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée au formulaire. Elle sera enregistrée lors de la création.');
@@ -856,8 +903,7 @@ export class BooksEditorComponent {
   async set_invoice_na() {
     try {
       this.form.controls['invoice_ref'].setValue('N/A');
-      this.selected_book_entry.invoice_ref = 'N/A';
-      await this.bookService.update_book_entry(this.selected_book_entry);
+      await this.save_invoice_reference('N/A');
       this.toastService.showSuccess('Facture', 'L\'écriture a été marquée comme non documentée.');
     } catch (err) {
       console.error('Error setting invoice N/A:', err);
@@ -868,8 +914,7 @@ export class BooksEditorComponent {
   async clear_invoice_na() {
     try {
       this.form.controls['invoice_ref'].setValue('');
-      this.selected_book_entry.invoice_ref = undefined;
-      await this.bookService.update_book_entry(this.selected_book_entry);
+      await this.save_invoice_reference(undefined);
       this.toastService.showSuccess('Facture', 'Le statut « non documenté » a été effacé.');
     } catch (err) {
       console.error('Error clearing invoice N/A:', err);
@@ -891,16 +936,25 @@ export class BooksEditorComponent {
     }
   }
 
-  clear_invoice_ref() {
+  private async save_invoice_reference(invoice_ref: string | undefined): Promise<void> {
+    const entry = { ...this.selected_book_entry, invoice_ref };
+    this.selected_book_entry = this.documentary_mode
+      ? await this.bookService.update_book_entry_documentation(entry)
+      : await this.bookService.update_book_entry(entry);
+  }
+
+  async clear_invoice_ref() {
     const invoice_ref = this.form.controls['invoice_ref'].value;
-    this.selected_book_entry.invoice_ref = undefined;
-    this.bookService.update_book_entry(this.selected_book_entry).then(() => {
+    try {
+      await this.save_invoice_reference(undefined);
       this.toastService.showSuccess('Suppression référence facture', 'la référence de la facture a été supprimée de l\'écriture');
-    }).catch((err) => {
+      this.form.controls['invoice_ref'].setValue('');
+    } catch (err) {
       console.error('Error updating book entry:', err);
       this.toastService.showError('Suppression référence facture', 'Une erreur est survenue lors de la suppression de la référence de la facture de l\'écriture');
-    });
-    if (invoice_ref && invoice_ref !== 'N/A') {
+      return;
+    }
+    if (!this.documentary_mode && invoice_ref && invoice_ref !== 'N/A') {
       this.invoiceService.delete_invoice(invoice_ref, this.season).then(() => {
         this.toastService.showSuccess('Suppression facture', invoice_ref + ' a été supprimé avec succès.');
       }).catch((err) => {
@@ -908,7 +962,6 @@ export class BooksEditorComponent {
         this.toastService.showError('Suppression facture', 'Une erreur est survenue lors de la suppression de la facture.');
       });
     }
-    this.form.controls['invoice_ref'].setValue('');
   }
 
   onBack() {
@@ -925,6 +978,7 @@ export class BooksEditorComponent {
   }
 
   onMemberSelected(member: Member, index: number) {
+    if (this.documentary_mode) return;
     const displayText = this.displayMemberFn(member);
     this.memberSearchInput[index] = displayText;
     const operationForm = this.operations.at(index) as FormGroup;

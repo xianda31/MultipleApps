@@ -1,5 +1,43 @@
 <div *ngIf="form_ready" class="mt-2">
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div *ngIf="documentary_mode" class="mx-3">
+      <div class="alert alert-info" role="status">
+        Saison {{selected_book_entry.season}} verrouillée : les données comptables restent inchangées.
+        <span *ngIf="can_edit_documentation">Seuls les libellés, le tag et la référence de facture sont modifiables.</span>
+        <span *ngIf="!can_edit_documentation">Les modifications documentaires sont réservées à Administrateur et System.</span>
+      </div>
+      <p>{{selected_book_entry.date}} — {{transaction_label(selected_book_entry.transaction_id)}}</p>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="documentary_tag">Tag</label>
+          <input id="documentary_tag" type="text" class="form-control" formControlName="tag">
+        </div>
+        <div class="col-md-6">
+          <label for="documentary_invoice_ref">Référence facture</label>
+          <input id="documentary_invoice_ref" type="text" class="form-control" formControlName="invoice_ref">
+          <button *ngIf="can_edit_documentation" type="button" class="btn btn-outline-primary mt-2"
+            [disabled]="saving_documentation" (click)="add_invoice_ref()">Définir une facture</button>
+          <button *ngIf="selected_book_entry.invoice_ref && selected_book_entry.invoice_ref !== 'N/A'"
+            type="button" class="btn btn-outline-secondary mt-2 ms-2"
+            (click)="invoiceService.download_invoice(selected_book_entry.invoice_ref!, selected_book_entry.season)">Voir</button>
+        </div>
+      </div>
+      <div formArrayName="operations" class="mt-3">
+        <div *ngFor="let operation of operations.controls; let i = index" [formGroupName]="i" class="mb-3">
+          <label [for]="'documentary_label_' + i">Libellé {{i + 1}}</label>
+          <input [id]="'documentary_label_' + i" type="text" class="form-control" formControlName="label">
+          <div class="small text-muted">{{selected_book_entry.operations[i].member}}</div>
+          <pre class="small mb-0">{{selected_book_entry.operations[i].values | json}}</pre>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button *ngIf="can_edit_documentation" type="submit" class="btn btn-primary me-2"
+          [disabled]="saving_documentation">Enregistrer la documentation</button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Sortir</button>
+      </div>
+      <pre class="small mt-3">{{selected_book_entry | json}}</pre>
+    </div>
+    <ng-container *ngIf="!documentary_mode">
     <!-- 1ere ligne : date , classe transaction , transaction , chèque ref (si applicable) , booutton back -->
     <div class="row justify-content-start align-items-end mx-0">
       <!-- date -->
@@ -379,5 +417,6 @@
 
     </ng-template>
 
+    </ng-container>
   </form>
 </div>

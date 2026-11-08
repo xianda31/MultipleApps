@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 
-import { announcedTransferAmount, announcedTransferPayer, BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, PurchaseStatementEntry, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
+import { announcedTransferAmount, announcedTransferPayer, bookEntryAccountingSnapshot, BookEntry, Revenue, FINANCIAL_ACCOUNT, BALANCE_ACCOUNT, Expense, CUSTOMER_ACCOUNT, TRANSACTION_ID, Operation, AMOUNTS, PurchaseStatementEntry, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
+import { GroupService } from '../../common/authentification/group.service';
+import { Group_names } from '../../common/authentification/group.interface';
 // import { Schema } from '../../../../amplify/data/resource';
 import { BehaviorSubject, catchError, combineLatest, distinctUntilKeyChanged, filter, firstValueFrom, from, map, Observable, of, race, skipWhile, Subscription, switchMap, tap, timer } from 'rxjs';
 import { SystemDataService } from '../../common/services/system-data.service';
@@ -79,7 +81,8 @@ export class BookService {
     private toastService: ToastService,
     private transactionService: TransactionService,
     private dbHandler: DBhandler,
-    private authService: AuthentificationService
+    private authService: AuthentificationService,
+    private groupService: GroupService,
   ) {
 
     // Chargement conditionné à l'authentification : BookEntry est une donnée métier
@@ -235,6 +238,45 @@ export class BookService {
   }
 
   // update
+
+  async can_edit_book_entry_documentation(entry: BookEntry): Promise<boolean> {
+    const groups = await this.groupService.getCurrentUserGroups();
+    const state = this.systemDataService.get_accounting_season_state();
+    const pastSeason = /^\d{4}\/\d{4}$/.test(entry.season)
+      && Number(entry.season.slice(0, 4)) < Math.min(
+        Number(state.initializedSeason.slice(0, 4)), Number(state.calendarSeason.slice(0, 4)),
+      );
+    return (groups.includes(Group_names.Admin) || groups.includes(Group_names.System))
+      && (pastSeason || this.systemDataService.can_write_accounting_season(entry.season));
+  }
+
+  async update_book_entry_documentation(entry: BookEntry): Promise<BookEntry> {
+    try {
+      const current = await this.dbHandler.readBookEntry(entry.id);
+      if (!await this.can_edit_book_entry_documentation(current)) {
+        throw new Error('Seuls Administrateur et System peuvent modifier les documents d’une saison passée.');
+      }
+      if (bookEntryAccountingSnapshot(entry) !== bookEntryAccountingSnapshot(current)) {
+        throw new Error('Modification refusée : seules les modifications de libellé, tag et référence de facture sont autorisées.');
+      }
+      const changes: { tag?: string | null; invoice_ref?: string | null; operations?: Operation[] } = {};
+      if ((entry.tag ?? null) !== (current.tag ?? null)) changes.tag = entry.tag ?? null;
+      if ((entry.invoice_ref ?? null) !== (current.invoice_ref ?? null)) changes.invoice_ref = entry.invoice_ref ?? null;
+      if (entry.operations.some((operation, index) => operation.label !== current.operations[index].label)) {
+        changes.operations = current.operations.map((operation, index) => ({
+          ...operation, label: entry.operations[index].label,
+        }));
+      }
+      if (Object.keys(changes).length === 0) return current;
+      const updated = await this.dbHandler.updateBookEntryDocumentation(entry.id, changes);
+      this.upsertBookEntry(updated);
+      return updated;
+    } catch (error: unknown) {
+      console.error('[BookService] Modification documentaire refusée', error);
+      this.toastService.showError('Documentation comptable', error instanceof Error ? error.message : 'Modification documentaire impossible.');
+      throw error;
+    }
+  }
 
   async update_book_entry(book_entry: BookEntry) {
     this.systemDataService.assert_accounting_write_allowed(book_entry.season);

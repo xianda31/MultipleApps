@@ -162,6 +162,23 @@ export interface BookEntry {
   operations: Operation[];
 }
 
+export function bookEntryAccountingSnapshot(entry: BookEntry): string {
+  const { tag, invoice_ref, createdAt, updatedAt, ...accounting } = entry;
+  const snapshot = {
+    ...accounting,
+    operations: entry.operations.map(({ label, ...operation }) => operation),
+  };
+  return JSON.stringify(snapshot, (_key, value: unknown) => {
+    if (value === null) return undefined;
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      return Object.fromEntries(Object.entries(value)
+        .filter(([key]) => key !== '__typename')
+        .sort(([left], [right]) => left.localeCompare(right)));
+    }
+    return value;
+  });
+}
+
 export function announcedTransferAmount(bookEntry: BookEntry): number {
   const globalAmount = bookEntry.amounts[CUSTOMER_ACCOUNT.DEBT_debit];
   if (globalAmount !== undefined) return globalAmount;

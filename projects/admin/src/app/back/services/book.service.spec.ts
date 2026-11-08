@@ -3,17 +3,31 @@ import { BehaviorSubject, firstValueFrom, of, Subject } from 'rxjs';
 import { BALANCE_ACCOUNT, BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID, TRANSFER_PROMISE_REF_PREFIX } from '../../common/interfaces/accounting.interface';
 import { TRANSACTION_CLASS } from '../../common/interfaces/transaction.definition';
 import { BookService } from './book.service';
+import { Group_names } from '../../common/authentification/group.interface';
+import { GroupService } from '../../common/authentification/group.service';
 
 describe('BookService', () => {
-  function createService(transactionOverrides: Record<string, unknown> = {}, dbHandler: Record<string, unknown> = {}) {
+  function createService(
+    transactionOverrides: Record<string, unknown> = {},
+    dbHandler: Record<string, unknown> = {},
+    groups: Group_names[] = [Group_names.Admin],
+  ) {
+    const groupService = jasmine.createSpyObj<GroupService>('GroupService', ['getCurrentUserGroups']);
+    groupService.getCurrentUserGroups.and.resolveTo(groups);
     return new BookService(
       {
         get_configuration: () => of({ season: '2026/2027' }),
         start_date: (season: string) => `${season.slice(0, 4)}-07-01`,
-        assert_accounting_write_allowed: () => undefined,
+        assert_accounting_write_allowed: (season: string) => {
+          if (season !== '2026/2027') throw new Error('Saison verrouillée');
+        },
         assert_season_initialization_allowed: () => undefined,
+        can_write_accounting_season: (season: string) => season === '2026/2027',
+        get_accounting_season_state: () => ({
+          initializedSeason: '2026/2027', calendarSeason: '2026/2027', status: 'open', writesAllowed: true,
+        }),
       } as any,
-      { showInfo: () => undefined } as any,
+      { showInfo: () => undefined, showError: () => undefined } as any,
       {
         get_transaction: () => ({ revenue_account_to_show: true, ...transactionOverrides }),
         get_entry_label: () => 'virement annoncé',
@@ -21,8 +35,135 @@ describe('BookService', () => {
       } as any,
       dbHandler as any,
       { logged_member$: of(null) } as any,
+      groupService,
     );
   }
+
+  describe('past-season documentation', () => {
+    const original: BookEntry = {
+      id: 'historical-entry', season: '2025/2026', date: '2026-05-10',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+      tag: 'ancien', invoice_ref: 'old.pdf', stripeTag: 'stripe:original',
+      stripeSessionId: 'cs_original', status: 'confirmed',
+      purchasedItems: [{ productId: 'card', beneficiaryMemberIds: ['member'], quantity: 1 }],
+      cheque_ref: 'BNK123', deposit_ref: 'deposit', bank_report: '2026-05',
+      amounts: { stripe_in: 30 },
+      operations: [{ label: 'ancien libellé', member: 'TEST Jean', productCodes: '#CAR12', values: { CAR: 30 } }],
+    };
+
+    for (const group of [Group_names.Admin, Group_names.System]) {
+      it(`allows documentation-only changes for ${group} without running accounting audit`, async () => {
+        const changed = {
+          ...original, amounts: { stripe_in: 31 }, tag: 'corrigé', invoice_ref: undefined,
+          operations: original.operations.map(operation => ({ ...operation, label: 'nouveau libellé' })),
+        };
+        const read = jasmine.createSpy('readBookEntry').and.resolveTo({
+          ...structuredClone(original), amounts: { stripe_in: 31 },
+        });
+        const update = jasmine.createSpy('updateBookEntryDocumentation').and.resolveTo(changed);
+        const service = createService({}, { readBookEntry: read, updateBookEntryDocumentation: update }, [group]);
+
+        await expectAsync(service.update_book_entry_documentation(changed)).toBeResolvedTo(changed);
+        expect(update).toHaveBeenCalledOnceWith(original.id, {
+          tag: 'corrigé', invoice_ref: null, operations: changed.operations,
+        });
+        expect(service.get_book_entries()[0].amounts).toEqual({ stripe_in: 31 });
+      });
+    }
+
+    for (const groups of [[], [Group_names.Member], [Group_names.Support], [Group_names.Editor]]) {
+      it(`rejects documentary updates without an Admin/System group (${groups.join(',') || 'none'})`, async () => {
+        const update = jasmine.createSpy('updateBookEntryDocumentation');
+        const service = createService({}, {
+          readBookEntry: jasmine.createSpy('readBookEntry').and.resolveTo(original),
+          updateBookEntryDocumentation: update,
+        }, groups);
+        spyOn(console, 'error');
+        await expectAsync(service.update_book_entry_documentation({ ...original, tag: 'changed' })).toBeRejected();
+        expect(update).not.toHaveBeenCalled();
+      });
+    }
+
+    const forbiddenChanges: Array<{ title: string; change: (entry: BookEntry) => void }> = [
+      { title: 'amounts', change: entry => { entry.amounts.stripe_in = 60; } },
+      { title: 'operation values', change: entry => { entry.operations[0].values['CAR'] = 60; } },
+      { title: 'beneficiary', change: entry => { entry.operations[0].member = 'AUTRE Jean'; } },
+      { title: 'product codes', change: entry => { entry.operations[0].productCodes = '#OTHER'; } },
+      { title: 'date', change: entry => { entry.date = '2026-05-11'; } },
+      { title: 'season', change: entry => { entry.season = '2026/2027'; } },
+      { title: 'transaction', change: entry => { entry.transaction_id = TRANSACTION_ID.vente_en_espèces; } },
+      { title: 'bank audit', change: entry => { entry.bank_report = null; } },
+      { title: 'cheque reference', change: entry => { entry.cheque_ref = 'BNK999'; } },
+      { title: 'deposit reference', change: entry => { entry.deposit_ref = 'other'; } },
+      { title: 'Stripe reference', change: entry => { entry.stripeTag = 'stripe:other'; } },
+      { title: 'Stripe session', change: entry => { entry.stripeSessionId = 'cs_other'; } },
+      { title: 'status', change: entry => { entry.status = 'pending'; } },
+      { title: 'purchased products', change: entry => { entry.purchasedItems = []; } },
+      { title: 'operation count', change: entry => { entry.operations.push({ label: 'other', values: {} }); } },
+      { title: 'missing accounting field', change: entry => { delete entry.deposit_ref; } },
+    ];
+    for (const { title, change } of forbiddenChanges) {
+      it(`rejects changing ${title} even for System`, async () => {
+        const changed = structuredClone(original);
+        change(changed);
+        const update = jasmine.createSpy('updateBookEntryDocumentation');
+        const service = createService({}, {
+          readBookEntry: jasmine.createSpy('readBookEntry').and.resolveTo(structuredClone(original)),
+          updateBookEntryDocumentation: update,
+        }, [Group_names.System]);
+        spyOn(console, 'error');
+        await expectAsync(service.update_book_entry_documentation(changed)).toBeRejected();
+        expect(update).not.toHaveBeenCalled();
+      });
+    }
+
+    it('sends only the changed reference and accepts reordered accounting object keys', async () => {
+      const source: BookEntry = {
+        ...original,
+        operations: [{ ...original.operations[0], values: { CAR: 20, ADH: 10 } }],
+      };
+      const changed: BookEntry = {
+        ...source, invoice_ref: 'new.pdf',
+        operations: [{ ...source.operations[0], values: { ADH: 10, CAR: 20 } }],
+      };
+      const update = jasmine.createSpy('updateBookEntryDocumentation').and.resolveTo(changed);
+      const service = createService({}, {
+        readBookEntry: jasmine.createSpy('readBookEntry').and.resolveTo(source),
+        updateBookEntryDocumentation: update,
+      });
+      await service.update_book_entry_documentation(changed);
+      expect(update).toHaveBeenCalledOnceWith(original.id, { invoice_ref: 'new.pdf' });
+    });
+
+    it('rejects a stale accounting snapshot rather than overwriting newer amounts', async () => {
+      const update = jasmine.createSpy('updateBookEntryDocumentation');
+      const service = createService({}, {
+        readBookEntry: jasmine.createSpy('readBookEntry').and.resolveTo({
+          ...original, bank_report: '2026-06',
+        }),
+        updateBookEntryDocumentation: update,
+      });
+      spyOn(console, 'error');
+      await expectAsync(service.update_book_entry_documentation({ ...original, tag: 'new' })).toBeRejected();
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('does not authorize documentary edits on a future, unopened season', async () => {
+      const future = { ...original, season: '2027/2028' };
+      const service = createService();
+      await expectAsync(service.can_edit_book_entry_documentation(future)).toBeResolvedTo(false);
+    });
+
+    it('keeps general accounting updates and deletes blocked on a past season', async () => {
+      const update = jasmine.createSpy('updateBookEntry');
+      const remove = jasmine.createSpy('deleteBookEntry');
+      const service = createService({}, { updateBookEntry: update, deleteBookEntry: remove });
+      await expectAsync(service.update_book_entry(original)).toBeRejectedWithError('Saison verrouillée');
+      await expectAsync(service.delete_book_entry(original)).toBeRejectedWithError('Saison verrouillée');
+      expect(update).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalled();
+    });
+  });
 
   it('prorates operation values for a partial Stripe refund', async () => {
     const service = createService();
@@ -487,6 +628,7 @@ describe('BookService live synchronization', () => {
       } as any,
       dbHandler as any,
       { logged_member$: of({ id: 'admin-1' }) } as any,
+      jasmine.createSpyObj<GroupService>('GroupService', ['getCurrentUserGroups']),
     );
     return { service, dbHandler, toastService, configuration$ };
   }

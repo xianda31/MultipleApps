@@ -4,27 +4,175 @@ import { BookEntry, CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from '
 import { TRANSACTION_DIRECTORY } from '../../../common/interfaces/transaction.definition';
 import { BooksEditorComponent } from './books-editor.component';
 import { TransactionService } from '../../services/transaction.service';
+import { BookService } from '../../services/book.service';
+import { SystemDataService } from '../../../common/services/system-data.service';
+import { ToastService } from '../../../common/services/toast.service';
+import { Location } from '@angular/common';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MembersService } from '../../../common/services/members.service';
+import { InvoiceService } from '../../../common/services/invoice.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('BooksEditorComponent accounting validation', () => {
-  function createComponent() {
+  function createComponent(
+    pastSeason = false,
+    bookService = jasmine.createSpyObj<BookService>('BookService', [
+      'update_book_entry_documentation', 'update_book_entry',
+    ]),
+  ) {
     const transactionService = jasmine.createSpyObj('TransactionService', ['get_transaction', 'class_to_ids', 'get_entry_label']);
     transactionService.get_entry_label.and.callFake((entry: BookEntry) =>
       new TransactionService(jasmine.createSpyObj('ToastService', ['showError'])).get_entry_label(entry));
     transactionService.get_transaction.and.callFake((id: TRANSACTION_ID) => TRANSACTION_DIRECTORY[id]);
     transactionService.class_to_ids.and.returnValue([TRANSACTION_ID.virement_stripe_vers_banque]);
+    const system = jasmine.createSpyObj<SystemDataService>('SystemDataService', [
+      'can_write_accounting_season', 'date_in_season',
+    ]);
+    system.can_write_accounting_season.and.returnValue(!pastSeason);
+    system.date_in_season.and.returnValue(true);
     return new BooksEditorComponent(
       new FormBuilder(),
-      {} as any,
+      bookService,
       transactionService,
+      system,
       {} as any,
       {} as any,
       {} as any,
+      jasmine.createSpyObj<ToastService>('ToastService', ['showError', 'showSuccess']),
       {} as any,
       {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      jasmine.createSpyObj<Location>('Location', ['back']),
     );
+  }
+
+  const historical: BookEntry = {
+    id: 'historical', season: '2025/2026', date: '2026-06-10',
+    transaction_id: TRANSACTION_ID.achat_adhérent_par_carte,
+    tag: 'ancien', invoice_ref: 'old.pdf', stripeSessionId: 'cs_original',
+    stripeTag: 'stripe:original', status: 'confirmed',
+    purchasedItems: [{ productId: 'card', beneficiaryMemberIds: ['buyer'], quantity: 1 }],
+    bank_report: '2026-06', amounts: { stripe_in: 31 },
+    operations: [{ label: 'ancien', member: 'TEST Jean', productCodes: '#CAR12', values: { CAR: 30 } }],
+  };
+
+  function loadHistorical(canEdit = true) {
+    const books = jasmine.createSpyObj<BookService>('BookService', [
+      'update_book_entry_documentation', 'update_book_entry',
+    ]);
+    books.update_book_entry_documentation.and.callFake(async entry => entry);
+    const component = createComponent(true, books);
+    component.can_edit_documentation = canEdit;
+    component.products_accounts = [{ key: 'CAR', description: 'Cartes' }];
+    component.expenses_accounts = [];
+    component.init_form();
+    component.set_form(structuredClone(historical));
+    return { component, books };
+  }
+
+  it('only enables labels, tag and invoice reference for authorized historical documentation', () => {
+    const { component } = loadHistorical();
+    expect(component.documentary_mode).toBeTrue();
+    expect(component.season).toBe(historical.season);
+    expect(component.form.get('tag')?.enabled).toBeTrue();
+    expect(component.form.get('invoice_ref')?.enabled).toBeTrue();
+    expect(component.operations.at(0).get('label')?.enabled).toBeTrue();
+    for (const key of ['date', 'transaction_id', 'amounts', 'stripeTag', 'deposit_ref', 'bank_name', 'cheque_number']) {
+      expect(component.form.get(key)?.disabled).withContext(key).toBeTrue();
+    }
+    expect(component.operations.at(0).get('member')?.disabled).toBeTrue();
+    expect(component.operations.at(0).get('values')?.disabled).toBeTrue();
+  });
+
+  it('preserves every accounting field and bypasses audit when saving historical labels', async () => {
+    const { component, books } = loadHistorical();
+    component.form.get('tag')?.setValue('nouveau');
+    component.operations.at(0).get('label')?.setValue('nouveau libellé');
+    const audit = spyOn(component, 'book_entry_balance_error').and.callThrough();
+
+    await component.save_documentation();
+
+    expect(books.update_book_entry_documentation).toHaveBeenCalledOnceWith({
+      ...historical, tag: 'nouveau',
+      operations: [{ ...historical.operations[0], label: 'nouveau libellé' }],
+    });
+    expect(books.update_book_entry).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it('leaves all historical fields disabled without documentary permission', async () => {
+    const { component, books } = loadHistorical(false);
+    expect(component.form.disabled).toBeTrue();
+    await component.save_documentation();
+    expect(books.update_book_entry_documentation).not.toHaveBeenCalled();
+  });
+
+  it('submits documentary edits without rebuilding amounts or operations', () => {
+    const { component } = loadHistorical();
+    const saveDocumentation = spyOn(component, 'save_documentation').and.resolveTo();
+    const saveAccounting = spyOn(component, 'save_book_entry');
+    component.onSubmit();
+    expect(saveDocumentation).toHaveBeenCalledOnceWith();
+    expect(saveAccounting).not.toHaveBeenCalled();
+  });
+
+  for (const canEdit of [true, false]) {
+    it(`renders historical documentation with no accounting controls (permission=${canEdit})`, async () => {
+      const books = jasmine.createSpyObj<BookService>('BookService', [
+        'update_book_entry_documentation', 'update_book_entry',
+      ]);
+      books.update_book_entry_documentation.and.callFake(async entry => entry);
+      const system = jasmine.createSpyObj<SystemDataService>('SystemDataService', [
+        'can_write_accounting_season', 'date_in_season',
+      ]);
+      system.can_write_accounting_season.and.returnValue(false);
+      system.date_in_season.and.returnValue(true);
+      await TestBed.configureTestingModule({
+        imports: [BooksEditorComponent],
+        providers: [
+          { provide: BookService, useValue: books },
+          TransactionService,
+          { provide: SystemDataService, useValue: system },
+          { provide: MembersService, useValue: {} },
+          { provide: InvoiceService, useValue: {} },
+          { provide: NgbModal, useValue: {} },
+          { provide: ToastService, useValue: jasmine.createSpyObj<ToastService>('ToastService', ['showSuccess', 'showError']) },
+          { provide: ActivatedRoute, useValue: {} },
+          { provide: Router, useValue: {} },
+          { provide: Location, useValue: jasmine.createSpyObj<Location>('Location', ['back']) },
+        ],
+      }).compileComponents();
+      spyOn(BooksEditorComponent.prototype, 'ngOnInit');
+      const fixture = TestBed.createComponent(BooksEditorComponent);
+      const component = fixture.componentInstance;
+      component.can_edit_documentation = canEdit;
+      component.products_accounts = [{ key: 'CAR', description: 'Cartes' }];
+      component.expenses_accounts = [];
+      component.init_form();
+      component.set_form(structuredClone(historical));
+      component.form_ready = true;
+      const audit = spyOn(component, 'book_entry_balance_error');
+      fixture.detectChanges();
+      const root: HTMLElement = fixture.nativeElement;
+      expect(root.textContent).toContain('Saison 2025/2026 verrouillée');
+      expect(root.querySelector('input[type="date"]')).toBeNull();
+      expect(root.querySelector('button[type="submit"]') !== null).toBe(canEdit);
+      expect(root.querySelector<HTMLInputElement>('#documentary_tag')?.disabled).toBe(!canEdit);
+      expect(root.querySelector<HTMLInputElement>('#documentary_label_0')?.disabled).toBe(!canEdit);
+      expect(audit).not.toHaveBeenCalled();
+      if (canEdit) {
+        const tag = root.querySelector<HTMLInputElement>('#documentary_tag')!;
+        tag.value = 'nouveau tag';
+        tag.dispatchEvent(new Event('input'));
+        root.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+        await fixture.whenStable();
+        expect(books.update_book_entry_documentation).toHaveBeenCalledOnceWith({
+          ...historical, tag: 'nouveau tag',
+        });
+        expect(books.update_book_entry).not.toHaveBeenCalled();
+      }
+      fixture.destroy();
+    });
   }
 
   it('rejects the malformed payout found in production', () => {

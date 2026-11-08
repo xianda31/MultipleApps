@@ -3,7 +3,7 @@ import { generateClient } from 'aws-amplify/api';
 import { catchError, defer, from, lastValueFrom, map, merge, Observable, of, switchMap, tap, filter } from 'rxjs';
 import { safeGetCurrentUser$ } from '../authentification/safe-auth';
 import { Member, Member_input } from '../interfaces/member.interface';
-import { BookEntry } from '../interfaces/accounting.interface';
+import { BookEntry, Operation } from '../interfaces/accounting.interface';
 import { Schema } from '../../../../../../amplify/data/resource';
 import { Product, Product_input } from '../../back/products/product.interface';
 import { StripeProduct, StripeProductInput } from '../../back/products/stripe-product.interface';
@@ -1742,6 +1742,28 @@ export class DBhandler {
     let jsonified_entry = this.jsonified_entry(entry);
     const { data, errors } = await client.models.BookEntry.update(jsonified_entry);
     if (errors) return Promise.reject(errors);
+    return this.parsed_entry(data as unknown as BookEntry);
+  }
+
+  async updateBookEntryDocumentation(
+    id: string,
+    changes: { tag?: string | null; invoice_ref?: string | null; operations?: Operation[] },
+  ): Promise<BookEntry> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { operations, ...references } = changes;
+    const { data, errors } = await client.models.BookEntry.update({
+      id,
+      ...references,
+      ...(operations ? {
+        operations: operations.map(operation => ({
+          ...operation,
+          values: JSON.stringify(operation.values),
+        })),
+      } : {}),
+    });
+    if (errors?.length) throw errors;
+    if (!data) throw new Error('La modification documentaire n’a retourné aucune écriture.');
     return this.parsed_entry(data as unknown as BookEntry);
   }
 

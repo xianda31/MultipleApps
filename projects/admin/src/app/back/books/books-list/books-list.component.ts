@@ -224,8 +224,7 @@ export class BooksListComponent {
     modalRef.componentInstance.invoiceSelected.subscribe(async (filename: string) => {
       try {
         modalRef.close();
-        entry.invoice_ref = filename;
-        await this.bookService.update_book_entry(entry);
+        await this.bookService.update_book_entry_documentation({ ...entry, invoice_ref: filename });
         this.toastService.showSuccess('Référence facture', 'la référence de la facture a été ajoutée à l\'écriture');
       } catch (err) {
         console.error('Error updating book entry with invoice ref:', err);
