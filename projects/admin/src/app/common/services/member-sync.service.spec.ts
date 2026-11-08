@@ -2,7 +2,9 @@ import { ClubMember } from '../ffb/interface/club-member.interface';
 import { PersonV2 } from '../ffb/interface/person-v2.interface';
 import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { MemberSyncService } from './member-sync.service';
-import { of } from 'rxjs';
+import { MembersService } from './members.service';
+import { Revenue } from '../interfaces/accounting.interface';
+import { firstValueFrom, of } from 'rxjs';
 
 describe('MemberSyncService', () => {
   const clubMember = {
@@ -96,8 +98,106 @@ describe('MemberSyncService', () => {
       ffbService,
       licenseesService,
       bookService,
+      systemDataService,
     };
   }
+
+  [
+    { label: 'person ID', repeated: { ...clubMember } },
+    { label: 'license number', repeated: { ...clubMember, id: 255111 } },
+  ].forEach(({ label, repeated }) => {
+    it(`does not recreate a new sympathisant repeated by ${label} after a cache update`, async () => {
+      const { licenseesService, ffbService, systemDataService, bookService } = createService();
+      const existingMember: Member = {
+        ...member,
+        id: 'existing-member',
+        person_id: 123456,
+        license_number: '01234567',
+        firstname: 'Alex',
+        lastname: 'EXAMPLE',
+        email: 'alex@example.fr',
+        membership_date: '',
+      };
+      const existingClubMember = {
+        ...clubMember,
+        id: existingMember.person_id,
+        license_number: existingMember.license_number,
+        firstName: existingMember.firstname,
+        lastName: existingMember.lastname,
+      } as ClubMember;
+      const dbHandler = jasmine.createSpyObj('DBhandler', ['listMembers', 'createMember', 'updateMember']);
+      let storedMembers = [existingMember];
+      dbHandler.listMembers.and.callFake(() => of([...storedMembers]));
+      dbHandler.createMember.and.callFake(async (input: Omit<Member, 'id'>): Promise<Member> => {
+        const created = { ...input, id: `created-${dbHandler.createMember.calls.count()}` };
+        storedMembers.push(created);
+        return created;
+      });
+      dbHandler.updateMember.and.callFake(async (updated: Member): Promise<Member> => {
+        storedMembers = storedMembers.map((candidate) => candidate.id === updated.id ? updated : candidate);
+        return updated;
+      });
+      const membersService = new MembersService(
+        jasmine.createSpyObj('ToastService', ['showError', 'showWarning', 'showSuccess']),
+        dbHandler,
+        systemDataService,
+      );
+      const service = new MemberSyncService(
+        membersService, licenseesService, ffbService, systemDataService, bookService,
+      );
+      licenseesService.getClubMembers$.and.returnValue(of([
+        existingClubMember, clubMember, repeated,
+      ]));
+
+      const synchronized = await service.ensureMembersSynchronized(true);
+
+      expect(dbHandler.createMember).toHaveBeenCalledTimes(1);
+      expect(synchronized.length).toBe(2);
+      const sympathisant = synchronized.find((candidate) => candidate.id === 'created-1')!;
+      expect(sympathisant.memberStatus).toBe('SYMPATHISANT');
+      expect(membersService.canPurchase(sympathisant)).toBeTrue();
+      expect(sympathisant.membership_date).toBe('');
+
+      const membershipSale: Revenue = {
+        book_entry_id: 'cash-sale',
+        season: '2026/2027',
+        label: '',
+        member: membersService.full_name(sympathisant),
+        date: '2026-11-06',
+        values: { ADH: 35, CAR: 30 },
+      };
+      bookService.get_operations.and.returnValue([membershipSale]);
+      const afterSale = await service.ensureMembersSynchronized(true);
+
+      expect(dbHandler.createMember).toHaveBeenCalledTimes(1);
+      expect(afterSale.length).toBe(2);
+      expect(afterSale.find((candidate) => candidate.id === sympathisant.id)?.membership_date)
+        .toBe('2026-11-06');
+    });
+  });
+
+  it('reloads AWS before matching a FFB identity created in another session', async () => {
+    const { licenseesService, ffbService, systemDataService, bookService } = createService();
+    const dbHandler = jasmine.createSpyObj('DBhandler', ['listMembers', 'createMember', 'updateMember']);
+    dbHandler.listMembers.and.returnValue(of([]));
+    dbHandler.updateMember.and.callFake(async (updated: Member): Promise<Member> => updated);
+    const membersService = new MembersService(
+      jasmine.createSpyObj('ToastService', ['showError', 'showWarning', 'showSuccess']),
+      dbHandler,
+      systemDataService,
+    );
+    await firstValueFrom(membersService.listMembers());
+    dbHandler.listMembers.and.returnValue(of([{ ...member, email: person.email }]));
+    const service = new MemberSyncService(
+      membersService, licenseesService, ffbService, systemDataService, bookService,
+    );
+
+    const result = await service.ensureMembersSynchronized(true);
+
+    expect(dbHandler.listMembers).toHaveBeenCalledTimes(2);
+    expect(dbHandler.createMember).not.toHaveBeenCalled();
+    expect(result.map((candidate) => candidate.id)).toEqual([member.id]);
+  });
 
   it('returns members without synchronizing when an historical season is selected', async () => {
     const {

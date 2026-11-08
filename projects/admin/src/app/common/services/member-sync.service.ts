@@ -118,13 +118,14 @@ export class MemberSyncService {
             throw new Error('La FFB n’a retourné aucun adhérent ; synchronisation annulée');
         }
 
-        let members = await this.getMembersSnapshot();
+        let members = await this.getMembersSnapshot(true);
 
         for (const [index, licensee] of licensees.entries()) {
             if (!this.canSynchronizeSeason(synchronizationSeason)) {
                 return this.getSortedMembersSnapshot();
             }
             await this.createOrUpdateMember(members, licensee);
+            members = await this.getMembersSnapshot();
             this.reportProgress(
                 8 + Math.round(((index + 1) / licensees.length) * 47),
                 `Fusion des membres FFB : ${index + 1}/${licensees.length}`
@@ -176,8 +177,8 @@ export class MemberSyncService {
         return this.bookService.get_operations();
     }
 
-    private async getMembersSnapshot(): Promise<Member[]> {
-        const members = await firstValueFrom(this.membersService.listMembers().pipe(take(1)));
+    private async getMembersSnapshot(refresh = false): Promise<Member[]> {
+        const members = await firstValueFrom(this.membersService.listMembers(refresh).pipe(take(1)));
         return members ?? [];
     }
 

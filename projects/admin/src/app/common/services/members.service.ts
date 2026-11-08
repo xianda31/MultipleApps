@@ -48,8 +48,8 @@ export class MembersService {
   ) { }
 
 
-  listMembers(): Observable<Member[]> {
-    if (this._members) {
+  listMembers(refresh = false): Observable<Member[]> {
+    if (this._members && !refresh) {
       return this._members$.asObservable();
     }
 
