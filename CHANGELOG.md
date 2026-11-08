@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 ### Fixed
+- Accounting operation identity: use the same top-aligned column for the member of nominative transactions and the label of non-nominative transactions.
+- BookEntry JSON: display compact JSON by default, with a switch to enable or disable indentation on demand.
+- Nominative accounting entries: keep the automatically populated operation label hidden in the editor for both current and closed seasons; retain the stored trace and its visibility in the raw JSON.
+- Accounting editor: open the compact form directly, retain account codes/tooltips, highlight changed fields and keep balance/actions visible. Only accounting changes require confirmation; authorized documentary edits bypass audit. Closed seasons use the same layout with accounting fields disabled. Invoice references are saved with the form without deleting supporting files; technical JSON remains directly visible, and payment metadata/purchased items are preserved.
 - Past-season accounting documentation: Administrateur and System can edit operation labels, tags and invoice references without changing or auditing accounting values. Dates, beneficiaries, accounts, amounts, bank pointing, payment references and purchased items remain locked; future/unopened seasons remain read-only.
 - Online shop: initialize debt and assets together after accounting synchronization, block checkout while balances are unavailable, and re-read server balances before Stripe; changed balances update the cart and require a new confirmation. Debt-only payments have no purchased items and create no playbook.
 - Tournament registration: report missing member FFB IDs, show pending team submissions, revalidate partners when registered teams change, and display FFB rejection reasons directly in the page (including registrations managed by the organizer).

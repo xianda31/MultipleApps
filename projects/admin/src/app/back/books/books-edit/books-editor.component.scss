@@ -18,3 +18,54 @@
 .my-custom-class.bs-tooltip-bottom .tooltip-arrow::before {
     border-bottom-color: darkgreen;
 }
+
+.books-editor {
+    .book-entry-json {
+        overflow-wrap: anywhere;
+        font-family: var(--bs-font-monospace);
+    }
+
+    .json-indented {
+        white-space: pre-wrap;
+    }
+
+    .account-cell {
+        flex: 1 1 calc(6.66% - 0.25rem);
+        min-width: 60px;
+        max-width: 120px;
+    }
+
+    .account-cell input,
+    input[id^="amount"],
+    input[id^="customer_account"] {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    input[id^="amount"],
+    input[id^="customer_account"] {
+        width: 100%;
+        max-width: 120px;
+    }
+
+    .form-control:focus,
+    .account-cell:focus-within {
+        background-color: var(--bs-primary-bg-subtle);
+    }
+
+    .field-modified {
+        border-left: 3px solid var(--bs-warning);
+        background-color: var(--bs-warning-bg-subtle);
+    }
+
+    .editor-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        box-shadow: 0 -2px 6px rgb(0 0 0 / 8%);
+    }
+
+    .form-control:disabled {
+        opacity: 1;
+    }
+}
