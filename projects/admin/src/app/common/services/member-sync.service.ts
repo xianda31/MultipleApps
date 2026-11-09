@@ -29,14 +29,15 @@ export interface MemberSyncProgress {
 })
 export class MemberSyncService {
     private syncInFlight: Promise<Member[]> | null = null;
-    private lastSyncAt = 0;
-    private readonly MIN_SYNC_INTERVAL_MS = 15_000;
+    private lastSynchronizedSeason: string | null = null;
     private pendingMergeConflicts: MemberMergeConflict[] = [];
     private readonly syncProgressSubject = new BehaviorSubject<MemberSyncProgress>({
         percent: 0,
         label: 'Préparation de la synchronisation...',
     });
     readonly syncProgress$ = this.syncProgressSubject.asObservable();
+    private readonly syncMembersSubject = new BehaviorSubject<Member[] | null>(null);
+    readonly syncMembers$ = this.syncMembersSubject.asObservable();
 
     constructor(
         private membersService: MembersService,
@@ -56,11 +57,11 @@ export class MemberSyncService {
             return this.syncInFlight;
         }
 
-        const now = Date.now();
-        if (!force && this.lastSyncAt > 0 && now - this.lastSyncAt < this.MIN_SYNC_INTERVAL_MS) {
-            return this.getMembersSnapshot();
+        if (!force && this.lastSynchronizedSeason === synchronizationSeason) {
+            return this.getSortedMembersSnapshot();
         }
 
+        this.lastSynchronizedSeason = null;
         this.syncInFlight = this.runSynchronization(synchronizationSeason).finally(() => {
             this.syncInFlight = null;
         });
@@ -105,9 +106,13 @@ export class MemberSyncService {
     private async runSynchronization(synchronizationSeason: string): Promise<Member[]> {
         this.pendingMergeConflicts = [];
         this.reportProgress(3, 'Chargement des données FFB et comptables...');
-        const [operations, licensees] = await Promise.all([
+        const [operations, licensees, initialMembers] = await Promise.all([
             this.loadOperations(),
-            firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1))),
+            firstValueFrom(this.licenseesService.getClubMembers$(true).pipe(take(1))),
+            this.getMembersSnapshot(true).then((members) => {
+                this.publishMembers(members);
+                return members;
+            }),
         ]);
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
@@ -118,7 +123,7 @@ export class MemberSyncService {
             throw new Error('La FFB n’a retourné aucun adhérent ; synchronisation annulée');
         }
 
-        let members = await this.getMembersSnapshot(true);
+        let members = initialMembers;
 
         for (const [index, licensee] of licensees.entries()) {
             if (!this.canSynchronizeSeason(synchronizationSeason)) {
@@ -132,6 +137,7 @@ export class MemberSyncService {
             );
         }
 
+        this.publishMembers(members);
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
@@ -157,7 +163,10 @@ export class MemberSyncService {
         members = await this.commitPhase(() => this.ensureMemberStatuses(members));
 
         members = await this.getMembersSnapshot();
-        this.lastSyncAt = Date.now();
+        if (!this.canSynchronizeSeason(synchronizationSeason)) {
+            return this.sortMembers(members);
+        }
+        this.lastSynchronizedSeason = synchronizationSeason;
         this.reportProgress(100, 'Synchronisation terminée');
 
         return this.sortMembers(members);
@@ -165,6 +174,10 @@ export class MemberSyncService {
 
     private reportProgress(percent: number, label: string): void {
         this.syncProgressSubject.next({ percent, label });
+    }
+
+    private publishMembers(members: Member[]): void {
+        this.syncMembersSubject.next(members.map((member) => ({ ...member })));
     }
 
     private async loadOperations(): Promise<Revenue[]> {
@@ -197,7 +210,9 @@ export class MemberSyncService {
 
     private async commitPhase(phase: () => Promise<void>): Promise<Member[]> {
         await phase();
-        return this.getMembersSnapshot();
+        const members = await this.getMembersSnapshot();
+        this.publishMembers(members);
+        return members;
     }
 
     private async createOrUpdateMember(members: Member[], clubMember: ClubMember): Promise<void> {

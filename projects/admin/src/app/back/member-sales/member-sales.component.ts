@@ -83,7 +83,7 @@ export class MemberSalesComponent implements OnDestroy {
         };
 
         const [members, conf, licensees] = await Promise.all([
-          trackInitialLoad(this.memberSyncService.ensureMembersSynchronized(true)),
+          trackInitialLoad(this.memberSyncService.ensureMembersSynchronized()),
           trackInitialLoad(firstValueFrom(this.systemDataService.get_configuration().pipe(take(1)))),
           trackInitialLoad(firstValueFrom(this.licenseesService.getClubMembers$().pipe(take(1)))),
         ]);

@@ -88,6 +88,8 @@ export class MembersComponent implements OnInit {
   selectedLifecycleFilter: MemberLifecycleStatus = 'ACTIVE';
   selectedStatusFilter: MemberStatus | null = null;
   loading: boolean = true;
+  membersLoaded = false;
+  synchronizationFailed = false;
   syncProgress: MemberSyncProgress = {
     percent: 0,
     label: 'Préparation de la synchronisation...',
@@ -164,7 +166,15 @@ export class MembersComponent implements OnInit {
       this.syncProgress = progress;
     });
 
-    void this.loadMembersWithSynchronization(true);
+    this.memberSyncService.syncMembers$.pipe(
+      takeUntil(this.destroy$),
+    ).subscribe((members) => {
+      if (members !== null && this.loading) {
+        this.applyMembers(members);
+      }
+    });
+
+    void this.loadMembersWithSynchronization(false);
   }
 
   ngOnDestroy(): void {
@@ -219,16 +229,28 @@ export class MembersComponent implements OnInit {
   }
 
   private applyMembers(members: Member[]): void {
-    this.members = members.sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    this.members = [...members].sort((a, b) => a.lastname.localeCompare(b.lastname, 'fr', { sensitivity: 'base' }));
+    this.membersLoaded = true;
     this.applyStatusCounters();
     this.avatar_urls$ = this.collect_avatars(this.members);
     this.applyFilters();
   }
 
+  async synchronizeMembers(): Promise<void> {
+    if (this.loading) {
+      return;
+    }
+    await this.loadMembersWithSynchronization(true);
+  }
+
   private async loadMembersWithSynchronization(forceSync: boolean): Promise<void> {
     this.loading = true;
+    this.synchronizationFailed = false;
     try {
-      const members = await this.memberSyncService.ensureMembersSynchronized(forceSync);
+      const [, members] = await Promise.all([
+        this.refreshMembersAsync(),
+        this.memberSyncService.ensureMembersSynchronized(forceSync),
+      ]);
       const changed = await this.resolveMemberMergeConflicts();
       if (changed) {
         await this.refreshMembersAsync();
@@ -236,6 +258,7 @@ export class MembersComponent implements OnInit {
         this.applyMembers(members);
       }
     } catch (err) {
+      this.synchronizationFailed = true;
       console.error('Erreur lors du chargement des membres:', err);
       this.toastService.showError('Membres', 'Erreur lors du chargement des membres');
     } finally {
@@ -251,6 +274,7 @@ export class MembersComponent implements OnInit {
 
     this.seasonRefreshInFlight = true;
     this.loading = true;
+    this.synchronizationFailed = false;
 
     try {
       do {
@@ -261,6 +285,7 @@ export class MembersComponent implements OnInit {
 
       await this.refreshMembersAsync();
     } catch (err) {
+      this.synchronizationFailed = true;
       console.error('Erreur lors de la mise à jour saison des membres:', err);
       this.toastService.showError('Membres', 'Erreur lors de la mise à jour saison');
     } finally {

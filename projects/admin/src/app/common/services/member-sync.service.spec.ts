@@ -4,7 +4,7 @@ import { Member, LicenseStatus } from '../interfaces/member.interface';
 import { MemberSyncService } from './member-sync.service';
 import { MembersService } from './members.service';
 import { Revenue } from '../interfaces/accounting.interface';
-import { firstValueFrom, of } from 'rxjs';
+import { Subject, filter, firstValueFrom, of, take } from 'rxjs';
 
 describe('MemberSyncService', () => {
   const clubMember = {
@@ -54,12 +54,18 @@ describe('MemberSyncService', () => {
         'getLifecycleStatus',
         'hasPaidMembership',
         'isInFfbBase',
+        'resolveMemberStatus',
+        'deriveMemberStatusFromData',
+        'full_name',
       ],
     );
     membersService.updateMember.and.resolveTo();
     membersService.listMembers.and.returnValue(of([member]));
     membersService.getLifecycleStatus.and.returnValue('ACTIVE');
     membersService.hasPaidMembership.and.returnValue(true);
+    membersService.resolveMemberStatus.and.returnValue('SYMPATHISANT');
+    membersService.deriveMemberStatusFromData.and.returnValue('SYMPATHISANT');
+    membersService.full_name.and.callFake((candidate: Member) => `${candidate.lastname} ${candidate.firstname}`);
     membersService.buildFfbBaseReferences.and.returnValue(new Set([clubMember.id, clubMember.license_number]));
     membersService.isInFfbBase.and.callFake((candidate: Member, references: Set<number | string>) =>
       references.has(candidate.person_id as number) || references.has(candidate.license_number)
@@ -101,6 +107,122 @@ describe('MemberSyncService', () => {
       systemDataService,
     };
   }
+
+  it('publishes AWS members before FFB completes, then only at phase boundaries', async () => {
+    const { service, licenseesService, membersService } = createService();
+    const ffbMembers = new Subject<ClubMember[]>();
+    licenseesService.getClubMembers$.and.returnValue(ffbMembers);
+    const snapshots: Member[][] = [];
+    const subscription = service.syncMembers$.subscribe(snapshot => {
+      if (snapshot !== null) snapshots.push(snapshot);
+    });
+    const initialSnapshot = firstValueFrom(service.syncMembers$.pipe(
+      filter((snapshot): snapshot is Member[] => snapshot !== null),
+      take(1),
+    ));
+    const synchronization = service.ensureMembersSynchronized();
+
+    expect(await initialSnapshot).toEqual([member]);
+    expect(snapshots.length).toBe(1);
+    expect(snapshots[0][0]).not.toBe(member);
+    expect(membersService.updateMember).not.toHaveBeenCalled();
+
+    ffbMembers.next([clubMember, { ...clubMember }]);
+    await synchronization;
+
+    expect(snapshots.length).toBe(6);
+    subscription.unsubscribe();
+  });
+
+  it('reuses a successful synchronization throughout the session and returns current cached members', async () => {
+    const { service, membersService, licenseesService, bookService, ffbService } = createService();
+    await service.ensureMembersSynchronized();
+    const cachedMember = { ...member, email: 'updated@example.fr' };
+    membersService.listMembers.and.returnValue(of([cachedMember]));
+    const updateCount = membersService.updateMember.calls.count();
+    const personLookupCount = ffbService.getFFBPerson.calls.count();
+    const later = Date.now() + 60 * 60 * 1000;
+    spyOn(Date, 'now').and.returnValue(later);
+
+    expect(await service.ensureMembersSynchronized()).toEqual([cachedMember]);
+    expect(licenseesService.getClubMembers$).toHaveBeenCalledOnceWith(true);
+    expect(bookService.list_book_entries).toHaveBeenCalledTimes(1);
+    expect(membersService.listMembers.calls.allArgs().filter((args: [boolean?]) => args[0] === true).length).toBe(1);
+    expect(membersService.updateMember).toHaveBeenCalledTimes(updateCount);
+    expect(ffbService.getFFBPerson).toHaveBeenCalledTimes(personLookupCount);
+  });
+
+  it('does not repeat external-license searches when returning in the same session', async () => {
+    const { service, membersService, ffbService } = createService();
+    membersService.listMembers.and.returnValue(of([
+      member,
+      { ...member, id: 'external', person_id: 987654, license_number: '01234567' },
+    ]));
+    await service.ensureMembersSynchronized();
+    const lookupCount = ffbService.searchPlayersSuchAs.calls.count();
+    expect(lookupCount).toBeGreaterThan(0);
+
+    await service.ensureMembersSynchronized();
+
+    expect(ffbService.searchPlayersSuchAs).toHaveBeenCalledTimes(lookupCount);
+  });
+
+  it('runs a new scan when explicitly forced', async () => {
+    const { service, licenseesService, bookService } = createService();
+    await service.ensureMembersSynchronized();
+    await service.ensureMembersSynchronized(true);
+
+    expect(licenseesService.getClubMembers$).toHaveBeenCalledTimes(2);
+    expect(bookService.list_book_entries).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not reuse a synchronization from another season', async () => {
+    const { service, systemDataService, licenseesService } = createService();
+    await service.ensureMembersSynchronized();
+    systemDataService.get_local_season.and.returnValue('2027/2028');
+    systemDataService.get_accounting_season_state.and.returnValue({ initializedSeason: '2027/2028' });
+    await service.ensureMembersSynchronized();
+
+    expect(licenseesService.getClubMembers$).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries after a forced synchronization fails', async () => {
+    const { service, licenseesService } = createService();
+    await service.ensureMembersSynchronized();
+    licenseesService.getClubMembers$.and.returnValue(of([]));
+    await expectAsync(service.ensureMembersSynchronized(true)).toBeRejectedWithError(/aucun adhérent/);
+    licenseesService.getClubMembers$.and.returnValue(of([clubMember]));
+
+    await service.ensureMembersSynchronized();
+
+    expect(licenseesService.getClubMembers$).toHaveBeenCalledTimes(3);
+  });
+
+  it('shares an ongoing scan between simultaneous callers', async () => {
+    const { service, licenseesService } = createService();
+    const [first, second] = await Promise.all([
+      service.ensureMembersSynchronized(),
+      service.ensureMembersSynchronized(),
+    ]);
+
+    expect(second).toEqual(first);
+    expect(licenseesService.getClubMembers$).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not mark a scan interrupted by a season change as successful', async () => {
+    const { service, systemDataService, bookService, licenseesService } = createService();
+    bookService.get_operations.and.callFake(() => {
+      systemDataService.get_local_season.and.returnValue('2025/2026');
+      return [];
+    });
+    await service.ensureMembersSynchronized();
+    systemDataService.get_local_season.and.returnValue('2026/2027');
+    bookService.get_operations.and.returnValue([]);
+
+    await service.ensureMembersSynchronized();
+
+    expect(licenseesService.getClubMembers$).toHaveBeenCalledTimes(2);
+  });
 
   [
     { label: 'person ID', repeated: { ...clubMember } },

@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 ### Fixed
+- Member directory: show cached/AWS members while synchronization runs, publish stable snapshots after each phase, and keep filters and sorting usable. Editing and export stay disabled until completion; failed scans retain the displayed directory with an explicit incomplete-data warning and a retry action.
+- Member directory: reuse a successful synchronization for the selected season throughout the application session, including member-sales navigation. Changing season or using the directory's Actualiser button runs a full scan with a fresh FFB club list; failed or interrupted scans remain retryable. Reloading the application starts a new synchronization session.
 - Member synchronization: reload the AWS directory before matching FFB identities, abort if that reload fails, and refresh the working snapshot after each member to avoid recreating members from a stale session or repeated FFB entries. Existing production duplicates are not deleted automatically.
 - Used-account filtering: returning from the full grid removes empty/zero fields, keeps non-successive used accounts adjacent in display order, and retains invalid inputs for correction without changing accounting values.
 - Additional-account selector: show a plus above a read-only “autre compte” placeholder; hide the selector and return no available accounts while the full grid is displayed.

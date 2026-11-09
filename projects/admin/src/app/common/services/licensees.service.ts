@@ -18,8 +18,8 @@ export class LicenseesService {
    * Get all club members (adherents) from FFB API
    * Cached with shareReplay(1) to prevent duplicate API calls
    */
-  getClubMembers$(): Observable<ClubMember[]> {
-    if (!this.clubMembers$) {
+  getClubMembers$(refresh = false): Observable<ClubMember[]> {
+    if (refresh || !this.clubMembers$) {
       this.clubMembers$ = from(this.FFBService.getAdherents()).pipe(
         shareReplay(1)
       );
