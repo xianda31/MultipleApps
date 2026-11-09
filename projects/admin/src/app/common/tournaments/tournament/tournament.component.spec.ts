@@ -22,6 +22,7 @@ describe('TournamentComponent team registration', () => {
   let teams: Subject<TournamentTeams>;
   const member: Member = {
     id: 'member',
+    lifecycleStatus: 'ACTIVE',
     person_id: 1,
     gender: 'U',
     firstname: 'Jean',

@@ -24,14 +24,18 @@ function member(overrides: Partial<Member>): Member {
 }
 
 describe('active members CSV export', () => {
-  it('exports active and legacy-active members only, sorted by name', () => {
+  it('exports only explicitly active members, sorted by name', () => {
     const csv = buildActiveMembersCsv([
       member({ id: 'archived', lastname: 'ARCHIVE', lifecycleStatus: 'ARCHIVED' }),
+      member({ id: 'banned', lastname: 'BANNI', lifecycleStatus: 'BANNED' }),
       member({ id: 'second', lastname: 'ZOLA', firstname: 'Zoé' }),
-      member({ id: 'legacy', lastname: 'MARTIN', firstname: 'Marc', lifecycleStatus: undefined }),
+      member({ id: 'active', lastname: 'MARTIN', firstname: 'Marc' }),
+      member({ id: 'legacy', lastname: 'LEGACY', lifecycleStatus: undefined }),
     ], '2026/2027');
 
     expect(csv).not.toContain('ARCHIVE');
+    expect(csv).not.toContain('BANNI');
+    expect(csv).not.toContain('LEGACY');
     expect(csv.indexOf('MARTIN')).toBeLessThan(csv.indexOf('ZOLA'));
     expect(csv).toContain('"Licencié"');
     expect(csv).toContain('"memberStatus"');

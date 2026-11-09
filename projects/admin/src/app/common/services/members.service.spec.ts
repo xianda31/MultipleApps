@@ -4,7 +4,7 @@ import { MembersService } from './members.service';
 
 describe('MembersService', () => {
   function createService(memberLoad$: Subject<Member[]>) {
-    const dbHandler = jasmine.createSpyObj('DBhandler', ['listMembers']);
+    const dbHandler = jasmine.createSpyObj('DBhandler', ['listMembers', 'createMember', 'updateMember']);
     dbHandler.listMembers.and.returnValue(memberLoad$.asObservable());
 
     const service = new MembersService(
@@ -78,13 +78,44 @@ describe('MembersService', () => {
     await expectAsync(refresh).toBeRejectedWithError('Member database unavailable');
   });
 
-  it('treats members without a persisted lifecycle status as active', () => {
+  it('rejects members without a persisted lifecycle status', () => {
     const { service } = createService(new Subject<Member[]>());
     const member = { id: 'legacy-member' } as Member;
 
-    expect(service.getLifecycleStatus(member)).toBe('ACTIVE');
+    spyOn(console, 'error');
+    expect(() => service.getLifecycleStatus(member)).toThrowError(/Statut du membre absent/);
+    expect(service.canLogin(member)).toBeFalse();
+    expect(service.canPurchase(member)).toBeFalse();
+  });
+
+  it('allows active members to log in and purchase independently of their FFB license', () => {
+    const { service } = createService(new Subject<Member[]>());
+    const member = { id: 'outside-ffb', lifecycleStatus: 'ACTIVE', license_status: 'unregistered' } as Member;
     expect(service.canLogin(member)).toBeTrue();
     expect(service.canPurchase(member)).toBeTrue();
+  });
+
+  it('rejects null and invalid lifecycle statuses', () => {
+    const { service } = createService(new Subject<Member[]>());
+    spyOn(console, 'error');
+    for (const lifecycleStatus of [null, '', 'UNKNOWN']) {
+      const member: Member = JSON.parse(JSON.stringify({ id: 'invalid', lifecycleStatus }));
+      expect(service.canLogin(member)).toBeFalse();
+      expect(service.canPurchase(member)).toBeFalse();
+      expect(() => service.getLifecycleStatus(member)).toThrowError(/Statut du membre absent/);
+    }
+  });
+
+  it('does not create or update members without an explicit valid lifecycle status', async () => {
+    const { service, dbHandler } = createService(new Subject<Member[]>());
+    const member = { id: 'missing-status' } as Member;
+    spyOn(console, 'error');
+
+    await expectAsync(service.createMember(member)).toBeRejected();
+    await expectAsync(service.updateMember(member)).toBeRejected();
+
+    expect(dbHandler.createMember).not.toHaveBeenCalled();
+    expect(dbHandler.updateMember).not.toHaveBeenCalled();
   });
 
   it('blocks archived and banned members from login and purchases', () => {

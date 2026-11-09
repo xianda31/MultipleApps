@@ -71,7 +71,7 @@ export function buildActiveMembersCsv(members: Member[], season: string = curren
   ];
 
   const rows = members
-    .filter((member) => (member.lifecycleStatus ?? 'ACTIVE') === 'ACTIVE')
+    .filter((member) => member.lifecycleStatus === 'ACTIVE')
     .sort((left, right) => {
       const lastNameOrder = left.lastname.localeCompare(right.lastname, 'fr', { sensitivity: 'base' });
       return lastNameOrder || left.firstname.localeCompare(right.firstname, 'fr', { sensitivity: 'base' });

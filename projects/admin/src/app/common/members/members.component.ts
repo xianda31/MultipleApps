@@ -417,6 +417,7 @@ export class MembersComponent implements OnInit {
       accept_mailing: newbee.acceptMailing,
       membership_date: '',
       memberStatus: 'NON_ADHERENT',
+      lifecycleStatus: 'ACTIVE',
       person_id: undefined,
       iv: undefined
     };

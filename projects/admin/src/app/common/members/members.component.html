@@ -21,7 +21,11 @@
             </div>
           </ng-container>
         </div>
-        <div class="col-auto ms-auto d-flex gap-2">
+        <div class="col-12 d-flex align-items-center gap-2">
+          <span *ngIf="loading && membersLoaded" class="members-sync-notice" role="status">
+            Données provisoires en cours de synchronisation
+          </span>
+          <div class="ms-auto d-flex gap-2">
           <button type="button" class="btn btn-sm btn-outline-primary"
             [disabled]="loading"
             ngbTooltip="Relancer la synchronisation FFB et comptable"
@@ -50,6 +54,7 @@
             <i class="bi bi-download" aria-hidden="true"></i>
             <span class="d-none d-sm-inline ms-1">Export .csv</span>
           </button>
+          </div>
         </div>
         <ng-container *ngIf="membersLoaded">
           <div class="col-12 mt-2 members-overview-layout">
@@ -220,10 +225,6 @@
     </div>
 
     <div class="card-body">
-      <div *ngIf="loading && membersLoaded" class="alert alert-info py-2" role="status">
-        Synchronisation en cours — adhésions et licences provisoires. Consultation disponible ;
-        modifications et export disponibles à la fin.
-      </div>
       <div *ngIf="synchronizationFailed" class="alert alert-warning py-2" role="alert">
         Synchronisation incomplète — les données affichées ne sont pas garanties à jour.
         Cliquez sur Actualiser pour réessayer.

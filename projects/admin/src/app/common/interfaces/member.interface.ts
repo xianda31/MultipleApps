@@ -24,7 +24,7 @@ export interface Member extends Member_settings{
   register_date?: string;
   person_id?: number | null;    // index FFB_licencee
   memberStatus?: string;
-  lifecycleStatus?: MemberLifecycleStatus;
+  lifecycleStatus: MemberLifecycleStatus;
   lifecycleChangedAt?: string;
   lifecycleChangedBy?: string;
   lifecycleReason?: string;

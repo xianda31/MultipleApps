@@ -17,7 +17,7 @@ describe('MembersComponent progressive synchronization', () => {
     id: 'member-1', firstname: 'Alex', lastname: 'EXAMPLE', gender: 'U',
     license_number: '01234567', birthdate: '', city: '', email: 'alex@example.fr',
     phone_one: '', license_taken_at: '', license_status: 'unregistered',
-    membership_date: '2026-09-01', accept_mailing: false,
+    membership_date: '2026-09-01', accept_mailing: false, lifecycleStatus: 'ACTIVE',
   };
 
   function setup() {
@@ -66,12 +66,27 @@ describe('MembersComponent progressive synchronization', () => {
     return { fixture, snapshots, complete, fail, toast };
   }
 
+  it('keeps summary rows compact without shrinking member rows', fakeAsync(() => {
+    const { fixture, complete } = setup();
+    const root: HTMLElement = fixture.nativeElement;
+    const summaryRows = root.querySelectorAll<HTMLTableRowElement>('.members-stats-table tbody tr');
+    expect(summaryRows.length).toBeGreaterThan(0);
+    summaryRows.forEach(row => {
+      expect(row.getBoundingClientRect().height).toBeGreaterThan(0);
+      expect(row.getBoundingClientRect().height).toBeLessThan(28);
+    });
+    const memberRow = root.querySelector<HTMLTableRowElement>('.members-table tbody tr');
+    expect(memberRow?.getBoundingClientRect().height).toBeGreaterThanOrEqual(38);
+    complete([member]);
+    flushMicrotasks();
+  }));
+
   it('renders cached data and phase updates with editing disabled until completion', fakeAsync(() => {
     const { fixture, snapshots, complete } = setup();
     const root: HTMLElement = fixture.nativeElement;
     expect(fixture.componentInstance.loading).toBeTrue();
     expect(root.querySelector('.members-table tbody')?.textContent).toContain('EXAMPLE');
-    expect(root.querySelector('.alert-info')).not.toBeNull();
+    expect(root.querySelector('.card-header .members-sync-notice')?.textContent).toContain('Données provisoires');
     expect(root.querySelector<HTMLButtonElement>('[aria-label="Archiver"]')?.disabled).toBeTrue();
     expect(root.querySelector<HTMLButtonElement>('[aria-label="Exporter les membres actifs au format CSV"]')?.disabled)
       .toBeTrue();
@@ -85,7 +100,7 @@ describe('MembersComponent progressive synchronization', () => {
     flushMicrotasks();
     fixture.detectChanges();
 
-    expect(root.querySelector('.alert-info')).toBeNull();
+    expect(root.querySelector('.members-sync-notice')).toBeNull();
     expect(root.querySelector<HTMLButtonElement>('[aria-label="Archiver"]')?.disabled).toBeFalse();
   }));
 

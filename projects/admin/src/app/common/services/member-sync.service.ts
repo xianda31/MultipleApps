@@ -73,7 +73,7 @@ export class MemberSyncService {
         const nextMember: Member = {
             ...member,
             memberStatus: this.membersService.resolveMemberStatus(member),
-            lifecycleStatus: member.lifecycleStatus ?? 'ACTIVE',
+            lifecycleStatus: member.lifecycleStatus,
         };
         await this.membersService.createMember(nextMember);
     }
@@ -272,7 +272,7 @@ export class MemberSyncService {
             membership_date: member.membership_date,
             person_id: clubMember.id,
             memberStatus: this.computeMemberStatusFromClubMember(clubMember),
-            lifecycleStatus: member.lifecycleStatus ?? 'ACTIVE',
+            lifecycleStatus: member.lifecycleStatus,
             lifecycleChangedAt: member.lifecycleChangedAt,
             lifecycleChangedBy: member.lifecycleChangedBy,
             lifecycleReason: member.lifecycleReason,

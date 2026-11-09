@@ -36,6 +36,7 @@ describe('MemberSyncService', () => {
     membership_date: '2026-08-14',
     person_id: 255110,
     memberStatus: 'SYMPATHISANT',
+    lifecycleStatus: 'ACTIVE',
     iv: 56,
   } as Member;
 

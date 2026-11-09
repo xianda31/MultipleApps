@@ -28,6 +28,24 @@
   font-size: 0.68rem;
 }
 
+.members-sync-notice {
+  color: var(--bs-primary);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  animation: members-sync-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes members-sync-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .members-sync-notice {
+    animation: none;
+  }
+}
+
 /* Avatar images should not stretch row height */
 .table-avatar {
   width: 32px;
@@ -45,10 +63,10 @@
 }
 
 /* Ensure table rows keep compact height */
-table.table.table-sm tbody tr {
+table.table.table-sm:not(.members-stats-table) tbody tr {
   height: 38px; /* matches Bootstrap approx small row height */
 }
-table.table.table-sm tbody tr td {
+table.table.table-sm:not(.members-stats-table) tbody tr td {
   padding-top: 0.35rem;
   padding-bottom: 0.35rem;
   vertical-align: middle;
@@ -167,8 +185,8 @@ table.table.table-sm tbody tr td {
 .members-stats-table {
   width: 100%;
   table-layout: fixed;
-  font-size: 0.95rem;
-  line-height: 1.2;
+  font-size: 0.85rem;
+  line-height: 1.1;
 }
 
 .members-stats-label-column {
@@ -180,7 +198,7 @@ table.table.table-sm tbody tr td {
 }
 
 .members-stats-table > :not(caption) > * > * {
-  padding: 0.3rem 0.55rem;
+  padding: 0.12rem 0.55rem;
   white-space: nowrap;
 }
 
@@ -240,7 +258,7 @@ table.table.table-sm tbody tr td {
 
 .members-stats-active-title {
   display: block;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .members-stats-child-row {
@@ -271,15 +289,15 @@ table.table.table-sm tbody tr td {
 
   .members-stats-table {
     min-width: 20rem;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
   }
 
   .members-stats-table > :not(caption) > * > * {
-    padding: 0.24rem 0.32rem;
+    padding: 0.1rem 0.32rem;
   }
 
   .members-stats-active-title {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
   }
 
   .members-directory-summary {

@@ -7,6 +7,7 @@ import { GameCardsEditorComponent } from './game-cards-editor.component';
 describe('GameCardsEditorComponent synchronization', () => {
   const owner: Member = {
     id: 'member-1',
+    lifecycleStatus: 'ACTIVE',
     gender: 'M',
     firstname: 'Jean',
     lastname: 'DUPONT',

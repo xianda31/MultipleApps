@@ -24,8 +24,6 @@ export type MemberStatusCounters = {
 
 export type FfbBaseReferences = ReadonlySet<number | string>;
 
-export const DEFAULT_MEMBER_LIFECYCLE_STATUS: MemberLifecycleStatus = 'ACTIVE';
-
 type MemberOperation = {
   member?: string;
   values: { [key: string]: number };
@@ -116,6 +114,7 @@ export class MembersService {
   async createMember(member: Member) {
     const { createdAt, updatedAt, id, ...member_input } = member;
     try {
+      this.getLifecycleStatus(member);
       const newMember = await this.dbHandler.createMember(member_input);
       this.toastService.showSuccess('Membre créé', `${newMember.lastname} ${newMember.firstname}`);
       // Initialize cache if empty
@@ -167,6 +166,7 @@ export class MembersService {
 
   async updateMember(member: Member) {
     try {
+      this.getLifecycleStatus(member);
       const newMember = await this.dbHandler.updateMember(member);
       this.toastService.showSuccess('Membre mis à jour', `${newMember.lastname} ${newMember.firstname}`);
       if (this._members) {      // could be not loaded yet
@@ -315,11 +315,16 @@ get_birthdays_this_month(): Observable<Member[]> {
   }
 
   getLifecycleStatus(member: Member): MemberLifecycleStatus {
-    return member.lifecycleStatus ?? DEFAULT_MEMBER_LIFECYCLE_STATUS;
+    const status = member.lifecycleStatus;
+    if (status !== 'ACTIVE' && status !== 'ARCHIVED' && status !== 'BANNED') {
+      console.error('[MembersService] Missing or invalid lifecycle status', { memberId: member.id });
+      throw new Error('Statut du membre absent ou invalide. Veuillez contacter le club.');
+    }
+    return status;
   }
 
   isActive(member: Member): boolean {
-    return this.getLifecycleStatus(member) === 'ACTIVE';
+    return member.lifecycleStatus === 'ACTIVE';
   }
 
   isMembershipRenewalOverdue(member: Member): boolean {

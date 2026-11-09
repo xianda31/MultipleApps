@@ -318,7 +318,7 @@ const schema = a.schema({
     membership_date: a.string(),
     person_id: a.integer(),
     memberStatus: a.string(),
-    lifecycleStatus: a.ref('MemberLifecycleStatus'),
+    lifecycleStatus: a.ref('MemberLifecycleStatus').required(),
     lifecycleChangedAt: a.string(),
     lifecycleChangedBy: a.string(),
     lifecycleReason: a.string(),
