@@ -6,6 +6,12 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
 
+### Admin maintenance configuration on a new development machine
+
+The local [Admin development environment](projects/admin/src/environments/environment.development.ts) is ignored by Git. When recreating it from [environment.ts](projects/admin/src/environments/environment.ts), keep the `maintenanceTargets` import and spread from [maintenance-targets.ts](projects/admin/src/environments/maintenance-targets.ts). This versioned file contains the non-secret Production/Sandbox DynamoDB identifiers used by CloneDB and Book Backup; update it when the target backends change. The PPTPE environment does not configure Admin maintenance.
+
+CloneDB uses temporary credentials from the logged-in Amplify/Cognito session, not the local AWS CLI profile. Its session must allow DynamoDB listing and descriptions in the configured region. Loading failures and unmatched target identifiers are displayed explicitly; listing tables does not clone or delete data.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.

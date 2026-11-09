@@ -5,6 +5,7 @@
         <span *ngIf="reverseDirection" class="fw-bold">⚠️ MODE INVERSÉ ({{sandbox_apid}} → {{production_apid}}) ⚠️</span>
     </h4>
     <div class="card-body">
+        <div *ngIf="loadingError" class="alert alert-danger" role="alert">{{ loadingError }}</div>
         <div class="row g-2 align-items-end mb-3">
             <div class="col-12 col-md-6">
                 <div class="text-muted small">Sélectionnez les tables à cloner et lancez l'action. Les tables de destination seront vidées puis recopiées.</div>
@@ -20,7 +21,7 @@
             <div class="col-12 col-md-6 d-flex gap-2 justify-content-end">
                 <button class="btn btn-outline-secondary" (click)="refreshTables()" [disabled]="started">Rafraîchir</button>
                 <button class="btn btn-outline-info" (click)="refreshCountsLive()" [disabled]="started">Rafraîchir (live)</button>
-                <button class="btn" [ngClass]="reverseDirection ? 'btn-danger' : 'btn-primary'" (click)="cloneSelected()" [disabled]="started">
+                <button class="btn" [ngClass]="reverseDirection ? 'btn-danger' : 'btn-primary'" (click)="cloneSelected()" [disabled]="started || !!loadingError || tableRows.length === 0">
                     <span *ngIf="!reverseDirection">Cloner la sélection</span>
                     <span *ngIf="reverseDirection">⚠️ ÉCRASER PRODUCTION</span>
                 </button>

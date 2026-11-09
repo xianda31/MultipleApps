@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 ### Fixed
+- CloneDB: restore Production/Sandbox identifiers in the local Admin environment and share non-secret maintenance targets through a versioned configuration. Filter target tables before describing them, report missing tables and AWS failures explicitly, and release the loading state instead of leaving an empty directory.
 - Member directory: show cached/AWS members while synchronization runs, publish stable snapshots after each phase, and keep filters and sorting usable. Editing and export stay disabled until completion; failed scans retain the displayed directory with an explicit incomplete-data warning and a retry action.
 - Member directory: reuse a successful synchronization for the selected season throughout the application session, including member-sales navigation. Changing season or using the directory's Actualiser button runs a full scan with a fresh FFB club list; failed or interrupted scans remain retryable. Reloading the application starts a new synchronization session.
 - Member synchronization: reload the AWS directory before matching FFB identities, abort if that reload fails, and refresh the working snapshot after each member to avoid recreating members from a stale session or repeated FFB entries. Existing production duplicates are not deleted automatically.

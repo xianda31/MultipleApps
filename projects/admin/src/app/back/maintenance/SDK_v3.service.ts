@@ -48,12 +48,12 @@ export class BatchService {
       }),
       catchError((error) => {
         console.error('Error listing tables:', error);
-        return of([]);
+        return throwError(() => error);
       })
     );
   }
 
-  describeTable(tableName: string): Observable<any> {
+  describeTable(tableName: string): Observable<DescribeTableOutput> {
     const command = new DescribeTableCommand({ TableName: tableName });
     return from(this.client.send(command)).pipe(
       map((data) => {
@@ -61,7 +61,7 @@ export class BatchService {
       }),
       catchError((error) => {
         console.error('Error describing table:', error);
-        return of(null);
+        return throwError(() => error);
       })
     );
   }

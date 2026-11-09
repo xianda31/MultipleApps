@@ -1,5 +1,6 @@
 import buildInfo from './commitHash.json';
 import type { BuildInfo } from './build-info.interface';
+import { maintenanceTargets } from './maintenance-targets';
 
 export const environment = {
     production: false,
@@ -10,8 +11,7 @@ export const environment = {
     region: 'eu-west-3',
     aws_access_key_id: '',
     aws_secret_access_key: '',
-    sandbox_apid: 'sandbox_apid_value',
-    production_apid: 'production_apid_value',
+    ...maintenanceTargets,
     back_guard: true,
     mailingCcEmail: 'xxxxx',
     low_game_card_message: false,

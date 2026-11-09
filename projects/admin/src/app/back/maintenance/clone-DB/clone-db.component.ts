@@ -32,6 +32,7 @@ export class CloneDBComponent {
   sandbox_tables: DescribeTableOutput[] = [];
   tableRows: TableRow[] = [];
   started: boolean = false;
+  loadingError = '';
   production_apid = environment.production_apid;
   sandbox_apid = environment.sandbox_apid;
   source_table_description!: DescribeTableOutput | null;
@@ -51,10 +52,26 @@ export class CloneDBComponent {
   }
 
   refreshTables(refreshLiveCounts = false) {
+    this.loadingError = '';
+    if (!/^[a-z0-9]{26}$/.test(this.production_apid)
+      || !/^[a-z0-9]{26}$/.test(this.sandbox_apid)
+      || this.production_apid === this.sandbox_apid) {
+      this.started = false;
+      this.loadingError = 'Configuration CloneDB invalide : vérifiez les identifiants Production et Sandbox des environnements Admin.';
+      console.error('[CloneDB] Invalid maintenance target configuration');
+      this.toastService.showError('Clone BDD', this.loadingError);
+      return;
+    }
     this.started = true;
     this.batchService.listTables().pipe(
       switchMap((tables) => {
-        const descriptions: Observable<DescribeTableOutput>[] = tables.map((table) => {
+        const matchingTables = tables.filter((table) =>
+          this.apid(table) === this.production_apid || this.apid(table) === this.sandbox_apid
+        );
+        if (matchingTables.length === 0) {
+          throw new Error(`Aucune table DynamoDB pour Production ${this.production_apid} ou Sandbox ${this.sandbox_apid} dans ${environment.region}. Vérifiez la région, le compte AWS et les identifiants configurés.`);
+        }
+        const descriptions: Observable<DescribeTableOutput>[] = matchingTables.map((table) => {
           return this.batchService.describeTable(table);
         });
         return combineLatest(descriptions)
@@ -104,9 +121,18 @@ export class CloneDBComponent {
             this.started = false;
           }
         },
-        error: (_e) => {
+        error: (error: unknown) => {
           this.started = false;
-          this.toastService.showError('Clone BDD', 'Erreur lors du chargement des tables');
+          this.production_tables = [];
+          this.sandbox_tables = [];
+          this.tableRows = [];
+          this.selected.clear();
+          this.rowCloning.clear();
+          console.error('[CloneDB] Table loading failed', error);
+          this.loadingError = error instanceof Error
+            ? error.message
+            : 'Erreur lors du chargement des tables DynamoDB. Vérifiez la session AWS et les autorisations.';
+          this.toastService.showError('Clone BDD', this.loadingError);
         }
       });
   }

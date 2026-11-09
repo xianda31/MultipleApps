@@ -11,6 +11,22 @@ describe('BatchService', () => {
     service = new BatchService();
   });
 
+  it('propagates listing failures instead of returning an empty table list', async () => {
+    const error = new Error('ListTables denied');
+    spyOn(service.client, 'send').and.callFake(async () => { throw error; });
+    spyOn(console, 'error');
+
+    await expectAsync(firstValueFrom(service.listTables())).toBeRejectedWith(error);
+  });
+
+  it('propagates description failures instead of returning null', async () => {
+    const error = new Error('DescribeTable denied');
+    spyOn(service.client, 'send').and.callFake(async () => { throw error; });
+    spyOn(console, 'error');
+
+    await expectAsync(firstValueFrom(service.describeTable('Member-example-NONE'))).toBeRejectedWith(error);
+  });
+
   it('scans every page when no limit is requested', async () => {
     const send = spyOn(service.client, 'send').and.callFake(async (command: any) => {
       const scan = command as ScanCommand;
