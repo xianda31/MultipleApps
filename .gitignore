@@ -5,6 +5,10 @@
 /tmp
 /out-tsc
 /bazel-out
+desktop/**/bin/
+desktop/**/obj/
+desktop/**/*.csproj.user
+desktop/**/TestResults/
 
 # Node
 /node_modules
