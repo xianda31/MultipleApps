@@ -1,4 +1,4 @@
-<div class="mt-2 container-fluid container-md members-page">
+<div class="mt-2 container-fluid container-md members-page" [class.members-with-nfc]="canManageNfcCards">
   <div class="card">
     <div class="card-header">
       <div class="row justify-content-start align-items-center fs-5">
@@ -364,6 +364,14 @@
                   aria-label="Voir la fiche" (click)="accessSettings(member)">
                   <i class="bi bi-eye"></i>
                 </button>
+                @if (canManageNfcCards) {
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                    [disabled]="loading || synchronizationFailed"
+                    ngbTooltip="Gérer les cartes NFC" placement="top" container="body"
+                    aria-label="Gérer les cartes NFC" (click)="openNfcCards(member)">
+                    <i class="bi bi-credit-card-2-front" aria-hidden="true"></i>
+                  </button>
+                }
                 @if (getLifecycleStatus(member) === 'ACTIVE') {
                   <button type="button" class="btn btn-sm btn-outline-secondary me-1"
                     [disabled]="loading || synchronizationFailed"

@@ -19,7 +19,9 @@ internal sealed class TrayContext : ApplicationContext
     };
     private readonly CancellationTokenSource _stop = new();
     private readonly INfcReader _monitor = new ReaderMonitor(() => new PresenceReader());
+    private readonly UidCapture _capture = new();
     private readonly Task _worker;
+    private readonly Task _bridgeWorker;
     private bool _quitting;
 
     public TrayContext()
@@ -50,6 +52,7 @@ internal sealed class TrayContext : ApplicationContext
         _window.Render(_monitor.Current);
         _monitor.Updated += PostUpdate;
         _worker = Task.Run(RunAsync);
+        _bridgeWorker = Task.Run(RunBridgeAsync);
         ShowDiagnostic();
     }
 
@@ -96,6 +99,7 @@ internal sealed class TrayContext : ApplicationContext
 
     private void PostUpdate(ReaderUpdate update)
     {
+        _capture.Observe(update);
         _window.BeginInvoke(() =>
         {
             _window.Render(update);
@@ -103,6 +107,32 @@ internal sealed class TrayContext : ApplicationContext
             _icon.Icon = update.Status is ReaderStatus.Error or ReaderStatus.Disconnected
                 ? SystemIcons.Warning : SystemIcons.Information;
         });
+    }
+
+    private async Task RunBridgeAsync()
+    {
+        try
+        {
+            await using var bridge = new LocalCaptureServer(_capture, LocalCaptureServer.LoadOrigins());
+            await bridge.StartAsync(_stop.Token);
+            try
+            {
+                await Task.Delay(Timeout.Infinite, _stop.Token);
+            }
+            catch (OperationCanceledException) when (_stop.IsCancellationRequested)
+            {
+            }
+            await bridge.StopAsync(CancellationToken.None);
+        }
+        catch (OperationCanceledException) when (_stop.IsCancellationRequested)
+        {
+        }
+        catch (Exception error)
+        {
+            _window.BeginInvoke(() => MessageBox.Show(_window,
+                $"L'editeur de cartes est indisponible : {error.Message}\nConfiguration : {LocalCaptureServer.OriginsPath}",
+                "ppNFC - Liaison locale", MessageBoxButtons.OK, MessageBoxIcon.Error));
+        }
     }
 
     private async Task RunAsync()
@@ -141,7 +171,7 @@ internal sealed class TrayContext : ApplicationContext
         _stop.Cancel();
         try
         {
-            await _worker;
+            await Task.WhenAll(_worker, _bridgeWorker);
         }
         catch (Exception error)
         {

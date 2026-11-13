@@ -298,6 +298,7 @@ const schema = a.schema({
 
   MemberGender: a.enum(['M', 'F', 'U']),
   MemberLifecycleStatus: a.enum(['ACTIVE', 'ARCHIVED', 'BANNED']),
+  MemberNfcCardStatus: a.enum(['ACTIVE', 'DISABLED']),
 
 
   Member: a.model({
@@ -334,6 +335,22 @@ const schema = a.schema({
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
       allow.group(Group_names.Member).to(['read', 'update']),
 
+    ]),
+
+  MemberNfcCard: a.model({
+    uid: a.string().required(),
+    licenseNumber: a.string().required(),
+    status: a.ref('MemberNfcCardStatus').required(),
+    assignedAt: a.datetime().required(),
+    assignedBy: a.string().required(),
+  })
+    .identifier(['uid'])
+    .secondaryIndexes((index) => [
+      index('licenseNumber').queryField('memberNfcCardsByLicense'),
+    ])
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
     ]),
 
 

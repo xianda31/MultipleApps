@@ -29,6 +29,8 @@ describe('MembersComponent progressive synchronization', () => {
     });
     const snapshots = new BehaviorSubject<Member[] | null>(null);
     const toast = jasmine.createSpyObj('ToastService', ['showError']);
+    const modals = jasmine.createSpyObj('NgbModal', ['open']);
+    modals.open.and.returnValue({ componentInstance: {} });
     const configuration = {
       get_local_season: () => '2026/2027',
       date_in_season: () => true,
@@ -56,15 +58,32 @@ describe('MembersComponent progressive synchronization', () => {
         { provide: FFB_proxyService, useValue: {} },
         { provide: AuthentificationService, useValue: {} },
         { provide: GroupService, useValue: { getUserAccreditation: () => Promise.resolve({ level: 0 }) } },
-        { provide: NgbModal, useValue: {} },
+        { provide: NgbModal, useValue: modals },
       ],
     });
     const fixture = TestBed.createComponent(MembersComponent);
     fixture.detectChanges();
     flushMicrotasks();
     fixture.detectChanges();
-    return { fixture, snapshots, complete, fail, toast };
+    return { fixture, snapshots, complete, fail, toast, modals };
   }
+
+  it('restricts the card editor entry to administrators and passes the selected member', fakeAsync(() => {
+    const { fixture, complete, modals } = setup();
+    complete([member]);
+    flushMicrotasks();
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('[aria-label="Gérer les cartes NFC"]')).toBeNull();
+    fixture.componentInstance.openNfcCards(member);
+    expect(modals.open).not.toHaveBeenCalled();
+
+    fixture.componentInstance.canManageNfcCards = true;
+    fixture.detectChanges();
+    root.querySelector<HTMLButtonElement>('[aria-label="Gérer les cartes NFC"]')?.click();
+    expect(modals.open).toHaveBeenCalled();
+    expect(modals.open.calls.mostRecent().returnValue.componentInstance.member).toBe(member);
+  }));
 
   it('keeps summary rows compact without shrinking member rows', fakeAsync(() => {
     const { fixture, complete } = setup();

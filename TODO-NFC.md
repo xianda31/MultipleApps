@@ -49,6 +49,36 @@ Ordre de reprise historique du 09/11/2026 :
   reportees a la phase 7. Le diagnostic ppNFC permettra de valider le pointage
   avant l'ajout des couleurs.
 
+### Validation de l'editeur du 13/11/2026
+
+- En sandbox, deux cartes ont ete attribuees depuis l'admin. L'attribution a
+  persiste apres actualisation ; desactivation et reactivation ont fonctionne.
+- Le transfert d'une carte active a ete refuse. Apres desactivation, le
+  transfert confirme vers un autre membre actif a reussi, puis la carte a ete
+  reattribuee a son titulaire initial. Les deux cartes sont restees actives
+  chez leurs titulaires respectifs apres reouverture des editeurs.
+- L'annulation d'une lecture et le refus des confirmations de desactivation et
+  de transfert ont ete verifies sans modification de la carte concernee.
+- Le lecteur a du etre reactive avant de lire : les indications « Pret » dans
+  ppNFC et « Online » dans l'outil ACS ne suffisaient pas a garantir une
+  detection effective. Le lecteur etait branche sur un chargeur USB lors de
+  l'incident : l'alimentation seule n'a donc pas suffi dans cet essai. La
+  cause et la duree d'inactivite restent a determiner ; c'est bloquant pour
+  l'exploitation sans intervention.
+- Un test automatise simule le backend et l'identite pour rejouer l'attribution,
+  le rechargement, la desactivation, le refus de transfert actif, le conflit
+  d'edition et la reattribution, sans lecteur ni modification de la sandbox.
+- L'expiration, la deconnexion pendant acquisition et l'usage depuis l'URL
+  HTTPS hebergee restent a valider avec le materiel.
+- Essai sur chargeur USB : apres 15 minutes sans lecture, une carte a ete lue
+  sans action sur le bouton. Cet essai ne reproduit pas l'incident initial et
+  ne valide pas encore la tenue sur plusieurs heures.
+- Le manuel ACS v2.02 documente une veille reglable (60 secondes par defaut)
+  et un reglage de desactivation de cette veille a partir du firmware 1.02.04.
+  La lecture du firmware a retourne 1.03.02, mais la lecture du reglage de
+  veille a renvoye `41`, valeur absente du tableau documente. Aucun reglage
+  n'a ete modifie ; ne pas supposer que la veille est desactivee.
+
 ### Essais Windows du 09/11/2026
 
 - Liaison uniquement Bluetooth, sans cable USB au PC, en mode Reader via le
@@ -127,7 +157,7 @@ Le mode Bluetooth exact de l'ACR1555U reste à valider avec le matériel :
 
 La technologie de réalisation du `.exe` est .NET 10 / Windows Forms, choisie
 pour l'intégration Windows, PC/SC et la zone de notification. Le démarrage
-automatique reste à implémenter.
+automatique est disponible dans le menu de l'icone.
 
 ### fees-collector et backend
 
@@ -257,15 +287,37 @@ Les validations restantes de l'ampoule sont regroupees en phase 7.
 
 ## Phase 3 - Attribution des cartes
 
-- [ ] Ajouter un modèle `MemberNfcCard`.
-- [ ] Enregistrer au minimum l'UID, le membre ou la licence, le statut, la date
+- [x] Ajouter un modèle `MemberNfcCard`.
+- [x] Enregistrer au minimum l'UID, le membre ou la licence, le statut, la date
   et l'auteur de l'attribution.
-- [ ] Garantir l'unicité de l'UID.
-- [ ] Définir et importer le CSV fournisseur enrichi avec les UID.
+- [x] Garantir l'unicité de l'UID.
+- [ ] Définir et importer par script ponctuel le fichier Excel fournisseur
+  (158 cartes ; colonnes prénom, nom, numéro de licence et UID).
 - [ ] Valider les UID, licences inconnues, doublons et écarts de quantité.
 - [ ] Produire un rapport d'import avant confirmation.
-- [ ] Ajouter une interface d'attribution, désactivation, remplacement et
+- [x] Ajouter une interface d'attribution, désactivation, remplacement et
   réattribution contrôlée.
+- [x] Valider ce parcours avec 2 ou 3 cartes blanches et l'éditeur admin.
+
+Le modèle utilise l'UID comme clé primaire, le numéro de licence pour retrouver
+les cartes d'un membre, un statut `ACTIVE` ou `DISABLED`, ainsi que la date et
+l'auteur de l'attribution. Sa lecture et son écriture sont réservées aux
+groupes `Systeme` et `Administrateur`.
+
+L'éditeur est accessible depuis chaque ligne du répertoire des adhérents pour
+ces deux groupes. **Lire une carte avec ppNFC** demande la prochaine présentation
+via une liaison locale sur le même PC, sans ouvrir le diagnostic ni copier
+l'UID. L'enregistrement demande une confirmation distincte. Une carte active
+doit être désactivée avant transfert à un autre titulaire ; aucune suppression
+définitive n'est proposée. Les modifications utilisent une condition sur la
+version et l'association lues pour refuser les mises à jour concurrentes.
+Les attributions et réactivations vérifient que la licence correspond à un
+unique membre explicitement `ACTIVE`.
+
+L'import en masse est une opération ponctuelle par script, pas une
+fonctionnalité à ajouter dans l'application. La validation matérielle de
+l'éditeur et la configuration des origines du navigateur sont décrites dans
+le [README ppNFC](desktop/ppNFC/README.md).
 
 ## Phase 4 - Session de pointage
 
