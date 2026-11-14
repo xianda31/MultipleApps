@@ -43,22 +43,37 @@ Le journal de diagnostic conserve uniquement les 200 derniers changements en
 memoire. Aucun journal n'est ecrit sur disque. Un UID n'est transmis que si un
 editeur local autorise demande explicitement une nouvelle lecture.
 
-## Editeur de cartes dans l'admin
+## Espace NFC dans l'admin
 
-L'admin et ppNFC doivent tourner sur le meme PC. Depuis le repertoire des
-adherents, un utilisateur `Systeme` ou `Administrateur` ouvre **Gerer les cartes
-NFC** sur la ligne d'un adherent, puis **Lire une carte avec ppNFC**.
+L'admin et ppNFC doivent tourner sur le meme PC. Un utilisateur `Systeme` ou
+`Administrateur` ouvre **Adherents > cartes NFC / badgeuse**, puis **Lire une
+carte**. Les parametres adherent contiennent un resume et un lien vers cette
+page filtre sur sa licence ; il n'y a plus d'editeur NFC par ligne du repertoire.
 Presenter une carte apres avoir clique ; une carte deja posee doit etre retiree
 puis representee. L'UID apparait automatiquement dans le navigateur, sans ouvrir
 le diagnostic ppNFC, sans presse-papiers et sans pointage.
 
-La lecture ne sauvegarde rien : l'utilisateur confirme l'attribution.
+La lecture ne sauvegarde rien : le titulaire, la licence et le statut sont
+affiches en lecture seule. L'utilisateur confirme separement toute attribution.
 Les cartes sont desactivees, jamais supprimees par l'editeur. Pour reattribuer
-une carte a une autre personne, la desactiver depuis la fiche de son titulaire,
-puis la lire depuis la fiche du nouveau titulaire et confirmer le transfert.
+une carte definitive a une autre personne, la desactiver puis choisir le nouveau
+titulaire et confirmer. Une carte blanche doit etre restituee et remise en
+stock avant un nouveau pret ; desactiver n'est pas restituer.
 La reactivation et l'attribution sont reservees aux membres explicitement
 `ACTIVE`. Plusieurs cartes peuvent etre associees a une licence ; l'attribution
 d'une nouvelle carte ne desactive pas implicitement une carte existante.
+
+Le volet **Poste de lecture** verifie separement la liaison HTTP locale et
+l'etat du lecteur. Il utilise `POST /status` avec les memes controles d'origine
+et d'en-tete que `/capture`. Cette reponse contient la version de ppNFC, l'etat,
+le nom et le message du lecteur, et indique si une acquisition est en cours.
+Elle ne renvoie pas l'UID memorise et ne declenche pas de lecture. Une ancienne
+version de ppNFC doit etre republiee et relancee pour fournir cet endpoint.
+Un etat « Pret » n'est pas une preuve de detection : effectuer une lecture
+reelle, sans pointage, depuis ce meme volet.
+
+Les parcours de stock, commandes et imports sont decrits dans
+[le plan NFC](../../TODO-NFC.md). Leur logique est dans l'admin, pas dans ppNFC.
 
 ### Autoriser le site admin
 

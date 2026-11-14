@@ -59,6 +59,7 @@ public sealed class LocalCaptureServer : IAsyncDisposable
             }
             await next(context);
         });
+        _app.MapPost("/status", () => Results.Json(capture.GetStatus()));
         _app.MapPost("/capture", async (HttpContext context) =>
         {
             using var stop = CancellationTokenSource.CreateLinkedTokenSource(

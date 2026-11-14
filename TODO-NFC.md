@@ -79,6 +79,110 @@ Ordre de reprise historique du 09/11/2026 :
   veille a renvoye `41`, valeur absente du tableau documente. Aucun reglage
   n'a ete modifie ; ne pas supposer que la veille est desactivee.
 
+### Espace NFC - evolution du 14/11/2026
+
+Observation utilisateur du 14/11 a 11:07 : hors charge USB-C, le lecteur
+s'eteint apres inactivite, sans que ppNFC ni la verification de liaison ne
+signalent cet etat. Le delai et la distinction veille/extinction restent a
+mesurer. L'etat `Ready` actuel repose sur la presence du lecteur dans PC/SC
+et l'absence de carte signalee par le pilote ; il ne prouve pas que le
+lecteur physique est eveille. `/status` restitue cet etat, sans interrogation
+materielle supplementaire. Priorite : identifier un controle ACS documente
+sans carte pour distinguer liaison du pilote et disponibilite du lecteur,
+puis valider la detection et les possibilites de reveil. Ne pas utiliser
+l'absence de lecture ou un timeout comme preuve de veille, et ne pas envoyer
+de commande de reglage non validee. Les essais de stock, commandes et imports
+sont reportes a la reception des 158 cartes officielles.
+
+Le perimetre inclut desormais une page admin **Adherents > cartes NFC /
+badgeuse**, reservee aux administrateurs et au groupe Systeme :
+
+- identification en lecture seule et recherche par nom, licence ou UID ;
+- gestion centralisee des cartes, sans second editeur dans le repertoire ;
+- resume informatif dans les parametres adherent et lien contextualise ;
+- stock des cartes blanches, prets, restitution explicite, pertes et mise
+  hors service, avec historique des changements ;
+- demandes de cartes definitives, reference et quantite de la commande
+  fournisseur (minimum 10), reception puis remise suivies separement ;
+- imports Excel/CSV avec prevalidation, confirmation, rapports et reprise ;
+- verification de la liaison locale ppNFC, etat du lecteur et lecture test.
+
+Les parcours metier et l'orchestration des imports sont dans l'admin. Le
+backend ne lit pas Excel et ne pilote pas les workflows : il controle les
+droits, les formats, les invariants critiques et les versions, puis enregistre
+les changements et leur historique dans une transaction DynamoDB.
+ppNFC reste limite au materiel.
+
+Ces sources doivent etre deployees en sandbox et la nouvelle interface testee
+avec le lecteur avant validation fonctionnelle. Les essais du 13/11 concernent
+l'ancien editeur, pas cette nouvelle page.
+
+Validation locale du 14/11 : build Angular de developpement reussi,
+33 tests Angular cibles reussis, 4 tests de persistance reussis et controle
+TypeScript du handler reussi. ppNFC et son projet de tests compilent ; leur
+execution est bloquee sur ce poste par la politique Windows de controle
+d'applications (`0x800711C7`). Ne pas assimiler cette compilation a une
+validation de l'endpoint `/status` en execution.
+
+Recette restante apres deploiement :
+
+Premiere verification apres deploiement sandbox du 14/11 : les quatre modeles
+NFC figurent dans les sorties generees ; la page charge les deux cartes
+existantes, leur consultation et le resume dans les parametres adherent
+fonctionnent, ainsi que le retour filtre vers l'espace NFC. Aucune carte
+n'a ete modifiee pendant cette verification. Le ppNFC en cours d'execution
+repond 404 a `/status` : mise a jour de l'executable necessaire avant
+validation du diagnostic. Les ecritures et les imports restent a recetter.
+
+Apres publication et lancement manuel de la nouvelle version, verification
+du 14/11 a 11:02 : la page admin joint ppNFC, affiche sa version `1.0.0.0`,
+le lecteur ACS ACR1555U PICC en etat `Ready` et aucune acquisition en cours,
+sans erreur. Avast avait bloque le lancement automatise via PowerShell ;
+le lancement manuel a ete accepte sans desactivation des protections.
+Cette verification valide `/status`. A 11:04, l'utilisateur confirme egalement
+le fonctionnement de la lecture physique et de l'affichage du titulaire dans
+l'espace NFC, en lecture seule. Les ecritures de gestion et les imports restent
+a recetter.
+
+- verifier les droits de la page et du resume, sans ouvrir les donnees NFC
+  aux contributeurs ou membres ordinaires ;
+- identifier les deux cartes existantes puis les classer explicitement ;
+- enregistrer une blanche, la preter, la desactiver sans retour en stock,
+  la restituer, puis la preter a un autre adherent ;
+- verifier la persistance et l'historique apres actualisation ;
+- prevalider un petit lot avec anomalies sans aucune ecriture, puis importer
+  un lot valide, suspendre/reprendre et rejouer le meme fichier sans doublon ;
+- enregistrer une demande, une commande d'au moins 10 cartes, une reception
+  et une remise sans restitution implicite d'une blanche ;
+- republier/relancer ppNFC, verifier `/status`, puis faire une lecture reelle
+  depuis le poste de lecture et depuis l'origine HTTPS autorisee.
+
+Les cartes historiques conservent leur attribution ; leur type n'est pas
+devine. L'operateur les classe explicitement en carte blanche ou definitive.
+Une desactivation ne rend jamais une carte disponible. La restitution physique
+confirmee d'une blanche retire son titulaire et la remet en stock ; l'ancien
+titulaire reste dans l'historique. La remise d'une carte definitive ne restitue
+pas implicitement une blanche et ne desactive pas les autres cartes.
+
+Le suivi des commandes enregistre une commande deja passee au fournisseur,
+pas un achat automatique. La quantite est celle de la commande entiere,
+au moins 10 ; plusieurs demandes peuvent partager sa reference. Ce minimum
+n'est pas un seuil d'alerte du stock. Reception et remise restent explicites
+apres l'import, pour ne pas confondre fichier fournisseur et remise physique.
+
+Import v1 : une feuille XLSX ou CSV UTF-8, quatre colonnes texte dans cet ordre
+`prenom`, `nom`, `licence`, `uid`. Maximum 500 cartes et 2 Mo par fichier ;
+un lot trop volumineux pour conserver son rapport doit etre scinde. Licences
+et UID doivent rester du texte pour conserver leurs zeros initiaux. La quantite
+attendue doit etre saisie par l'operateur. Les ecarts de nom, doublons, licences
+inconnues/ambigues, titulaires non actifs et cartes incompatibles bloquent le
+demarrage. Les associations deja identiques sont ignorees, sans reactivation
+ni transfert automatique. Chaque ligne et sa progression sont atomiques :
+une interruption permet une reprise depuis les lots enregistres. Une erreur
+de concurrence/reseau suspend l'import sans annoncer un succes ; actualiser
+et reprendre. Les anomalies detectees en cours d'import sont consignees dans
+le rapport ; un lot termine avec erreurs peut etre reimporte apres correction.
+
 ### Essais Windows du 09/11/2026
 
 - Liaison uniquement Bluetooth, sans cable USB au PC, en mode Reader via le
@@ -291,10 +395,11 @@ Les validations restantes de l'ampoule sont regroupees en phase 7.
 - [x] Enregistrer au minimum l'UID, le membre ou la licence, le statut, la date
   et l'auteur de l'attribution.
 - [x] Garantir l'unicité de l'UID.
-- [ ] Définir et importer par script ponctuel le fichier Excel fournisseur
-  (158 cartes ; colonnes prénom, nom, numéro de licence et UID).
-- [ ] Valider les UID, licences inconnues, doublons et écarts de quantité.
-- [ ] Produire un rapport d'import avant confirmation.
+- [ ] Importer et valider en sandbox le lot fournisseur de 158 cartes avec
+  la nouvelle interface (colonnes prenom, nom, licence et UID).
+- [ ] Valider avec les donnees fournisseur la prevalidation des UID,
+  licences, noms, doublons et ecarts de quantite.
+- [ ] Valider les rapports et la reprise apres interruption.
 - [x] Ajouter une interface d'attribution, désactivation, remplacement et
   réattribution contrôlée.
 - [x] Valider ce parcours avec 2 ou 3 cartes blanches et l'éditeur admin.
@@ -304,8 +409,9 @@ les cartes d'un membre, un statut `ACTIVE` ou `DISABLED`, ainsi que la date et
 l'auteur de l'attribution. Sa lecture et son écriture sont réservées aux
 groupes `Systeme` et `Administrateur`.
 
-L'éditeur est accessible depuis chaque ligne du répertoire des adhérents pour
-ces deux groupes. **Lire une carte avec ppNFC** demande la prochaine présentation
+La gestion est centralisee dans l'espace NFC pour ces deux groupes. Les
+parametres adherent affichent un resume et un lien filtre sur sa licence.
+**Lire une carte** demande la prochaine présentation
 via une liaison locale sur le même PC, sans ouvrir le diagnostic ni copier
 l'UID. L'enregistrement demande une confirmation distincte. Une carte active
 doit être désactivée avant transfert à un autre titulaire ; aucune suppression
@@ -314,9 +420,9 @@ version et l'association lues pour refuser les mises à jour concurrentes.
 Les attributions et réactivations vérifient que la licence correspond à un
 unique membre explicitement `ACTIVE`.
 
-L'import en masse est une opération ponctuelle par script, pas une
-fonctionnalité à ajouter dans l'application. La validation matérielle de
-l'éditeur et la configuration des origines du navigateur sont décrites dans
+L'import par script ponctuel est remplace par une ingestion de lots dans
+l'espace NFC ; voir le perimetre et les limites du 14/11 ci-dessus.
+La validation matérielle et la configuration des origines du navigateur sont décrites dans
 le [README ppNFC](desktop/ppNFC/README.md).
 
 ## Phase 4 - Session de pointage

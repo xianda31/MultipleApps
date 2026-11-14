@@ -1,0 +1,239 @@
+<div class="container-fluid py-3">
+  <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Espace NFC</h1>
+    <button class="btn btn-outline-secondary" [disabled]="busy" (click)="refresh()">Actualiser</button>
+  </div>
+  <nav class="nav nav-tabs mb-3" aria-label="Sections NFC">
+    @for (name of tabs; track name) {
+      <button class="nav-link" [class.active]="tab === name" [attr.aria-current]="tab === name ? 'page' : null"
+        [disabled]="busy" (click)="tab = name">{{ name }}</button>
+    }
+  </nav>
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }} Actualisez avant de réessayer une écriture non confirmée.</div> }
+  @if (notice) { <div class="alert alert-info" role="status">{{ notice }}</div> }
+  @if (busy && !acquiring && !importing) { <p role="status">Opération en cours…</p> }
+  @if (!loaded && !busy) { <p>Les données NFC ne sont pas disponibles. Vérifiez le déploiement du backend puis actualisez.</p> }
+
+  @if (tab === 'Poste de lecture') {
+    <h2 class="h5">Liaison avec ppNFC sur ce PC</h2>
+    <button class="btn btn-primary mb-3" [disabled]="busy" (click)="checkBridge()">Vérifier la liaison</button>
+    @if (reader) {
+      <dl>
+        <dt>Application locale</dt><dd>Joignable — version {{ reader.version }}</dd>
+        <dt>Lecteur</dt><dd>{{ reader.readerName || 'Non détecté' }} — {{ reader.readerStatus }}</dd>
+        <dt>Diagnostic</dt><dd>{{ reader.message }}</dd>
+        <dt>Acquisition</dt><dd>{{ reader.capturing ? 'En cours dans un éditeur' : 'Aucune' }}</dd>
+      </dl>
+    }
+    @if (bridgeError) { <p class="text-danger">{{ bridgeError }}</p> }
+    <p>Un lecteur déclaré prêt peut ne pas détecter de carte. Vérifiez toujours par une lecture réelle ci-dessous.</p>
+    <details class="mb-3">
+      <summary>Installation et dépannage</summary>
+      <ol>
+        <li>Installer le pilote ACS BLE PC/SC et ajouter l’ACR1555U en mode Reader dans l’outil ACS.</li>
+        <li>Lancer ppNFC sur ce PC. Fermer QuickView et les autres diagnostics du lecteur.</li>
+        <li>Autoriser l’origine exacte de l’admin dans <code>%LOCALAPPDATA%\ppNFC\editor-origins.json</code>, puis relancer ppNFC.</li>
+        <li>Accepter l’autorisation réseau local du navigateur. Mettre ppNFC à jour si la vérification d’état n’est pas reconnue.</li>
+        <li>En cas d’inactivité du lecteur, vérifier son alimentation et le réactiver, puis refaire une lecture.</li>
+      </ol>
+      <p>Le navigateur n’installe ni ne démarre ppNFC. Aucun pointage métier n’est effectué par cette page.</p>
+    </details>
+  }
+
+  @if (tab === 'Cartes' || tab === 'Stock et prêts' || tab === 'Poste de lecture') {
+    <section class="card mb-3">
+      <div class="card-body">
+        <h2 class="h5">{{ tab === 'Poste de lecture' ? 'Tester une lecture réelle' : 'Identifier une carte' }}</h2>
+        <p>Lecture seule : ni attribution ni pointage automatiques. Retirer puis représenter une carte déjà posée.</p>
+        <button class="btn btn-primary" [disabled]="busy || !loaded" (click)="readCard()">Lire une carte</button>
+        @if (acquiring) {
+          <span class="ms-2" role="status">Présentez une carte (30 secondes maximum).</span>
+          <button class="btn btn-outline-secondary ms-2" (click)="cancelRead()">Annuler</button>
+        }
+        @if (identified) {
+          <div class="border rounded p-3 mt-3" aria-live="polite">
+            <h3 class="h5"><code>{{ selectedUid }}</code></h3>
+            @if (selectedCard; as card) {
+              <p class="mb-1"><strong>{{ owner(card.licenseNumber) }}</strong>
+                @if (card.licenseNumber) { — licence {{ card.licenseNumber }} }</p>
+              <p>{{ cardLabel(card) }}</p>
+              @if (selectedMember; as member) {
+                <p>Statut adhérent : <strong>{{ member.lifecycleStatus || 'Non renseigné' }}</strong></p>
+                <button class="btn btn-sm btn-outline-secondary" [disabled]="busy" (click)="openMember()">Ouvrir les paramètres adhérent</button>
+              }
+              @if (tab !== 'Poste de lecture') {
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                  @if (!card.kind) {
+                    <button class="btn btn-outline-primary" [disabled]="busy" (click)="cardAction('CLASSIFY_WHITE')">Définir comme carte blanche</button>
+                    <button class="btn btn-outline-primary" [disabled]="busy" (click)="cardAction('CLASSIFY_PERSONAL')">Définir comme carte définitive</button>
+                  }
+                  @if (card.status === 'ACTIVE') {
+                    <button class="btn btn-outline-warning" [disabled]="busy" (click)="cardAction('DISABLE')">Désactiver</button>
+                  }
+                  @if (card.kind === 'WHITE' && card.stockState !== 'AVAILABLE' && card.stockState !== 'RETIRED') {
+                    <button class="btn btn-outline-success" [disabled]="busy" (click)="cardAction('RETURN')">Restituer et remettre en stock</button>
+                  }
+                  @if (card.stockState !== 'LOST' && card.stockState !== 'RETIRED') {
+                    <button class="btn btn-outline-danger" [disabled]="busy" (click)="cardAction('LOST')">Déclarer perdue</button>
+                    <button class="btn btn-outline-danger" [disabled]="busy" (click)="cardAction('RETIRED')">Mettre hors service</button>
+                  }
+                </div>
+              }
+            } @else {
+              <p>Carte non enregistrée dans le club.</p>
+              @if (tab !== 'Poste de lecture') {
+                <button class="btn btn-outline-primary" [disabled]="busy" (click)="cardAction('REGISTER_WHITE')">Enregistrer une carte blanche en stock</button>
+              }
+            }
+            @if (tab !== 'Poste de lecture' && (!selectedCard || (selectedCard.stockState !== 'LOST' && selectedCard.stockState !== 'RETIRED'))) {
+              <div class="mt-3">
+                <label for="nfc-owner" class="form-label">Adhérent destinataire</label>
+                <select id="nfc-owner" class="form-select" [(ngModel)]="license" [disabled]="busy">
+                  <option value="">Sélectionner un adhérent actif</option>
+                  @for (member of activeMembers; track member.id) {
+                    <option [value]="member.license_number">{{ member.firstname }} {{ member.lastname }} — {{ member.license_number }}</option>
+                  }
+                </select>
+                <button class="btn btn-success mt-2"
+                  [disabled]="busy || !license || (selectedCard && !selectedCard.kind) || (selectedCard?.status === 'ACTIVE' && selectedCard?.licenseNumber === license)"
+                  (click)="cardAction('ASSIGN')">{{ selectedCard?.kind === 'WHITE' ? 'Confirmer le prêt / la réactivation' : 'Confirmer l’attribution / la réactivation' }}</button>
+                <p class="small text-muted mt-2">Carte active d’un autre titulaire : désactivation préalable. Carte blanche : restitution préalable à un nouveau prêt.</p>
+              </div>
+            }
+            @if (history.length && tab !== 'Poste de lecture') {
+              <details class="mt-3">
+                <summary>Historique de cette carte ({{ history.length }})</summary>
+                @for (entry of history; track entry.id) {
+                  <div class="border-top py-2">
+                    {{ entry.createdAt | date:'dd/MM/yyyy HH:mm' }} — {{ entry.action }} — opérateur {{ entry.actor }}
+                    <details><summary>Détails avant / après</summary><pre class="text-wrap">{{ entry.before | json }}</pre><pre class="text-wrap">{{ entry.after | json }}</pre></details>
+                  </div>
+                }
+              </details>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (tab === 'Cartes' || tab === 'Stock et prêts' || tab === 'Commandes') {
+    <label for="nfc-search" class="form-label">Rechercher par nom, licence ou UID</label>
+    <div class="input-group mb-3">
+      <input id="nfc-search" class="form-control" [(ngModel)]="query" placeholder="Tous les adhérents et cartes">
+      <button class="btn btn-outline-secondary" (click)="query = ''">Effacer</button>
+    </div>
+  }
+  @if (tab === 'Stock et prêts') {
+    <div class="alert alert-light border">
+      Stock total : {{ stockCount('AVAILABLE') }} disponible(s) · {{ stockCount('ASSIGNED') }} prêtée(s), y compris désactivées ·
+      {{ stockCount('LOST') }} perdue(s) · {{ stockCount('RETIRED') }} hors service.
+      <p class="mb-0">Désactiver ne signifie pas restituer. Les cartes historiques doivent être classées depuis l’onglet Cartes.</p>
+    </div>
+  }
+  @if (tab === 'Cartes' || tab === 'Stock et prêts') {
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead><tr><th>UID</th><th>Titulaire</th><th>Type / état</th><th>Action</th></tr></thead>
+        <tbody>
+          @for (card of filteredCards; track card.uid) {
+            <tr><td><code>{{ card.uid }}</code></td><td>{{ owner(card.licenseNumber) }}<br>{{ card.licenseNumber }}</td>
+              <td>{{ cardLabel(card) }}</td><td><button class="btn btn-sm btn-outline-primary" [disabled]="busy || !loaded" (click)="selectCard(card.uid)">Consulter</button></td></tr>
+          } @empty { <tr><td colspan="4">Aucune carte pour cette recherche.</td></tr> }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (tab === 'Commandes') {
+    <h2 class="h5">Cartes définitives</h2>
+    <p>{{ pendingRequests }} carte(s) à commander — minimum fournisseur : <strong>10</strong>.
+      Ce compteur n’est pas un seuil d’alerte du stock de cartes blanches.</p>
+    <label for="nfc-request-member" class="form-label">Ajouter une demande</label>
+    <select id="nfc-request-member" class="form-select mb-2" [(ngModel)]="license" [disabled]="busy">
+      <option value="">Sélectionner un adhérent actif</option>
+      @for (member of activeMembers; track member.id) {
+        <option [value]="member.license_number">{{ member.firstname }} {{ member.lastname }} — {{ member.license_number }}</option>
+      }
+    </select>
+    <button class="btn btn-primary mb-3" [disabled]="busy || !loaded || !license" (click)="requestStage(license, 'REQUESTED')">Mettre en attente de commande</button>
+    <div class="row g-2 mb-3">
+      <div class="col-md-6"><label for="nfc-order-ref" class="form-label">Référence de la commande fournisseur passée</label>
+        <input id="nfc-order-ref" class="form-control" [(ngModel)]="orderReference" [disabled]="busy"></div>
+      <div class="col-md-6"><label for="nfc-order-count" class="form-label">Quantité totale de cette commande (minimum 10)</label>
+        <input id="nfc-order-count" class="form-control" type="number" min="10" step="1" [(ngModel)]="orderQuantity" [disabled]="busy"></div>
+    </div>
+    <p class="small">Ces champs servent à enregistrer une commande déjà passée, pas à l’envoyer au fournisseur. La remise définitive ne restitue pas automatiquement une carte blanche.</p>
+    <div class="table-responsive"><table class="table align-middle">
+      <thead><tr><th>Adhérent</th><th>Suivi</th><th>Actions</th></tr></thead>
+      <tbody>
+        @for (request of filteredRequests; track request.licenseNumber) {
+          <tr><td>{{ owner(request.licenseNumber) }}<br>{{ request.licenseNumber }}</td>
+            <td>{{ labels[request.stage] }}<br>{{ request.orderReference }} @if (request.orderQuantity) { ({{ request.orderQuantity }} cartes) }</td>
+            <td>
+              @if (request.stage === 'REQUESTED') {
+                <button class="btn btn-sm btn-outline-primary" [disabled]="busy || !loaded || !orderReference || orderQuantity < 10" (click)="requestStage(request.licenseNumber, 'ORDERED')">Marquer commandée</button>
+              }
+              @if (request.stage === 'ORDERED') {
+                <select class="form-select form-select-sm mb-1" [attr.aria-label]="'Carte définitive de ' + owner(request.licenseNumber)"
+                  [(ngModel)]="requestUids[request.licenseNumber]" [disabled]="busy">
+                  <option value="">Choisir la carte reçue et importée</option>
+                  @for (card of personalCards(request.licenseNumber); track card.uid) { <option [value]="card.uid">{{ card.uid }}</option> }
+                </select>
+                <button class="btn btn-sm btn-outline-primary" [disabled]="busy || !loaded || !requestUids[request.licenseNumber]" (click)="requestStage(request.licenseNumber, 'RECEIVED')">Marquer reçue</button>
+              }
+              @if (request.stage === 'RECEIVED') {
+                <button class="btn btn-sm btn-outline-success" [disabled]="busy || !loaded" (click)="requestStage(request.licenseNumber, 'DELIVERED')">Confirmer la remise</button>
+              }
+              @if (request.stage !== 'DELIVERED' && request.stage !== 'CANCELLED') {
+                <button class="btn btn-sm btn-outline-danger ms-1" [disabled]="busy || !loaded" (click)="requestStage(request.licenseNumber, 'CANCELLED')">Annuler</button>
+              }
+            </td></tr>
+        } @empty { <tr><td colspan="3">Aucune demande pour cette recherche.</td></tr> }
+      </tbody>
+    </table></div>
+  }
+
+  @if (tab === 'Imports') {
+    <h2 class="h5">Importer un lot fournisseur</h2>
+    <p>Excel (.xlsx, une feuille) ou CSV : <code>prenom, nom, licence, uid</code>, dans cet ordre. Toutes les cellules doivent être du texte pour conserver les zéros des licences et UID. Maximum 500 cartes / 2 Mo.</p>
+    <button class="btn btn-outline-secondary mb-2" (click)="downloadTemplate()">Télécharger le modèle CSV</button>
+    <label for="nfc-import-file" class="form-label d-block">Fichier fournisseur</label>
+    <input id="nfc-import-file" class="form-control mb-2" type="file" accept=".csv,.xlsx" [disabled]="busy" (change)="readFile($event)">
+    <label for="nfc-import-count" class="form-label">Quantité attendue sur la commande / livraison</label>
+    <input id="nfc-import-count" class="form-control mb-2" type="number" min="1" max="500" step="1"
+      [(ngModel)]="expected" (ngModelChange)="checks = []" [disabled]="busy">
+    <div class="d-flex gap-2 mb-3">
+      <button class="btn btn-outline-primary" [disabled]="busy || !fileRows.length" (click)="preview()">Prévalider sans enregistrer</button>
+      <button class="btn btn-success" [disabled]="busy || !canImport" (click)="startImport()">Confirmer l’import</button>
+      <button class="btn btn-outline-secondary" [disabled]="!checks.length" (click)="downloadReport()">Rapport de prévalidation</button>
+    </div>
+    @if (checks.length) {
+      <p>Aucune écriture si une anomalie est détectée. Les associations identiques sont ignorées ; aucun transfert ni aucune réactivation automatique.</p>
+      <div class="table-responsive" style="max-height: 24rem; overflow: auto"><table class="table table-sm">
+        <thead><tr><th>Ligne</th><th>UID / licence</th><th>Résultat</th></tr></thead>
+        <tbody>@for (row of checks; track row.line) {
+          <tr [class.table-danger]="row.outcome === 'ERROR'"><td>{{ row.line }}</td><td>{{ row.uid }} / {{ row.licenseNumber }}</td><td>{{ row.message }}</td></tr>
+        }</tbody>
+      </table></div>
+    }
+    @if (reportBatch; as batch) {
+      <p class="mt-3" role="status">Lot {{ batch.filename }} : {{ batch.cursor }} / {{ batch.rows.length }} lignes traitées.</p>
+      @if (importing) { <button class="btn btn-outline-warning mb-3" (click)="stopImport = true">Suspendre après la ligne en cours</button> }
+      <button class="btn btn-outline-secondary mb-3 ms-2" (click)="downloadReport(batch)">Rapport des résultats enregistrés</button>
+    }
+    <h3 class="h5 mt-3">Lots enregistrés</h3>
+    <p>Un lot interrompu peut être repris. Les lignes déjà traitées ne sont pas rejouées. Après correction des erreurs d’un lot terminé, prévalidez à nouveau le fichier.</p>
+    <ul class="list-group">
+      @for (batch of data.batches; track batch.id) {
+        <li class="list-group-item">
+          {{ batch.createdAt | date:'dd/MM/yyyy HH:mm' }} — {{ batch.filename }} — {{ batch.cursor }}/{{ batch.rows.length }} — opérateur {{ batch.actor }}
+          <button class="btn btn-sm btn-outline-secondary ms-2" (click)="downloadReport(batch)">Rapport</button>
+          @if (batch.cursor < batch.rows.length) {
+            <button class="btn btn-sm btn-outline-primary ms-2" [disabled]="busy" (click)="resumeImport(batch)">Reprendre</button>
+          }
+        </li>
+      } @empty { <li class="list-group-item">Aucun lot enregistré.</li> }
+    </ul>
+  }
+</div>

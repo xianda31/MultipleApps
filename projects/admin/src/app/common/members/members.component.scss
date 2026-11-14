@@ -165,13 +165,9 @@ table.table.table-sm:not(.members-stats-table) tbody tr td {
   min-width: 9rem;
 }
 
-.members-with-nfc {
-  --member-actions-extra-width: 2.5rem;
-}
-
 .member-actions-column {
-  width: calc(8.5rem + var(--member-actions-extra-width, 0rem));
-  min-width: calc(8.5rem + var(--member-actions-extra-width, 0rem));
+  width: 8.5rem;
+  min-width: 8.5rem;
 }
 
 .members-stats-table-wrapper {

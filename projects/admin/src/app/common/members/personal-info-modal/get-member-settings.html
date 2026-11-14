@@ -84,6 +84,8 @@
         </div>
       </section>
 
+      <app-nfc-member-summary [licenseNumber]="member.license_number" (open)="openNfc()" />
+
       <section class="settings-section mb-0" aria-labelledby="consents-title">
         <div class="settings-section__heading">
           <h6 id="consents-title" class="settings-section__title mb-0">

@@ -26,6 +26,7 @@ const MENU_DEFINITIONS: NavbarMenu[] = [
         icon: 'bi-people',
         subMenus: [
             { label: 'répertoire', route: BACK_ROUTE_PATHS.MembersDatabase },
+            { label: 'cartes NFC / badgeuse', route: BACK_ROUTE_PATHS.Nfc },
             { label: 'cartes admission', route: BACK_ROUTE_PATHS.GameCardsEditor },
             { label: 'contrôles', route: BACK_ROUTE_PATHS.MemberSales },
         ]

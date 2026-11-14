@@ -12,6 +12,9 @@ import { MemberSettingsService } from '../../services/member-settings.service';
 import { normalizeFrenchPhoneNumber } from '../../pipes/phone.pipe';
 import { getFfbRankingCodeParts } from '../../utils/ffb-ranking.util';
 import { SystemDataService } from '../../services/system-data.service';
+import { NfcMemberSummaryComponent } from '../nfc-member-summary.component';
+import { Router } from '@angular/router';
+import { BACK_ROUTE_ABS_PATHS } from '../../../back/routes/back-route-paths';
 import {
   NotificationSubscriptionService,
   NotificationTopic,
@@ -20,7 +23,7 @@ import {
 
 @Component({
   selector: 'app-get-member-settings',
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModalModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbModalModule, NfcMemberSummaryComponent],
 
   templateUrl: './get-member-settings.html',
   styleUrls: ['./get-member-settings.scss']
@@ -53,6 +56,7 @@ export class GetMemberSettingsComponent {
     private membersService: MembersService,
     private systemDataService: SystemDataService,
     private injector: Injector,
+    private router: Router,
 
   ) {
 
@@ -182,6 +186,22 @@ export class GetMemberSettingsComponent {
 
   exit() {
     this.activeModal.close(null);
+  }
+
+  async openNfc(): Promise<void> {
+    if (this.saving) return;
+    if ((this.preferenceForm.dirty || this.base64_ico)
+      && !window.confirm('Quitter les paramètres sans enregistrer les modifications en cours ?')) return;
+    try {
+      if (await this.router.navigate([BACK_ROUTE_ABS_PATHS['Nfc']], { queryParams: { license: this.member.license_number } })) {
+        this.activeModal.close(null);
+      } else {
+        this.toastService.showError('NFC', 'Navigation refusée.');
+      }
+    } catch (error) {
+      console.error('[Navigation NFC]', error);
+      this.toastService.showError('NFC', 'Impossible d’ouvrir l’espace NFC.');
+    }
   }
 
   changeIco(event: Event) {

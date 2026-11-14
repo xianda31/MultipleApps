@@ -6,6 +6,7 @@ export const BACK_ROUTE_PATHS = {
   Products: 'caisse/produits',
   Billetterie: 'caisse/ticketing',
   MembersDatabase: 'members/database',
+  Nfc: 'members/nfc',
   GameCardsEditor: 'members/cartes-admission',
   MemberSales: 'members/controls',
   CashBoxStatus: 'finance/état-de-caisse',

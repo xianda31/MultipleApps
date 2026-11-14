@@ -14,6 +14,7 @@ export const BACK_ROUTE_ACCESS = {
   Products: { minimumGroup: Group_names.Support, helpTopicId: 'boutique-produits' },
   Billetterie: { minimumGroup: Group_names.Support, helpTopicId: 'boutique-billetterie' },
   MembersDatabase: { minimumGroup: Group_names.Support, helpTopicId: 'adherents-repertoire' },
+  Nfc: { minimumGroup: Group_names.Admin, helpTopicId: undefined },
   GameCardsEditor: { minimumGroup: Group_names.Admin, helpTopicId: 'adherents-cartes' },
   MemberSales: { minimumGroup: Group_names.Support, helpTopicId: 'adherents-controles' },
   CashBoxStatus: { minimumGroup: Group_names.Admin, helpTopicId: 'compta-etat-caisse' },

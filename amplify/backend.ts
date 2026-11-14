@@ -29,6 +29,7 @@ import { processBookEntryActions } from "./functions/process-book-entry-actions/
 import { processCmsImage } from "./functions/process-cms-image/resource";
 import { expireFeaturedSnippets } from "./functions/expire-featured-snippets/resource";
 import { sendWebPush } from "./functions/send-web-push/resource";
+import { nfcManagement } from "./functions/nfc-management/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { storage } from "./storage/resource";
@@ -49,7 +50,16 @@ const backend = defineBackend({
   processCmsImage,
   expireFeaturedSnippets,
   sendWebPush,
+  nfcManagement,
 });
+
+for (const name of ['MemberNfcCard', 'NfcCardRequest', 'NfcImportBatch', 'NfcHistory'] as const) {
+  const table = backend.data.resources.tables[name];
+  table.grantReadWriteData(backend.nfcManagement.resources.lambda);
+  backend.nfcManagement.addEnvironment(`${name}_TABLE`, table.tableName);
+}
+backend.data.resources.tables['Member'].grantReadData(backend.nfcManagement.resources.lambda);
+backend.nfcManagement.addEnvironment('Member_TABLE', backend.data.resources.tables['Member'].tableName);
 
 const storageBucket = backend.storage.resources.bucket;
 const processCmsImageLambda = backend.processCmsImage.resources.lambda;

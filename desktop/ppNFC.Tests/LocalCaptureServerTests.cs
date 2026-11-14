@@ -7,6 +7,29 @@ public sealed class LocalCaptureServerTests
 {
     private const string Origin = "http://localhost:4200";
 
+    [Fact]
+    public async Task StatusReportsReaderStateWithoutReturningUidOrStartingCapture()
+    {
+        var capture = new UidCapture();
+        capture.Observe(new(ReaderStatus.CardRead, "ACR1555 PICC", "04E50142E37384", 1, DateTimeOffset.UtcNow, "Lu"));
+        await using var server = new LocalCaptureServer(capture, [Origin], 0);
+        await server.StartAsync(CancellationToken.None);
+        using var client = new HttpClient { BaseAddress = new Uri(server.Address) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/status");
+        request.Headers.Add("Origin", Origin);
+        request.Headers.Add("X-ppNFC-Editor", "1");
+        using var response = await client.SendAsync(request);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal("CardRead", body.GetProperty("readerStatus").GetString());
+        Assert.Equal("ACR1555 PICC", body.GetProperty("readerName").GetString());
+        Assert.False(body.TryGetProperty("uid", out _));
+        Assert.False(capture.IsCapturing);
+        using var denied = await client.PostAsync("/status", null);
+        Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
+        await server.StopAsync(CancellationToken.None);
+    }
+
     [Theory]
     [InlineData("http://localhost:4200", true)]
     [InlineData("https://admin.example.test", true)]

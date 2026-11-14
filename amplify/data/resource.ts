@@ -9,6 +9,7 @@ import { removeUserFromGroup } from './remove-user-from-group/resource';
 import { processBookEntryActions } from '../functions/process-book-entry-actions/resource';
 import { stripeWebhooks } from '../functions/stripe-webhooks/resource';
 import { sendWebPush } from '../functions/send-web-push/resource';
+import { nfcManagement } from '../functions/nfc-management/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
@@ -23,6 +24,12 @@ enum Group_names {
 
 
 const schema = a.schema({
+
+  manageNfc: a.mutation()
+    .arguments({ input: a.json().required() })
+    .authorization((allow) => [allow.group(Group_names.System), allow.group(Group_names.Admin)])
+    .handler(a.handler.function(nfcManagement))
+    .returns(a.json()),
 
   // custom mutation
 
@@ -299,6 +306,9 @@ const schema = a.schema({
   MemberGender: a.enum(['M', 'F', 'U']),
   MemberLifecycleStatus: a.enum(['ACTIVE', 'ARCHIVED', 'BANNED']),
   MemberNfcCardStatus: a.enum(['ACTIVE', 'DISABLED']),
+  NfcCardKind: a.enum(['WHITE', 'PERSONAL']),
+  NfcStockState: a.enum(['AVAILABLE', 'ASSIGNED', 'LOST', 'RETIRED']),
+  NfcRequestStage: a.enum(['REQUESTED', 'ORDERED', 'RECEIVED', 'DELIVERED', 'CANCELLED']),
 
 
   Member: a.model({
@@ -339,20 +349,54 @@ const schema = a.schema({
 
   MemberNfcCard: a.model({
     uid: a.string().required(),
-    licenseNumber: a.string().required(),
+    licenseNumber: a.string(),
     status: a.ref('MemberNfcCardStatus').required(),
-    assignedAt: a.datetime().required(),
-    assignedBy: a.string().required(),
+    assignedAt: a.datetime(),
+    assignedBy: a.string(),
+    kind: a.ref('NfcCardKind'),
+    stockState: a.ref('NfcStockState'),
   })
     .identifier(['uid'])
     .secondaryIndexes((index) => [
       index('licenseNumber').queryField('memberNfcCardsByLicense'),
     ])
     .authorization((allow) => [
-      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
-      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.System).to(['read']),
+      allow.group(Group_names.Admin).to(['read']),
     ]),
 
+  NfcCardRequest: a.model({
+    licenseNumber: a.string().required(),
+    stage: a.ref('NfcRequestStage').required(),
+    orderReference: a.string(),
+    orderQuantity: a.integer(),
+    uid: a.string(),
+  }).identifier(['licenseNumber']).authorization((allow) => [
+    allow.group(Group_names.System).to(['read']), allow.group(Group_names.Admin).to(['read']),
+  ]),
+
+  NfcImportBatch: a.model({
+    id: a.id().required(),
+    filename: a.string().required(),
+    actor: a.string().required(),
+    rows: a.json().required(),
+    results: a.json().required(),
+    cursor: a.integer().required(),
+  }).authorization((allow) => [
+    allow.group(Group_names.System).to(['read']), allow.group(Group_names.Admin).to(['read']),
+  ]),
+
+  NfcHistory: a.model({
+    id: a.id().required(),
+    subject: a.string().required(),
+    action: a.string().required(),
+    actor: a.string().required(),
+    before: a.json(),
+    after: a.json(),
+  }).secondaryIndexes((index) => [index('subject').queryField('nfcHistoryBySubject')])
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read']), allow.group(Group_names.Admin).to(['read']),
+    ]),
 
   // Produits à la vente (unifié back-office + Stripe)
 

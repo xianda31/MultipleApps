@@ -31,7 +31,6 @@ import {
   AddDirectoryPersonModalComponent,
   AddDirectoryPersonResult,
 } from './add-directory-person-modal.component';
-import { MemberNfcCardsModalComponent } from './member-nfc-cards-modal.component';
 
 type MemberStatusConfig = {
   label: string;
@@ -118,7 +117,6 @@ export class MembersComponent implements OnInit {
   private seasonRefreshInFlight = false;
   private pendingSeasonRefresh = false;
   canDeleteMembers = false;
-  canManageNfcCards = false;
 
   // radioButtonGroup: FormGroup = new FormGroup({
   //   radioButton: new FormControl('Tous')
@@ -142,11 +140,9 @@ export class MembersComponent implements OnInit {
     void this.groupService.getUserAccreditation()
       .then(accreditation => {
         this.canDeleteMembers = accreditation.level >= Group_priorities.Administrateur;
-        this.canManageNfcCards = this.canDeleteMembers;
       })
       .catch(() => {
         this.canDeleteMembers = false;
-        this.canManageNfcCards = false;
       });
     this.systemDataService.get_configuration().pipe(
       distinctUntilKeyChanged('season'),
@@ -296,18 +292,6 @@ export class MembersComponent implements OnInit {
       this.loading = false;
       this.seasonRefreshInFlight = false;
     }
-  }
-
-  openNfcCards(member: Member): void {
-    if (!this.canManageNfcCards || this.loading || this.synchronizationFailed) return;
-    const ref = this.modalService.open(MemberNfcCardsModalComponent, {
-      size: 'lg',
-      centered: true,
-      backdrop: 'static',
-      keyboard: false,
-    });
-    ref.componentInstance.member = member;
-    ref.componentInstance.members = this.members;
   }
 
   async openAddPersonModal(): Promise<void> {

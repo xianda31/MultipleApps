@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
-import { getCurrentUser } from '@aws-amplify/auth';
 import { generateClient } from 'aws-amplify/data';
-import type { GraphQLQuery } from 'aws-amplify/api';
 import type { Schema } from '../../../../../../amplify/data/resource';
-import type { Member } from '../interfaces/member.interface';
+import { z } from 'zod';
 
 export type MemberNfcCard = Schema['MemberNfcCard']['type'];
+export const readerStatusSchema = z.object({
+  version: z.string(), readerStatus: z.enum(['Starting', 'Ready', 'CardRead', 'Disconnected', 'Error']),
+  readerName: z.string().nullable(), message: z.string(), capturing: z.boolean(),
+});
+export type NfcReaderStatus = z.infer<typeof readerStatusSchema>;
 
 export function normalizeNtag213Uid(value: string): string {
   const uid = value.trim().toUpperCase();
@@ -22,9 +25,21 @@ export class MemberNfcCardService {
   }
 
   async acquire(signal: AbortSignal): Promise<string> {
+    const body = await this.bridge('capture', signal);
+    if (typeof body !== 'object' || body === null || !('uid' in body) || typeof body.uid !== 'string') {
+      throw new Error('Réponse ppNFC invalide : UID absent.');
+    }
+    return normalizeNtag213Uid(body.uid);
+  }
+
+  async status(signal: AbortSignal): Promise<NfcReaderStatus> {
+    return readerStatusSchema.parse(await this.bridge('status', signal));
+  }
+
+  private async bridge(path: 'capture' | 'status', signal: AbortSignal): Promise<unknown> {
     let response: Response;
     try {
-      response = await fetch('http://127.0.0.1:17835/capture', {
+      response = await fetch(`http://127.0.0.1:17835/${path}`, {
         method: 'POST',
         headers: { 'X-ppNFC-Editor': '1' },
         signal,
@@ -39,16 +54,24 @@ export class MemberNfcCardService {
         { cause: error },
       );
     }
-    const body: unknown = await response.json();
+    if (path === 'status' && response.status === 404) {
+      throw new Error('Cette version de ppNFC ne fournit pas le contrôle d’état. Mettez à jour puis relancez ppNFC.');
+    }
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      throw new Error(response.ok
+        ? 'Réponse ppNFC invalide : contenu JSON attendu.'
+        : `Erreur ppNFC (${response.status}) : réponse vide ou non JSON.`, { cause: error });
+    }
     if (!response.ok) {
       const message = typeof body === 'object' && body !== null && 'message' in body
         && typeof body.message === 'string' ? body.message : `Erreur ppNFC (${response.status}).`;
       throw new Error(message);
     }
-    if (typeof body !== 'object' || body === null || !('uid' in body) || typeof body.uid !== 'string') {
-      throw new Error('Réponse ppNFC invalide : UID absent.');
-    }
-    return normalizeNtag213Uid(body.uid);
+    return body;
   }
 
   async list(licenseNumber: string): Promise<MemberNfcCard[]> {
@@ -72,74 +95,4 @@ export class MemberNfcCardService {
     return result.data;
   }
 
-  async assign(uid: string, member: Member, previous: MemberNfcCard | null): Promise<MemberNfcCard> {
-    const normalized = normalizeNtag213Uid(uid);
-    if (previous && previous.uid !== normalized) throw new Error('La carte a changé. Relisez-la.');
-    if (previous && previous.licenseNumber !== member.license_number && previous.status !== 'DISABLED') {
-      throw new Error('Désactivez la carte avant de la réattribuer à un autre adhérent.');
-    }
-    await this.ensureActiveMember(member);
-    const { userId } = await getCurrentUser();
-    const input = {
-      uid: normalized,
-      licenseNumber: member.license_number,
-      status: 'ACTIVE' as const,
-      assignedAt: new Date().toISOString(),
-      assignedBy: userId,
-    };
-    if (previous) return this.update(previous, input);
-    const result = await this.client.models.MemberNfcCard.create(input);
-    if (result.errors?.length) throw new Error(result.errors.map(error => error.message).join('; '));
-    if (!result.data) throw new Error('La carte n’a pas été enregistrée.');
-    return result.data;
-  }
-
-  async deactivate(card: MemberNfcCard): Promise<MemberNfcCard> {
-    return this.update(card, { uid: card.uid, status: 'DISABLED' });
-  }
-
-  private async ensureActiveMember(member: Member): Promise<void> {
-    const client = this.client;
-    const matches: Schema['Member']['type'][] = [];
-    let nextToken: string | null | undefined;
-    do {
-      const result = await client.models.Member.list({
-        filter: { license_number: { eq: member.license_number } }, nextToken,
-      });
-      if (result.errors?.length) throw new Error(result.errors.map(error => error.message).join('; '));
-      matches.push(...result.data);
-      nextToken = result.nextToken;
-    } while (nextToken);
-    if (!member.license_number.trim() || matches.length !== 1 || matches[0].id !== member.id) {
-      throw new Error('Licence inconnue ou ambiguë. Actualisez le répertoire avant l’attribution.');
-    }
-    if (matches[0].lifecycleStatus !== 'ACTIVE') {
-      throw new Error('Une carte ne peut être activée que pour un adhérent explicitement actif.');
-    }
-  }
-
-  private async update(
-    previous: MemberNfcCard,
-    input: { uid: string; status: 'ACTIVE' | 'DISABLED'; licenseNumber?: string; assignedAt?: string; assignedBy?: string },
-  ): Promise<MemberNfcCard> {
-    if (!previous.updatedAt) throw new Error('Version de carte absente. Rechargez les cartes.');
-    const result = await this.client.graphql<GraphQLQuery<{ updateMemberNfcCard: MemberNfcCard | null }>>({
-      query: `mutation UpdateNfcCard($input: UpdateMemberNfcCardInput!, $condition: ModelMemberNfcCardConditionInput) {
-        updateMemberNfcCard(input: $input, condition: $condition) {
-          uid licenseNumber status assignedAt assignedBy createdAt updatedAt
-        }
-      }`,
-      variables: {
-        input,
-        condition: {
-          licenseNumber: { eq: previous.licenseNumber },
-          status: { eq: previous.status },
-          updatedAt: { eq: previous.updatedAt },
-        },
-      },
-    });
-    if (result.errors?.length) throw new Error(result.errors.map(error => error.message).join('; '));
-    if (!result.data.updateMemberNfcCard) throw new Error('Modification non confirmée. Rechargez les cartes.');
-    return result.data.updateMemberNfcCard;
-  }
 }

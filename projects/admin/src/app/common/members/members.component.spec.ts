@@ -68,21 +68,14 @@ describe('MembersComponent progressive synchronization', () => {
     return { fixture, snapshots, complete, fail, toast, modals };
   }
 
-  it('restricts the card editor entry to administrators and passes the selected member', fakeAsync(() => {
-    const { fixture, complete, modals } = setup();
+  it('keeps the member settings entry without a duplicate NFC editor', fakeAsync(() => {
+    const { fixture, complete } = setup();
     complete([member]);
     flushMicrotasks();
     fixture.detectChanges();
     const root: HTMLElement = fixture.nativeElement;
     expect(root.querySelector('[aria-label="Gérer les cartes NFC"]')).toBeNull();
-    fixture.componentInstance.openNfcCards(member);
-    expect(modals.open).not.toHaveBeenCalled();
-
-    fixture.componentInstance.canManageNfcCards = true;
-    fixture.detectChanges();
-    root.querySelector<HTMLButtonElement>('[aria-label="Gérer les cartes NFC"]')?.click();
-    expect(modals.open).toHaveBeenCalled();
-    expect(modals.open.calls.mostRecent().returnValue.componentInstance.member).toBe(member);
+    expect(root.querySelector('[aria-label="Voir la fiche"]')).not.toBeNull();
   }));
 
   it('keeps summary rows compact without shrinking member rows', fakeAsync(() => {

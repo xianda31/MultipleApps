@@ -19,4 +19,10 @@ describe('back-office routes', () => {
 
     expect(route?.canActivate).toEqual([AuthGuard, AccreditationGuard]);
   });
+
+  it('restricts the NFC workspace to administrators', () => {
+    const route = childRoutes.find(candidate => candidate.path === BACK_ROUTE_PATHS.Nfc);
+    expect(route?.canActivate).toEqual([AuthGuard, AccreditationGuard]);
+    expect(route?.data?.['minimumAccreditationLevel']).toBe(3);
+  });
 });

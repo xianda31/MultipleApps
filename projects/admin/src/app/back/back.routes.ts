@@ -90,6 +90,7 @@ export const routes: Routes = [
 
 
       { path: BACK_ROUTE_PATHS.MembersDatabase, component: MembersComponent, canActivate: [AuthGuard] },
+      { path: BACK_ROUTE_PATHS.Nfc, loadComponent: () => import('./nfc/nfc-workspace.component').then(module => module.NfcWorkspaceComponent) },
       { path: BACK_ROUTE_PATHS.GameCardsEditor, component: GameCardsEditorComponent, canActivate: [AuthGuard] },
       { path: BACK_ROUTE_PATHS.MemberSales, component: MemberSalesComponent, canActivate: [AuthGuard] },
 
