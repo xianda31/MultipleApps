@@ -12,6 +12,7 @@ import { Page, Page_input, Snippet, Snippet_input } from '../interfaces/page_sni
 import {
   FEE_RATE,
   Game,
+  GamePlayersAction,
   GameCheckIn,
   GameFeeConfiguration,
   Game_input,
@@ -26,6 +27,7 @@ import { MailingList, MailingListInput } from '../../back/mailing/mailing-list.i
 import { classifyMemberLookupError, sanitizeGraphqlErrors } from '../authentification/member-lookup-diagnostics';
 import { collectStripeTransactionPages } from './stripe-transaction-pagination';
 import { canResumeGameSettlement } from '../../back/fees/fees-collector/fees-settlement.util';
+import { decodeGamePlayers } from '../../back/fees/fees-collector/fees-pairs.util';
 
 @Injectable({
   providedIn: 'root'
@@ -1194,24 +1196,14 @@ export class DBhandler {
       fee_rate: game.fee_rate,
       alphabetic_sort: game.alphabetic_sort,
       tournament: game.tournament,
-      gamers: JSON.stringify(game.gamers)
+      gamers: JSON.stringify(game.gamers.map(player => ({ ...player, photo_url$: null })))
     };
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data: game_output_raw, errors } = await client.models.Game.create(game_input);
     if (errors) throw errors;
-    const game_output = game_output_raw as any;
-    let created_game = game_output
-      ? {
-        ...game_output,
-        gamers: typeof game_output.gamers === 'string'
-          ? JSON.parse(game_output.gamers)
-          : game_output.gamers,
-        fee_rate: this.normalizeGameFeeRate(game_output.fee_rate)
-      }
-      : null;
-    if (!created_game) throw new Error('Game creation failed: game_output is null');
-    return created_game as unknown as Game;
+    if (!game_output_raw) throw new Error('Game creation failed: game_output is null');
+    return this.decodeSharedGame(game_output_raw);
   }
 
   async readGame(season: string, trn_id: number): Promise<Game | null> {
@@ -1219,24 +1211,13 @@ export class DBhandler {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data: game_output_raw, errors } = await client.models.Game.get({ gameId: game_id });
-    // console.log('Game.read output:', game_output);
     if (errors) throw errors;
-    const game_output = game_output_raw as any;
-    let read_game = game_output
-      ? {
-        ...game_output,
-        gamers: typeof game_output.gamers === 'string'
-          ? JSON.parse(game_output.gamers)
-          : game_output.gamers,
-        fee_rate: this.normalizeGameFeeRate(game_output.fee_rate)
-      }
-      : null;
-    return read_game as unknown as Game | null;
+    return game_output_raw ? this.decodeSharedGame(game_output_raw) : null;
   }
 
   async updateGame(game: Game): Promise<Game> {
     const game_id = this.create_custom_key(game.season, game.tournament!.id);
-    let game_input: Game_input = {
+    let game_input: Omit<Game_input, 'gamers'> = {
       gameId: game_id,
       season: game.season,
       fee_rate: game.fee_rate,
@@ -1245,24 +1226,13 @@ export class DBhandler {
       fees_doubled: game.fees_doubled,
       alphabetic_sort: game.alphabetic_sort,
       tournament: game.tournament,
-      gamers: JSON.stringify(game.gamers)
     };
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode: authMode });
     const { data: game_output_raw, errors } = await client.models.Game.update(game_input);
     if (errors) throw errors;
-    const game_output = game_output_raw as any;
-    let updated_game = game_output
-      ? {
-        ...game_output,
-        gamers: typeof game_output.gamers === 'string'
-          ? JSON.parse(game_output.gamers)
-          : game_output.gamers,
-        fee_rate: this.normalizeGameFeeRate(game_output.fee_rate)
-      }
-      : null;
-    if (!updated_game) throw new Error('Game update failed: game_output is null');
-    return updated_game as unknown as Game;
+    if (!game_output_raw) throw new Error('Game update failed: game_output is null');
+    return this.decodeSharedGame(game_output_raw);
   }
 
   async deleteGame(season: string, trn_id: number): Promise<boolean> {
@@ -1274,7 +1244,64 @@ export class DBhandler {
     return true;
   }
 
-  async upsertGameCheckIn(checkIn: Omit<GameCheckIn, 'updatedAt'>): Promise<GameCheckIn> {
+  private decodeSharedGame(data: Schema['Game']['type']): Game {
+    return { ...data, tournament: data.tournament ?? null, gamers: decodeGamePlayers(data.gamers),
+      fee_rate: this.normalizeGameFeeRate(data.fee_rate) };
+  }
+
+  async initializeGamePlayers(game: Game): Promise<Game> {
+    const existing = await this.readGame(game.season, game.tournament!.id);
+    if (existing) return existing;
+    try {
+      return await this.createGame({ ...game, gamers: game.gamers.map(player => ({ ...player, photo_url$: null })) });
+    } catch (error) {
+      const winner = await this.readGame(game.season, game.tournament!.id);
+      if (!winner) throw error;
+      console.info('[FeesCollector] Tournament list initialized by another post.');
+      return winner;
+    }
+  }
+
+  async mutateGamePlayers(gameId: string, action: GamePlayersAction, expectedRoster?: string): Promise<Game> {
+    const authMode = await lastValueFrom(this._authMode());
+    const client = generateClient<Schema>({ authMode });
+    const { data, errors } = await client.mutations.mutateGamePlayers({
+      gameId, action: JSON.stringify(action), expectedRoster,
+    });
+    if (errors?.length) throw new Error(errors.map(error => error.message).join('\n'));
+    if (!data) throw new Error('Tournament player update returned no data');
+    return this.decodeSharedGame(data);
+  }
+
+  observeGamePlayers(gameId: string): Observable<Game> {
+    return this._authMode().pipe(switchMap(authMode => new Observable<Game>(observer => {
+      const client = generateClient<Schema>({ authMode });
+      const subscription = client.subscriptions.onGamePlayersChanged({ gameId }).subscribe({
+        next: data => {
+          try {
+            if (data) observer.next(this.decodeSharedGame(data));
+          } catch (error) {
+            observer.error(error);
+          }
+        },
+        error: error => observer.error(error),
+      });
+      return () => subscription.unsubscribe();
+    })));
+  }
+
+  async upsertGameCheckIn(checkIn: Omit<GameCheckIn, 'updatedAt'>, expectedVersion?: string | null): Promise<GameCheckIn> {
+    if (expectedVersion !== undefined) {
+      const saved = await this.mutateGamePlayers(checkIn.gameId, {
+        type: 'check-in', license: checkIn.license, mode: checkIn.mode, source: checkIn.source, expectedVersion,
+      });
+      const player = saved.gamers.find(candidate => candidate.license === checkIn.license);
+      if (!player?.check_in_updated_at || !player.check_in_source || !player.check_in_updated_by) {
+        throw new Error('Tournament check-in returned no version or author');
+      }
+      return { ...checkIn, source: player.check_in_source, updatedBy: player.check_in_updated_by,
+        updatedAt: player.check_in_updated_at };
+    }
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
     const model = client.models.GameCheckIn;
@@ -1361,7 +1388,8 @@ export class DBhandler {
   }
 
   async updateGameFeeConfiguration(
-    configuration: Omit<GameFeeConfiguration, 'updatedAt'>,
+    configuration: Pick<GameFeeConfiguration, 'gameId' | 'updatedBy'>
+      & Partial<Omit<GameFeeConfiguration, 'gameId' | 'updatedBy' | 'updatedAt'>>,
   ): Promise<GameFeeConfiguration> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });

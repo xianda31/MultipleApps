@@ -9,6 +9,7 @@ import { removeUserFromGroup } from './remove-user-from-group/resource';
 import { processBookEntryActions } from '../functions/process-book-entry-actions/resource';
 import { stripeWebhooks } from '../functions/stripe-webhooks/resource';
 import { sendWebPush } from '../functions/send-web-push/resource';
+import { gamePlayers } from '../functions/game-players/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
@@ -23,6 +24,23 @@ enum Group_names {
 
 
 const schema = a.schema({
+  mutateGamePlayers: a.mutation()
+    .arguments({ gameId: a.id().required(), expectedRoster: a.string(), action: a.json().required() })
+    .returns(a.ref('Game'))
+    .authorization(allow => [
+      allow.group(Group_names.System), allow.group(Group_names.Admin),
+      allow.group(Group_names.Editor), allow.group(Group_names.Support),
+    ])
+    .handler(a.handler.function(gamePlayers)),
+
+  onGamePlayersChanged: a.subscription()
+    .arguments({ gameId: a.id().required() })
+    .for(a.ref('mutateGamePlayers'))
+    .handler(a.handler.custom({ entry: './on-game-players-changed.js' }))
+    .authorization(allow => [
+      allow.group(Group_names.System), allow.group(Group_names.Admin),
+      allow.group(Group_names.Editor), allow.group(Group_names.Support),
+    ]),
 
   // custom mutation
 
@@ -218,6 +236,7 @@ const schema = a.schema({
       time: a.string().required()
     }),
     gamers: a.json().required(),
+    playersVersion: a.integer(),
   })
     .identifier(['gameId'])
     .authorization((allow) => [
@@ -255,6 +274,7 @@ const schema = a.schema({
     memberPrice: a.float().required(),
     nonMemberPrice: a.float().required(),
     feesDoubled: a.boolean().required(),
+    paymentPreference: a.enum(['card', 'euro']),
     updatedBy: a.string().required(),
   })
     .identifier(['gameId'])

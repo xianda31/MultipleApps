@@ -63,6 +63,7 @@ export class SysConfComponent {
           key: ['standard'],
           member_price: [0],
           non_member_price: [0],
+          payment_preference: ['card', [Validators.required, Validators.pattern(/^(card|euro)$/)]],
         })
       ]),
 
@@ -265,8 +266,11 @@ export class SysConfComponent {
 
     configuration.fee_rates
       .filter((fee_rate) => String(fee_rate.key) !== 'accession')
-      .forEach((fee_rate: any) => {
-        this.fee_rates.push(this.fb.group(fee_rate));
+      .forEach((fee_rate) => {
+        this.fee_rates.push(this.fb.group({
+          ...fee_rate,
+          payment_preference: [fee_rate.payment_preference ?? 'card', [Validators.required, Validators.pattern(/^(card|euro)$/)]],
+        }));
       });
 
 

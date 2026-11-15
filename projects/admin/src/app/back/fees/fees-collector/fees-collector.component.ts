@@ -11,7 +11,7 @@ import { FFBplayer } from '../../../common/ffb/interface/FFBplayer.interface';
 import { ClubMember } from '../../../common/ffb/interface/club-member.interface';
 import { InputPlayerComponent } from '../../../common/ffb/input-licensee/input-player.component';
 import { InputMemberComponent } from '../../input-member/input-member.component';
-import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule, NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { GetConfirmationComponent } from '../../../common/modals/get-confirmation.component';
 import { ToastService } from '../../../common/services/toast.service';
 import { MembersService } from '../../../common/services/members.service';
@@ -21,18 +21,18 @@ import { PaymentMode } from '../../shop/cart/cart.interface';
 import { ProductService } from '../../../common/services/product.service';
 import { BreakingNewsService } from '../../breaking-news/breaking-news.service';
 import { Member } from '../../../common/interfaces/member.interface';
-import { normalizeGender } from '../../../common/utils/gender.util';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
-import { feeModeFromConfiguration, membershipPaymentWarningActive, membershipPaymentWarningLevel, TournamentFeeMode } from './fees-check-in.util';
+import { canSelectGameCard, feeModeFromConfiguration, membershipPaymentWarningActive, membershipPaymentWarningLevel, TournamentFeeMode } from './fees-check-in.util';
 import { SettlementProgressComponent } from './settlement-progress.component';
+import { GamerPair, gamerPairs, rosterSignature } from './fees-pairs.util';
 
 
 
 @Component({
   selector: 'app-fees-collector',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, InputMemberComponent, NgbTooltipModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, InputMemberComponent, NgbTooltipModule, NgbDropdownModule],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
@@ -56,10 +56,17 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   new_pair_player1!: ClubMember | null;
   new_pair_player2!: ClubMember | null;
   modalErrorMessage: string = '';
-  addPlayersModalOpen: boolean = false;
+  pairsModalOpen = false;
+  pairEditMode: 'list' | 'add' | 'replace' | 'remove' = 'list';
+  pairChangePending = false;
+  replacementPlayer: ClubMember | null = null;
+  replacedPlayer: Gamer | null = null;
+  removedPair: GamerPair | null = null;
+  private editingRoster = '';
   hideValidated: boolean = false;
   compactFooterVisible: boolean = false;
   disappearingGamers: Map<number, boolean> = new Map();
+  pendingCheckIns = new Set<string>();
   CARD_PRICE !: number;
   members: Member[] = [];
   banks: Bank[] = [];
@@ -232,6 +239,10 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     if (saved) await this.log_game_state();
   }
 
+  get paymentPreference(): 'card' | 'euro' {
+    return this.feesCollectorService.paymentPreference;
+  }
+
   one_week_back() {
     this.days_back += 7;
     this.daysBack$.next(this.days_back);
@@ -296,7 +307,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   shouldShowGamer(gamer: Gamer): boolean {
-    if (!this.game?.alphabetic_sort || !this.hideValidated) {
+    if (!this.hideValidated) {
       return true;
     }
     // Ne pas afficher si validé et pas en cours de disparition
@@ -307,7 +318,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   onGamerValidated(gamer: Gamer): void {
-    if (this.game?.alphabetic_sort && this.hideValidated && gamer.validated) {
+    if (this.hideValidated && gamer.validated) {
       // Marquer comme en cours de disparition
       this.disappearingGamers.set(gamer.index, true);
       // Retirer après l'animation (2500ms)
@@ -322,10 +333,39 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   async setGamerPayment(gamer: Gamer, mode: 'card' | 'euro' | 'none'): Promise<void> {
-    const saved = await this.feesCollectorService.setGamerPayment(gamer, mode, 'manual');
-    if (!saved) return;
-    this.onGamerValidated(gamer);
-    this.check_status();
+    if (this.pendingCheckIns.has(gamer.license)) return;
+    this.pendingCheckIns.add(gamer.license);
+    try {
+      const saved = await this.feesCollectorService.setGamerPayment(gamer, mode, 'manual');
+      if (!saved) return;
+      this.onGamerValidated(gamer);
+      this.check_status();
+    } finally {
+      this.pendingCheckIns.delete(gamer.license);
+    }
+  }
+
+  async cancelCheckIn(gamer: Gamer): Promise<void> {
+    if (this.pendingCheckIns.has(gamer.license)) return;
+    this.pendingCheckIns.add(gamer.license);
+    try {
+      if (await this.feesCollectorService.cancelGamerCheckIn(gamer)) {
+        this.disappearingGamers.delete(gamer.index);
+      }
+    } finally {
+      this.pendingCheckIns.delete(gamer.license);
+    }
+  }
+
+  canUseCard(gamer: Gamer): boolean {
+    return canSelectGameCard(gamer, this.game.fees_doubled);
+  }
+
+  checkInLabel(gamer: Gamer): string {
+    if (!gamer.validated) return 'Pointer';
+    return !gamer.enabled ? 'Offert' : gamer.in_euro
+      ? `${gamer.price.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`
+      : 'Carte';
   }
 
   async validate_fees(): Promise<boolean> {
@@ -350,76 +390,92 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     return true;
   }
 
-  add_player(player: FFBplayer | null) {
-    if (player) {
-      this.feesCollectorService.add_player(player);
-      this.log_game_state();
-    }
+  get pairs(): GamerPair[] {
+    return gamerPairs(this.game?.gamers ?? []);
   }
 
-  openAddPlayersModal() {
+  get pairManagementDisabled(): boolean {
+    return this.pairChangePending || this.feesCollectorService.playersLoading
+      || this.selected_tournament?.status === Game_status.COMPLETED
+      || this.feesCollectorService.rosterLocked;
+  }
+
+  openPairsModal(): void {
+    this.showPairList();
+    this.pairsModalOpen = true;
+  }
+
+  closePairsModal(): void {
+    if (this.pairChangePending) return;
+    this.pairsModalOpen = false;
+    this.showPairList();
+  }
+
+  showPairList(): void {
+    if (this.pairChangePending) return;
+    this.pairEditMode = 'list';
     this.modalErrorMessage = '';
     this.new_pair_player1 = null;
     this.new_pair_player2 = null;
-    this.addPlayersModalOpen = true;
+    this.replacementPlayer = null;
+    this.replacedPlayer = null;
+    this.removedPair = null;
   }
 
-  closeAddPlayersModal() {
-    this.addPlayersModalOpen = false;
-    this.new_pair_player1 = null;
-    this.new_pair_player2 = null;
-    this.modalErrorMessage = '';
+  beginAddPair(): void {
+    this.showPairList();
+    this.editingRoster = rosterSignature(this.game.gamers);
+    this.pairEditMode = 'add';
   }
 
-  add_pair(player1: ClubMember | null, player2: ClubMember | null) {
+  beginReplacePlayer(player: Gamer): void {
+    this.showPairList();
+    this.editingRoster = rosterSignature(this.game.gamers);
+    this.replacedPlayer = player;
+    this.pairEditMode = 'replace';
+  }
+
+  beginRemovePair(pair: GamerPair): void {
+    this.showPairList();
+    this.editingRoster = rosterSignature(this.game.gamers);
+    this.removedPair = pair;
+    this.pairEditMode = 'remove';
+  }
+
+  pairHasCheckedInPlayers(pair: GamerPair): boolean {
+    return pair.players.some(player => player.validated);
+  }
+
+  async confirmPairChange(): Promise<void> {
+    if (this.pairManagementDisabled) return;
+    if (this.pairEditMode === 'add' && (!this.new_pair_player1 || !this.new_pair_player2)) {
+      this.modalErrorMessage = 'Sélectionnez les deux joueurs de la paire.';
+      return;
+    }
+    if (this.pairEditMode === 'replace' && (!this.replacedPlayer || !this.replacementPlayer)) {
+      this.modalErrorMessage = 'Sélectionnez le remplaçant.';
+      return;
+    }
+    if (this.pairEditMode === 'list' || (this.pairEditMode === 'remove' && !this.removedPair)) return;
+    this.pairChangePending = true;
     this.modalErrorMessage = '';
-
-    // Vérifier que au moins un joueur est saisi
-    if (!player1 && !player2) {
-      this.modalErrorMessage = 'Veuillez saisir au moins un joueur.';
-      return;
-    }
-
-    // Vérifier que ce ne sont pas les mêmes joueurs (comparaison par person_id)
-    if (player1 && player2 && player1.id === player2.id) {
-      this.modalErrorMessage = 'Les deux joueurs doivent être différents.';
-      return;
-    }
-
-    // Vérifier que les joueurs ne sont pas déjà inscrits (comparaison par FFB person_id)
-    if (player1) {
-      const player1Exists = this.game.gamers.some(g => g.ffb_person_id === player1.id);
-      if (player1Exists) {
-        this.modalErrorMessage = `${player1.firstName} ${player1.lastName} est déjà inscrit dans ce tournoi.`;
-        return;
+    let saved = false;
+    try {
+      if (this.pairEditMode === 'add' && this.new_pair_player1 && this.new_pair_player2) {
+        saved = await this.feesCollectorService.addPair(this.new_pair_player1, this.new_pair_player2, this.editingRoster);
+      } else if (this.pairEditMode === 'replace' && this.replacedPlayer && this.replacementPlayer) {
+        saved = await this.feesCollectorService.replacePlayer(this.replacedPlayer.license, this.replacementPlayer, this.editingRoster);
+      } else if (this.pairEditMode === 'remove' && this.removedPair) {
+        saved = await this.feesCollectorService.removePair(this.removedPair.id, this.editingRoster);
       }
+    } finally {
+      this.pairChangePending = false;
     }
-
-    if (player2) {
-      const player2Exists = this.game.gamers.some(g => g.ffb_person_id === player2.id);
-      if (player2Exists) {
-        this.modalErrorMessage = `${player2.firstName} ${player2.lastName} est déjà inscrit dans ce tournoi.`;
-        return;
-      }
+    if (saved) {
+      this.showPairList();
+    } else {
+      this.modalErrorMessage = 'La modification n’a pas été enregistrée. Consultez le message d’erreur puis revenez à la liste avant de réessayer.';
     }
-
-    // Tout est ok, ajouter les joueurs (conversion ClubMember → FFBplayer)
-    const toFFBplayer = (m: ClubMember): FFBplayer => ({
-      license_number: m.license_number,
-      firstname: m.firstName,
-      lastname: m.lastName,
-      person_id: m.id,
-      gender: normalizeGender(m.gender) === 'M' ? 1 : 2,
-    } as unknown as FFBplayer);
-
-    if (player1) {
-      this.feesCollectorService.add_player(toFFBplayer(player1));
-    }
-    if (player2) {
-      this.feesCollectorService.add_player(toFFBplayer(player2));
-    }
-    this.log_game_state();
-    this.closeAddPlayersModal();
   }
 
   quickSale(gamer: Gamer) {
@@ -496,6 +552,10 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       && this.game.gamers.every(gamer => gamer.validated);
   }
 
+  get checkedInCount(): number {
+    return this.game?.gamers.filter(gamer => gamer.validated).length ?? 0;
+  }
+
   gamer_solvent(gamer: Gamer): boolean {
     return !gamer.is_member || gamer.in_euro || (gamer.game_credits >= (this.game.fees_doubled ? 2 : 1));
   }
@@ -522,22 +582,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   gamer_class(gamer: Gamer): string {
-    let card_class = 'card h-100 nice_shadow';
-    if (!gamer.enabled) {
-      card_class += ' bg-success shadow-lg text-bg-success';
-      return card_class;
-    }
-
-    if (gamer.validated) {
-      card_class += ' bg-success shadow-lg text-bg-success';
-    } else {
-      if (gamer.is_member)
-        card_class += ' border-primary';
-      else {
-        card_class += ' border-secondary';
-      }
-    }
-    return card_class
+    return `card h-100 fee-player-card${gamer.validated ? ' is-checked-in' : ''}`;
   }
 
   async log_game_state() {
@@ -570,18 +615,11 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
 
   private csvPairRows(): string[] {
     if (!this.game) return [];
-    const gamers = [...this.game.gamers].sort((a, b) => a.index - b.index);
-    const rows: string[] = [];
-    for (let i = 0; i < gamers.length; i += 2) {
-      const gamer1 = gamers[i]?.license ?? '';
-      const gamer2 = gamers[i + 1]?.license ?? '';
-      rows.push(`${gamer1};${gamer2}`);
-    }
-    return rows;
+    return this.pairs.map(pair => `${pair.players[0]?.license ?? ''};${pair.players[1]?.license ?? ''}`);
   }
 
   csvListPairCounts(): { a: number; b: number } {
-    const pairCount = Math.ceil((this.game?.gamers.length ?? 0) / 2);
+    const pairCount = this.pairs.length;
     const a = Math.ceil(pairCount / 2);
     return { a, b: pairCount - a };
   }
@@ -624,7 +662,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     rows: []
   };
 
-  printTable() {
+  downloadTournamentPdf() {
     this.pdfLoading = true;
     setTimeout(() => {
       this.tables_to_pdf();

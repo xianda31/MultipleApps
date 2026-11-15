@@ -3,6 +3,221 @@
   width: 100%;
 }
 
+.fees-collector-root {
+  border: 1px solid #dfe6ef;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.fees-collector-body {
+  background: #eef2f7;
+}
+
+.fees-footer-actions {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fees-footer-actions > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.fees-footer-actions .btn {
+  width: 100%;
+  height: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 575.98px) {
+  .fees-collector-footer {
+    padding-inline: 0.35rem;
+  }
+
+  .fees-footer-actions {
+    gap: 0.2rem;
+  }
+
+  .fees-footer-actions .btn {
+    padding-inline: 0.15rem;
+    font-size: 0.7rem;
+  }
+}
+
+.fee-pair-selection-body {
+  min-height: min(28rem, calc(100dvh - 9rem));
+}
+
+.fees-gamers-grid {
+  margin-inline: 0;
+}
+
+.fees-collector-header {
+  background: #fff;
+  border-bottom: 1px solid #e6ecf3;
+}
+
+.fee-tournament-title {
+  color: #17365b;
+  font-weight: 700;
+}
+
+.fee-tournament-meta,
+.fee-receipt {
+  color: #526579;
+  font-size: 0.82rem;
+}
+
+.fee-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #e7f5ec;
+  color: #17653a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fee-display-controls {
+  color: #34495e;
+  background: #f7f9fc;
+  border-bottom: 1px solid #e6ecf3;
+}
+
+.fee-player-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.4rem;
+  background: #fff;
+  border: 1px solid #d3dce7;
+  border-radius: 0.6rem;
+  box-shadow: 0 1px 2px rgba(28, 54, 84, 0.08), 0 2px 6px rgba(28, 54, 84, 0.08);
+}
+
+.fee-player-card.is-checked-in {
+  background: #edf8f1;
+  border-color: #80c99b;
+}
+
+.fee-player-main {
+  display: flex;
+  gap: 0.4rem;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.fee-avatar {
+  display: grid;
+  flex: 0 0 2.5rem;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: #e7eef7;
+  color: #59728e;
+  font-size: 1.4rem;
+}
+
+.fee-avatar img,
+.fee-avatar svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.fee-avatar img:hover,
+.fee-avatar svg:hover {
+  position: relative;
+  z-index: 1;
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.fee-player-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.fee-player-name {
+  color: #18324e;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.fee-player-credit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.fee-credit-badge {
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.35rem;
+  background: #e8f0fb;
+  color: #264f7d;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.fee-credit-badge.fee-credit-low {
+  background: #fff0e3;
+  color: #914400;
+}
+
+.fee-financial-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  color: #526579;
+  font-size: 0.72rem;
+}
+
+.fee-actions {
+  position: relative;
+  margin-top: auto;
+}
+
+.fee-checkin-button {
+  flex: 1;
+  min-width: 0;
+  min-height: 2rem;
+  font-weight: 600;
+}
+
+.fee-options-button {
+  flex: 0 0 2rem;
+  min-height: 2rem;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.fee-options-button::after {
+  display: none;
+}
+
+.fee-options-menu {
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(28, 54, 84, 0.18);
+}
+
+.fee-option-check {
+  display: inline-block;
+  width: 1.25rem;
+  color: #17653a;
+}
+
 // Boutons de mode de paiement harmonisés avec cart
 .btn-pay {
   flex: 1;
@@ -111,6 +326,49 @@
   overflow: hidden;
 }
 
+/* Laptop/desktop paysage : autant de fiches que la largeur le permet. */
+@media (orientation: landscape) and (min-width: 992px) {
+  .fees-gamers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: 0.35rem;
+    margin: 0;
+  }
+
+  .fees-gamers-grid > .gamer-container {
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .fee-player-card {
+    padding: 0.3rem;
+  }
+
+  .fee-player-main {
+    gap: 0.3rem;
+  }
+
+  .fee-avatar {
+    flex-basis: 2.2rem;
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .fee-player-name {
+    font-size: 0.82rem;
+  }
+
+  .fee-player-credit {
+    flex-wrap: nowrap;
+  }
+
+  .fee-credit-badge {
+    white-space: nowrap;
+  }
+}
+
 /* Animation d'explosion-disparition */
 .explode-disappear {
   animation: explode-disappear 2.5s ease-out forwards;
@@ -172,9 +430,10 @@
 
 /* Ensure quickSale button matches the same height */
 .quick-sale-btn {
-  width: 2.2rem !important;
-  height: 2.2rem !important;
+  width: 1.6rem !important;
+  height: 1.6rem !important;
   padding: 0 !important;
+  font-size: 0.75rem;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -202,29 +461,9 @@
   pointer-events: auto !important;
   cursor: pointer !important;
   position: relative !important;
-  z-index: 9999 !important;
 }
 
-/* Ensure the bottom-left badge container is interactive (allows its children to receive pointer events) */
-.gamer-container > .position-absolute.bottom-0.start-0 {
-  pointer-events: auto !important;
-  z-index: 10001 !important;
-}
-
-/* Avatar hover: allow pointer events on avatar and apply slight zoom + shadow */
-.gamer-container .position-absolute.top-50.start-50.translate-middle img.img-fluid.rounded-circle {
-  pointer-events: auto !important;
-  transition: transform 180ms ease, box-shadow 180ms ease;
-  transform-origin: center center;
-}
-.gamer-container .position-absolute.top-50.start-50.translate-middle:hover img.img-fluid.rounded-circle,
-.gamer-container .position-absolute.top-50.start-50.translate-middle img.img-fluid.rounded-circle:hover {
-  transform: scale(1.20) !important;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
-}
-
-/* Compact tablet mode aligned with Bootstrap md range for consistency across devices. */
-@media (orientation: landscape) and (min-width: 768px) and (max-width: 991.98px) {
+@media (orientation: landscape) and (max-width: 991.98px) {
   .fees-collector-root {
     margin-top: 0 !important;
     border-top: 0 !important;
@@ -247,6 +486,10 @@
 
   .fees-collector-header {
     padding: 0.25rem 0.45rem !important;
+  }
+
+  .fee-selected-tournament > .col-12 {
+    width: auto;
   }
 
   .fees-collector-body {
@@ -288,26 +531,22 @@
   }
 
   .fees-collector-footer {
-    display: block;
-    position: static;
     background: #fff;
-    border-top: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    pointer-events: none;
-    transition: max-height 180ms ease, opacity 140ms ease, padding 140ms ease;
-  }
-
-  .fees-collector-footer.compact-footer-visible {
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
     padding-top: 0.2rem;
     padding-bottom: 0.2rem;
-    max-height: 260px;
-    opacity: 1;
-    pointer-events: auto;
+  }
+
+  .fees-collector-footer:not(.compact-footer-visible) .fees-footer-secondary {
+    display: none;
+  }
+
+  .fees-collector-footer:not(.compact-footer-visible) .fees-footer-actions {
+    justify-content: flex-end;
+  }
+
+  .fees-collector-footer:not(.compact-footer-visible) .fees-footer-actions > .btn {
+    flex: 0 1 auto;
+    width: auto;
   }
 
   .fees-collector-footer .text-muted {
@@ -322,20 +561,20 @@
     line-height: 1.1;
   }
 
-  .fees-collector-footer .row {
-    --bs-gutter-x: 0.35rem;
-    --bs-gutter-y: 0.2rem;
-  }
-
-  /* In landscape tablet range, use three cards per row to avoid unused right-side space. */
   .fees-gamers-grid > .gamer-container {
     flex: 0 0 33.333333%;
     max-width: 33.333333%;
   }
 }
 
-/* Tablet portrait: keep two player cards per row for better space usage. */
-@media (orientation: portrait) and (min-width: 768px) and (max-width: 991.98px) {
+@media (orientation: landscape) and (max-width: 575.98px) {
+  .fees-gamers-grid > .gamer-container {
+    flex-basis: 50%;
+    max-width: 50%;
+  }
+}
+
+@media (orientation: portrait) {
   .fees-gamers-grid > .gamer-container {
     flex: 0 0 50%;
     max-width: 50%;

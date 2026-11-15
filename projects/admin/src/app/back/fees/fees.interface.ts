@@ -25,6 +25,7 @@ export interface club_tournament_extended extends Tournament {
 };
 
 export interface Game extends Fees_context {
+    playersVersion?: number | null;
     tournament : { id: number; name: string; date: string; time: string } | null;
 
     gamers: Gamer[];
@@ -44,6 +45,7 @@ export interface Gamer {
     debt: number;
     credit: number;
     index: number;
+    pair_id?: string;
     in_euro: boolean;
     price: number;
     validated: boolean;
@@ -58,12 +60,19 @@ export interface Gamer {
 }
 
 export type GameCheckInMode = 'card' | 'euro' | 'none';
+export type GameCheckInStoredMode = GameCheckInMode | 'unpointed';
 export type GameCheckInSource = 'manual' | 'nfc';
+
+export type GamePlayersAction =
+    | { type: 'add'; players: Gamer[] }
+    | { type: 'remove'; pairId: string }
+    | { type: 'replace'; license: string; player: Gamer }
+    | { type: 'check-in'; license: string; mode: GameCheckInStoredMode; source: GameCheckInSource; expectedVersion: string | null };
 
 export interface GameCheckIn {
     gameId: string;
     license: string;
-    mode: GameCheckInMode;
+    mode: GameCheckInStoredMode;
     source: GameCheckInSource;
     updatedBy: string;
     updatedAt?: string;
@@ -75,6 +84,7 @@ export interface GameFeeConfiguration {
     memberPrice: number;
     nonMemberPrice: number;
     feesDoubled: boolean;
+    paymentPreference?: 'card' | 'euro' | null;
     updatedBy: string;
     updatedAt?: string;
 }

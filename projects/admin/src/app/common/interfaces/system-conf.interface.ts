@@ -14,6 +14,7 @@ export interface Fee_rate {
     key: FEE_RATE;
     member_price: number;
     non_member_price: number;
+    payment_preference?: 'card' | 'euro';
 };
 
 

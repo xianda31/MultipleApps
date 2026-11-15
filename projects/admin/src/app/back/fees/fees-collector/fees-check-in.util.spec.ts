@@ -58,5 +58,6 @@ describe('fees check-in rules', () => {
     expect(checkInState('card')).toEqual({ validated: true, enabled: true, in_euro: false });
     expect(checkInState('euro')).toEqual({ validated: true, enabled: true, in_euro: true });
     expect(checkInState('none')).toEqual({ validated: true, enabled: false, in_euro: false });
+    expect(checkInState('unpointed')).toEqual({ validated: false, enabled: true, in_euro: false });
   });
 });

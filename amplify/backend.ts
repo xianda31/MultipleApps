@@ -29,8 +29,10 @@ import { processBookEntryActions } from "./functions/process-book-entry-actions/
 import { processCmsImage } from "./functions/process-cms-image/resource";
 import { expireFeaturedSnippets } from "./functions/expire-featured-snippets/resource";
 import { sendWebPush } from "./functions/send-web-push/resource";
+import { gamePlayers } from "./functions/game-players/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
+import { configureGamePlayersSubscription } from "./data/game-players-subscription";
 import { storage } from "./storage/resource";
 
 
@@ -49,7 +51,24 @@ const backend = defineBackend({
   processCmsImage,
   expireFeaturedSnippets,
   sendWebPush,
+  gamePlayers,
 });
+
+configureGamePlayersSubscription(backend.data);
+
+for (const [model, variable] of [
+  ['Game', 'GAME_TABLE_NAME'],
+  ['GameCheckIn', 'GAME_CHECK_IN_TABLE_NAME'],
+  ['GameSettlement', 'GAME_SETTLEMENT_TABLE_NAME'],
+] as const) {
+  const table = backend.data.resources.tables[model];
+  if (model === 'GameSettlement') {
+    table.grant(backend.gamePlayers.resources.lambda, 'dynamodb:GetItem', 'dynamodb:ConditionCheckItem');
+  } else {
+    table.grantReadWriteData(backend.gamePlayers.resources.lambda);
+  }
+  backend.gamePlayers.addEnvironment(variable, table.tableName);
+}
 
 const storageBucket = backend.storage.resources.bucket;
 const processCmsImageLambda = backend.processCmsImage.resources.lambda;

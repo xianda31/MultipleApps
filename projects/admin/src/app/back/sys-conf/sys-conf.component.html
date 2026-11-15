@@ -16,6 +16,7 @@
                       <th class="text-center">Type</th>
                       <th class="text-center">Adhérent</th>
                       <th class="text-center">Non adhérent</th>
+                      <th class="text-center">Règlement préféré</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -28,6 +29,13 @@
                       </td>
                       <td>
                         <input type="number" class="form-control text-center" formControlName="non_member_price">
+                      </td>
+                      <td>
+                        <select class="form-select" formControlName="payment_preference"
+                          [attr.aria-label]="'Règlement préféré pour le tarif ' + fee.get('key')?.value">
+                          <option value="card">Carte</option>
+                          <option value="euro">€</option>
+                        </select>
                       </td>
                     </tr>
                   </tbody>
