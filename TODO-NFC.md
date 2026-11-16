@@ -21,6 +21,7 @@ Le Reader Mode BLE de l'ACR1555U reste une option si les essais HID montrent une
 - Laisser Stripe Terminal gérer seul le WisePad 3.
 - En HID, laisser Android gérer la connexion Bluetooth de l'ACR1555U.
 - Alimenter l'ACR1555U par un chargeur USB 5 V séparé, et non par le port USB hôte de la tablette.
+- Réserver le pointage NFC aux tournois à priorité de règlement par carte ; en priorité euro, le pointage reste manuel.
 
 ## Phase 1 - Prototype NFC Android
 
@@ -48,6 +49,7 @@ Résultat attendu : un UID actif permet de retrouver un membre ou une licence de
 ## Phase 3 - Session de pointage
 
 - [ ] Permettre à fees-collector d'activer une session de pointage pour un tournoi.
+- [ ] N'activer la session NFC qu'en priorité carte et la désactiver si le tournoi passe en priorité euro.
 - [ ] Transmettre à ppTPE le tournoi ou `gameId` actif.
 - [ ] Afficher clairement dans ppTPE si le pointage est actif.
 - [ ] Associer chaque lecture au tournoi actif.
@@ -60,6 +62,7 @@ Résultat attendu : ppTPE ne choisit jamais implicitement le tournoi à modifier
 - [ ] Résoudre l'UID vers la licence du membre.
 - [ ] Vérifier que le joueur est inscrit au tournoi actif.
 - [ ] Réutiliser le traitement métier existant de `checkInByNfc`.
+- [x] Refuser les pointages de source NFC en priorité euro dans le traitement métier partagé, sans bloquer le choix manuel de la carte.
 - [ ] Conserver les contrôles de crédits de carte de jeu.
 - [ ] Respecter les pointages manuels et l'état de clôture du tournoi.
 - [ ] Créer ou actualiser le `GameCheckIn`.

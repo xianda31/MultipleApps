@@ -116,8 +116,11 @@
                     [checked]="!hideValidated" (change)="setValidatedFilter(false)">
                 <label class="btn btn-outline-primary btn-sm" for="gamerFilterAll">Tous</label>
                 <input class="btn-check" type="radio" name="gamerFilter" id="gamerFilterPending"
-                    [checked]="hideValidated" (change)="setValidatedFilter(true)">
-                <label class="btn btn-outline-primary btn-sm" for="gamerFilterPending">Manquants</label>
+                    [checked]="hideValidated" (click)="setValidatedFilter(true)">
+                <label class="btn btn-outline-primary btn-sm" for="gamerFilterPending"
+                    ngbTooltip="Cliquer pour regrouper les joueurs restants">
+                    Manquants <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                </label>
             </span>
         </span>
     </div>
@@ -130,7 +133,8 @@
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2 fees-gamers-grid">
                 <ng-container *ngFor="let gamer of game.gamers">
                     <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
-                        [ngClass]="{'explode-disappear': isDisappearing(gamer)}">
+                        [class.gamer-placeholder]="hideValidated && gamer.validated"
+                        [attr.inert]="hideValidated && gamer.validated ? '' : null">
                         <ng-container
                             *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
                     </div>
@@ -210,10 +214,10 @@
                     </div>
                     <div *ngIf="gamer.is_member" class="fee-player-credit">
                         <span *ngIf="gamer.is_member" class="fee-credit-badge"
-                            [class.fee-credit-low]="gamer.game_credits <= 1">
-                            {{ gamer.game_credits }} {{ gamer.game_credits > 1 ? 'crédits' : 'crédit' }}
+                            [class.fee-credit-low]="displayedGameCredits(gamer) <= 1">
+                            {{ displayedGameCredits(gamer) }} {{ displayedGameCredits(gamer) > 1 ? 'crédits' : 'crédit' }}
                         </span>
-                        <button *ngIf="gamer.enabled && gamer.is_member && gamer.game_credits <= 4"
+                        <button *ngIf="gamer.enabled && gamer.is_member && displayedGameCredits(gamer) <= 4"
                             type="button" class="btn btn-outline-primary btn-sm quick-sale-btn"
                             ngbTooltip="Acheter une carte" placement="top" (click)="quickSale(gamer)"
                             [attr.aria-label]="'Acheter une carte pour ' + gamer.firstname + ' ' + gamer.lastname">

@@ -463,6 +463,13 @@ export class FeesCollectorService {
     if (source === 'nfc' && mode !== 'card') {
       throw new Error('NFC check-in only supports game-card payments');
     }
+    if (source === 'nfc' && this.paymentPreference !== 'card') {
+      this.toastService.showWarning(
+        'Pointage NFC',
+        'Le pointage NFC est réservé aux tournois à priorité de règlement par carte.',
+      );
+      return false;
+    }
     try {
       const settlementStatus = await this.DBhandler.readGameSettlementStatus(gameId);
       if (settlementStatus) {

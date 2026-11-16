@@ -1,5 +1,4 @@
 import { BehaviorSubject } from 'rxjs';
-import { fakeAsync, tick } from '@angular/core/testing';
 import { FEE_RATE, Game, Gamer, GameCheckIn, GameFeeConfiguration } from '../fees.interface';
 import { FeesCollectorService } from './fees-collector.service';
 import { FeesCollectorComponent } from './fees-collector.component';
@@ -29,35 +28,42 @@ describe('shared check-in cancellation', () => {
     const service = Object.create(FeesCollectorService.prototype) as FeesCollectorService;
     service.game = game;
     service._game$ = new BehaviorSubject(game);
-    Object.assign(service, { DBhandler: db, toastService: toast, tournament: { id: 1 } });
+    Object.assign(service, {
+      DBhandler: db, toastService: toast, tournament: { id: 1 },
+      sys_conf: {
+        fee_rates: [
+          { key: FEE_RATE.STANDARD, member_price: 3, non_member_price: 5, payment_preference: 'card' },
+        ],
+      },
+    });
     spyOn(service, 'log_game_state').and.resolveTo();
     return { service, gamer, db, toast, current };
   }
 
   for (const alphabeticSort of [false, true]) {
-    it(`filters checked-in players independently of sorting (alphabetic: ${alphabeticSort})`, fakeAsync(() => {
+    it(`keeps checked-in slots until explicitly regrouped (alphabetic: ${alphabeticSort})`, () => {
       const { gamer, service } = setup();
       const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
       Object.assign(component, {
         game: { ...service.game, alphabetic_sort: alphabeticSort },
         hideValidated: true,
-        disappearingGamers: new Map<number, boolean>(),
+        visibleGamerLicenses: new Set<string>(),
+        feesCollectorService: { set_hide_validated: (hidden: boolean) => hidden },
       });
       expect(component.shouldShowGamer(gamer)).toBeFalse();
       gamer.validated = false;
+      component.setValidatedFilter(true);
       expect(component.shouldShowGamer(gamer)).toBeTrue();
       gamer.validated = true;
-      component.onGamerValidated(gamer);
-      expect(component.isDisappearing(gamer)).toBeTrue();
       expect(component.shouldShowGamer(gamer)).toBeTrue();
-      tick(2500);
+      component.setValidatedFilter(true);
       expect(component.shouldShowGamer(gamer)).toBeFalse();
       gamer.validated = false;
       expect(component.shouldShowGamer(gamer)).toBeTrue();
       gamer.validated = true;
       component.hideValidated = false;
       expect(component.shouldShowGamer(gamer)).toBeTrue();
-    }));
+    });
   }
 
   it('stores a versioned unpointed state, separate from offered, and allows a new NFC check-in', async () => {
@@ -71,6 +77,39 @@ describe('shared check-in cancellation', () => {
     expect(await service.checkInByNfc(gamer.license)).toBeTrue();
     expect(gamer.validated).toBeTrue();
     expect(db.upsertGameCheckIn.calls.mostRecent().args[0].source).toBe('nfc');
+  });
+
+  for (const entryPoint of ['hook', 'payment']) {
+    it(`refuses NFC check-in with euro priority through the ${entryPoint} entry point`, async () => {
+      const { service, gamer, db, toast } = setup();
+      service.sys_conf.fee_rates[0].payment_preference = 'euro';
+      gamer.validated = false;
+      const previousState = { ...gamer };
+
+      const result = entryPoint === 'hook'
+        ? await service.checkInByNfc(gamer.license)
+        : await service.setGamerPayment(gamer, 'card', 'nfc');
+
+      expect(result).toBeFalse();
+      expect(gamer).toEqual(previousState);
+      expect(db.readGameSettlementStatus).not.toHaveBeenCalled();
+      expect(db.upsertGameCheckIn).not.toHaveBeenCalled();
+      expect(toast.showWarning).toHaveBeenCalledOnceWith(
+        'Pointage NFC',
+        'Le pointage NFC est réservé aux tournois à priorité de règlement par carte.',
+      );
+    });
+  }
+
+  it('still allows manual card check-in with euro priority', async () => {
+    const { service, gamer, db } = setup();
+    service.sys_conf.fee_rates[0].payment_preference = 'euro';
+    gamer.validated = false;
+
+    expect(await service.setGamerPayment(gamer, 'card', 'manual')).toBeTrue();
+    expect(db.upsertGameCheckIn).toHaveBeenCalledWith(
+      jasmine.objectContaining({ mode: 'card', source: 'manual' }), stamp,
+    );
   });
 
   it('refuses stale manual edits and adopts the other post’s state', async () => {
@@ -178,7 +217,6 @@ describe('shared check-in cancellation', () => {
     const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
     Object.assign(component, {
       pendingCheckIns: new Set<string>(),
-      disappearingGamers: new Map<number, boolean>(),
       feesCollectorService: { cancelGamerCheckIn: jasmine.createSpy().and.resolveTo(true) },
     });
     const checkStatus = spyOn(component, 'check_status');
