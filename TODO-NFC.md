@@ -340,6 +340,7 @@ définie pendant le prototype.
   obligatoire.
 - Ne dépendre d'aucun service cloud Tuya pour le fonctionnement quotidien.
 - Journaliser les erreurs techniques sans données personnelles inutiles.
+- Réserver le pointage NFC aux tournois à priorité de règlement par carte ; en priorité euro, le pointage reste manuel.
 
 ## Phase 0 - Prototype Android historique
 
@@ -428,6 +429,7 @@ le [README ppNFC](desktop/ppNFC/README.md).
 ## Phase 4 - Session de pointage
 
 - [ ] Permettre à fees-collector d'activer une session pour un tournoi.
+- [ ] N'activer la session NFC qu'en priorité carte et la désactiver si le tournoi passe en priorité euro.
 - [ ] Publier le `gameId` actif à destination de ppNFC.
 - [ ] Afficher dans ppNFC si le pointage est actif.
 - [ ] Associer chaque lecture au tournoi actif.
@@ -441,6 +443,7 @@ le [README ppNFC](desktop/ppNFC/README.md).
   du statut de licence FFB.
 - [ ] Vérifier que le joueur est inscrit au tournoi actif.
 - [ ] Réutiliser le traitement métier existant de `checkInByNfc`.
+- [x] Refuser les pointages de source NFC en priorité euro dans le traitement métier partagé, sans bloquer le choix manuel de la carte.
 - [ ] Conserver les contrôles de crédits de carte de jeu.
 - [ ] Respecter les pointages manuels et l'état de clôture du tournoi.
 - [ ] Créer ou actualiser le `GameCheckIn`.

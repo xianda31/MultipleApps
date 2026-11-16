@@ -1,4 +1,4 @@
-import { FEE_RATE, GameCheckInMode } from '../fees.interface';
+import { FEE_RATE, GameCheckInStoredMode } from '../fees.interface';
 
 export type TournamentFeeMode = 'summer' | 'standard' | 'standard-doubled';
 
@@ -70,13 +70,13 @@ export function membershipPaymentWarningLevel(
   return today >= dangerDate ? 'danger' : 'warning';
 }
 
-export function checkInState(mode: GameCheckInMode): {
-  validated: true;
+export function checkInState(mode: GameCheckInStoredMode): {
+  validated: boolean;
   enabled: boolean;
   in_euro: boolean;
 } {
   return {
-    validated: true,
+    validated: mode !== 'unpointed',
     enabled: mode !== 'none',
     in_euro: mode === 'euro',
   };

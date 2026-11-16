@@ -95,6 +95,7 @@ describe('FeesCollectorService settlement protection', () => {
     ]);
     dbHandler.create_custom_key.and.returnValue('2026/2027_338131');
     dbHandler.readGameFeeConfiguration.and.returnValue(pendingPromise());
+    spyOn(service, 'refreshGamePlayers').and.resolveTo();
     const toastService = jasmine.createSpyObj('ToastService', ['showError', 'showWarning']);
     Object.assign(service as object, {
       DBhandler: dbHandler,

@@ -54,17 +54,25 @@
             </div>
         </div>
 
-        <div *ngIf="game" class="row align-items-center g-2">
+        <div *ngIf="game" class="row align-items-center g-2 fee-selected-tournament">
             <div *ngIf="game && game.tournament"
-                class="col-12 col-md-auto d-flex flex-wrap justify-content-center justify-content-md-start align-items-center gap-2 text-primary fw-bold">
-                <span> {{ game.tournament.date | date:'EEEE d MMMM':'':'fr-FR' }}</span>
-                <span class="text-secondary" aria-hidden="true">•</span>
-                <span> {{ game.tournament.name }}</span>
-                <span class="text-secondary" aria-hidden="true">•</span>
-                <span>{{game.gamers.length / 2 | number:'1.0-0'}} paires</span>
+                class="col-12 col-md-auto">
+                <div class="fee-tournament-title">{{ game.tournament.name }}</div>
+                <div class="fee-tournament-meta">
+                    {{ game.tournament.date | date:'EEEE d MMMM':'':'fr-FR' }}
+                    <span aria-hidden="true"> · </span>
+                    {{ pairs.length }} paires
+                </div>
             </div>
-            
-            <div class="col-12 col-md d-flex justify-content-center align-items-center gap-2">
+
+            <div class="col-auto">
+                <span class="fee-progress" aria-live="polite">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                    {{ checkedInCount }} / {{ game.gamers.length }} pointés
+                </span>
+            </div>
+
+            <div class="col-12 col-md d-flex flex-wrap justify-content-md-center align-items-center gap-2">
                 <span class="fw-semibold text-nowrap">Tarification :</span>
                 <div class="btn-group" role="group" aria-label="Tarification du tournoi">
                     <ng-container *ngFor="let feeMode of feeModes">
@@ -79,18 +87,17 @@
                 </div>
             </div>
 
-            <div class="col-12 col-md-auto d-flex justify-content-center justify-content-md-end">
-                <button type="button" class="btn btn-sm btn-primary shadow-sm" (click)="openAddPlayersModal()">
-                    <i class="bi bi-person-plus-fill me-1"></i>Ajouter une paire
-                </button>
+            <div class="col-12 col-xl-auto">
+                <ng-container *ngTemplateOutlet="display_controls"></ng-container>
             </div>
 
         </div>
 
     </div>
 
-    <div *ngIf="game" class="d-flex flex-wrap gap-3 align-items-center px-3 py-2 small">
-        <span class="text-secondary fw-bold">Affichage selon</span>
+    <ng-template #display_controls>
+    <div class="fee-display-controls d-flex flex-wrap gap-2 align-items-center p-2 small">
+        <span class="fw-semibold">Affichage</span>
         <span class="d-flex align-items-center gap-2">
             <span class="text-muted">Tri :</span>
             <span class="btn-group" role="group" aria-label="Tri des joueurs">
@@ -109,20 +116,25 @@
                     [checked]="!hideValidated" (change)="setValidatedFilter(false)">
                 <label class="btn btn-outline-primary btn-sm" for="gamerFilterAll">Tous</label>
                 <input class="btn-check" type="radio" name="gamerFilter" id="gamerFilterPending"
-                    [checked]="hideValidated" (change)="setValidatedFilter(true)">
-                <label class="btn btn-outline-primary btn-sm" for="gamerFilterPending">Manquants</label>
+                    [checked]="hideValidated" (click)="setValidatedFilter(true)">
+                <label class="btn btn-outline-primary btn-sm" for="gamerFilterPending"
+                    ngbTooltip="Cliquer pour regrouper les joueurs restants">
+                    Manquants <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                </label>
             </span>
         </span>
     </div>
+    </ng-template>
 
     <div *ngIf="game " class="card-body fees-collector-body">
 
         <!-- loop sur les gamers -->
-        <div class="row fees-gamers-scroll" #feesGamersScroll (scroll)="onGamersScroll($event)">
+        <div class="fees-gamers-scroll" #feesGamersScroll (scroll)="onGamersScroll($event)">
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2 fees-gamers-grid">
                 <ng-container *ngFor="let gamer of game.gamers">
                     <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
-                        [ngClass]="{'explode-disappear': isDisappearing(gamer)}">
+                        [class.gamer-placeholder]="hideValidated && gamer.validated"
+                        [attr.inert]="hideValidated && gamer.validated ? '' : null">
                         <ng-container
                             *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
                     </div>
@@ -130,132 +142,126 @@
             </div>
         </div>
 
-        <div class="col-auto mt-2">
-            <span class="text-muted">
-                <strong>
-                    recette:
-                    {{stamps_collected()}} tampon(s)
-                    et {{euros_collected()}} €
-
-                </strong>
-            </span>
+        <div class="fee-receipt mt-2">
+            Recette prévue : <strong>{{ stamps_collected() }} tampon(s)</strong>
+            <span aria-hidden="true"> · </span>
+            <strong>{{ euros_collected() }} €</strong>
         </div>
 
     </div>
 
     <!-- footer -->
     <div *ngIf="game " class="card-footer fees-collector-footer" [class.compact-footer-visible]="compactFooterVisible">
-        <div class="row justify-content-between align-items-center">
+        <div class="fees-footer-warning fees-footer-secondary">
             <ng-container *ngTemplateOutlet="save_dialog"></ng-container>
-            <div class="col">
-                <span class="text-muted">imprimer la feuille de tournoi </span>
-                <button (click)="printTable()" type="button" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-printer"> imprimer</i>
+        </div>
+        <div class="fees-footer-actions">
+            <button type="button" class="btn btn-sm btn-primary" (click)="openPairsModal()"
+                [disabled]="pairManagementDisabled">
+                <i class="bi bi-people-fill me-1" aria-hidden="true"></i>Gérer les paires
+            </button>
+            <div class="fees-footer-secondary">
+                <button (click)="downloadTournamentPdf()" type="button" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-cloud-download" aria-hidden="true"></i> pointages
                 </button>
             </div>
-
-            <div class="col">
-                <button (click)="export_csv_files()" type="button" class="ms-1 btn btn-sm btn-outline-primary">
-                    <i class="bi bi-cloud-download"> .csv pour FFBclubnet</i>
+            <div class="fees-footer-secondary">
+                <button (click)="export_csv_files()" type="button" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-cloud-download" aria-hidden="true"></i> .csv FFBclubnet
                 </button>
             </div>
-
-            <div class="col-auto">
-                <div class="col-auto">
-                    <button type="button" class="ms-1 btn btn-sm btn-outline-primary" (click)="clear_session()">
-                        <i class="bi bi-x-circle-fill"> fermer</i>
-                    </button>
-                </div>
+            <div class="fees-footer-secondary">
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="clear_session()">
+                    <i class="bi bi-x-circle-fill"> fermer</i>
+                </button>
             </div>
-
         </div>
     </div>
 
     <ng-template #fee_editor ; let-gamer="gamer" ; let-doubled="doubled">
-        <div [class]="gamer_class(gamer)" style="position: relative; background-color: #f0f4f8;">
-            <!-- Bottom-left badges: NP (non payant) and member credits -->
-            <div class="position-absolute bottom-0 start-0 m-1 d-flex gap-1" style="z-index: 2;">
-                <span *ngIf="!gamer.enabled" class="badge bg-secondary fixed-badge">NP</span>
-                <span *ngIf="gamer.is_member" class="badge fixed-badge"
-                    [ngClass]="{ 'text-bg-danger': gamer.game_credits <= 1, 'text-bg-warning': gamer.game_credits > 1 && gamer.game_credits < 3, 'text-dark': gamer.game_credits > 1 && gamer.game_credits < 3, 'text-bg-success': gamer.game_credits >= 3 }">
-                    <span>{{ gamer.game_credits }}</span> <i class="bi bi-pass"></i>
-                </span>
-                <span *ngIf="gamer.enabled && gamer.is_member && gamer.game_credits <= 4">
-                    <button type="button" class="btn btn-outline-primary btn-sm rounded-circle quick-sale-btn"
-                        [ngbTooltip]="'Acheter une carte'" placement="top" (click)="quickSale(gamer)">
-                        <i class="bi bi-cart-fill"></i>
-                    </button>
-                </span>
-                <div class="ms-3 d-flex align-items-end">
-                    <ul *ngIf="gamer.is_member" class="small list-unstyled mb-0 d-flex flex-column justify-content-end">
-                        <li *ngIf="gamer.debt > 0" class="mb-0 text-muted small">dette : <span class="text-muted">{{
-                                gamer.debt | currency : 'EUR': 'symbol'}}</span></li>
-                        <li *ngIf="gamer.credit>0" class="mb-0 text-muted small">avoir : <span class="text-muted">{{
-                                gamer.credit | currency : 'EUR': 'symbol'}}</span></li>
-                    </ul>
+        <div [class]="gamer_class(gamer)">
+            <div class="fee-player-main">
+                <div class="fee-avatar" [ngbTooltip]="gamer.is_member ? null : 'Joueur extérieur'"
+                    container="body" placement="top">
+                    <ng-container *ngIf="gamer.is_member; else guestAvatar">
+                        <ng-container *ngIf="gamer.photo_url$ | async as photoUrl; else noPhoto">
+                            <img [src]="photoUrl" alt="" (error)="gamer.photo_url$ = null">
+                        </ng-container>
+                    </ng-container>
+                    <ng-template #guestAvatar>
+                        <svg viewBox="0 0 48 48" role="img" aria-label="Joueur extérieur" focusable="false">
+                            <circle cx="24" cy="24" r="24" fill="#fff1dc"></circle>
+                            <circle cx="24" cy="18" r="8" fill="#b77928"></circle>
+                            <path d="M9 41c1-8 7-13 15-13s14 5 15 13" fill="#b77928"></path>
+                        </svg>
+                    </ng-template>
+                    <ng-template #noPhoto>
+                        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                            <circle cx="24" cy="24" r="24" fill="#e7eef7"></circle>
+                            <circle cx="24" cy="18" r="8" fill="#8298b0"></circle>
+                            <path d="M9 41c1-8 7-13 15-13s14 5 15 13" fill="#8298b0"></path>
+                        </svg>
+                    </ng-template>
+                </div>
+                <div class="fee-player-details">
+                    <div class="fee-player-name">
+                        <strong>{{ gamer.lastname }}</strong> {{ gamer.firstname }}
+                        <span *ngIf="gamer.is_member && isBirthday(gamer)" title="Joyeux anniversaire !">🎂</span>
+                        <span *ngIf="showMembershipPaymentWarning(gamer)" [ngClass]="membershipPaymentWarningClass()"
+                            ngbTooltip="Adhésion à régler" placement="top" aria-label="Adhésion à régler">
+                            <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <div *ngIf="gamer.is_member" class="fee-player-credit">
+                        <span *ngIf="gamer.is_member" class="fee-credit-badge"
+                            [class.fee-credit-low]="displayedGameCredits(gamer) <= 1">
+                            {{ displayedGameCredits(gamer) }} {{ displayedGameCredits(gamer) > 1 ? 'crédits' : 'crédit' }}
+                        </span>
+                        <button *ngIf="gamer.enabled && gamer.is_member && displayedGameCredits(gamer) <= 4"
+                            type="button" class="btn btn-outline-primary btn-sm quick-sale-btn"
+                            ngbTooltip="Acheter une carte" placement="top" (click)="quickSale(gamer)"
+                            [attr.aria-label]="'Acheter une carte pour ' + gamer.firstname + ' ' + gamer.lastname">
+                            <i class="bi bi-cart-fill" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div *ngIf="gamer.is_member && (gamer.debt > 0 || gamer.credit > 0)" class="fee-financial-info">
+                        <span *ngIf="gamer.debt > 0">Dette : {{ gamer.debt | currency:'EUR':'symbol' }}</span>
+                        <span *ngIf="gamer.credit > 0">Avoir : {{ gamer.credit | currency:'EUR':'symbol' }}</span>
+                    </div>
                 </div>
             </div>
-            <span *ngIf="showMembershipPaymentWarning(gamer)"
-                class="position-absolute start-0 membership-payment-warning"
-                [ngClass]="membershipPaymentWarningClass()"
-                ngbTooltip="Adhésion à régler" placement="right">
-                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
-            </span>
-            <div class="card-body py-0 position-relative" style="z-index: 1; overflow: visible;">
-                <!-- Avatar wrapper for centering -->
-                <div *ngIf="(gamer.photo_url$ | async) as photoUrl">
-                    <ng-container *ngIf="photoUrl">
-                        <div class="position-absolute top-50 start-50 translate-middle d-flex justify-content-center align-items-center w-100 h-100"
-                            style="z-index: 0; pointer-events: none;">
-                            <img [src]="photoUrl" alt="{{ gamer.lastname }}" class="img-fluid rounded-circle"
-                                style="max-height: 120px; max-width: 120px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.25);"
-                                (error)="gamer.photo_url = null">
-                            <span *ngIf="gamer.is_member && isBirthday(gamer)" class="birthday-emoji" title="Joyeux anniversaire!" style="z-index: 5; margin-left: 10px; pointer-events: auto;">
-                                🎂
-                            </span>
-                        </div>
-                    </ng-container>
+            <div ngbDropdown #actions="ngbDropdown" container="body" placement="bottom-end" class="fee-actions">
+                <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-sm fee-checkin-button"
+                        [class.btn-success]="gamer.validated" [class.btn-outline-primary]="!gamer.validated"
+                        [disabled]="pairManagementDisabled || pendingCheckIns.has(gamer.license)"
+                        [attr.aria-label]="gamer.validated ? 'Annuler le pointage de ' + gamer.firstname + ' ' + gamer.lastname : null"
+                        [title]="gamer.validated ? 'Annuler le pointage' : 'Pointer le joueur'"
+                        (click)="gamer.validated ? cancelCheckIn(gamer) : (paymentPreference === 'euro' ? setGamerPayment(gamer, 'euro') : (canUseCard(gamer) ? setGamerPayment(gamer, 'card') : actions.open()))">
+                        <i *ngIf="gamer.validated" class="bi bi-check-lg" aria-hidden="true"></i>
+                        {{ checkInLabel(gamer) }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary fee-options-button" ngbDropdownToggle
+                        [disabled]="pairManagementDisabled || pendingCheckIns.has(gamer.license)"
+                        [attr.aria-label]="'Options de pointage pour ' + gamer.firstname + ' ' + gamer.lastname">⋯</button>
                 </div>
-
-                <div class="row">
-                    <!-- nom et prénom du joueur -->
-                    <div class="col-6 px-0 pt-1">
-                        <h6 class="p-0 mb-0">{{gamer.lastname}} </h6>
-                        <span class="text-muted">{{gamer.firstname}}  </span>
-                    </div>
-
-                    <!-- mode de réglement (vertical: carte / euro / non payant) -->
-                    <div class="col-6 d-flex flex-column-reverse gap-2" style="height: 120px;">
-                        <!-- Non payant option (dernier, en bas) -->
-                        <div class="form-check form-check-reverse mb-2">
-                            <input class="form-check-input fee-radio-lg" type="radio"
-                                [name]="'card_or_euro' + gamer.index" [id]="'none_radio'+ gamer.index" [value]="'none'"
-                                [checked]="gamer.validated && !gamer.enabled" [disabled]="gamer.disabled"
-                                (change)="setGamerPayment(gamer, 'none')" />
-                            <label class="form-check-label" [for]="'none_radio'+ gamer.index">offert</label>
-                        </div>
-                        <!-- Euro -->
-                        <div class="form-check form-check-reverse">
-                            <input class="form-check-input fee-radio-lg" type="radio"
-                                [name]="'card_or_euro' + gamer.index" [id]="'euro_radio'+ gamer.index" [value]="'euro'"
-                                [checked]="gamer.validated && gamer.enabled && gamer.in_euro"
-                                [disabled]="gamer.disabled"
-                                (change)="setGamerPayment(gamer, 'euro')" />
-                            <label class="form-check-label" [for]="'euro_radio'+ gamer.index">{{gamer.price}}€</label>
-                        </div>
-                        <!-- Carte (membres uniquement, en haut si affiché) -->
-                        <div *ngIf="gamer.is_member" class="form-check form-check-reverse">
-                            <input class="form-check-input fee-radio-lg" type="radio"
-                                [name]="'card_or_euro' + gamer.index" [id]="'pass-radio'+ gamer.index" [value]="'card'"
-                                [checked]="gamer.validated && gamer.enabled && !gamer.in_euro"
-                                [disabled]="gamer.disabled || gamer.game_credits < (doubled ? 2 : 1)"
-                                (change)="setGamerPayment(gamer, 'card')" />
-                            <label class="form-check-label" [for]="'pass-radio'+ gamer.index">
-                                <!-- {{doubled ? '2 tampons' : '1 tampon'}} -->
-                                carte
-                            </label>
-                        </div>
-                    </div>
+                <div ngbDropdownMenu class="fee-options-menu">
+                    <button *ngIf="gamer.is_member" ngbDropdownItem type="button"
+                        [disabled]="!canUseCard(gamer)" (click)="setGamerPayment(gamer, 'card')">
+                        <span class="fee-option-check" aria-hidden="true"><i *ngIf="gamer.validated && gamer.enabled && !gamer.in_euro" class="bi bi-check-lg"></i></span>
+                        <span *ngIf="gamer.validated && gamer.enabled && !gamer.in_euro" class="visually-hidden">Sélectionné : </span>Carte
+                    </button>
+                    <button ngbDropdownItem type="button" (click)="setGamerPayment(gamer, 'euro')">
+                        <span class="fee-option-check" aria-hidden="true"><i *ngIf="gamer.validated && gamer.enabled && gamer.in_euro" class="bi bi-check-lg"></i></span>
+                        <span *ngIf="gamer.validated && gamer.enabled && gamer.in_euro" class="visually-hidden">Sélectionné : </span>€ — {{ gamer.price | currency:'EUR' }}
+                    </button>
+                    <button ngbDropdownItem type="button" (click)="setGamerPayment(gamer, 'none')">
+                        <span class="fee-option-check" aria-hidden="true"><i *ngIf="gamer.validated && !gamer.enabled" class="bi bi-check-lg"></i></span>
+                        <span *ngIf="gamer.validated && !gamer.enabled" class="visually-hidden">Sélectionné : </span>Offert
+                    </button>
+                    <button *ngIf="gamer.validated" ngbDropdownItem type="button" (click)="cancelCheckIn(gamer)">
+                        <span class="fee-option-check" aria-hidden="true"></span>Annuler le pointage
+                    </button>
                 </div>
             </div>
         </div>
@@ -381,23 +387,58 @@
         </div>
     </div>
 
-    <!-- Modal ajout paire de joueurs (inline - comme quickSaleModal) -->
-    <div *ngIf="addPlayersModalOpen" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.45);">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div *ngIf="pairsModalOpen" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true"
+        aria-labelledby="pairsModalTitle" style="background:rgba(0,0,0,0.45);">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h6 class="modal-title d-flex align-items-center gap-3">
-                        <i class="bi bi-person-plus-fill me-2"></i>
-                        Ajouter une nouvelle paire
+                    <h6 id="pairsModalTitle" class="modal-title">
+                        <i class="bi bi-people-fill me-2" aria-hidden="true"></i>
+                        Gérer les paires
                     </h6>
-                    <button type="button" class="btn-close" aria-label="Close" (click)="closeAddPlayersModal()"></button>
+                    <button type="button" class="btn-close" aria-label="Fermer" [disabled]="pairChangePending"
+                        (click)="closePairsModal()"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body"
+                    [class.fee-pair-selection-body]="pairEditMode === 'add' || pairEditMode === 'replace'">
                     <div *ngIf="modalErrorMessage" class="alert alert-danger alert-dismissible fade show py-2" role="alert">
                         {{ modalErrorMessage }}
                         <button type="button" class="btn-close" (click)="modalErrorMessage = ''"></button>
                     </div>
-                    <div class="mb-3">
+                    <p class="small text-muted">Modifications de la liste de pointage uniquement. Les inscriptions FFB restent inchangées.</p>
+                    <ng-container *ngIf="pairEditMode === 'list'">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                            <span>{{ pairs.length }} paire(s)</span>
+                            <button type="button" class="btn btn-primary btn-sm" [disabled]="pairManagementDisabled"
+                                (click)="beginAddPair()">
+                                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Ajouter une paire
+                            </button>
+                        </div>
+                        <p class="small text-muted">Un joueur pointé doit être dépointé avant remplacement ; les deux doivent l’être avant suppression de la paire.</p>
+                        <div *ngFor="let pair of pairs; let i = index" class="fee-pair-row border rounded p-2 mb-2">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <strong>Paire {{ i + 1 }}</strong>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    [disabled]="pairManagementDisabled || pairHasCheckedInPlayers(pair)"
+                                    (click)="beginRemovePair(pair)">Supprimer la paire</button>
+                            </div>
+                            <div *ngFor="let player of pair.players" class="d-flex align-items-center justify-content-between gap-2 py-1">
+                                <span>
+                                    {{ player.lastname }} {{ player.firstname }}
+                                    <i *ngIf="player.validated" class="bi bi-check-circle-fill text-success ms-1"
+                                        aria-label="Pointé" role="img"></i>
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0"
+                                    [disabled]="pairManagementDisabled || player.validated"
+                                    [attr.aria-label]="'Remplacer ' + player.firstname + ' ' + player.lastname"
+                                    (click)="beginReplacePlayer(player)">Remplacer</button>
+                            </div>
+                            <span *ngIf="pair.players.length === 1" class="small text-muted">Paire importée incomplète</span>
+                        </div>
+                        <p *ngIf="!pairs.length" class="text-muted">Aucune paire dans la liste.</p>
+                    </ng-container>
+                    <div *ngIf="pairEditMode === 'add'" class="mb-3">
+                        <h6>Ajouter une paire complète</h6>
                         <div class="row mb-3 g-2">
                             <div class="col-12 col-sm-6">
                                 <label class="form-label fw-semibold small">
@@ -419,13 +460,37 @@
                             </div>
                         </div>
                     </div>
+                    <div *ngIf="pairEditMode === 'replace' && replacedPlayer">
+                        <h6>Remplacer {{ replacedPlayer.firstname }} {{ replacedPlayer.lastname }}</h6>
+                        <app-input-player listeId="replacement_player" placeholder="Rechercher le remplaçant"
+                            [groupSessionId]="selected_tournament?.id"
+                            class="form-control form-control-sm" [(ngModel)]="replacementPlayer">
+                        </app-input-player>
+                        <p *ngIf="replacementPlayer" class="mt-3">
+                            Confirmer le remplacement de <strong>{{ replacedPlayer.firstname }} {{ replacedPlayer.lastname }}</strong>
+                            par <strong>{{ replacementPlayer.firstName }} {{ replacementPlayer.lastName }}</strong> ?
+                            Le partenaire est conservé et le remplaçant arrive non pointé.
+                        </p>
+                    </div>
+                    <div *ngIf="pairEditMode === 'remove' && removedPair" class="alert alert-warning">
+                        <p>Supprimer cette paire de la liste de pointage ?</p>
+                        <ul class="mb-0">
+                            <li *ngFor="let player of removedPair.players">{{ player.firstname }} {{ player.lastname }}</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="closeAddPlayersModal()">Annuler</button>
-                    <button type="button" class="btn btn-sm btn-primary"
-                        (click)="add_pair(new_pair_player1, new_pair_player2)"
-                        [disabled]="!new_pair_player1 && !new_pair_player2">
-                        <i class="bi bi-plus-circle me-1"></i>Ajouter
+                    <button *ngIf="pairEditMode === 'list'" type="button" class="btn btn-sm btn-outline-secondary"
+                        (click)="closePairsModal()">Fermer</button>
+                    <button *ngIf="pairEditMode !== 'list'" type="button" class="btn btn-sm btn-outline-secondary"
+                        [disabled]="pairChangePending" (click)="showPairList()">Retour à la liste</button>
+                    <button *ngIf="pairEditMode !== 'list'" type="button" class="btn btn-sm"
+                        [class.btn-primary]="pairEditMode !== 'remove'" [class.btn-danger]="pairEditMode === 'remove'"
+                        (click)="confirmPairChange()"
+                        [disabled]="pairManagementDisabled
+                            || (pairEditMode === 'add' && (!new_pair_player1 || !new_pair_player2))
+                            || (pairEditMode === 'replace' && !replacementPlayer)">
+                        {{ pairChangePending ? 'Enregistrement…' : pairEditMode === 'add' ? 'Ajouter la paire' : pairEditMode === 'replace' ? 'Confirmer le remplacement' : 'Supprimer la paire' }}
                     </button>
                 </div>
             </div>
