@@ -352,7 +352,8 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   displayedGameCredits(gamer: Gamer): number {
-    const creditsToDebit = gamer.validated && gamer.enabled && !gamer.in_euro
+    const creditsToDebit = this.selected_tournament?.status !== Game_status.COMPLETED
+      && gamer.validated && gamer.enabled && !gamer.in_euro
       ? requiredGameCredits(this.game.fees_doubled)
       : 0;
     return gamer.game_credits - creditsToDebit;

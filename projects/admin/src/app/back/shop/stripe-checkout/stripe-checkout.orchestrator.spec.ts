@@ -7,8 +7,8 @@ describe('StripeCheckoutOrchestrator', () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => sessionStorage.clear());
 
-  for (const buyCard of [false, true]) {
-    it(`charges debt with correct purchased items (new card=${buyCard})`, async () => {
+  for (const [buyCard, debtAmount] of [[false, 30], [true, 30], [true, 0]] as const) {
+    it(`records online payment without a zero debt account (new card=${buyCard}, debt=${debtAmount})`, async () => {
       const member = { id: 'buyer', firstname: 'Jean', lastname: 'TEST', license_number: '00000001' } as Member;
       const books = jasmine.createSpyObj('BookService', ['create_book_entry', 'process_book_entry_actions']);
       books.create_book_entry.and.callFake(async (entry: object) => ({ ...entry, id: 'debt-payment' }));
@@ -17,7 +17,7 @@ describe('StripeCheckoutOrchestrator', () => {
       const cards = jasmine.createSpyObj('GameCardService', ['createCard', 'refreshCards']);
       const cart = new CartService(books, products, cards);
       cart.setBuyer('TEST Jean');
-      cart.setDebt('TEST Jean', 30);
+      cart.setDebt('TEST Jean', debtAmount);
       if (buyCard) cart.addToCart({
         product_id: 'card-product', product_account: 'CAR', payee: member,
         payee_name: 'TEST Jean', paied: 30,
@@ -34,19 +34,22 @@ describe('StripeCheckoutOrchestrator', () => {
         jasmine.createSpyObj('ToastService', ['showError']), members,
       );
       await orchestrator.initiateCheckout(
-        cart.getCartItems(), member, 30, 0, { season: '2026/2027', date: '2026-11-06' },
+        cart.getCartItems(), member, debtAmount, 0, { season: '2026/2027', date: '2026-11-06' },
         true, 'https://example.test/success', 'https://example.test/cancel',
       );
       expect(stripe.createCheckoutSession).toHaveBeenCalledWith(jasmine.objectContaining({
         productIds: buyCard ? ['card-product'] : [],
         quantities: buyCard ? [1] : [],
-        debtAmountCents: 3000,
+        debtAmountCents: debtAmount > 0 ? debtAmount * 100 : undefined,
       }));
       const entry = books.create_book_entry.calls.mostRecent().args[0];
-      expect(entry.amounts.stripe_in).toBe(buyCard ? 60 : 30);
+      expect(entry.amounts.stripe_in).toBe((buyCard ? 30 : 0) + debtAmount);
       expect(entry.purchasedItems).toEqual(buyCard
         ? [{ productId: 'card-product', beneficiaryMemberIds: ['buyer'], quantity: 1 }] : []);
-      expect(entry.operations[0].values.creance_out).toBe(30);
+      expect(entry.operations[0].values.creance_out).toBe(debtAmount > 0 ? debtAmount : undefined);
+      if (debtAmount === 0) {
+        expect(entry.operations[0].values).toEqual({ CAR: 30 });
+      }
       expect(entry.operations[0].values.CAR).toBe(buyCard ? 30 : undefined);
       expect(cards.createCard).not.toHaveBeenCalled();
       expect(books.process_book_entry_actions).not.toHaveBeenCalled();

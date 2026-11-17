@@ -95,6 +95,10 @@ describe('FeesCollectorComponent player cards', () => {
     game.fees_doubled = true;
     fixture.detectChanges();
     expect(cards[0].querySelector('.fee-credit-badge')!.textContent!.trim()).toBe('1 crédit');
+    fixture.componentInstance.selected_tournament!.status = Game_status.COMPLETED;
+    fixture.detectChanges();
+    expect(cards[0].querySelector('.fee-credit-badge')!.textContent!.trim()).toBe('3 crédits');
+    fixture.componentInstance.selected_tournament!.status = Game_status.RECOVERED;
     gamer.in_euro = true;
     fixture.detectChanges();
     expect(cards[0].querySelector('.fee-credit-badge')!.textContent!.trim()).toBe('3 crédits');
