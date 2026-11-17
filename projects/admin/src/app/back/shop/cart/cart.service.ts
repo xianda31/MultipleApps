@@ -280,7 +280,7 @@ export class CartService {
     });
 
     // push debt_credit and asset_debit as "CartItems"
-    if (this._cart.debt && this._cart.take_debt) {
+    if (this._cart.debt && this._cart.take_debt && this._cart.debt.amount !== 0) {
       let items = payees.get(this._cart.debt.name) ?? [];
       items.push({ payee: { lastname: this._cart.debt.name, firstname: '' } as any, paied: this._cart.debt.amount, product_account: CUSTOMER_ACCOUNT.DEBT_credit, payee_name: this._cart.debt.name, product_id: '' });
       payees.set(this._cart.debt.name, items);
