@@ -34,6 +34,17 @@ describe('MemberNfcCardService bridge', () => {
     fetch.and.resolveTo(new Response('{}'));
     await expectAsync(new MemberNfcCardService().status(new AbortController().signal)).toBeRejected();
   });
+  it('accepts a read-only ACS hardware probe in the status response', async () => {
+    const state: NfcReaderStatus = {
+      version: '1.0', readerStatus: 'Ready', readerName: 'ACR1555U', message: 'Ready', capturing: false,
+      hardwareProbe: {
+        state: 'Responsive', pcdPiccStatus: 1, message: 'Aucune carte',
+        checkedAt: '2026-11-16T08:00:00Z',
+      },
+    };
+    spyOn(globalThis, 'fetch').and.resolveTo(new Response(JSON.stringify(state)));
+    await expectAsync(new MemberNfcCardService().status(new AbortController().signal)).toBeResolvedTo(state);
+  });
   it('distinguishes an idle capture from a bridge failure', async () => {
     spyOn(globalThis, 'fetch').and.resolveTo(
       new Response(JSON.stringify({ message: 'Aucune nouvelle carte lue en 30 secondes.' }), { status: 408 }));

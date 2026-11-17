@@ -16,7 +16,9 @@ public sealed class LocalCaptureServer : IAsyncDisposable
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ppNFC", "editor-origins.json");
     private readonly WebApplication _app;
 
-    public LocalCaptureServer(UidCapture capture, IReadOnlyCollection<string> origins, int port = Port)
+    public LocalCaptureServer(
+        UidCapture capture, IReadOnlyCollection<string> origins, int port = Port,
+        Func<ReaderProbeResult>? probeReader = null)
     {
         if (origins.Count == 0 || origins.Any(origin => !IsValidOrigin(origin)))
             throw new InvalidDataException("La liste des origines de l'editeur ppNFC est invalide.");
@@ -59,7 +61,7 @@ public sealed class LocalCaptureServer : IAsyncDisposable
             }
             await next(context);
         });
-        _app.MapPost("/status", () => Results.Json(capture.GetStatus()));
+        _app.MapPost("/status", () => Results.Json(capture.GetStatus(probeReader?.Invoke())));
         _app.MapPost("/capture", async (HttpContext context) =>
         {
             using var stop = CancellationTokenSource.CreateLinkedTokenSource(

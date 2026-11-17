@@ -247,6 +247,55 @@ public sealed class ReaderMonitorTests
         Assert.Contains("8010000B", monitor.Current.Message);
     }
 
+    [Theory]
+    [InlineData(1, "aucune carte")]
+    [InlineData(2, "carte prete")]
+    public void ProbeReportsAcsStatusWithoutChangingTheCaptureState(byte status, string message)
+    {
+        var device = new FakeReader { PcdPiccStatus = status };
+        using var monitor = new ReaderMonitor(() => device);
+        monitor.Tick(Start);
+
+        var probe = monitor.Probe();
+
+        Assert.Equal(ReaderProbeState.Responsive, probe.State);
+        Assert.Equal(status, probe.PcdPiccStatus);
+        Assert.Contains(message, probe.Message);
+        Assert.Equal(ReaderStatus.Ready, monitor.Current.Status);
+        Assert.Equal(0, monitor.Current.Readings);
+        Assert.Equal(1, device.ProbeRequests);
+    }
+
+    [Fact]
+    public void ProbeReportsPcscDisconnectionWithoutChangingTheCachedReaderState()
+    {
+        var device = new FakeReader
+        {
+            ProbeFailure = new PcscException(0x0000048F, "Get PCD/PICC status")
+        };
+        using var monitor = new ReaderMonitor(() => device);
+        monitor.Tick(Start);
+
+        var probe = monitor.Probe();
+
+        Assert.Equal(ReaderProbeState.Unresponsive, probe.State);
+        Assert.Null(probe.PcdPiccStatus);
+        Assert.Contains("0000048F", probe.Message);
+        Assert.Equal(ReaderStatus.Ready, monitor.Current.Status);
+        Assert.Equal(0, monitor.Current.Readings);
+    }
+
+    [Fact]
+    public void ProbeDoesNotClaimSuccessBeforeTheReaderHasBeenInitialized()
+    {
+        using var monitor = new ReaderMonitor(() => new FakeReader());
+
+        var probe = monitor.Probe();
+
+        Assert.Equal(ReaderProbeState.Unverified, probe.State);
+        Assert.Null(probe.PcdPiccStatus);
+    }
+
     [Fact]
     public void UnchangedStateDoesNotFloodDiagnosticEvents()
     {
@@ -289,6 +338,9 @@ public sealed class ReaderMonitorTests
         public Exception? ReadFailure { get; set; }
         public PcscException? DisposeFailure { get; set; }
         public int UidRequests { get; private set; }
+        public byte PcdPiccStatus { get; set; } = 1;
+        public PcscException? ProbeFailure { get; set; }
+        public int ProbeRequests { get; private set; }
         public bool Disposed { get; private set; }
 
         public string[] ListReaders() => Names;
@@ -306,6 +358,13 @@ public sealed class ReaderMonitorTests
             if (Failure is not null)
                 throw Failure;
             return Uid!;
+        }
+        public byte GetPcdPiccStatus(string reader)
+        {
+            ProbeRequests++;
+            if (ProbeFailure is not null)
+                throw ProbeFailure;
+            return PcdPiccStatus;
         }
         public void Dispose()
         {

@@ -14,7 +14,7 @@ public sealed class UidCapture
         get { lock (_gate) return _pending is not null; }
     }
 
-    public object GetStatus()
+    public object GetStatus(ReaderProbeResult? probe = null)
     {
         lock (_gate)
             return new
@@ -23,7 +23,14 @@ public sealed class UidCapture
                 readerStatus = _latest.Status.ToString(),
                 readerName = _latest.ReaderName,
                 message = _latest.Message,
-                capturing = _pending is not null
+                capturing = _pending is not null,
+                hardwareProbe = probe is null ? null : new
+                {
+                    state = probe.State.ToString(),
+                    pcdPiccStatus = probe.PcdPiccStatus,
+                    message = probe.Message,
+                    checkedAt = DateTimeOffset.UtcNow
+                }
             };
     }
 

@@ -7,6 +7,12 @@ export type MemberNfcCard = Schema['MemberNfcCard']['type'];
 export const readerStatusSchema = z.object({
   version: z.string(), readerStatus: z.enum(['Starting', 'Ready', 'CardRead', 'Disconnected', 'Error']),
   readerName: z.string().nullable(), message: z.string(), capturing: z.boolean(),
+  hardwareProbe: z.object({
+    state: z.enum(['Unverified', 'Responsive', 'Unresponsive']),
+    pcdPiccStatus: z.number().int().nullable(),
+    message: z.string(),
+    checkedAt: z.string(),
+  }).nullable().optional(),
 });
 export type NfcReaderStatus = z.infer<typeof readerStatusSchema>;
 

@@ -1,12 +1,25 @@
-<div ngbDropdown container="body" placement="bottom-end" autoClose="outside" (openChange)="panelOpened($event)">
-  <button type="button" class="btn btn-sm btn-outline-secondary" ngbDropdownToggle
-    [class.text-success]="active"
-    [class.text-warning]="!!error || reader?.readerStatus === 'Disconnected' || reader?.readerStatus === 'Error'"
-    [attr.aria-label]="active ? 'Badgeuse NFC : pointage actif' : 'Commandes de la badgeuse NFC'"
+<div ngbDropdown class="d-inline-flex flex-wrap align-items-center gap-2" container="body"
+  placement="bottom-end" autoClose="outside" (openChange)="panelOpened($event)">
+  <button type="button" class="btn btn-sm btn-outline-secondary nfc-indicator nfc-reader-indicator" ngbDropdownToggle
+    [attr.aria-label]="'Commandes de la badgeuse NFC : ' + readerIndicatorMessage"
     container="body" [disableTooltip]="panelOpen"
-    [ngbTooltip]="active ? 'Pointage NFC actif' : 'Badgeuse NFC : ' + readerLabel">
-    <i class="bi bi-broadcast-pin" aria-hidden="true"></i><span class="ms-1">NFC</span>
+    [ngbTooltip]="readerIndicatorMessage">
+    <i class="bi bi-broadcast-pin" aria-hidden="true"></i>
+    <span [class]="'nfc-status-light text-' + readerIndicatorColor" aria-hidden="true"></span>
+    <span class="text-start" role="status">
+      <span class="d-block">NFC : {{ readerIndicatorLabel }}</span>
+      <small *ngIf="!reader?.hardwareProbe && (reader?.readerStatus === 'Ready' || reader?.readerStatus === 'CardRead')" class="d-block">
+        Éveil non vérifié
+      </small>
+      <small *ngIf="reader?.hardwareProbe?.state === 'Responsive'" class="d-block">Sonde ACS confirmée</small>
+      <small *ngIf="reader?.hardwareProbe?.state === 'Unresponsive'" class="d-block">Vérifiez POWER et l’alimentation</small>
+    </span>
   </button>
+  <span class="nfc-indicator nfc-checkin-indicator border rounded" role="status"
+    container="body" [ngbTooltip]="checkInIndicatorMessage">
+    <span [class]="'nfc-status-light text-' + checkInIndicatorColor" aria-hidden="true"></span>
+    <span>Pointage : {{ checkInIndicatorLabel }}</span>
+  </span>
   <div ngbDropdownMenu class="nfc-panel p-3">
     <section aria-label="Contrôle de la badgeuse NFC">
       <h6>Badgeuse NFC</h6>
@@ -15,14 +28,22 @@
         <dd>{{ checking || starting ? 'Vérification…' : (reader ? 'Joignable — version ' + reader.version : 'Liaison non vérifiée') }}</dd>
         <dt>Lecteur</dt>
         <dd>{{ readerLabel }}<span *ngIf="reader?.readerName"> — {{ reader?.readerName }}</span></dd>
+        <dt>Sonde ACS</dt>
+        <dd *ngIf="reader?.hardwareProbe as probe">
+          {{ probe.message }} — {{ probe.checkedAt | date:'HH:mm:ss' }}
+        </dd>
+        <dd *ngIf="!reader?.hardwareProbe">Aucune interrogation matérielle disponible.</dd>
         <dt>Session de pointage</dt>
         <dd [class.text-success]="active">
           {{ active ? 'Active' : (starting ? 'Activation…' : (paused ? 'Suspendue' : 'Arrêtée')) }} — {{ game.tournament?.name }}
         </dd>
       </dl>
-      <p *ngIf="reader" class="small text-muted mb-2">{{ reader.message }}</p>
+      <p *ngIf="reader" class="small text-muted mb-2">Dernier message ppNFC : {{ reader.message }}</p>
       <p class="small text-muted">
-        L’état Windows ne garantit pas que le lecteur physique est éveillé. Aucun réveil logiciel n’est disponible.
+        La sonde ACS vérifie une réponse réelle, sans modifier la configuration ni maintenir le lecteur éveillé.
+        Face NFC vers vous, prise USB en haut : le bouton MODE/Bluetooth est à gauche et le bouton POWER est à droite.
+        Maintenez POWER environ 3 secondes pour allumer le lecteur ; un appui bref le réveille.
+        Si aucune carte n’est détectée, vérifiez les voyants puis utilisez « Tester une lecture ».
       </p>
       <div *ngIf="error" class="alert alert-warning small p-2" role="alert">{{ error }}</div>
       <p *ngIf="notice" class="small" role="status">{{ notice }}</p>

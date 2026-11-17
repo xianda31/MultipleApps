@@ -113,7 +113,8 @@ internal sealed class TrayContext : ApplicationContext
     {
         try
         {
-            await using var bridge = new LocalCaptureServer(_capture, LocalCaptureServer.LoadOrigins());
+            await using var bridge = new LocalCaptureServer(
+                _capture, LocalCaptureServer.LoadOrigins(), probeReader: _monitor.Probe);
             await bridge.StartAsync(_stop.Token);
             try
             {

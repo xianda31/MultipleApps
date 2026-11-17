@@ -13,8 +13,19 @@ Nouvelle baseline définie le 01/11/2026.
   le contrôle de la badgeuse : état ppNFC, état déclaré par Windows, test de
   lecture sans pointage, dernière lecture et activation/arrêt de la session.
   Sélectionner un tournoi à priorité Carte non clôturé démarre automatiquement
-  la badgeuse, sans confirmation dans le panneau. Le symbole devient vert
-  lorsque la session est **Active** ; les cartes peuvent alors être présentées.
+  la badgeuse, sans confirmation dans le panneau.
+  Le bouton **NFC** intègre le voyant et l'état du lecteur, sans voyant
+  **Lecteur** séparé. Si ppNFC ne fournit pas de sonde matérielle, la détection
+  Windows reste orange avec **Éveil non vérifié**. La nouvelle sonde ACS
+  différencie ce cas d'une réponse réelle du lecteur.
+  Le voyant **Pointage** reste indépendant pour le cycle de lecture.
+  Le pointage est bleu lorsqu'il est **Prêt**, orange pendant la vérification,
+  vert si **Accepté** et rouge si **Refusé**. Le résultat reste affiché trois
+  secondes, puis revient à **Prêt** si la session reste active. Une nouvelle
+  carte relance immédiatement la vérification. Un refus métier ne modifie pas
+  le voyant du lecteur. Une suspension ou un arrêt efface le résultat lumineux ;
+  la dernière lecture reste consultable dans le panneau. Ces voyants sont
+  purement visuels dans la page, sans pilotage Tuya ni commande matérielle.
   **Suspendre le pointage** reste respecté pour le tournoi affiché, même lors
   des mises à jour de la liste ; **Reprendre le pointage** réactive la lecture.
   Le panneau est affiché hors du cadre du tournoi et peut défiler si l'écran
@@ -24,8 +35,9 @@ Nouvelle baseline définie le 01/11/2026.
   sont absents hors mode trace et pendant un simple test de lecture ; les
   alertes métier habituelles restent inchangées.
 - Le diagnostic reste accessible en priorité Euro ou pour un tournoi verrouillé ;
-  seule l'activation du pointage est interdite. Aucun réveil logiciel du lecteur
-  n'est proposé, faute de commande matérielle validée.
+  seule l'activation du pointage est interdite. La sonde ACS est une interrogation
+  ponctuelle en lecture seule : elle ne réveille pas le lecteur et ne change aucun
+  réglage.
 - La session est **pilotée par la page fees-collector**, sur le même PC que ppNFC.
   Elle n'est ni autonome ni persistée : quitter la page, changer de tournoi,
   passer en priorité Euro, verrouiller le tournoi ou retirer l'autorisation
@@ -38,8 +50,64 @@ Nouvelle baseline définie le 01/11/2026.
   Une autre acquisition en cours n'est pas reprise de force. Une erreur de
   liaison arrête la session et demande une nouvelle activation explicite.
 - L'état `Ready` de PC/SC reste insuffisant pour prouver que le lecteur est
-  physiquement éveillé. La recette matérielle, les permissions du navigateur
-  depuis l'URL HTTPS et les essais prolongés restent nécessaires.
+  physiquement éveillé. Le nouvel endpoint `/status` ajoute une interrogation
+  ACS ponctuelle ; l'état affiché reste celui de l'instant du contrôle. La recette
+  matérielle, les permissions du navigateur depuis l'URL HTTPS et les essais
+  prolongés restent nécessaires.
+- Essai utilisateur du 17/11/2026 sur localhost : lecteur alimenté par USB,
+  voyants physiques éteints et état Windows disponible ; le test de lecture
+  expire sans détecter de carte. Après appui sur le bouton latéral droit,
+  les voyants vert, bleu et jaune s'allument et la carte est lue. Cet essai
+  confirme que l'état Windows ne suffit pas ; il ne distingue pas la veille
+  d'une extinction. Un délai de lecture seul ne modifie pas ce diagnostic.
+- Sondes ponctuelles en lecture seule du 17/11/2026, via `SCardControl`
+  sur le lecteur PICC exposé par le pilote ACS BLE : `Get PCD/PICC Status`
+  (`E0 00 00 25 00`, manuel v2.02 §6.1.2) renvoie
+  `E1 00 00 00 01 01` (**No PICC**) en 129 ms, puis 120 ms après environ
+  dix minutes sans lecture de carte. `Get Firmware Version`
+  (`E0 00 00 18 00`, §6.3.1) renvoie **ACR1555 FW 1.03.02** en 60 et
+  63 ms. Les voyants sont restés allumés ; ppNFC continuait de surveiller
+  le lecteur, mais le pointage était arrêté. Aucune configuration ni
+  authentification n'a   été tentée. Ces commandes sont donc utilisables sur cette liaison lorsque le
+  lecteur est réveillé ; voir le comparatif ci-dessous pour leur résultat avec
+  les voyants éteints.
+- Comparatif matériel suivant, le 17/11/2026 : avec toutes les LED éteintes,
+  les mêmes deux commandes échouent en 13–15 ms avec `0x0000048F`
+  (**Windows : périphérique non connecté**), alors que le nom PICC reste dans
+  la liste PC/SC. Le bouton POWER a été maintenu environ trois secondes ;
+  les LED verte, bleue et jaune se sont rallumées et les commandes ont répondu
+  de nouveau : `No PICC` en 122 ms et firmware `1.03.02` en 38 ms. Ce test
+  confirme que la sonde distingue le lecteur répondant du périphérique non
+  connecté et que POWER le réactive dans cet essai. Les boutons sont identifiés
+  par le schéma ACS (manuel utilisateur v1.07, p. 12) : face NFC vers soi,
+  USB en haut, **MODE/Bluetooth à gauche**, **POWER ON/OFF à droite**. Ne pas
+  confondre l'appui long MODE, qui peut basculer le mode USB/BLE, avec le réveil
+  par POWER. L'état PC/SC `No PICC` signifie aucune carte, pas une erreur.
+  Les commandes de statut/firmware ACS v2.02 sont documentées comme lecture
+  sans authentification (§6.0, §6.1.2 et §6.3.1) ; aucune configuration n'a
+  été changée.
+- Intégration en cours : ppNFC `/status` interroge `Get PCD/PICC Status` à la
+  demande et sérialise la commande avec la surveillance PC/SC. Le retour
+  `No PICC` signifie que le lecteur répond sans carte ; l'erreur Windows
+  `0x0000048F` est signalée comme lecteur non joignable. La page affiche la
+  dernière réponse et son heure, sans polling périodique ; elle empêche
+  l'activation du pointage si la sonde indique que le lecteur ne répond pas.
+  Cette vérification n'établit pas à elle seule si le lecteur est en veille ou
+  éteint.
+- Validation locale du 17/11/2026 : build Angular de développement réussi,
+  39 tests Angular ciblés réussis et build .NET de ppNFC/tests réussi sans
+  avertissement. L'exécution des tests .NET reste bloquée par Windows
+  Application Control (`0x800711C7`). Après redémarrage de ppNFC, `/status`
+  ne renvoyait toujours pas `hardwareProbe` : le processus était l'ancien
+  exécutable `dist\ppNFC\ppNFC.exe`. La nouvelle publication a été préparée
+  séparément dans `dist\ppNFC-acs-probe\ppNFC.exe`, sans arrêter ni remplacer
+  le processus en cours. Son lancement est bloqué par Smart App Control
+  (exécutable non signé, sans réputation Microsoft ; l'ancien binaire du 14/11
+  est accepté). Le fichier est soumis à Microsoft pour analyse. Chaque nouvelle
+  publication non signée peut être bloquée de la même façon.
+  Recette restante : lancer cette nouvelle version,
+  vérifier `hardwareProbe` sur `/status`, puis tester les états lecteur allumé
+  et éteint dans la page de tournoi.
 - Validation locale : 56 tests Angular ciblés passent (commandes NFC,
   configuration, annulations, contrôles de pointage et gestion NFC existante).
   Le nouveau réglage a aussi été vérifié dans le navigateur, sans sauvegarder

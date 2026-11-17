@@ -10,6 +10,7 @@ namespace NfcDiagnostic
         string[] ListReaders();
         bool IsCardPresent(string reader);
         string ReadUid(string reader);
+        byte GetPcdPiccStatus(string reader);
     }
 
     public sealed class PcscException : InvalidOperationException
@@ -122,6 +123,31 @@ namespace NfcDiagnostic
             finally
             {
                 Check(SCardDisconnect(card, 0), "Disconnect from reader");
+            }
+        }
+
+        public byte GetPcdPiccStatus(string reader)
+        {
+            IntPtr card;
+            uint protocol;
+            Check(SCardConnectW(context, reader, 3, 0, out card, out protocol), "Connect to reader for status probe");
+            try
+            {
+                byte[] command = new byte[] { 0xE0, 0, 0, 0x25, 0 };
+                byte[] response = new byte[258];
+                uint received;
+                Check(SCardControl(card, 0x003136B0, command, (uint)command.Length,
+                    response, (uint)response.Length, out received), "Get PCD/PICC status");
+                if (received != 6 || response[0] != 0xE1 || response[1] != 0 ||
+                    response[2] != 0 || response[3] != 0 || response[4] != 1 ||
+                    (response[5] > 3 && response[5] != 0xFF))
+                    throw new InvalidDataException("Unexpected PCD/PICC status response: "
+                        + BitConverter.ToString(response, 0, (int)received));
+                return response[5];
+            }
+            finally
+            {
+                Check(SCardDisconnect(card, 0), "Disconnect after status probe");
             }
         }
 

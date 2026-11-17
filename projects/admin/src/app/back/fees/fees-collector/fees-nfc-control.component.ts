@@ -9,6 +9,8 @@ import { ToastService } from '../../../common/services/toast.service';
 import { Game } from '../fees.interface';
 import { FeesCollectorService } from './fees-collector.service';
 
+type CheckInFeedback = 'checking' | 'accepted' | 'refused';
+
 @Component({
   selector: 'app-fees-nfc-control',
   standalone: true,
@@ -17,6 +19,21 @@ import { FeesCollectorService } from './fees-collector.service';
   styles: [`
     :host { display: inline-block; }
     .dropdown-toggle::after { display: none; }
+    .nfc-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .25rem .5rem;
+      font-size: .8rem;
+    }
+    .nfc-status-light {
+      flex: 0 0 1rem;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 .4rem currentColor;
+    }
     .nfc-panel {
       width: min(23rem, calc(100vw - 2rem));
       max-height: calc(100dvh - 2rem);
@@ -48,6 +65,9 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
   private wasEligible = false;
   private autoStartRequested = false;
   private destroyed = false;
+  private checkInFeedback?: CheckInFeedback;
+  private feedbackTimer?: number;
+  private readerErrorConfirmed = false;
 
   constructor(
     private readonly bridge: MemberNfcCardService,
@@ -70,14 +90,97 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
 
   get readerLabel(): string {
     if (!this.reader) return 'État non vérifié';
+    const probe = this.reader.hardwareProbe;
+    if (probe?.state === 'Unverified') return 'Lecteur non vérifié par PC/SC';
+    if (probe?.state === 'Unresponsive') return 'Lecteur non joignable';
+    if (probe?.state === 'Responsive') {
+      switch (probe.pcdPiccStatus) {
+        case 0: return 'Lecteur répond — RF coupée';
+        case 1: return 'Lecteur répond — aucune carte';
+        case 2: return 'Lecteur répond — carte prête';
+        case 3: return 'Lecteur répond — carte sélectionnée';
+        case 255: return 'Réponse en erreur PCD/PICC';
+        default: return 'Réponse ACS inconnue';
+      }
+    }
     const labels: Record<NfcReaderStatus['readerStatus'], string> = {
       Starting: 'Démarrage',
-      Ready: 'Déclaré disponible par Windows',
-      CardRead: 'Carte détectée',
+      Ready: 'Détecté par Windows — disponibilité physique non vérifiée',
+      CardRead: 'Carte détectée — dernier état Windows',
       Disconnected: 'Lecteur déconnecté',
       Error: 'Erreur lecteur',
     };
     return labels[this.reader.readerStatus];
+  }
+
+  get readerIndicatorColor(): 'secondary' | 'warning' | 'danger' | 'success' {
+    if (this.checking || this.starting || this.reader?.readerStatus === 'Starting') return 'warning';
+    if (this.error && this.readerErrorConfirmed) return 'danger';
+    const probe = this.reader?.hardwareProbe;
+    if (probe?.state === 'Unresponsive') return 'danger';
+    if (probe?.state === 'Responsive') {
+      if (probe.pcdPiccStatus === 0) return 'warning';
+      if (probe.pcdPiccStatus === 255) return 'danger';
+      return probe.pcdPiccStatus === null ? 'warning' : 'success';
+    }
+    if (this.reader?.readerStatus === 'Ready' || this.reader?.readerStatus === 'CardRead') return 'warning';
+    if (this.reader?.readerStatus === 'Disconnected' || this.reader?.readerStatus === 'Error') return 'danger';
+    if (this.error) return 'warning';
+    return 'secondary';
+  }
+
+  get readerIndicatorLabel(): string {
+    if (this.checking || this.starting) return 'Vérification…';
+    if (this.reader?.hardwareProbe?.state === 'Unresponsive') return this.readerLabel;
+    if (this.error && this.readerErrorConfirmed) return 'Indisponible';
+    if (!this.reader) return 'Non vérifié';
+    if (this.reader.hardwareProbe?.state) return this.readerLabel;
+    return this.reader.readerStatus === 'Ready' ? 'Détecté (Windows)' : this.readerLabel;
+  }
+
+  get readerIndicatorMessage(): string {
+    if (!this.reader) return this.error || this.readerIndicatorLabel;
+    const probe = this.reader.hardwareProbe;
+    if (probe?.state === 'Responsive') {
+      return `${this.readerLabel}. ${probe.message}${this.error ? ` ${this.error}.` : ''} Cette interrogation ponctuelle ne maintient pas le lecteur éveillé.`;
+    }
+    if (probe?.state === 'Unresponsive') {
+      return `${this.readerLabel}. ${probe.message} Vérifiez l’alimentation USB et le bouton POWER à droite.`;
+    }
+    if (probe?.state === 'Unverified') return `${this.readerLabel}. ${probe.message}`;
+    const error = this.error ? ` ${this.error}.` : '';
+    return `${this.readerLabel}.${error} L’état Windows ne garantit pas que le lecteur physique est éveillé. Cliquez pour ouvrir le diagnostic et tester une lecture sans pointage.`;
+  }
+
+  get checkInState(): 'inactive' | 'ready' | CheckInFeedback {
+    return this.active ? this.checkInFeedback ?? 'ready' : 'inactive';
+  }
+
+  get checkInIndicatorLabel(): string {
+    switch (this.checkInState) {
+      case 'ready': return 'Prêt';
+      case 'checking': return 'Vérification…';
+      case 'accepted': return 'Accepté';
+      case 'refused': return 'Refusé';
+      case 'inactive': return this.starting ? 'Activation…' : this.paused ? 'Suspendu' : 'Arrêté';
+    }
+  }
+
+  get checkInIndicatorColor(): string {
+    switch (this.checkInState) {
+      case 'ready': return 'primary';
+      case 'checking': return 'warning';
+      case 'accepted': return 'success';
+      case 'refused': return 'danger';
+      case 'inactive': return 'secondary';
+    }
+  }
+
+  get checkInIndicatorMessage(): string {
+    if (this.checkInState === 'accepted' || this.checkInState === 'refused') {
+      return this.lastReading?.message || this.checkInIndicatorLabel;
+    }
+    return this.active ? this.checkInIndicatorLabel : this.unavailableReason || this.error || this.notice || this.checkInIndicatorLabel;
   }
 
   ngOnChanges(): void {
@@ -120,12 +223,14 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     this.operation = abort;
     this.checking = true;
     this.error = '';
+    this.readerErrorConfirmed = false;
     this.reader = null;
     try {
       const reader = await this.timed(abort, 5000, signal => this.bridge.status(signal));
       if (!abort.signal.aborted) {
         this.reader = reader;
-        if (this.sessionPending && (reader.readerStatus === 'Disconnected' || reader.readerStatus === 'Error')) {
+        if (this.sessionPending && (reader.readerStatus === 'Disconnected' || reader.readerStatus === 'Error'
+          || reader.hardwareProbe?.state === 'Unresponsive')) {
           this.stopSession('Pointage NFC arrêté : le lecteur est indisponible.', false);
         }
       }
@@ -147,6 +252,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     this.operation = abort;
     this.testing = true;
     this.error = '';
+    this.readerErrorConfirmed = false;
     this.notice = 'Présentez une carte. Ce test ne pointe aucun joueur.';
     try {
       const uid = await this.timed(abort, 35000, signal => this.bridge.acquire(signal));
@@ -183,13 +289,18 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     this.sessionKey = key;
     this.starting = true;
     this.error = '';
+    this.readerErrorConfirmed = false;
     this.notice = '';
     this.lastReading = null;
+    this.clearCheckInFeedback();
     this.reader = null;
     try {
       this.reader = await this.timed(abort, 5000, signal => this.bridge.status(signal));
       if (!this.isCurrent(abort, key)) return;
       if (this.reader.capturing) throw new Error('Une lecture est déjà en cours dans un autre écran ou onglet.');
+      if (this.reader.hardwareProbe?.state === 'Unresponsive') {
+        throw new Error(`Impossible d’activer le pointage : ${this.readerIndicatorMessage}`);
+      }
       if (this.reader.readerStatus !== 'Ready' && this.reader.readerStatus !== 'CardRead') {
         throw new Error(`Impossible d’activer le pointage : ${this.readerLabel}.`);
       }
@@ -206,10 +317,10 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
         if (this.isCurrent(abort, key)) await this.checkInUid(uid, abort, key);
       }
     } catch (error) {
-      if (!abort.signal.aborted || abort.signal.reason === 'timeout') this.reader = null;
       this.reportError(error, abort);
     } finally {
       if (this.session === abort) {
+        this.clearCheckInFeedback();
         this.active = false;
         this.starting = false;
         this.session = undefined;
@@ -222,6 +333,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     if (manualPause) this.paused = true;
     this.autoStartRequested = false;
     this.session?.abort('cancelled');
+    this.clearCheckInFeedback();
     this.active = false;
     this.starting = false;
     this.notice = message;
@@ -239,6 +351,8 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
   }
 
   private async checkInUid(uid: string, abort: AbortController, key: string): Promise<void> {
+    this.clearCheckInFeedback();
+    this.checkInFeedback = 'checking';
     try {
       const card = await this.bridge.get(uid);
       if (!this.isCurrent(abort, key)) return;
@@ -265,6 +379,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
           ? `${gamer.firstname} ${gamer.lastname} : ${alreadyCheckedIn ? 'déjà pointé par carte' : 'pointage carte confirmé'}.`
           : `${gamer.firstname} ${gamer.lastname} : pointage refusé ou non confirmé. Consultez le message de pointage.`,
       };
+      this.showCheckInFeedback(accepted);
       this.showTraceReading();
       if (accepted && !alreadyCheckedIn) this.checkedIn.emit();
     } catch (error) {
@@ -274,8 +389,21 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
         uid, accepted: false, at: new Date(),
         message: error instanceof Error ? error.message : 'Vérification de la carte impossible. Aucun pointage confirmé.',
       };
+      this.showCheckInFeedback(false);
       this.showTraceReading();
     }
+  }
+
+  private showCheckInFeedback(accepted: boolean): void {
+    this.clearCheckInFeedback();
+    this.checkInFeedback = accepted ? 'accepted' : 'refused';
+    this.feedbackTimer = window.setTimeout(() => this.clearCheckInFeedback(), 3000);
+  }
+
+  private clearCheckInFeedback(): void {
+    window.clearTimeout(this.feedbackTimer);
+    this.feedbackTimer = undefined;
+    this.checkInFeedback = undefined;
   }
 
   private showTraceReading(): void {
@@ -298,6 +426,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
   private reportError(error: unknown, abort: AbortController): void {
     if (abort.signal.aborted && abort.signal.reason !== 'timeout') return;
     console.error('[Pointage NFC]', error);
+    this.readerErrorConfirmed = !(error instanceof NfcCaptureTimeoutError || abort.signal.reason === 'timeout');
     this.error = abort.signal.reason === 'timeout'
       ? 'ppNFC ne répond pas dans le délai prévu. Vérifiez la liaison puis réessayez.'
       : error instanceof Error ? error.message : 'Opération NFC impossible.';
