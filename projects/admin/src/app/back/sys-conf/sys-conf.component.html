@@ -7,6 +7,17 @@
           <div class="card h-100">
             <h5 class="card-header">Pointage tournois</h5>
             <div class="card-body p-0">
+              <div class="p-3 border-bottom">
+                <div class="form-check form-switch">
+                  <input id="nfcCheckInActive" type="checkbox" class="form-check-input" role="switch"
+                    formControlName="nfc_check_in_active">
+                  <label for="nfcCheckInActive" class="form-check-label">Autoriser le pointage par badgeuse NFC</label>
+                </div>
+                <div class="small text-muted mt-1">
+                  Rend les commandes NFC disponibles dans le pointage. La badgeuse démarre automatiquement
+                  à la sélection d’un tournoi à priorité Carte non clôturé.
+                </div>
+              </div>
               <div class="p-3 pb-2 fw-bold">Tarification des droits de table (€)</div>
               <div formArrayName="fee_rates">
               <div class="table-responsive">

@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { MembersService } from '../../../common/services/members.service';
+import { MemberNfcCardService } from '../../../common/services/member-nfc-card.service';
 import { PdfService } from '../../../common/services/pdf.service';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { ToastService } from '../../../common/services/toast.service';
@@ -33,6 +34,13 @@ describe('FeesCollectorComponent player cards', () => {
       gamers: [gamer, { ...gamer, index: 1, license: '00000002', firstname: 'Anne', validated: true, enabled: false }],
     };
     let hideValidated = false;
+    const configuration$ = new BehaviorSubject({
+      banks: [], membership_payment_warning_month: 12, nfc_check_in_active: false,
+    });
+    const bridge = jasmine.createSpyObj<MemberNfcCardService>('MemberNfcCardService', ['status', 'acquire']);
+    bridge.status.and.resolveTo({
+      version: '1.0', readerStatus: 'Ready', readerName: 'ACR1555U', message: '', capturing: false,
+    });
     const feesService = {
       game$: new BehaviorSubject(game),
       get_tournament: () => ({ id: 1, status: Game_status.RECOVERED }),
@@ -41,6 +49,7 @@ describe('FeesCollectorComponent player cards', () => {
       stamps_collected: () => 0,
       euros_collected: () => 0,
       paymentPreference: 'card',
+      nfcCheckInEnabled: true,
       addPair: jasmine.createSpy().and.resolveTo(true),
       replacePlayer: jasmine.createSpy().and.resolveTo(true),
       removePair: jasmine.createSpy().and.resolveTo(true),
@@ -51,7 +60,8 @@ describe('FeesCollectorComponent player cards', () => {
         { provide: FeesCollectorService, useValue: feesService },
         { provide: TournamentService, useValue: { list_next_tournaments: () => of([]) } },
         { provide: MembersService, useValue: { listMembers: () => of([]) } },
-        { provide: SystemDataService, useValue: { get_configuration: () => of({ banks: [], membership_payment_warning_month: 12 }) } },
+        { provide: MemberNfcCardService, useValue: bridge },
+        { provide: SystemDataService, useValue: { get_configuration: () => configuration$ } },
         { provide: ProductService, useValue: { listProducts: () => of([{ account: 'CAR', paired: false, price: 10 }]) } },
         { provide: BreakingNewsService, useValue: { activate: () => {}, deactivate: () => {} } },
         { provide: PdfService, useValue: {} },
@@ -63,6 +73,13 @@ describe('FeesCollectorComponent player cards', () => {
     }).compileComponents();
     const fixture = TestBed.createComponent(FeesCollectorComponent);
     fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-fees-nfc-control')).toBeNull();
+    configuration$.next({ banks: [], membership_payment_warning_month: 12, nfc_check_in_active: true });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-fees-nfc-control')).not.toBeNull();
+    configuration$.next({ banks: [], membership_payment_warning_month: 12, nfc_check_in_active: false });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-fees-nfc-control')).toBeNull();
 
     const cards: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.fee-player-card'));
     expect(fixture.nativeElement.querySelector('.fee-progress').textContent).toContain('1 / 2 pointés');

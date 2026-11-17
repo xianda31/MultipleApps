@@ -54,6 +54,7 @@ export class SysConfComponent {
       web_push_active: [false],
       online_payment_active: [false],
       tpe_payment_active: [false],
+      nfc_check_in_active: [false],
       CB_fees_account: [''],
       minimum_cb_amount: [0],
       membership_payment_warning_month: [11, [Validators.required, Validators.min(1), Validators.max(12)]],
@@ -244,6 +245,7 @@ export class SysConfComponent {
   loadDataInFormGroup(configuration: SystemConfiguration) {
     this.systemFormGroup.patchValue({
       ...configuration,
+      nfc_check_in_active: configuration.nfc_check_in_active ?? false,
       membership_payment_warning_month: configuration.membership_payment_warning_month ?? 11,
     }, { emitEvent: false });
     // patchValue doest not work for FormArray ; work-around method : clear and re-populate

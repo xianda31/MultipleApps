@@ -10,6 +10,8 @@ export const readerStatusSchema = z.object({
 });
 export type NfcReaderStatus = z.infer<typeof readerStatusSchema>;
 
+export class NfcCaptureTimeoutError extends Error {}
+
 export function normalizeNtag213Uid(value: string): string {
   const uid = value.trim().toUpperCase();
   if (!/^[0-9A-F]{14}$/.test(uid)) {
@@ -69,6 +71,7 @@ export class MemberNfcCardService {
     if (!response.ok) {
       const message = typeof body === 'object' && body !== null && 'message' in body
         && typeof body.message === 'string' ? body.message : `Erreur ppNFC (${response.status}).`;
+      if (path === 'capture' && response.status === 408) throw new NfcCaptureTimeoutError(message);
       throw new Error(message);
     }
     return body;

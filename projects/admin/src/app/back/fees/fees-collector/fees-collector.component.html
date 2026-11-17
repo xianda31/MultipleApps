@@ -71,6 +71,10 @@
                     {{ checkedInCount }} / {{ game.gamers.length }} pointés
                 </span>
             </div>
+            <div *ngIf="nfcCheckInEnabled && game.tournament" class="col-auto">
+                <app-fees-nfc-control [game]="game" [paymentPreference]="paymentPreference"
+                    [blocked]="pairManagementDisabled" (checkedIn)="check_status()"></app-fees-nfc-control>
+            </div>
 
             <div class="col-12 col-md d-flex flex-wrap justify-content-md-center align-items-center gap-2">
                 <span class="fw-semibold text-nowrap">Tarification :</span>

@@ -30,17 +30,22 @@ describe('SysConfComponent payment preferences', () => {
       banks: [],
     };
     component.loadDataInFormGroup(configuration);
+    expect(component.systemFormGroup.get('nfc_check_in_active')!.value).toBeFalse();
+    component.systemFormGroup.get('nfc_check_in_active')!.setValue(true);
     expect(component.fee_rates.at(0).get('payment_preference')!.value).toBe('card');
     expect(component.fee_rates.at(1).get('payment_preference')!.value).toBe('euro');
     component.fee_rates.at(0).get('payment_preference')!.setValue('euro');
     component.fee_rates.at(1).get('payment_preference')!.setValue('card');
     component.save_configuration();
     expect(systemData.save_configuration).toHaveBeenCalledOnceWith(jasmine.objectContaining({
+      nfc_check_in_active: true,
       fee_rates: [
         { key: FEE_RATE.STANDARD, member_price: 3, non_member_price: 5, payment_preference: 'euro' },
         { key: FEE_RATE.HOLIDAYS, member_price: 3, non_member_price: 5, payment_preference: 'card' },
       ],
     }));
+    component.loadDataInFormGroup(configuration);
+    expect(component.systemFormGroup.get('nfc_check_in_active')!.value).toBeFalse();
     fixture.destroy();
   });
 });

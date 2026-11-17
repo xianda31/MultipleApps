@@ -2,6 +2,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { SystemConfiguration } from '../interfaces/system-conf.interface';
 import { SystemDataService } from './system-data.service';
+import { ToastService } from './toast.service';
 
 describe('SystemDataService accounting season', () => {
   function configuration(initializedSeason?: string): SystemConfiguration {
@@ -67,6 +68,21 @@ describe('SystemDataService accounting season', () => {
     const loaded = await firstValueFrom(service.get_configuration());
 
     expect(loaded.web_push_active).toBeTrue();
+  });
+
+  it('keeps badgeuse check-in opt-in when loading legacy or enabled configuration', async () => {
+    for (const enabled of [undefined, true]) {
+      const fileService = jasmine.createSpyObj('FileService', ['download_json_file', 'upload_to_S3']);
+      const toast = jasmine.createSpyObj<ToastService>('ToastService', ['showWarning']);
+      const service = new SystemDataService(fileService, toast);
+      fileService.download_json_file.and.resolveTo({
+        ...configuration(service.get_today_season()), nfc_check_in_active: enabled,
+      });
+
+      const loaded = await firstValueFrom(service.get_configuration());
+
+      expect(loaded.nfc_check_in_active).toBe(enabled === true);
+    }
   });
 
   it('blocks all writes when the next season is initialized before July', async () => {

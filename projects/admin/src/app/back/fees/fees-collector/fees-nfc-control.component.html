@@ -1,0 +1,54 @@
+<div ngbDropdown container="body" placement="bottom-end" autoClose="outside" (openChange)="panelOpened($event)">
+  <button type="button" class="btn btn-sm btn-outline-secondary" ngbDropdownToggle
+    [class.text-success]="active"
+    [class.text-warning]="!!error || reader?.readerStatus === 'Disconnected' || reader?.readerStatus === 'Error'"
+    [attr.aria-label]="active ? 'Badgeuse NFC : pointage actif' : 'Commandes de la badgeuse NFC'"
+    container="body" [disableTooltip]="panelOpen"
+    [ngbTooltip]="active ? 'Pointage NFC actif' : 'Badgeuse NFC : ' + readerLabel">
+    <i class="bi bi-broadcast-pin" aria-hidden="true"></i><span class="ms-1">NFC</span>
+  </button>
+  <div ngbDropdownMenu class="nfc-panel p-3">
+    <section aria-label="Contrôle de la badgeuse NFC">
+      <h6>Badgeuse NFC</h6>
+      <dl class="small mb-2">
+        <dt>ppNFC sur ce PC</dt>
+        <dd>{{ checking || starting ? 'Vérification…' : (reader ? 'Joignable — version ' + reader.version : 'Liaison non vérifiée') }}</dd>
+        <dt>Lecteur</dt>
+        <dd>{{ readerLabel }}<span *ngIf="reader?.readerName"> — {{ reader?.readerName }}</span></dd>
+        <dt>Session de pointage</dt>
+        <dd [class.text-success]="active">
+          {{ active ? 'Active' : (starting ? 'Activation…' : (paused ? 'Suspendue' : 'Arrêtée')) }} — {{ game.tournament?.name }}
+        </dd>
+      </dl>
+      <p *ngIf="reader" class="small text-muted mb-2">{{ reader.message }}</p>
+      <p class="small text-muted">
+        L’état Windows ne garantit pas que le lecteur physique est éveillé. Aucun réveil logiciel n’est disponible.
+      </p>
+      <div *ngIf="error" class="alert alert-warning small p-2" role="alert">{{ error }}</div>
+      <p *ngIf="notice" class="small" role="status">{{ notice }}</p>
+      <div *ngIf="lastReading" class="border rounded p-2 small mb-2" aria-live="polite">
+        <div>{{ lastReading.at | date:'HH:mm:ss' }} — {{ lastReading.uid }}</div>
+        <div [class.text-success]="lastReading.accepted">{{ lastReading.message }}</div>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="busy || starting"
+          (click)="refreshStatus()">Actualiser l’état</button>
+        <button *ngIf="!testing" type="button" class="btn btn-sm btn-outline-secondary"
+          [disabled]="busy || sessionPending" (click)="testRead()">Tester une lecture</button>
+        <button *ngIf="testing" type="button" class="btn btn-sm btn-outline-secondary"
+          (click)="cancelTest()">Annuler le test</button>
+      </div>
+      <p *ngIf="unavailableReason" class="small text-muted mb-2">{{ unavailableReason }}</p>
+      <button *ngIf="!sessionPending" type="button" class="btn btn-sm btn-primary"
+        [disabled]="busy || !!unavailableReason" (click)="startSession()">
+        {{ paused ? 'Reprendre le pointage' : (error ? 'Réessayer le pointage' : 'Activer le pointage') }}
+      </button>
+      <button *ngIf="sessionPending" type="button" class="btn btn-sm btn-outline-danger"
+        (click)="stopSession()">Suspendre le pointage</button>
+      <p class="small text-muted mt-2 mb-0">
+        Le pointage démarre automatiquement pour un tournoi éligible. Gardez cette page ouverte.
+        Quitter le pointage arrête les lectures ; une écriture déjà envoyée peut se terminer.
+      </p>
+    </section>
+  </div>
+</div>

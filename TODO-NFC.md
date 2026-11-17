@@ -4,6 +4,47 @@
 
 Nouvelle baseline définie le 01/11/2026.
 
+### Commandes de badgeuse et session locale du 16/11/2026
+
+- Dans **Configuration > Pointage tournois**, le réglage
+  **Autoriser le pointage par badgeuse NFC** (`nfc_check_in_active`) est
+  désactivé par défaut. Il autorise la fonctionnalité indépendamment du tarif.
+- Lorsque ce réglage est actif, le symbole **NFC** du bandeau de pointage ouvre
+  le contrôle de la badgeuse : état ppNFC, état déclaré par Windows, test de
+  lecture sans pointage, dernière lecture et activation/arrêt de la session.
+  Sélectionner un tournoi à priorité Carte non clôturé démarre automatiquement
+  la badgeuse, sans confirmation dans le panneau. Le symbole devient vert
+  lorsque la session est **Active** ; les cartes peuvent alors être présentées.
+  **Suspendre le pointage** reste respecté pour le tournoi affiché, même lors
+  des mises à jour de la liste ; **Reprendre le pointage** réactive la lecture.
+  Le panneau est affiché hors du cadre du tournoi et peut défiler si l'écran
+  est trop bas, pour garder les commandes accessibles même avec peu de joueurs.
+- En mode trace sys-conf, chaque résultat de pointage NFC ajoute un toast
+  indiquant la confirmation ou le refus et l'UID lu. Ces toasts de diagnostic
+  sont absents hors mode trace et pendant un simple test de lecture ; les
+  alertes métier habituelles restent inchangées.
+- Le diagnostic reste accessible en priorité Euro ou pour un tournoi verrouillé ;
+  seule l'activation du pointage est interdite. Aucun réveil logiciel du lecteur
+  n'est proposé, faute de commande matérielle validée.
+- La session est **pilotée par la page fees-collector**, sur le même PC que ppNFC.
+  Elle n'est ni autonome ni persistée : quitter la page, changer de tournoi,
+  passer en priorité Euro, verrouiller le tournoi ou retirer l'autorisation
+  globale interrompt les lectures. Un nouveau tournoi éligible démarre une
+  nouvelle session après libération de l'ancienne. Le panneau peut être fermé sans arrêter
+  la session. Une écriture déjà envoyée au backend peut néanmoins se terminer.
+- La page demande successivement des lectures à la liaison locale ppNFC.
+  Elle vérifie la carte et l'identité actuelle du membre, puis appelle le
+  pointage partagé existant ; les crédits ne sont débités qu'à la clôture.
+  Une autre acquisition en cours n'est pas reprise de force. Une erreur de
+  liaison arrête la session et demande une nouvelle activation explicite.
+- L'état `Ready` de PC/SC reste insuffisant pour prouver que le lecteur est
+  physiquement éveillé. La recette matérielle, les permissions du navigateur
+  depuis l'URL HTTPS et les essais prolongés restent nécessaires.
+- Validation locale : 56 tests Angular ciblés passent (commandes NFC,
+  configuration, annulations, contrôles de pointage et gestion NFC existante).
+  Le nouveau réglage a aussi été vérifié dans le navigateur, sans sauvegarder
+  ni activer la badgeuse. Aucun essai physique de cette session n'est revendiqué.
+
 ### Revue du 09/11/2026
 
 - La branche de développement est `feature/nfc-reader`.
@@ -221,12 +262,13 @@ historique. Il n'est plus la cible d'exploitation :
 ## Objectif
 
 Permettre aux joueurs de se pointer avec une carte NTAG213 attribuée à un membre.
-ppNFC lit l'UID avec l'ACR1555U, l'envoie avec la session de pointage active au
-backend, puis restitue immédiatement le résultat sur la badgeuse.
+ppNFC lit l'UID avec l'ACR1555U et le transmet à la page de pointage active.
+La page applique les contrôles métier et enregistre le pointage partagé.
+La restitution lumineuse sur la badgeuse reste une étape ultérieure.
 
 Chaîne fonctionnelle :
 
-`NTAG213 -> ACR1555U -> ppNFC -> backend -> fees-collector`
+`NTAG213 -> ACR1555U -> ppNFC local -> fees-collector -> backend (GameCheckIn)`
 
 ## Architecture cible
 
@@ -249,7 +291,8 @@ Chaîne fonctionnelle :
 - Reçoit l'UID de l'ACR1555U en Bluetooth.
 - Normalise l'UID en hexadécimal, majuscules et sans séparateur.
 - Bloque les doubles lectures pendant une courte période.
-- Transmet l'UID et le `gameId` actif au backend.
+- Transmet les UID demandés par la page de pointage via la liaison locale.
+- Ne nécessite pas d'authentification backend propre dans ce mode piloté par la page.
 - Ne porte pas les règles métier de pointage.
 
 Le mode Bluetooth exact de l'ACR1555U reste à valider avec le matériel :
@@ -265,13 +308,15 @@ automatique est disponible dans le menu de l'icone.
 
 ### fees-collector et backend
 
-- fees-collector sélectionne et publie explicitement la session de pointage
-  active et son `gameId`.
+- fees-collector sélectionne explicitement le tournoi et conserve une session
+  locale tant que sa page reste ouverte et le pointage autorisé.
 - ppNFC ne choisit jamais implicitement le tournoi.
-- Le backend résout l'UID vers le membre ou la licence.
-- Les contrôles métier restent ceux de fees-collector.
+- La page résout l'UID vers la carte et vérifie le membre actif inscrit au tournoi.
+- Les contrôles métier restent ceux de fees-collector ; le backend conserve
+  les contrôles indispensables et la persistance partagée existante.
 - Sans session active, aucun badge ne peut être accepté.
-- Le résultat métier est retourné à ppNFC pour piloter la signalétique.
+- Le résultat métier est affiché dans le panneau NFC. Le retour à ppNFC
+  pour piloter la signalétique reste à réaliser.
 
 ## Signalétique de la badgeuse
 
@@ -428,26 +473,30 @@ le [README ppNFC](desktop/ppNFC/README.md).
 
 ## Phase 4 - Session de pointage
 
-- [ ] Permettre à fees-collector d'activer une session pour un tournoi.
-- [ ] N'activer la session NFC qu'en priorité carte et la désactiver si le tournoi passe en priorité euro.
-- [ ] Publier le `gameId` actif à destination de ppNFC.
-- [ ] Afficher dans ppNFC si le pointage est actif.
-- [ ] Associer chaque lecture au tournoi actif.
-- [ ] Refuser le pointage lorsqu'aucun tournoi n'est actif.
+- [x] Autoriser globalement la badgeuse dans sys-conf ; démarrer automatiquement à la sélection d'un tournoi éligible.
+- [x] Permettre à fees-collector d'activer une session locale pour un tournoi.
+- [x] N'activer la session NFC qu'en priorité carte et la désactiver si le tournoi passe en priorité euro.
+- [x] Associer chaque lecture au tournoi actif dans la page, sans session autonome ppNFC.
+- [x] Arrêter les lectures en quittant la page ou si les conditions d'activation changent.
+- [x] Refuser le pointage lorsqu'aucune session locale n'est active.
+- [x] Afficher dans fees-collector l'état et les commandes de la badgeuse.
+
+Le choix du mode piloté par la page remplace la publication d'une session
+autonome à ppNFC. Il n'y a pas de nouveau modèle backend de session.
 
 ## Phase 5 - Intégration métier
 
-- [ ] Résoudre l'UID vers la licence du membre.
-- [ ] Exiger un membre explicitement `ACTIVE` ; refuser les membres
+- [x] Résoudre l'UID vers la licence du membre.
+- [x] Exiger un membre explicitement `ACTIVE` ; refuser les membres
   `ARCHIVED`, `BANNED` ou dont le statut est absent/invalide, indépendamment
   du statut de licence FFB.
-- [ ] Vérifier que le joueur est inscrit au tournoi actif.
-- [ ] Réutiliser le traitement métier existant de `checkInByNfc`.
+- [x] Vérifier que le joueur est inscrit au tournoi actif.
+- [x] Réutiliser le traitement métier existant de `checkInByNfc`.
 - [x] Refuser les pointages de source NFC en priorité euro dans le traitement métier partagé, sans bloquer le choix manuel de la carte.
-- [ ] Conserver les contrôles de crédits de carte de jeu.
-- [ ] Respecter les pointages manuels et l'état de clôture du tournoi.
-- [ ] Créer ou actualiser le `GameCheckIn`.
-- [ ] Synchroniser le résultat en temps réel dans fees-collector.
+- [x] Conserver les contrôles de crédits de carte de jeu.
+- [x] Respecter les pointages manuels et l'état de clôture du tournoi.
+- [x] Créer ou actualiser le `GameCheckIn`.
+- [x] Synchroniser le résultat en temps réel dans fees-collector.
 - [ ] Retourner à ppNFC un résultat explicite et stable.
 
 ## Phase 6 - Validation du pointage sans signalisation lumineuse

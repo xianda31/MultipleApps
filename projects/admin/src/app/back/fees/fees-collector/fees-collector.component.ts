@@ -26,13 +26,14 @@ import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { canSelectGameCard, feeModeFromConfiguration, membershipPaymentWarningActive, membershipPaymentWarningLevel, requiredGameCredits, TournamentFeeMode } from './fees-check-in.util';
 import { SettlementProgressComponent } from './settlement-progress.component';
 import { GamerPair, gamerPairs, rosterSignature } from './fees-pairs.util';
+import { FeesNfcControlComponent } from './fees-nfc-control.component';
 
 
 
 @Component({
   selector: 'app-fees-collector',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, InputMemberComponent, NgbTooltipModule, NgbDropdownModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, InputMemberComponent, NgbTooltipModule, NgbDropdownModule, FeesNfcControlComponent],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
 })
@@ -71,6 +72,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   members: Member[] = [];
   banks: Bank[] = [];
   membershipPaymentWarningMonth = 11;
+  nfcCheckInEnabled = false;
   @ViewChild('feesGamersScroll') feesGamersScroll?: ElementRef<HTMLDivElement>;
 
   constructor(
@@ -88,6 +90,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     this.systemDataService.get_configuration().subscribe(conf => {
       this.banks = conf.banks || [];
       this.membershipPaymentWarningMonth = conf.membership_payment_warning_month ?? 11;
+      this.nfcCheckInEnabled = conf.nfc_check_in_active === true;
     });
 
     this.membersService.listMembers().subscribe(members => {

@@ -31,6 +31,7 @@ describe('shared check-in cancellation', () => {
     Object.assign(service, {
       DBhandler: db, toastService: toast, tournament: { id: 1 },
       sys_conf: {
+        nfc_check_in_active: true,
         fee_rates: [
           { key: FEE_RATE.STANDARD, member_price: 3, non_member_price: 5, payment_preference: 'card' },
         ],
@@ -80,6 +81,23 @@ describe('shared check-in cancellation', () => {
   });
 
   for (const entryPoint of ['hook', 'payment']) {
+    it(`refuses globally disabled NFC through the ${entryPoint} entry point without blocking manual card payments`, async () => {
+      const { service, gamer, db, toast } = setup();
+      delete service.sys_conf.nfc_check_in_active;
+      gamer.validated = false;
+      const result = entryPoint === 'hook'
+        ? await service.checkInByNfc(gamer.license)
+        : await service.setGamerPayment(gamer, 'card', 'nfc');
+
+      expect(result).toBeFalse();
+      expect(gamer.validated).toBeFalse();
+      expect(db.upsertGameCheckIn).not.toHaveBeenCalled();
+      expect(toast.showWarning).toHaveBeenCalledWith(
+        'Pointage NFC', 'Le pointage par badgeuse NFC n’est pas autorisé dans la configuration.',
+      );
+      expect(await service.setGamerPayment(gamer, 'card')).toBeTrue();
+    });
+
     it(`refuses NFC check-in with euro priority through the ${entryPoint} entry point`, async () => {
       const { service, gamer, db, toast } = setup();
       service.sys_conf.fee_rates[0].payment_preference = 'euro';
@@ -111,6 +129,23 @@ describe('shared check-in cancellation', () => {
       jasmine.objectContaining({ mode: 'card', source: 'manual' }), stamp,
     );
   });
+
+  for (const interruption of ['cancel', 'disable', 'euro', 'tournament']) {
+    it(`does not write an NFC check-in when ${interruption} occurs during verification`, async () => {
+      const { service, gamer, db, current } = setup();
+      const abort = new AbortController();
+      db.readGameCheckIn.and.callFake(async () => {
+        if (interruption === 'cancel') abort.abort();
+        if (interruption === 'disable') service.sys_conf.nfc_check_in_active = false;
+        if (interruption === 'euro') service.sys_conf.fee_rates[0].payment_preference = 'euro';
+        if (interruption === 'tournament') service.game = { ...service.game, gamers: [] };
+        return { ...current, mode: 'unpointed' };
+      });
+
+      expect(await service.checkInByNfc(gamer.license, abort.signal)).toBeFalse();
+      expect(db.upsertGameCheckIn).not.toHaveBeenCalled();
+    });
+  }
 
   it('refuses stale manual edits and adopts the other post’s state', async () => {
     const { service, gamer, db, current, toast } = setup();

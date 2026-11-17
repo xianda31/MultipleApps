@@ -1,4 +1,4 @@
-import { MemberNfcCardService, normalizeNtag213Uid, NfcReaderStatus } from './member-nfc-card.service';
+import { MemberNfcCardService, normalizeNtag213Uid, NfcCaptureTimeoutError, NfcReaderStatus } from './member-nfc-card.service';
 
 describe('MemberNfcCardService bridge', () => {
   const uid = '04E50142E37384';
@@ -33,6 +33,12 @@ describe('MemberNfcCardService bridge', () => {
     expect(fetch.calls.mostRecent().args[0]).toBe('http://127.0.0.1:17835/status');
     fetch.and.resolveTo(new Response('{}'));
     await expectAsync(new MemberNfcCardService().status(new AbortController().signal)).toBeRejected();
+  });
+  it('distinguishes an idle capture from a bridge failure', async () => {
+    spyOn(globalThis, 'fetch').and.resolveTo(
+      new Response(JSON.stringify({ message: 'Aucune nouvelle carte lue en 30 secondes.' }), { status: 408 }));
+    await expectAsync(new MemberNfcCardService().acquire(new AbortController().signal))
+      .toBeRejectedWithError(NfcCaptureTimeoutError, 'Aucune nouvelle carte lue en 30 secondes.');
   });
   it('does not turn failed UID lookups into unassigned cards', async () => {
     const service = new MemberNfcCardService();

@@ -445,8 +445,9 @@ export class FeesCollectorService {
     gamer: Gamer,
     mode: GameCheckInMode,
     source: GameCheckInSource = 'manual',
+    signal?: AbortSignal,
   ): Promise<boolean> {
-    return this.writeGamerCheckIn(gamer, mode, source);
+    return this.writeGamerCheckIn(gamer, mode, source, signal);
   }
 
   async cancelGamerCheckIn(gamer: Gamer): Promise<boolean> {
@@ -457,26 +458,27 @@ export class FeesCollectorService {
     gamer: Gamer,
     mode: GameCheckInStoredMode,
     source: GameCheckInSource,
+    signal?: AbortSignal,
   ): Promise<boolean> {
     const gameId = this.gameId;
+    const game = this.game;
+    const cancelled = () => signal?.aborted || this.game !== game || this.gameId !== gameId;
+    if (cancelled()) return false;
     if (!gameId || this.tournament?.status === Game_status.COMPLETED) return false;
     if (source === 'nfc' && mode !== 'card') {
       throw new Error('NFC check-in only supports game-card payments');
     }
-    if (source === 'nfc' && this.paymentPreference !== 'card') {
-      this.toastService.showWarning(
-        'Pointage NFC',
-        'Le pointage NFC est réservé aux tournois à priorité de règlement par carte.',
-      );
-      return false;
-    }
+    if (source === 'nfc' && !this.nfcCheckInAllowed()) return false;
     try {
       const settlementStatus = await this.DBhandler.readGameSettlementStatus(gameId);
+      if (cancelled()) return false;
       if (settlementStatus) {
         this.toastService.showWarning('Pointage partagé', 'Le tournoi est en cours de clôture ou déjà clôturé.');
         return false;
       }
       const remoteCheckIn = await this.DBhandler.readGameCheckIn(gameId, gamer.license);
+      if (cancelled()) return false;
+      if (source === 'nfc' && !this.nfcCheckInAllowed()) return false;
       if (source === 'manual' && (remoteCheckIn?.updatedAt ?? null) !== (gamer.check_in_updated_at ?? null)) {
         if (remoteCheckIn) this.applyCheckIns([remoteCheckIn]);
         this.toastService.showWarning('Pointage partagé', 'Le pointage a changé sur un autre poste. Vérifiez-le puis réessayez.');
@@ -498,6 +500,8 @@ export class FeesCollectorService {
       }
       if (source === 'nfc' && this.currentMode(gamer) === 'card') return true;
       const user = await safeGetCurrentUserPromise();
+      if (cancelled()) return false;
+      if (source === 'nfc' && !this.nfcCheckInAllowed()) return false;
       const checkIn: Omit<GameCheckIn, 'updatedAt'> = {
         gameId,
         license: gamer.license,
@@ -508,7 +512,7 @@ export class FeesCollectorService {
 
       if (remoteCheckIn && !remoteCheckIn.updatedAt) throw new Error('Version du pointage absente.');
       const saved = await this.DBhandler.upsertGameCheckIn(checkIn, remoteCheckIn?.updatedAt ?? null);
-      this.applyCheckIns([saved]);
+      if (this.game === game && this.gameId === gameId) this.applyCheckIns([saved]);
       return true;
     } catch (error) {
       console.error('[FeesCollector] Unable to persist check-in:', error);
@@ -517,14 +521,30 @@ export class FeesCollectorService {
     }
   }
 
-  async checkInByNfc(license: string): Promise<boolean> {
+  private nfcCheckInAllowed(): boolean {
+    if (!this.nfcCheckInEnabled) {
+      this.toastService.showWarning('Pointage NFC', 'Le pointage par badgeuse NFC n’est pas autorisé dans la configuration.');
+      return false;
+    }
+    if (this.paymentPreference !== 'card') {
+      this.toastService.showWarning('Pointage NFC', 'Le pointage NFC est réservé aux tournois à priorité de règlement par carte.');
+      return false;
+    }
+    if (this.rosterLocked) {
+      this.toastService.showWarning('Pointage NFC', 'Le tournoi est en cours de clôture ou déjà clôturé.');
+      return false;
+    }
+    return true;
+  }
+
+  async checkInByNfc(license: string, signal?: AbortSignal): Promise<boolean> {
     const normalizedLicense = license.trim().padStart(8, '0');
     const gamer = this.game.gamers?.find(candidate => candidate.license.padStart(8, '0') === normalizedLicense);
     if (!gamer) {
       this.toastService.showWarning('Pointage NFC', 'Ce badge ne correspond à aucun joueur inscrit.');
       return false;
     }
-    return this.setGamerPayment(gamer, 'card', 'nfc');
+    return this.setGamerPayment(gamer, 'card', 'nfc', signal);
   }
 
   async refreshGameCheckIns(): Promise<void> {
@@ -602,6 +622,10 @@ export class FeesCollectorService {
 
   get paymentPreference(): 'card' | 'euro' {
     return this.sys_conf?.fee_rates.find(rate => rate.key === this.game.fee_rate)?.payment_preference ?? 'card';
+  }
+
+  get nfcCheckInEnabled(): boolean {
+    return this.sys_conf?.nfc_check_in_active === true;
   }
 
   private showFeeRateChangeAlert(

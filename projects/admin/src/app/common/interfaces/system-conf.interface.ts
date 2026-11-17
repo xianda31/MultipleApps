@@ -46,6 +46,7 @@ export interface SystemConfiguration {
 
     online_payment_active: boolean;
     tpe_payment_active: boolean;
+    nfc_check_in_active?: boolean;
     web_push_active?: boolean;
     CB_fees_account: string;
     minimum_cb_amount: number;
