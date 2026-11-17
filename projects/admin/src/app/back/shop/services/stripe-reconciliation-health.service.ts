@@ -53,12 +53,12 @@ export class StripeReconciliationHealthService {
   }
 
   private async loadSnapshot(): Promise<StripeReconciliationHealthSnapshot> {
-    const allBookEntries = this.bookService.get_book_entries();
-    const candidateBookEntries = this.findCandidateBookEntries(allBookEntries);
     const [stripeTransactions, abandonedTransactions] = await Promise.all([
       this.dbHandler.listUnpayoutedStripeTransactions(),
       this.dbHandler.listAbandonedStripeTransactions(),
     ]);
+    // A payout may have reconciled book entries while the Stripe requests were pending.
+    const candidateBookEntries = this.findCandidateBookEntries(this.bookService.get_book_entries());
     const allStripeTransactions = [...stripeTransactions, ...abandonedTransactions];
     const abandonedCheckouts = candidateBookEntries.filter(bookEntry =>
       !allStripeTransactions.some((transaction: any) =>
