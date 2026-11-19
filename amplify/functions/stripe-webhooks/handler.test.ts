@@ -12,6 +12,7 @@ process.env['MEMBER_TABLE_NAME'] = 'Member';
 process.env['PLAYBOOK_TABLE_NAME'] = 'PlayBook';
 process.env['FULFILLMENT_EXECUTION_TABLE_NAME'] = 'FulfillmentExecution';
 process.env['ASSISTANCE_REQUEST_TABLE_NAME'] = 'AssistanceRequest';
+process.env['TICKETING_RESERVATION_TABLE_NAME'] = 'TicketingReservation';
 
 test('terminal webhook confirms and fulfills its BookEntry exactly once', async () => {
   const webhookModule = await import('./handler');
