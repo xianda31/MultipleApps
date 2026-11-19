@@ -113,14 +113,18 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   membershipCheckoutWarning = '';
   accountingCheckoutBlocked = false;
   accountingCheckoutWarning = '';
+  eventTicketCheckoutBlocked = false;
+  eventTicketCheckoutWarning = '';
+  private eventTicketRevision = 0;
 
   get checkoutBlocked(): boolean {
     return !this.buyerBalanceReady || this.buyerBalanceLoading
-      || this.accountingCheckoutBlocked || this.membershipCheckoutBlocked;
+      || this.accountingCheckoutBlocked || this.membershipCheckoutBlocked || this.eventTicketCheckoutBlocked;
   }
 
   get checkoutWarning(): string {
-    return this.buyerBalanceMessage || this.accountingCheckoutWarning || this.membershipCheckoutWarning;
+    return this.buyerBalanceMessage || this.accountingCheckoutWarning || this.membershipCheckoutWarning
+      || this.eventTicketCheckoutWarning;
   }
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
@@ -302,12 +306,14 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       this.cartSubscription = this.cartService.cart$.subscribe((cart) => {
         this.cartItemsSnapshot = cart.items || [];
         this.validateMembershipGuardrailBeforeCheckout();
+        void this.refreshEventTicketGuard();
       });
 
       // Load and organize products
       this.shopProducts.loadAndOrganizeProducts().subscribe((data) => {
         this.allProducts = data.allProducts;
         this.products_array = data.productsArray;
+        void this.refreshEventTicketGuard();
         // Try to complete Stripe checkout if pending
         this.tryCompleteStripeCheckout();
       });
@@ -417,7 +423,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     this.buyerInput?.focus();
   }
 
-  async on_product_click(product: Product) {
+  on_product_click(product: Product) {
     if (this.buyerBalanceLoading || !this.buyerBalanceReady || this.isSaving || this.tpePaymentInProgress) return;
 
     if (!this.buyerForm.valid || !this.ensureBuyerCanPurchase(this.buyer)) {
@@ -431,48 +437,65 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       this.pairedSecondMember = null;
       this.showPairedModal = true;
     } else {
-      const buyer = this.buyer!;
-      if (!await this.ensureEventTicketAllowed(product, [buyer])) return;
-      const item = this.cartService.build_cart_item(product, buyer);
+      const item = this.cartService.build_cart_item(product, this.buyer!);
       this.cartService.addToCart(item);
     }
   }
 
-  async on_paired_confirmed() {
+  on_paired_confirmed() {
     if (this.buyerBalanceLoading || !this.buyerBalanceReady || this.isSaving || this.tpePaymentInProgress) return;
     if (!this.pendingPairedProduct || !this.pairedSecondMember) return;
     if (!this.ensureBuyerCanPurchase(this.buyer) || !this.ensureBuyerCanPurchase(this.pairedSecondMember)) return;
-    const product = this.pendingPairedProduct;
-    const members = [this.buyer!, this.pairedSecondMember];
-    if (!await this.ensureEventTicketAllowed(product, members)) return;
-    const item = this.cartService.build_cart_item(product, members[0], members[1]);
+    const item = this.cartService.build_cart_item(this.pendingPairedProduct, this.buyer!, this.pairedSecondMember);
     this.cartService.addToCart(item);
     this.showPairedModal = false;
     this.pendingPairedProduct = null;
     this.pairedSecondMember = null;
   }
 
-  /** Repas / événement : vendu uniquement aux adhérents ayant répondu « je viens » à son sondage, une seule fois. */
-  private async ensureEventTicketAllowed(product: Product, members: Member[]): Promise<boolean> {
-    if (product.fulfillmentAction !== SETTLE_TICKETING_RESERVATION) return true;
-    const inCart = members.find((member) => this.cartService.getCartItems().some((item) =>
-      item.product_id === product.id && (item.payee.id === member.id || item.paired_with?.id === member.id)));
-    if (inCart) {
-      this.toastService.showWarning('Vente', `« ${product.name} » est déjà dans le panier pour ${inCart.lastname} ${inCart.firstname}.`);
-      return false;
+  /**
+   * Repas / événement : le critère est le bénéficiaire (nom porté sur l'article), pas l'acheteur.
+   * Chaque bénéficiaire doit avoir répondu « je viens » au sondage du produit et ne pas l'avoir déjà réglé.
+   */
+  private async refreshEventTicketGuard(): Promise<void> {
+    const revision = ++this.eventTicketRevision;
+    const byProduct = new Map<string, { product: Product; members: Member[] }>();
+    for (const item of this.cartItemsSnapshot) {
+      const product = this.allProducts.find((candidate) => candidate.id === item.product_id);
+      if (!product || product.fulfillmentAction !== SETTLE_TICKETING_RESERVATION) continue;
+      const entry = byProduct.get(product.id) ?? { product, members: [] };
+      entry.members.push(...[item.payee, item.paired_with].filter((member): member is Member => !!member));
+      byProduct.set(product.id, entry);
     }
+    if (byProduct.size === 0) {
+      this.eventTicketCheckoutBlocked = false;
+      this.eventTicketCheckoutWarning = '';
+      return;
+    }
+
+    this.eventTicketCheckoutBlocked = true;
+    this.eventTicketCheckoutWarning = 'Vérification des réponses au sondage…';
+    let warning = '';
     try {
-      const refusal = await this.eventTicketGuard.refusalReason(product, members);
-      if (refusal) {
-        this.toastService.showWarning('Vente impossible', refusal);
-        return false;
+      for (const { product, members } of byProduct.values()) {
+        const duplicate = members.find((member, index) => members.findIndex((other) => other.id === member.id) !== index);
+        if (duplicate) {
+          warning = `« ${product.name} » figure deux fois dans le panier pour ${duplicate.lastname} ${duplicate.firstname}.`;
+          break;
+        }
+        const refusal = await this.eventTicketGuard.refusalReason(product, members);
+        if (refusal) {
+          warning = `${refusal} Changez le bénéficiaire de l’article (clic sur le nom) ou retirez-le.`;
+          break;
+        }
       }
-      return true;
     } catch (error) {
       console.error('[Shop] Contrôle de réponse au sondage impossible', error);
-      this.toastService.showError('Vente', 'Impossible de vérifier la réponse au sondage : réessayez.');
-      return false;
+      warning = 'Impossible de vérifier les réponses au sondage : modifiez le panier pour réessayer.';
     }
+    if (revision !== this.eventTicketRevision) return;
+    this.eventTicketCheckoutBlocked = warning !== '';
+    this.eventTicketCheckoutWarning = warning;
   }
 
   on_paired_cancelled() {

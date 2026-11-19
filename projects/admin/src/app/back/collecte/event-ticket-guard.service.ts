@@ -8,8 +8,8 @@ import { TicketingService } from './ticketing.service';
 export const SETTLE_TICKETING_RESERVATION = 'SETTLE_TICKETING_RESERVATION';
 
 /**
- * Règle de vente d'un repas ou d'un événement : seul un adhérent ayant répondu « je viens » au sondage
- * rattaché au produit (donc ayant indiqué son choix) peut l'acheter, une seule fois.
+ * Règle de vente d'un repas ou d'un événement : chaque bénéficiaire (nom porté sur l'article, quel que soit
+ * l'acheteur) doit avoir répondu « je viens » au sondage rattaché au produit, et ne l'avoir pas déjà réglé.
  */
 @Injectable({ providedIn: 'root' })
 export class EventTicketGuardService {
