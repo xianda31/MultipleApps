@@ -2,6 +2,7 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT, TRANSACTION_ID } from '../../../common/interfaces/accounting.interface';
 import { CartService } from './cart.service';
 import { PaymentMode } from './cart.interface';
+import { FulfillmentError } from '../../services/book.service';
 
 describe('CartService', () => {
   it('does not retain an asset debit after a refreshed balance removes the available asset', () => {
@@ -224,6 +225,29 @@ describe('CartService', () => {
     expect(createdEntry.operations[1].member).toBe('AUTRE Marie');
     expect(createdEntry.operations[0].values[CUSTOMER_ACCOUNT.DEBT_debit]).toBeUndefined();
     expect(createdEntry.operations[0].values['ADH']).toBe(30);
+  });
+
+  it('empties the cart when the sale is recorded but an after-sale action fails', async () => {
+    const sale = { id: 'double-payment-sale', season: '2026/2027', date: '2026-12-05' };
+    const member = { id: 'member-1', firstname: 'Christian', lastname: 'RENOUX', license_number: '00000001' } as Member;
+    const failure = new FulfillmentError(sale.id, ['RENOUX Christian avait déjà réglé ce repas (billetterie) : double paiement']);
+    const bookService = jasmine.createSpyObj('BookService', ['create_book_entry', 'process_book_entry_actions']);
+    bookService.create_book_entry.and.resolveTo(sale);
+    bookService.process_book_entry_actions.and.rejectWith(failure);
+    const productService = jasmine.createSpyObj('ProductService', ['getProduct']);
+    productService.getProduct.and.returnValue({ fulfillmentAction: 'SETTLE_TICKETING_RESERVATION' });
+    const gameCardService = jasmine.createSpyObj('GameCardService', ['refreshCards']);
+    const service = new CartService(bookService, productService, gameCardService);
+    service.payment = { mode: PaymentMode.CASH, amount: 15, payer_id: member.id, bank: '', cheque_no: '' };
+    service.addToCart({
+      product_id: 'product-noel', product_account: 'PAF', payee: member, payee_name: 'RENOUX Christian', paied: 15,
+    });
+
+    await expectAsync(service.save_sale({ season: sale.season, date: sale.date })).toBeRejectedWith(failure);
+
+    expect(bookService.create_book_entry).toHaveBeenCalledTimes(1);
+    expect(service.getCartItems().length).toBe(0);
+    expect(failure.message).toContain('double paiement');
   });
 
   it('keeps the cart while preparing a deferred terminal sale', async () => {

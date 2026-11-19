@@ -16,6 +16,17 @@ import { PaymentMode, SALE_ACCOUNTS } from '../shop/cart/cart.interface';
 
 export type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag' | 'invoice';
 
+/**
+ * La vente est enregistrée, mais une action après vente a échoué (ex. double paiement d'une réservation).
+ * Le détail est déjà transmis à l'assistance par le backend.
+ */
+export class FulfillmentError extends Error {
+  constructor(readonly bookEntryId: string, readonly details: string[]) {
+    super(`Le traitement métier de l'écriture ${bookEntryId} a échoué${details.length ? ` : ${details.join(' ; ')}` : ''}`);
+    this.name = 'FulfillmentError';
+  }
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -210,7 +221,10 @@ export class BookService {
   async process_book_entry_actions(bookEntryId: string): Promise<any> {
     const result = await this.dbHandler.processBookEntryActions(bookEntryId);
     if (Number(result?.failed || 0) > 0) {
-      throw new Error(`Le traitement métier de l'écriture ${bookEntryId} a échoué`);
+      const details = (Array.isArray(result?.results) ? result.results : [])
+        .filter((action: any) => action?.status === 'failed' && action?.error)
+        .map((action: any) => String(action.error));
+      throw new FulfillmentError(bookEntryId, details);
     }
     return result;
   }

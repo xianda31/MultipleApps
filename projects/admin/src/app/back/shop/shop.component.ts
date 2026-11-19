@@ -21,7 +21,7 @@ import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { CartItem, PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
-import { BookService } from '../services/book.service';
+import { BookService, FulfillmentError } from '../services/book.service';
 import { Subscription } from 'rxjs';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -469,6 +469,14 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       })
       .catch((error) => {
         console.error('error saving sale', error);
+        if (error instanceof FulfillmentError) {
+          this.toastService.showWarning(
+            'vente à ' + full_name + ' enregistrée',
+            `Attention : ${error.details.join(' ; ') || 'une action après vente a échoué'}. `
+            + 'Une demande d’assistance a été créée ; vérifiez s’il faut rembourser.',
+          );
+          return;
+        }
         this.toastService.showError('vente', 'erreur lors de l\'enregistrement de la vente');
       })
       .finally(() => {
@@ -812,6 +820,11 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       );
     } catch (error) {
       console.error('error saving zero-total online sale', error);
+      if (error instanceof FulfillmentError) {
+        this.toastService.showWarning('Achat enregistré',
+          `Attention : ${error.details.join(' ; ') || 'une action après vente a échoué'}. Le club a été prévenu.`);
+        return;
+      }
       this.toastService.showError('Achat', 'Erreur lors de l’enregistrement de la vente');
     } finally {
       this.isSaving = false;

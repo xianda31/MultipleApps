@@ -363,7 +363,7 @@ async function settleTicketingReservation(
     const reservationKey = `member:${memberId}`;
     const [existing] = await findReservations(productId, reservationKey);
     if (existing?.['reservationStatus'] === 'sold') {
-      throw new Error(`Reservation de ${memberName} deja reglee (${existing['paidChannel'] || 'billetterie'}) : double paiement`);
+      throw new Error(`${memberName} avait déjà réglé ce repas (${existing['paidChannel'] || 'billetterie'}) : double paiement`);
     }
 
     const { channel, paymentMode } = describeSale(bookEntry);
