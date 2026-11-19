@@ -8,6 +8,7 @@ import android.webkit.WebView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
+import fr.bridgeclubsaintorens.pptpe.acr.AcrReaderPlugin;
 
 public class MainActivity extends BridgeActivity {
 
@@ -16,6 +17,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(AcrReaderPlugin.class);
         super.onCreate(savedInstanceState);
         WebView.setWebContentsDebuggingEnabled(true);
     }

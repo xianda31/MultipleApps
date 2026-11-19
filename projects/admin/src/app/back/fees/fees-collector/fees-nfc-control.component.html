@@ -6,14 +6,7 @@
     [ngbTooltip]="readerIndicatorMessage">
     <i class="bi bi-broadcast-pin" aria-hidden="true"></i>
     <span [class]="'nfc-status-light text-' + readerIndicatorColor" aria-hidden="true"></span>
-    <span class="text-start" role="status">
-      <span class="d-block">NFC : {{ readerIndicatorLabel }}</span>
-      <small *ngIf="!reader?.hardwareProbe && (reader?.readerStatus === 'Ready' || reader?.readerStatus === 'CardRead')" class="d-block">
-        Éveil non vérifié
-      </small>
-      <small *ngIf="reader?.hardwareProbe?.state === 'Responsive'" class="d-block">Sonde ACS confirmée</small>
-      <small *ngIf="reader?.hardwareProbe?.state === 'Unresponsive'" class="d-block">Vérifiez POWER et l’alimentation</small>
-    </span>
+    <span class="text-start" role="status">NFC : {{ readerIndicatorLabel }}</span>
   </button>
   <span class="nfc-indicator nfc-checkin-indicator border rounded" role="status"
     container="body" [ngbTooltip]="checkInIndicatorMessage">
@@ -23,12 +16,20 @@
   <div ngbDropdownMenu class="nfc-panel p-3">
     <section aria-label="Contrôle de la badgeuse NFC">
       <h6>Badgeuse NFC</h6>
+      <div class="btn-group btn-group-sm w-100 mb-2" role="group" aria-label="Source des lectures NFC">
+        <button type="button" class="btn" [class.btn-primary]="source === 'pc'" [class.btn-outline-primary]="source !== 'pc'"
+          [disabled]="busy || starting || sessionPending" [attr.aria-pressed]="source === 'pc'"
+          (click)="setSource('pc')">ppNFC sur ce PC</button>
+        <button type="button" class="btn" [class.btn-primary]="source === 'tablet'" [class.btn-outline-primary]="source !== 'tablet'"
+          [disabled]="busy || starting || sessionPending" [attr.aria-pressed]="source === 'tablet'"
+          (click)="setSource('tablet')">Tablette ppTPE</button>
+      </div>
       <dl class="small mb-2">
-        <dt>ppNFC sur ce PC</dt>
+        <dt>{{ sourceLabel }}</dt>
         <dd>{{ checking || starting ? 'Vérification…' : (reader ? 'Joignable — version ' + reader.version : 'Liaison non vérifiée') }}</dd>
         <dt>Lecteur</dt>
         <dd>{{ readerLabel }}<span *ngIf="reader?.readerName"> — {{ reader?.readerName }}</span></dd>
-        <dt>Sonde ACS</dt>
+        <dt>{{ source === 'tablet' ? 'État du lecteur' : 'Sonde ACS' }}</dt>
         <dd *ngIf="reader?.hardwareProbe as probe">
           {{ probe.message }} — {{ probe.checkedAt | date:'HH:mm:ss' }}
         </dd>
@@ -38,7 +39,7 @@
           {{ active ? 'Active' : (starting ? 'Activation…' : (paused ? 'Suspendue' : 'Arrêtée')) }} — {{ game.tournament?.name }}
         </dd>
       </dl>
-      <p *ngIf="reader" class="small text-muted mb-2">Dernier message ppNFC : {{ reader.message }}</p>
+      <p *ngIf="reader" class="small text-muted mb-2">Dernier message {{ source === 'tablet' ? 'ppTPE' : 'ppNFC' }} : {{ reader.message }}</p>
       <p class="small text-muted">
         La sonde ACS vérifie une réponse réelle, sans modifier la configuration ni maintenir le lecteur éveillé.
         Face NFC vers vous, prise USB en haut : le bouton MODE/Bluetooth est à gauche et le bouton POWER est à droite.

@@ -97,6 +97,122 @@ $accent: #6ea8fe;
   margin: 0;
 }
 
+// ── Volets TPE / NFC ───────────────────────────────────────
+
+.panes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 360px;
+}
+
+@media (orientation: landscape) and (min-width: 700px) {
+  .panes {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .pane {
+    flex: 1 1 0;
+    max-width: 440px;
+    justify-content: center;
+  }
+
+  .pane .state-card,
+  .pane .nfc-diagnostic {
+    max-width: none;
+  }
+}
+
+// ── Pointage NFC ───────────────────────────────────────────
+
+.checkin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 1.25rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: $card-bg;
+  border: 1px solid $card-border;
+  border-radius: 1.25rem;
+}
+
+.checkin-card__heading {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+// Couleurs alignées sur les voyants Bootstrap de fees-collector.
+.mirror-light {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.mirror-light__dot {
+  flex: 0 0 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0.6rem currentColor;
+  transition: color 0.2s;
+
+  &--primary { color: #0d6efd; }
+  &--success { color: #198754; }
+  &--warning { color: #ffc107; }
+  &--danger { color: #dc3545; }
+  &--secondary { color: #6c757d; }
+}
+
+.checkin-card__message {
+  margin: 0;
+  font-size: 0.9rem;
+
+  &--muted {
+    color: rgba(255, 255, 255, 0.55);
+  }
+}
+
+.checkin-card__last {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid $card-border;
+  border-radius: 0.6rem;
+
+  small {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  &--accepted div { color: #75b798; }
+  &--refused div { color: #ea868f; }
+}
+
+.checkin-card__buzzer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.6rem;
+  font-size: 0.85rem;
+  border-top: 1px solid $card-border;
+}
+
 // ── Diagnostic NFC ─────────────────────────────────────────
 
 .nfc-diagnostic {

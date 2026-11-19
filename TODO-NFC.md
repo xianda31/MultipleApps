@@ -468,6 +468,76 @@ Validation du 20/10/2026 : prototype installé et lecture NFC confirmée sur le
 Xiaomi Mi 10 Lite. Cette implémentation doit être retirée de ppTPE lors de la
 mise en place de ppNFC.
 
+## Phase 0 bis - Prototype Android ACR1555U en Bluetooth
+
+Branche `feature/nfc-android-prototype`, tablette Redmi Pad SE 8.7 (Android 16),
+ACR1555U-A1 firmware 1.03.02, carte NTAG213 d'UID `04E50142E37384`.
+
+- [x] Lire l'UID avec l'application ACS BLETest 0.6.2 (`FF CA 00 00 00`).
+- [x] Lire sur batterie et sur chargeur USB secteur.
+- [x] Lire après 40 minutes d'inactivité sur chargeur, liaison BLE continue.
+- [x] Ajouter à ppTPE le plugin natif `AcrReader` et son panneau de diagnostic.
+- [x] Valider ppTPE TEST avec le lecteur (UID affiché le 18/11/2026 à 10:01).
+- [ ] Valider la coexistence avec le WisePad 3 (reporté : WisePad indisponible le 18/11/2026).
+- [ ] Détecter le blocage NFC décrit ci-dessous et inviter à redémarrer le lecteur.
+- [ ] Reconnexion après redémarrage de ppTPE : le 18/11 à 11:43, la mise à jour
+  de l'APK a coupé la liaison BLE et l'ACR1555U n'a plus émis d'annonce
+  (aucun résultat de scan). À valider : un arrêt/redémarrage par POWER suffit-il,
+  et faut-il un `disconnect` propre à l'arrêt de ppTPE pour l'éviter ?
+- [ ] Valider sur le matériel le buzzer piloté par ppTPE et la lecture de carte
+  depuis l'Espace NFC via la tablette (APK du 18/11 11:41 copié dans Download).
+- [x] Relayer les lectures vers fees-collector et afficher son verdict sur ppTPE (code).
+- [x] Valider le relais de bout en bout après déploiement du schéma (18/11/2026,
+  sandbox, tournoi « COUPE DES CLUBS » : refus non-inscrit, acceptation,
+  « déjà pointé », carte présentée pendant une suspension non transmise).
+- [ ] Étudier les retours sonores (demande du 18/11/2026) :
+  - [x] buzzer de l'ACR1555U piloté par ppTPE selon le verdict (`AcrReader.beep`,
+    commande `E0 00 00 28 01 durée/10 ms`, manuel v2.02 §5.3.4) : accepté
+    1 bip court, refusé 3 bips, carte lue 1 bip très court, non traitée 1 bip
+    long ; activable dans ppTPE (`pptpe-acr-buzzer`). Volume à valider en salle ;
+  - son sur la tablette selon le verdict (accepté / refusé), via le haut-parleur
+    Android, avec un volume réglable dans ppTPE.
+
+Relais tablette → fees-collector (18/11/2026), via AppSync, sans liaison locale :
+- `NfcReaderSession` (id = utilisateur Cognito de la tablette) : ppTPE y publie
+  l'état du lecteur toutes les 15 s ; fees-collector y publie l'état de sa
+  session de pointage (`collectorStatus`, tournoi) toutes les 15 s. Un état
+  plus vieux que 45 s est considéré comme absent.
+- `NfcScan` : ppTPE crée une lecture `pending` ; fees-collector la traite avec
+  les contrôles existants puis écrit `accepted`/`refused` et le message, qui
+  contient le nom du joueur. La tablette affiche « pas de réponse » après 10 s.
+- Les deux tables sont purgées par TTL DynamoDB après environ 1 h.
+- ppTPE ne publie qu'une fois connecté : utiliser de préférence un compte
+  dédié à la tablette dans le groupe Support. Sans session de pointage active,
+  la tablette n'envoie pas la carte et l'indique au joueur.
+- Dans le panneau NFC de fees-collector, choisir **Tablette ppTPE** ; ce choix
+  est mémorisé dans le navigateur (`fees-nfc-source`) et partagé avec l'Espace
+  NFC, qui peut lire une carte sur la tablette pour l'attribuer (résultat
+  `read`, sans pointage). Limite : si fees-collector pointe en même temps sur
+  la même tablette, une carte lue pour l'Espace NFC est aussi soumise au pointage.
+- En paysage, ppTPE affiche le TPE et la badgeuse côte à côte.
+- Après modification du schéma : relancer la sandbox pour régénérer
+  `amplify_outputs.json`, puis recompiler ppTPE TEST et fees-collector.
+
+Essais du 18/11/2026 :
+- Le chargeur USB secteur ne coupe ni le Bluetooth ni la lecture. Le Scan BLETest
+  ne dure que 5 s et peut manquer les annonces du lecteur ; le plugin scanne 20 s.
+- De 08:12 à 08:35, la liaison BLE fonctionnait mais aucune carte n'était
+  détectée (`No card present`), même sur batterie. Un arrêt/redémarrage par
+  POWER a rétabli la lecture. Cause non établie, non reproduite ensuite.
+- Manuel utilisateur v1.07 p. 12 : vert fixe et bleu clignotant = détectable ;
+  sinon MODE 3 s. Bleu fixe = connecté (p. 26). Orange et jaune non documentés.
+- Le lecteur n'accepte qu'une connexion : fermer BLETest avant ppTPE TEST.
+
+Installation du SDK ACS, propriétaire et non versionné : télécharger
+`acssmcio-0.6.2-android21-20251203.zip` sur le site ACS, puis copier
+`BLETest/app/libs/acssmcio-0.6.2.aar` et `smartcardio-0.1.7.aar` dans
+`android/app/libs/`. Sans ces fichiers, la compilation Android échoue.
+
+Compilation : Gradle 8.14.3 du wrapper avec un JDK 21 ; le JDK 25 d'Android
+Studio et Gradle 9.6+ sont incompatibles avec le plugin Android du projet.
+L'APK de débogage s'installe sous le nom « ppTPE TEST », à côté de ppTPE.
+
 ## Phase 1 - Validation matérielle Windows
 
 - [x] Connecter l'ACR1555U en Bluetooth avec le poste Windows cible via ACS.

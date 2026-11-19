@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Amplify } from 'aws-amplify';
@@ -18,8 +18,15 @@ import outputs from '../../../../amplify_outputs.json';
 import { environment } from '../environments/environment';
 import type { Schema } from '../../../../amplify/data/resource';
 import { NfcTagReaderService } from './nfc/nfc-tag-reader.service';
+import { AcrBleReaderService } from './nfc/acr-ble-reader.service';
+import { NfcRelayService } from './nfc/nfc-relay.service';
 
 type AppState = 'checking-auth' | 'login' | 'scanning' | 'connecting' | 'connected' | 'processing' | 'error';
+
+interface Light {
+  color: 'primary' | 'success' | 'warning' | 'danger' | 'secondary';
+  label: string;
+}
 
 @Component({
   selector: 'app-root',
@@ -31,6 +38,8 @@ type AppState = 'checking-auth' | 'login' | 'scanning' | 'connecting' | 'connect
 export class AppComponent implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private readonly nfcReader = inject(NfcTagReaderService);
+  private readonly acrReader = inject(AcrBleReaderService);
+  private readonly nfcRelay = inject(NfcRelayService);
   state: AppState = 'checking-auth';
   readerLabel = '';
   firmwareProgress = 0;
@@ -47,6 +56,52 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly nfcState = this.nfcReader.state;
   readonly nfcScans = this.nfcReader.scans;
   readonly nfcReadError = this.nfcReader.readError;
+  readonly acrState = this.acrReader.state;
+  readonly acrScans = this.acrReader.scans;
+  readonly acrReadError = this.acrReader.readError;
+  readonly relayConnected = this.nfcRelay.connected;
+  readonly relayCollector = this.nfcRelay.collector;
+  readonly relayLastReading = this.nfcRelay.lastReading;
+  readonly buzzerEnabled = this.nfcRelay.buzzerEnabled;
+
+  onBuzzerToggle(enabled: boolean): void {
+    this.nfcRelay.setBuzzer(enabled);
+  }
+
+  onBuzzerTest(): void {
+    this.nfcRelay.testBuzzer();
+  }
+
+  /** Voyant « NFC » : miroir de l'indicateur lecteur de fees-collector. */
+  readonly readerLight = computed<Light>(() => {
+    switch (this.acrState().status) {
+      case 'ready': return { color: 'success', label: 'Prêt' };
+      case 'read-error': return { color: 'warning', label: 'Lecture incomplète' };
+      case 'scanning': return { color: 'warning', label: 'Recherche du lecteur…' };
+      case 'not-found': return { color: 'danger', label: 'Lecteur introuvable' };
+      case 'permission': return { color: 'danger', label: 'Autorisation Bluetooth requise' };
+      case 'error': return { color: 'danger', label: 'Lecteur indisponible' };
+      default: return { color: 'secondary', label: 'Arrêté' };
+    }
+  });
+
+  /** Voyant « Pointage » : miroir de l'indicateur de session de fees-collector. */
+  readonly checkInLight = computed<Light>(() => {
+    if (!this.relayConnected()) return { color: 'secondary', label: 'Non relié (connexion requise)' };
+    switch (this.nfcRelay.feedback()?.result) {
+      case 'pending': return { color: 'warning', label: 'Vérification…' };
+      case 'accepted': return { color: 'success', label: 'Accepté' };
+      case 'refused': return { color: 'danger', label: 'Refusé' };
+      case 'read': return { color: 'primary', label: 'Carte lue' };
+      case 'unanswered': return { color: 'warning', label: 'Carte non traitée' };
+    }
+    switch (this.relayCollector().status) {
+      case 'active': return { color: 'primary', label: 'Prêt' };
+      case 'paused': return { color: 'secondary', label: 'Suspendu' };
+      case 'stopped': return { color: 'secondary', label: 'Arrêté' };
+      default: return { color: 'secondary', label: 'fees-collector absent' };
+    }
+  });
 
   // Token cache — pré-fetché avant connectReader pour répondre instantanément au SDK
   private cachedToken: string | null = null;
@@ -99,16 +154,23 @@ export class AppComponent implements OnInit, OnDestroy {
 
     this.client = generateClient<Schema>();
     void this.nfcReader.start();
+    void this.acrReader.start();
     this.checkAuth();
   }
 
   ngOnDestroy(): void {
     this.paymentRequestSub?.unsubscribe();
     this.nfcReader.stop();
+    this.acrReader.stop();
+    this.nfcRelay.detach();
     this.stopHeartbeat();
     this.clearResumeWatchdog();
     // Fermeture propre : marquer la session comme déconnectée
     this.upsertTPESession('disconnected', '').catch(() => {});
+  }
+
+  onAcrRetry(): void {
+    void this.acrReader.start();
   }
 
   // ──────────────────────────────────────────────────────────
@@ -119,6 +181,7 @@ export class AppComponent implements OnInit, OnDestroy {
     try {
       const user = await getCurrentUser();
       this.tpeSessionId = user.userId; // ID déterministe = 1 session par user
+      this.nfcRelay.attach(user.userId);
       await this.startTPE();
     } catch {
       this.state = 'login';
@@ -132,6 +195,7 @@ export class AppComponent implements OnInit, OnDestroy {
       await signIn({ username: this.loginEmail, password: this.loginPassword });
       const user = await getCurrentUser();
       this.tpeSessionId = user.userId;
+      this.nfcRelay.attach(user.userId);
       await this.startTPE();
     } catch (e: any) {
       this.loginError = e.message || 'Identifiants incorrects';
@@ -144,6 +208,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.paymentRequestSub?.unsubscribe();
     this.paymentRequestSub = null;
     this.stopHeartbeat();
+    this.nfcRelay.detach();
     await this.upsertTPESession('disconnected', '');
     if (this.capacitorInitialized) {
       await StripeTerminal.disconnectReader().catch(() => {});

@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { NfcWorkspaceComponent } from './nfc-workspace.component';
 import { NfcWorkspaceService } from '../../common/services/nfc-workspace.service';
 import { MemberNfcCardService } from '../../common/services/member-nfc-card.service';
+import { TabletNfcBridgeService } from '../../common/services/tablet-nfc-bridge.service';
 import { MembersService } from '../../common/services/members.service';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
 import type { NfcSnapshot } from '../../../../../common/nfc-contract';
@@ -23,11 +24,15 @@ describe('NFC workspace', () => {
     service.history.and.resolveTo([]);
     const bridge = jasmine.createSpyObj<MemberNfcCardService>('MemberNfcCardService', ['acquire', 'status']);
     bridge.acquire.and.resolveTo(snapshot.cards[0].uid);
+    const tablet = jasmine.createSpyObj<TabletNfcBridgeService>('TabletNfcBridgeService', ['readOnce', 'status']);
+    tablet.readOnce.and.resolveTo(snapshot.cards[0].uid);
+    localStorage.removeItem('fees-nfc-source');
     await TestBed.configureTestingModule({
       imports: [NfcWorkspaceComponent],
       providers: [
         { provide: NfcWorkspaceService, useValue: service },
         { provide: MemberNfcCardService, useValue: bridge },
+        { provide: TabletNfcBridgeService, useValue: tablet },
         { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ license: '00123456' })) } },
         { provide: MembersService, useValue: {} },
         { provide: MemberSettingsService, useValue: {} },
@@ -37,8 +42,20 @@ describe('NFC workspace', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    return { fixture, service, bridge };
+    return { fixture, service, bridge, tablet };
   }
+
+  it('identifies a card read on the ppTPE tablet when that source is selected', async () => {
+    const { fixture, bridge, tablet, service } = await setup();
+    fixture.componentInstance.setSource('tablet');
+    await fixture.componentInstance.readCard();
+    fixture.detectChanges();
+    expect(tablet.readOnce).toHaveBeenCalledOnceWith(jasmine.any(AbortSignal), jasmine.any(String), jasmine.any(String));
+    expect(bridge.acquire).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Alex Exemple');
+    expect(service.commit).not.toHaveBeenCalled();
+    localStorage.removeItem('fees-nfc-source');
+  });
 
   it('identifies a presented card without opening a member or modifying its attribution', async () => {
     const { fixture, service } = await setup();

@@ -880,6 +880,41 @@ AssistanceRequest: a.model({
       allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
     ]),
+  // ─── Badgeuse NFC Bluetooth via ppTPE (tablette ↔ fees-collector) ───
+  // ppTPE publie l'état de son ACR1555U (heartbeat 15 s) ; fees-collector y publie
+  // l'état de sa session de pointage (champs collector*, heartbeat 15 s).
+  NfcReaderSession: a.model({
+    readerName: a.string(),            // ex: 'ACR1555U-A1-001714 PICC'
+    status: a.enum(['scanning', 'ready', 'not_found', 'error', 'stopped']),
+    message: a.string(),
+    readerUpdatedAt: a.integer(),      // epoch seconds, heartbeat ppTPE
+    collectorStatus: a.enum(['active', 'paused', 'stopped']),
+    collectorTournament: a.string(),
+    collectorMessage: a.string(),      // motif d'arrêt ou de suspension affiché sur la tablette
+    collectorUpdatedAt: a.integer(),   // epoch seconds, heartbeat fees-collector
+    ttl: a.integer(),                  // purge auto DynamoDB (epoch seconds, ~1h)
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+    ]),
+  // Une lecture de carte publiée par ppTPE ; fees-collector y inscrit le résultat.
+  NfcScan: a.model({
+    uid: a.string().required(),        // UID normalisé, hexadécimal majuscule
+    readerName: a.string(),
+    sessionId: a.string().required(),  // NfcReaderSession émettrice
+    result: a.enum(['pending', 'accepted', 'refused', 'read']), // read : lecture sans pointage
+    message: a.string(),               // retour affiché sur la tablette
+    ttl: a.integer(),                  // purge auto DynamoDB (epoch seconds, ~1h)
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
+      allow.group(Group_names.Editor).to(['read', 'create', 'update']),
+      allow.group(Group_names.Support).to(['read', 'create', 'update']),
+    ]),
 }).authorization((allow) => [
   allow.resource(processBookEntryActions).to(['mutate']),
   allow.resource(stripeWebhooks).to(['mutate']),

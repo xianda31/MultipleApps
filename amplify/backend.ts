@@ -494,6 +494,16 @@ if (cfnVisitSessionTable) {
   cfnVisitSessionTable.timeToLiveSpecification = { enabled: true, attributeName: 'ttl' };
 }
 
+// Purger les états et lectures de la badgeuse NFC Bluetooth (ppTPE) après ~1 h
+for (const model of ['NfcReaderSession', 'NfcScan'] as const) {
+  const table = backend.data.resources.tables[model];
+  const cfnTable = table.node.tryFindChild('Resource') as CfnTable
+    ?? table.node.children.find((c: Construct): c is CfnTable => c instanceof CfnTable);
+  if (cfnTable) {
+    cfnTable.timeToLiveSpecification = { enabled: true, attributeName: 'ttl' };
+  }
+}
+
 // Grant both email Lambdas access to Member table
 const memberTable = backend.data.resources.tables['Member'];
 memberTable.grantReadWriteData(backend.emailUnsubscribe.resources.lambda);

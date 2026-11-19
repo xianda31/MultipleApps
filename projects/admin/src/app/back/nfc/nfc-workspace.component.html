@@ -15,7 +15,7 @@
   @if (!loaded && !busy) { <p>Les données NFC ne sont pas disponibles. Vérifiez le déploiement du backend puis actualisez.</p> }
 
   @if (tab === 'Poste de lecture') {
-    <h2 class="h5">Liaison avec ppNFC sur ce PC</h2>
+    <h2 class="h5">{{ source === 'tablet' ? 'Liaison avec la tablette ppTPE' : 'Liaison avec ppNFC sur ce PC' }}</h2>
     <button class="btn btn-primary mb-3" [disabled]="busy" (click)="checkBridge()">Vérifier la liaison</button>
     @if (reader) {
       <dl>
@@ -45,6 +45,13 @@
       <div class="card-body">
         <h2 class="h5">{{ tab === 'Poste de lecture' ? 'Tester une lecture réelle' : 'Identifier une carte' }}</h2>
         <p>Lecture seule : ni attribution ni pointage automatiques. Retirer puis représenter une carte déjà posée.</p>
+        <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Lecteur utilisé">
+          <button type="button" class="btn" [class.btn-secondary]="source === 'pc'" [class.btn-outline-secondary]="source !== 'pc'"
+            [disabled]="busy" [attr.aria-pressed]="source === 'pc'" (click)="setSource('pc')">ppNFC sur ce PC</button>
+          <button type="button" class="btn" [class.btn-secondary]="source === 'tablet'" [class.btn-outline-secondary]="source !== 'tablet'"
+            [disabled]="busy" [attr.aria-pressed]="source === 'tablet'" (click)="setSource('tablet')">Tablette ppTPE</button>
+        </div>
+        <br>
         <button class="btn btn-primary" [disabled]="busy || !loaded" (click)="readCard()">Lire une carte</button>
         @if (acquiring) {
           <span class="ms-2" role="status">Présentez une carte (30 secondes maximum).</span>

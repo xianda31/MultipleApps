@@ -1,4 +1,6 @@
 <div class="pptpe-container">
+<div class="panes">
+<section class="pane pane--tpe" aria-label="Terminal de paiement">
 
   <!-- Vérification auth au démarrage -->
   @if (state === 'checking-auth') {
@@ -116,36 +118,111 @@
   </div>
   }
 
+</section>
+
+@if (acrState().status !== 'unsupported' || nfcState().status !== 'unsupported') {
+<section class="pane pane--nfc" aria-label="Badgeuse NFC">
+
+  @if (acrState().status !== 'unsupported') {
+  <div class="checkin-card" aria-live="polite">
+    <h6 class="checkin-card__heading">
+      <i class="bi bi-broadcast-pin me-1" aria-hidden="true"></i> Badgeuse — miroir de fees-collector
+    </h6>
+    <div class="mirror-light" role="status">
+      <span [class]="'mirror-light__dot mirror-light__dot--' + readerLight().color" aria-hidden="true"></span>
+      <span>NFC : {{ readerLight().label }}</span>
+    </div>
+    <div class="mirror-light" role="status">
+      <span [class]="'mirror-light__dot mirror-light__dot--' + checkInLight().color" aria-hidden="true"></span>
+      <span>Pointage : {{ checkInLight().label }}</span>
+    </div>
+    @if (relayCollector().tournament) {
+    <p class="checkin-card__message">{{ relayCollector().tournament }}</p>
+    }
+    @if (relayCollector().message && relayCollector().status !== 'active') {
+    <p class="checkin-card__message checkin-card__message--muted">{{ relayCollector().message }}</p>
+    }
+    @if (relayLastReading(); as reading) {
+    <div class="checkin-card__last" [class.checkin-card__last--accepted]="reading.result === 'accepted'"
+      [class.checkin-card__last--refused]="reading.result === 'refused'">
+      <small>{{ reading.at | date:'HH:mm:ss' }} — {{ reading.uid }}</small>
+      <div>{{ reading.message }}</div>
+    </div>
+    }
+    <div class="checkin-card__buzzer">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" role="switch" id="acr-buzzer"
+          [checked]="buzzerEnabled()" (change)="onBuzzerToggle($any($event.target).checked)">
+        <label class="form-check-label" for="acr-buzzer">Bip du lecteur selon le verdict</label>
+      </div>
+      <button type="button" class="btn btn-outline-light btn-sm" [disabled]="readerLight().color !== 'success'"
+        (click)="onBuzzerTest()">
+        <i class="bi bi-volume-up me-1" aria-hidden="true"></i>Tester
+      </button>
+    </div>
+  </div>
+  }
+
+  @if (acrState().status !== 'unsupported') {
+  <ng-container *ngTemplateOutlet="readerDiagnostic; context: {
+    title: 'Lecteur ACR1555U',
+    state: acrState(),
+    scans: acrScans(),
+    error: acrReadError(),
+    canRetry: ['permission', 'error', 'stopped'].includes(acrState().status)
+  }"></ng-container>
+  }
+
   @if (nfcState().status !== 'unsupported') {
+  <ng-container *ngTemplateOutlet="readerDiagnostic; context: {
+    title: 'Test NFC',
+    state: nfcState(),
+    scans: nfcScans(),
+    error: nfcReadError(),
+    canRetry: false
+  }"></ng-container>
+  }
+
+</section>
+}
+</div>
+
+  <ng-template #readerDiagnostic let-title="title" let-state="state" let-scans="scans" let-error="error"
+    let-canRetry="canRetry">
   <aside class="nfc-diagnostic" aria-live="polite">
     <div class="nfc-diagnostic__heading">
       <i class="bi bi-wifi" aria-hidden="true"></i>
-      <strong>Test NFC</strong>
+      <strong>{{ title }}</strong>
       <span class="nfc-diagnostic__status"
-        [class.nfc-diagnostic__status--ready]="nfcState().status === 'ready'">
-        {{ nfcState().status === 'ready' ? 'prêt' : nfcState().status }}
+        [class.nfc-diagnostic__status--ready]="state.status === 'ready'">
+        {{ state.status === 'ready' ? 'prêt' : state.status }}
       </span>
     </div>
-    <p class="nfc-diagnostic__message">{{ nfcState().message }}</p>
-    @if (nfcReadError()) {
-    <p class="nfc-diagnostic__error">{{ nfcReadError() }}</p>
+    <p class="nfc-diagnostic__message">{{ state.message }}</p>
+    @if (error) {
+    <p class="nfc-diagnostic__error">{{ error }}</p>
     }
-    @if (nfcScans().length > 0) {
+    @if (canRetry) {
+    <button class="btn btn-outline-light btn-sm mt-2" (click)="onAcrRetry()">
+      <i class="bi bi-arrow-clockwise me-1"></i> Réessayer
+    </button>
+    }
+    @if (scans.length > 0) {
     <div class="nfc-diagnostic__last-scan">
       <span>Dernier UID</span>
-      <code>{{ nfcScans()[0].uid }}</code>
-      <small>{{ nfcScans()[0].scannedAt | date:'HH:mm:ss' }}</small>
+      <code>{{ scans[0].uid }}</code>
+      <small>{{ scans[0].scannedAt | date:'HH:mm:ss' }}</small>
     </div>
-    @if (nfcScans().length > 1) {
+    @if (scans.length > 1) {
     <div class="nfc-diagnostic__history">
-      @for (scan of nfcScans().slice(1); track scan.scannedAt) {
+      @for (scan of scans.slice(1); track scan.scannedAt) {
       <code>{{ scan.uid }}</code>
       }
     </div>
     }
     }
   </aside>
-  }
+  </ng-template>
 
   <!-- Bouton déconnexion (visible sauf sur les écrans login/checking) -->
   @if (state !== 'checking-auth' && state !== 'login') {

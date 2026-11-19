@@ -5,11 +5,16 @@ import {
   MemberNfcCardService, NfcCaptureTimeoutError, NfcReaderStatus,
 } from '../../../common/services/member-nfc-card.service';
 import { MembersService } from '../../../common/services/members.service';
+import {
+  readStoredNfcSource, storeNfcSource, TabletNfcBridgeService, type NfcSource,
+} from '../../../common/services/tablet-nfc-bridge.service';
 import { ToastService } from '../../../common/services/toast.service';
 import { Game } from '../fees.interface';
 import { FeesCollectorService } from './fees-collector.service';
 
 type CheckInFeedback = 'checking' | 'accepted' | 'refused';
+
+const COLLECTOR_HEARTBEAT_MS = 15_000;
 
 @Component({
   selector: 'app-fees-nfc-control',
@@ -68,13 +73,67 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
   private checkInFeedback?: CheckInFeedback;
   private feedbackTimer?: number;
   private readerErrorConfirmed = false;
+  source: NfcSource = readStoredNfcSource();
+  private tabletSessionId: string | null = null;
+  private collectorHeartbeat?: number;
 
   constructor(
     private readonly bridge: MemberNfcCardService,
     private readonly members: MembersService,
     private readonly fees: FeesCollectorService,
     private readonly toast: ToastService,
+    private readonly tablet: TabletNfcBridgeService,
   ) {}
+
+  get sourceLabel(): string {
+    return this.source === 'tablet' ? 'Tablette ppTPE' : 'ppNFC sur ce PC';
+  }
+
+  setSource(source: NfcSource): void {
+    if (source === this.source || this.busy || this.starting || this.sessionPending) return;
+    this.source = source;
+    storeNfcSource(source);
+    this.reader = null;
+    this.error = '';
+    this.notice = '';
+    this.lastReading = null;
+    // Une activation automatique échouée avec l'ancienne source est retentée avec la nouvelle.
+    this.autoStartRequested = !this.paused && !this.unavailableReason;
+    void this.refreshStatus();
+  }
+
+  private async readStatus(signal: AbortSignal): Promise<NfcReaderStatus> {
+    if (this.source === 'pc') return this.bridge.status(signal);
+    const status = await this.tablet.status(signal);
+    this.tabletSessionId = status.sessionId;
+    return status;
+  }
+
+  private acquireUid(signal: AbortSignal): Promise<string> {
+    return this.source === 'tablet' ? this.tablet.acquire(signal) : this.bridge.acquire(signal);
+  }
+
+  /** En mode tablette, ouvre le flux des lectures et annonce la session à ppTPE (heartbeat). */
+  private openTabletSession(tournament: string): void {
+    const sessionId = this.tabletSessionId;
+    if (this.source !== 'tablet' || !sessionId) return;
+    this.tablet.watch(sessionId);
+    const publish = () => void this.tablet.publishCollector(sessionId, 'active', tournament);
+    publish();
+    window.clearInterval(this.collectorHeartbeat);
+    this.collectorHeartbeat = window.setInterval(publish, COLLECTOR_HEARTBEAT_MS);
+  }
+
+  private closeTabletSession(): void {
+    window.clearInterval(this.collectorHeartbeat);
+    this.collectorHeartbeat = undefined;
+    const sessionId = this.tabletSessionId;
+    if (this.source !== 'tablet' || !sessionId) return;
+    this.tablet.unwatch();
+    void this.tablet.publishCollector(
+      sessionId, this.paused ? 'paused' : 'stopped', this.game?.tournament?.name ?? '', this.error || this.notice,
+    );
+  }
 
   get sessionPending(): boolean { return !!this.session; }
   get busy(): boolean { return this.checking || this.testing; }
@@ -129,13 +188,24 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     return 'secondary';
   }
 
+  /** Libellé court du bouton ; les détails restent dans l'infobulle et le panneau. */
   get readerIndicatorLabel(): string {
     if (this.checking || this.starting) return 'Vérification…';
-    if (this.reader?.hardwareProbe?.state === 'Unresponsive') return this.readerLabel;
+    const probe = this.reader?.hardwareProbe;
+    if (probe?.state === 'Unresponsive') return 'Non joignable';
     if (this.error && this.readerErrorConfirmed) return 'Indisponible';
     if (!this.reader) return 'Non vérifié';
-    if (this.reader.hardwareProbe?.state) return this.readerLabel;
-    return this.reader.readerStatus === 'Ready' ? 'Détecté (Windows)' : this.readerLabel;
+    if (probe?.state === 'Responsive') {
+      if (probe.pcdPiccStatus === 0) return 'RF coupée';
+      if (probe.pcdPiccStatus === 255) return 'Erreur';
+      return probe.pcdPiccStatus === null ? 'Non vérifié' : 'Prêt';
+    }
+    switch (this.reader.readerStatus) {
+      case 'Starting': return 'Démarrage';
+      case 'Disconnected': return 'Déconnecté';
+      case 'Error': return 'Erreur';
+      default: return 'Détecté (Windows)';
+    }
   }
 
   get readerIndicatorMessage(): string {
@@ -226,7 +296,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     this.readerErrorConfirmed = false;
     this.reader = null;
     try {
-      const reader = await this.timed(abort, 5000, signal => this.bridge.status(signal));
+      const reader = await this.timed(abort, 5000, signal => this.readStatus(signal));
       if (!abort.signal.aborted) {
         this.reader = reader;
         if (this.sessionPending && (reader.readerStatus === 'Disconnected' || reader.readerStatus === 'Error'
@@ -255,15 +325,21 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     this.readerErrorConfirmed = false;
     this.notice = 'Présentez une carte. Ce test ne pointe aucun joueur.';
     try {
-      const uid = await this.timed(abort, 35000, signal => this.bridge.acquire(signal));
+      if (this.source === 'tablet') {
+        await this.timed(abort, 5000, signal => this.readStatus(signal));
+        this.openTabletSession('Test de lecture (sans pointage)');
+      }
+      const uid = await this.timed(abort, 35000, signal => this.acquireUid(signal));
       if (!abort.signal.aborted) {
         this.lastReading = { uid, message: 'Lecture test réussie : aucun pointage effectué.', accepted: false, at: new Date() };
         this.notice = '';
+        if (this.source === 'tablet') void this.tablet.reportRead('Lecture test sur le PC : aucun pointage effectué.');
       }
     } catch (error) {
       if (!abort.signal.aborted || abort.signal.reason === 'timeout') this.notice = '';
       this.reportError(error, abort);
     } finally {
+      this.closeTabletSession();
       this.testing = false;
       if (this.operation === abort) this.operation = undefined;
       this.startAutomaticallyIfRequested();
@@ -295,7 +371,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     this.clearCheckInFeedback();
     this.reader = null;
     try {
-      this.reader = await this.timed(abort, 5000, signal => this.bridge.status(signal));
+      this.reader = await this.timed(abort, 5000, signal => this.readStatus(signal));
       if (!this.isCurrent(abort, key)) return;
       if (this.reader.capturing) throw new Error('Une lecture est déjà en cours dans un autre écran ou onglet.');
       if (this.reader.hardwareProbe?.state === 'Unresponsive') {
@@ -304,14 +380,23 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
       if (this.reader.readerStatus !== 'Ready' && this.reader.readerStatus !== 'CardRead') {
         throw new Error(`Impossible d’activer le pointage : ${this.readerLabel}.`);
       }
+      this.openTabletSession(this.game.tournament?.name ?? '');
       this.starting = false;
       this.active = true;
       while (this.isCurrent(abort, key)) {
         let uid: string;
         try {
-          uid = await this.timed(abort, 35000, signal => this.bridge.acquire(signal));
+          uid = await this.timed(abort, 35000, signal => this.acquireUid(signal));
         } catch (error) {
-          if (error instanceof NfcCaptureTimeoutError && this.isCurrent(abort, key)) continue;
+          if (error instanceof NfcCaptureTimeoutError && this.isCurrent(abort, key)) {
+            if (this.source === 'tablet') {
+              this.reader = await this.timed(abort, 5000, signal => this.readStatus(signal));
+              if (this.reader.readerStatus !== 'Ready') {
+                throw new Error(`Pointage NFC arrêté : ${this.reader.hardwareProbe?.message || this.readerLabel}`);
+              }
+            }
+            continue;
+          }
           throw error;
         }
         if (this.isCurrent(abort, key)) await this.checkInUid(uid, abort, key);
@@ -320,6 +405,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
       this.reportError(error, abort);
     } finally {
       if (this.session === abort) {
+        this.closeTabletSession();
         this.clearCheckInFeedback();
         this.active = false;
         this.starting = false;
@@ -381,6 +467,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
       };
       this.showCheckInFeedback(accepted);
       this.showTraceReading();
+      this.reportToTablet();
       if (accepted && !alreadyCheckedIn) this.checkedIn.emit();
     } catch (error) {
       if (!this.isCurrent(abort, key)) return;
@@ -391,6 +478,13 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
       };
       this.showCheckInFeedback(false);
       this.showTraceReading();
+      this.reportToTablet();
+    }
+  }
+
+  private reportToTablet(): void {
+    if (this.source === 'tablet' && this.lastReading) {
+      void this.tablet.report(this.lastReading.accepted, this.lastReading.message);
     }
   }
 
@@ -428,7 +522,9 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     console.error('[Pointage NFC]', error);
     this.readerErrorConfirmed = !(error instanceof NfcCaptureTimeoutError || abort.signal.reason === 'timeout');
     this.error = abort.signal.reason === 'timeout'
-      ? 'ppNFC ne répond pas dans le délai prévu. Vérifiez la liaison puis réessayez.'
+      ? (this.source === 'tablet'
+        ? 'La tablette ppTPE ne répond pas dans le délai prévu. Vérifiez la connexion puis réessayez.'
+        : 'ppNFC ne répond pas dans le délai prévu. Vérifiez la liaison puis réessayez.')
       : error instanceof Error ? error.message : 'Opération NFC impossible.';
   }
 }
