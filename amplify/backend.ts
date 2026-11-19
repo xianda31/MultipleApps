@@ -442,6 +442,8 @@ fulfillmentMemberTable.grantReadData(backend.stripeWebhooks.resources.lambda);
 playBookTable.grantWriteData(backend.stripeWebhooks.resources.lambda);
 fulfillmentExecutionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 assistanceRequestTable.grantWriteData(backend.stripeWebhooks.resources.lambda);
+ticketingReservationTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
+backend.stripeWebhooks.addEnvironment('TICKETING_RESERVATION_TABLE_NAME', ticketingReservationTable.tableName);
 backend.stripeWebhooks.addEnvironment('BOOK_ENTRY_TABLE_NAME', bookEntryTable.tableName);
 backend.stripeWebhooks.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
 backend.stripeWebhooks.addEnvironment('MEMBER_TABLE_NAME', fulfillmentMemberTable.tableName);
