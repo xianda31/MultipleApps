@@ -16,6 +16,15 @@ export interface ReservationImportRow {
   expectedProductId?: string;
 }
 
+/** Événement de billetterie : identifié par son produit dédié (ex. « Repas de Noël 2026 »). */
+export interface TicketingEventContext {
+  productId: string;
+  eventTitle: string;
+  date: string;
+  season: string;
+  source?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -24,41 +33,27 @@ export class TicketingService {
     return (generateClient<Schema>() as any).models;
   }
 
-  async listReservations(date: string, eventTitle: string): Promise<TicketingReservation[]> {
+  /** Toutes les réservations de l'événement, quelle que soit la date d'import ou de paiement. */
+  async listEventReservations(productId: string): Promise<TicketingReservation[]> {
     const { data } = await this.models.TicketingReservation.list({ limit: 3000 });
     return (data ?? []).filter(
-      (entry: TicketingReservation | null) =>
-        !!entry && entry.date === date && this.normalizeEventTitle(entry.eventTitle) === this.normalizeEventTitle(eventTitle),
+      (entry: TicketingReservation | null) => !!entry && entry.expectedProductId === productId,
     ) as TicketingReservation[];
   }
 
-  async listReservationsForDate(date: string): Promise<TicketingReservation[]> {
-    const { data } = await this.models.TicketingReservation.list({ limit: 3000 });
-    return (data ?? []).filter(
-      (entry: TicketingReservation | null) => !!entry && entry.date === date,
-    ) as TicketingReservation[];
-  }
-
-  async listPayments(date: string, eventTitle: string): Promise<TicketingPayment[]> {
+  /** Paiements saisis en billetterie pour l'événement. */
+  async listEventPayments(productId: string): Promise<TicketingPayment[]> {
     const { data } = await this.models.TicketingPayment.list({ limit: 3000 });
     return (data ?? []).filter(
-      (entry: TicketingPayment | null) =>
-        !!entry && entry.date === date && this.normalizeEventTitle(entry.eventTitle) === this.normalizeEventTitle(eventTitle),
-    ) as TicketingPayment[];
-  }
-
-  async listPaymentsForDate(date: string): Promise<TicketingPayment[]> {
-    const { data } = await this.models.TicketingPayment.list({ limit: 3000 });
-    return (data ?? []).filter(
-      (entry: TicketingPayment | null) => !!entry && entry.date === date,
+      (entry: TicketingPayment | null) => !!entry && entry.productId === productId,
     ) as TicketingPayment[];
   }
 
   async importReservations(
     rows: ReservationImportRow[],
-    ctx: { date: string; season: string; eventTitle: string; source?: string },
+    ctx: TicketingEventContext,
   ): Promise<{ created: number; updated: number }> {
-    const existing = await this.listReservations(ctx.date, ctx.eventTitle);
+    const existing = await this.listEventReservations(ctx.productId);
     const byKey = new Map(existing.map((entry) => [entry.reservationKey, entry]));
 
     let created = 0;
@@ -76,7 +71,7 @@ export class TicketingService {
           memberId: row.memberId,
           memberName: row.memberName.trim(),
           isMember: row.isMember,
-          expectedProductId: row.expectedProductId,
+          expectedProductId: ctx.productId,
           reservationStatus: 'reserved',
           source: ctx.source ?? 'csv',
         });
@@ -93,7 +88,6 @@ export class TicketingService {
         memberId: row.memberId,
         memberName: row.memberName.trim(),
         isMember: row.isMember,
-        expectedProductId: row.expectedProductId,
         source: ctx.source ?? previous.source ?? 'csv',
       });
       updated += 1;
@@ -106,6 +100,7 @@ export class TicketingService {
     season: string;
     date: string;
     eventTitle: string;
+    productId: string;
     paymentMode: TicketingPaymentMode;
     totalAmount: number;
     reservationCount: number;
@@ -122,7 +117,7 @@ export class TicketingService {
       return;
     }
 
-    const reservations = await this.listReservations(payment.date, payment.eventTitle);
+    const reservations = payment.productId ? await this.listEventReservations(payment.productId) : [];
     const linkedReservations = reservations.filter((reservation) => reservation.paymentId === payment.id);
 
     await Promise.all([
@@ -134,6 +129,7 @@ export class TicketingService {
         paidAmount: null,
         paidAccount: null,
         paidProductId: null,
+        paidChannel: null,
         paidAt: null,
         accountedAt: null,
       })),
@@ -159,6 +155,7 @@ export class TicketingService {
           paidAmount: row.amount,
           paidAccount: row.account,
           paidProductId: row.productId,
+          paidChannel: 'billetterie',
           paidAt,
         });
       }),
@@ -187,9 +184,5 @@ export class TicketingService {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
-  }
-
-  private normalizeEventTitle(title: string): string {
-    return (title ?? '').trim().toLowerCase();
   }
 }

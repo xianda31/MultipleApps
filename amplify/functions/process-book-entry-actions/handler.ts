@@ -5,6 +5,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  ScanCommand,
   TransactWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { notifyPlayBookUpdate } from './appsync-playbook-notifier';
@@ -17,6 +18,7 @@ const MEMBER_TABLE = process.env['MEMBER_TABLE_NAME'] || '';
 const PLAYBOOK_TABLE = process.env['PLAYBOOK_TABLE_NAME'] || '';
 const FULFILLMENT_EXECUTION_TABLE = process.env['FULFILLMENT_EXECUTION_TABLE_NAME'] || '';
 const ASSISTANCE_REQUEST_TABLE = process.env['ASSISTANCE_REQUEST_TABLE_NAME'] || '';
+const TICKETING_RESERVATION_TABLE = process.env['TICKETING_RESERVATION_TABLE_NAME'] || '';
 const DEFAULT_PLAYBOOK_CREDITS = 12;
 
 export const playBookNotifier = {
@@ -24,12 +26,20 @@ export const playBookNotifier = {
 };
 
 type Handler = Schema['processBookEntryActions']['functionHandler'];
+type ActionType = 'CREATE_PLAYBOOK' | 'SETTLE_TICKETING_RESERVATION';
 type ActionResult = {
   executionId: string;
-  actionType: 'CREATE_PLAYBOOK';
+  actionType: ActionType;
   status: 'completed' | 'failed' | 'skipped';
   resultId?: string;
   error?: string;
+};
+
+/** Conséquence d'un échec, rappelée dans le rapport d'assistance. */
+const FAILURE_CONSEQUENCE: Record<ActionType, string> = {
+  CREATE_PLAYBOOK: 'Le paiement peut etre confirme alors que le carnet de parties manque.',
+  SETTLE_TICKETING_RESERVATION:
+    'Le paiement est confirme mais la reservation billetterie n est pas marquee payee (ou l etait deja : double paiement possible).',
 };
 
 function requireEnvironment(): void {
@@ -40,6 +50,7 @@ function requireEnvironment(): void {
     ['PLAYBOOK_TABLE_NAME', PLAYBOOK_TABLE],
     ['FULFILLMENT_EXECUTION_TABLE_NAME', FULFILLMENT_EXECUTION_TABLE],
     ['ASSISTANCE_REQUEST_TABLE_NAME', ASSISTANCE_REQUEST_TABLE],
+    ['TICKETING_RESERVATION_TABLE_NAME', TICKETING_RESERVATION_TABLE],
   ].filter(([, value]) => !value).map(([name]) => name);
 
   if (missing.length > 0) {
@@ -78,6 +89,7 @@ async function reportFailureToAssistance(
   purchasedItemIndex: number,
   error: string,
   paymentChannel: string,
+  actionType: ActionType = 'CREATE_PLAYBOOK',
 ): Promise<void> {
   const now = new Date().toISOString();
   const assistanceRequestId = deterministicId('fulfillment-alert', executionId);
@@ -91,14 +103,14 @@ async function reportFailureToAssistance(
         email: 'bridge.saintorens@free.fr',
         type: 'Support technique',
         texte: [
-          '[Auto-rapport Pilote fulfillment v1] CREATE_PLAYBOOK a echoue',
+          `[Auto-rapport Pilote fulfillment v1] ${actionType} a echoue`,
           `Canal de paiement: ${paymentChannel}`,
           `BookEntry: ${bookEntryId}`,
           `Execution: ${executionId}`,
           `Article achete (index): ${purchasedItemIndex}`,
           `Erreur: ${error}`,
           '',
-          'Le paiement peut etre confirme alors que le carnet de parties manque.',
+          FAILURE_CONSEQUENCE[actionType],
           'Verifier le paiement et le BookEntry, puis relancer le fulfillment.',
           `Date: ${now}`,
         ].join('\n'),
@@ -126,6 +138,7 @@ async function recordFailure(
   purchasedItemIndex: number,
   error: string,
   paymentChannel: string,
+  actionType: ActionType = 'CREATE_PLAYBOOK',
 ): Promise<void> {
   const now = new Date().toISOString();
   await documentClient.send(new PutCommand({
@@ -134,7 +147,7 @@ async function recordFailure(
       id: executionId,
       bookEntryId,
       purchasedItemIndex,
-      actionType: 'CREATE_PLAYBOOK',
+      actionType,
       status: 'failed',
       error,
       createdAt: now,
@@ -145,7 +158,7 @@ async function recordFailure(
     ExpressionAttributeNames: { '#status': 'status' },
     ExpressionAttributeValues: { ':completed': 'completed' },
   }));
-  await reportFailureToAssistance(executionId, bookEntryId, purchasedItemIndex, error, paymentChannel);
+  await reportFailureToAssistance(executionId, bookEntryId, purchasedItemIndex, error, paymentChannel, actionType);
 }
 
 async function notifyPlayBookUpdateBestEffort(playBookId: string): Promise<void> {
@@ -287,6 +300,171 @@ async function createPlayBook(
   }
 }
 
+type BookEntryRecord = Record<string, any>;
+type ReservationRecord = Record<string, any>;
+
+/** Canal et mode de paiement d'une vente en caisse ou en ligne. */
+export function describeSale(bookEntry: BookEntryRecord): { channel: 'caisse' | 'en_ligne'; paymentMode: string } {
+  const transactionId = String(bookEntry['transaction_id'] || '');
+  const paymentMode = /espèces/.test(transactionId) ? 'cash'
+    : /chèque/.test(transactionId) ? 'cheque'
+      : /carte/.test(transactionId) || bookEntry['stripeTag'] ? 'card'
+        : 'other';
+  return { channel: bookEntry['stripeSessionId'] ? 'en_ligne' : 'caisse', paymentMode };
+}
+
+async function findReservations(productId: string, reservationKey: string): Promise<ReservationRecord[]> {
+  const reservations: ReservationRecord[] = [];
+  let exclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const page = await documentClient.send(new ScanCommand({
+      TableName: TICKETING_RESERVATION_TABLE,
+      FilterExpression: 'expectedProductId = :productId AND reservationKey = :reservationKey',
+      ExpressionAttributeValues: { ':productId': productId, ':reservationKey': reservationKey },
+      ExclusiveStartKey: exclusiveStartKey,
+    }));
+    reservations.push(...(page.Items ?? []));
+    exclusiveStartKey = page.LastEvaluatedKey;
+  } while (exclusiveStartKey);
+  return reservations.filter((reservation) => reservation['reservationStatus'] !== 'cancelled');
+}
+
+/**
+ * Règle la réservation billetterie d'un adhérent après une vente en caisse ou en ligne :
+ * la réservation issue du sondage passe à « payée », ou est créée payée si l'adhérent n'avait pas répondu.
+ * La vente étant déjà comptabilisée, la réservation est marquée comptabilisée.
+ */
+async function settleTicketingReservation(
+  bookEntry: BookEntryRecord,
+  purchasedItemIndex: number,
+  memberId: string,
+  product: Record<string, any>,
+  amount: number,
+  paymentChannel: string,
+): Promise<ActionResult> {
+  const actionType = 'SETTLE_TICKETING_RESERVATION';
+  const bookEntryId = String(bookEntry['id']);
+  const executionId = `${bookEntryId}:${purchasedItemIndex}:${memberId}:${actionType}`;
+  const existingExecution = await documentClient.send(new GetCommand({
+    TableName: FULFILLMENT_EXECUTION_TABLE,
+    Key: { id: executionId },
+  }));
+  if (existingExecution.Item?.['status'] === 'completed') {
+    return { executionId, actionType, status: 'skipped', resultId: existingExecution.Item['resultId'] };
+  }
+
+  try {
+    const memberResult = await documentClient.send(new GetCommand({ TableName: MEMBER_TABLE, Key: { id: memberId } }));
+    const member = memberResult.Item;
+    if (!member) throw new Error(`Member ${memberId} not found`);
+    const memberName = `${member['lastname'] ?? ''} ${member['firstname'] ?? ''}`.trim();
+
+    const productId = String(product['id']);
+    const reservationKey = `member:${memberId}`;
+    const [existing] = await findReservations(productId, reservationKey);
+    if (existing?.['reservationStatus'] === 'sold') {
+      throw new Error(`Reservation de ${memberName} deja reglee (${existing['paidChannel'] || 'billetterie'}) : double paiement`);
+    }
+
+    const { channel, paymentMode } = describeSale(bookEntry);
+    const now = new Date().toISOString();
+    const paid = {
+      reservationStatus: 'sold',
+      paidChannel: channel,
+      bookEntryId,
+      paidAmount: amount,
+      paidAccount: String(product['account'] || ''),
+      paidProductId: productId,
+      paymentMode,
+      paidAt: now,
+      accountedAt: now,
+      updatedAt: now,
+    };
+    const reservationId = existing ? String(existing['id']) : deterministicId('ticketing', executionId);
+    const reservationWrite = existing
+      ? {
+        Update: {
+          TableName: TICKETING_RESERVATION_TABLE,
+          Key: { id: reservationId },
+          UpdateExpression: `SET ${Object.keys(paid).map((key) => `#${key} = :${key}`).join(', ')} REMOVE #paymentId`,
+          ConditionExpression: '#reservationStatus = :reserved',
+          ExpressionAttributeNames: {
+            ...Object.fromEntries(Object.keys(paid).map((key) => [`#${key}`, key])),
+            '#paymentId': 'paymentId',
+          },
+          ExpressionAttributeValues: {
+            ...Object.fromEntries(Object.entries(paid).map(([key, value]) => [`:${key}`, value])),
+            ':reserved': 'reserved',
+          },
+        },
+      }
+      : {
+        Put: {
+          TableName: TICKETING_RESERVATION_TABLE,
+          Item: {
+            id: reservationId,
+            season: String(bookEntry['season'] || ''),
+            date: String(bookEntry['date'] || now.slice(0, 10)),
+            eventTitle: String(product['name'] || productId),
+            reservationKey,
+            memberId,
+            memberName,
+            isMember: true,
+            expectedProductId: productId,
+            source: channel,
+            ...paid,
+            createdAt: now,
+            __typename: 'TicketingReservation',
+          },
+          ConditionExpression: 'attribute_not_exists(id)',
+        },
+      };
+
+    await documentClient.send(new TransactWriteCommand({
+      TransactItems: [
+        reservationWrite,
+        {
+          Put: {
+            TableName: FULFILLMENT_EXECUTION_TABLE,
+            Item: {
+              id: executionId,
+              bookEntryId,
+              purchasedItemIndex,
+              actionType,
+              status: 'completed',
+              resultId: reservationId,
+              createdAt: now,
+              updatedAt: now,
+              __typename: 'FulfillmentExecution',
+            },
+            ConditionExpression: 'attribute_not_exists(id) OR #status = :failed',
+            ExpressionAttributeNames: { '#status': 'status' },
+            ExpressionAttributeValues: { ':failed': 'failed' },
+          },
+        },
+      ],
+    }));
+    return { executionId, actionType, status: 'completed', resultId: reservationId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const completedExecution = await documentClient.send(new GetCommand({
+      TableName: FULFILLMENT_EXECUTION_TABLE,
+      Key: { id: executionId },
+      ConsistentRead: true,
+    }));
+    if (completedExecution.Item?.['status'] === 'completed') {
+      return { executionId, actionType, status: 'skipped', resultId: completedExecution.Item['resultId'] };
+    }
+    try {
+      await recordFailure(executionId, bookEntryId, purchasedItemIndex, message, paymentChannel, actionType);
+    } catch (recordError: any) {
+      if (recordError?.name !== 'ConditionalCheckFailedException') throw recordError;
+      return { executionId, actionType, status: 'skipped' };
+    }
+    return { executionId, actionType, status: 'failed', error: message };
+  }
+}
+
 export const handler: Handler = async (event) => {
   requireEnvironment();
   const bookEntryId = event.arguments.bookEntryId;
@@ -318,14 +496,26 @@ export const handler: Handler = async (event) => {
       }));
       const product = productResult.Item;
       if (!product) throw new Error(`SaleItem ${productId} not found`);
-      if (product['fulfillmentAction'] !== 'CREATE_PLAYBOOK') continue;
-
-      const parameters = parseParameters(product['fulfillmentParameters']);
-      const initialCredits = resolveInitialCredits(parameters);
       const beneficiaryMemberIds = Array.isArray(purchasedItem['beneficiaryMemberIds'])
         ? purchasedItem['beneficiaryMemberIds'].map(String)
         : [];
       const quantity = Number(purchasedItem['quantity']);
+
+      if (product['fulfillmentAction'] === 'SETTLE_TICKETING_RESERVATION') {
+        if (quantity !== 1) throw new Error(`Invalid quantity for purchased item ${itemIndex}: one ticket per beneficiary expected`);
+        if (beneficiaryMemberIds.length === 0) throw new Error(`Purchased item ${itemIndex} has no beneficiary`);
+        // Un produit « couple » est vendu au prix total pour ses deux bénéficiaires.
+        const price = Number(product['price'] || 0);
+        const amount = product['paired'] ? price / beneficiaryMemberIds.length : price;
+        for (const memberId of new Set(beneficiaryMemberIds)) {
+          results.push(await settleTicketingReservation(bookEntry, itemIndex, memberId, product, amount, paymentChannel));
+        }
+        continue;
+      }
+      if (product['fulfillmentAction'] !== 'CREATE_PLAYBOOK') continue;
+
+      const parameters = parseParameters(product['fulfillmentParameters']);
+      const initialCredits = resolveInitialCredits(parameters);
       if (!Number.isInteger(quantity) || quantity <= 0) {
         throw new Error(`Invalid quantity for purchased item ${itemIndex}`);
       }

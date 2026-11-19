@@ -175,7 +175,14 @@
                             <select class="form-select" id="modal-fulfillment-action" formControlName="fulfillmentAction">
                                 <option value="">Aucun</option>
                                 <option value="CREATE_PLAYBOOK">Créer une carte</option>
+                                <option value="SETTLE_TICKETING_RESERVATION">Régler la réservation billetterie</option>
                             </select>
+                            @if (productForm.get('fulfillmentAction')?.value === 'SETTLE_TICKETING_RESERVATION') {
+                            <div class="form-text">
+                                Une vente en caisse ou en ligne marque la réservation de l’événement comme payée,
+                                ou la crée si l’adhérent n’a pas répondu au sondage.
+                            </div>
+                            }
                         </div>
                         @if (productForm.get('fulfillmentAction')?.value === 'CREATE_PLAYBOOK') {
                         <div class="col-md-3">

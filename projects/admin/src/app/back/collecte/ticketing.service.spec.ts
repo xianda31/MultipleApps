@@ -32,8 +32,8 @@ class FakeTable<T extends Row> {
 }
 
 describe('TicketingService', () => {
-  const ctx = { date: '2026-12-18', season: '2026/27', eventTitle: 'Repas de Noël' };
   const dinner = 'product-noel';
+  const ctx = { productId: dinner, date: '2026-12-18', season: '2026/27', eventTitle: 'Repas de Noël' };
   let service: TicketingService;
   let reservations: FakeTable<TicketingReservation & Row>;
   let payments: FakeTable<TicketingPayment & Row>;
@@ -103,12 +103,12 @@ describe('TicketingService', () => {
       const paid = { ...reservationOf('member-anne') };
 
       const result = await service.importReservations(
-        couple.map(row => ({ ...row, expectedProductId: 'other-product' })), ctx,
+        couple.map(row => ({ ...row, memberName: `${row.memberName} (modifié)` })), ctx,
       );
 
       expect(result).toEqual({ created: 0, updated: 1 });
       expect(reservationOf('member-anne')).toEqual(paid);
-      expect(reservationOf('member-jean').expectedProductId).toBe('other-product');
+      expect(reservationOf('member-jean').memberName).toBe('DUPONT Jean (modifié)');
     });
 
     it('adds a late answer to the existing bookings of the event', async () => {
@@ -127,11 +127,11 @@ describe('TicketingService', () => {
       const payment = await sell(['member-anne', 'member-jean'], 'card');
 
       expect(payments.get(payment.id)).toEqual(jasmine.objectContaining({
-        status: 'active', paymentMode: 'card', totalAmount: 70, reservationCount: 2,
+        status: 'active', paymentMode: 'card', totalAmount: 70, reservationCount: 2, productId: dinner,
       }));
       for (const memberId of ['member-anne', 'member-jean']) {
         expect(reservationOf(memberId)).toEqual(jasmine.objectContaining({
-          reservationStatus: 'sold', paymentId: payment.id, paymentMode: 'card',
+          reservationStatus: 'sold', paymentId: payment.id, paymentMode: 'card', paidChannel: 'billetterie',
           paidAmount: 35, paidAccount: 'PAF', paidProductId: dinner,
         }));
         expect(reservationOf(memberId).paidAt).toEqual(jasmine.any(String));
@@ -148,7 +148,7 @@ describe('TicketingService', () => {
       expect(payments.get(couplePayment.id).status).toBe('cancelled');
       for (const memberId of ['member-anne', 'member-jean']) {
         expect(reservationOf(memberId)).toEqual(jasmine.objectContaining({
-          reservationStatus: 'reserved', paymentId: null, paymentMode: null, paidAmount: null, paidAt: null,
+          reservationStatus: 'reserved', paymentId: null, paymentMode: null, paidAmount: null, paidChannel: null, paidAt: null,
         }));
       }
       expect(reservationOf('member-paul')).toEqual(jasmine.objectContaining({
@@ -193,17 +193,19 @@ describe('TicketingService', () => {
     expect(reservations.rows.every(row => row.accountedAt === accountedAt)).toBeTrue();
   });
 
-  it('lists only the bookings and payments of the requested event and date', async () => {
-    await service.importReservations(couple, ctx);
-    await service.importReservations([couple[0]], { ...ctx, eventTitle: 'Galette des rois' });
-    await service.importReservations([couple[0]], { ...ctx, date: '2026-12-19' });
+  it('lists the bookings and payments of the event whatever their date', async () => {
+    await service.importReservations([couple[0]], ctx);
+    await service.importReservations([couple[1]], { ...ctx, date: '2026-12-01' });
+    await service.importReservations([couple[0]], { ...ctx, productId: 'product-galette', eventTitle: 'Galette des rois' });
     await sell(['member-jean']);
 
-    const listed = await service.listReservations(ctx.date, '  repas de noël ');
-    const listedPayments = await service.listPayments(ctx.date, 'REPAS DE NOËL');
+    const listed = await service.listEventReservations(dinner);
+    const listedPayments = await service.listEventPayments(dinner);
 
     expect(listed.map(row => row.memberId).sort()).toEqual(['member-anne', 'member-jean']);
+    expect(listed.every(row => row.expectedProductId === dinner)).toBeTrue();
     expect(listedPayments.length).toBe(1);
+    expect(await service.listEventPayments('product-galette')).toEqual([]);
   });
 
   it('identifies members by id and guests by their normalised name', () => {

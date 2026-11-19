@@ -22,7 +22,17 @@ import {
 } from '../../common/interfaces/accounting.interface';
 import { TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
 import { TicketingPayment, TicketingService, TicketingReservation } from './ticketing.service';
-import { BILLETTERIE_CSV_HEADERS, billetterieCsvRows, paymentModeLabel } from './billetterie-export';
+import { BILLETTERIE_CSV_HEADERS, billetterieCsvRows, paidChannelLabel, paymentModeLabel } from './billetterie-export';
+
+const EVENT_PRODUCT_KEY = 'billetterie-event-product';
+
+function readStoredEventProductId(): string {
+  try { return localStorage.getItem(EVENT_PRODUCT_KEY) ?? ''; } catch { return ''; }
+}
+
+function storeEventProductId(productId: string): void {
+  try { localStorage.setItem(EVENT_PRODUCT_KEY, productId); } catch { /* stockage indisponible */ }
+}
 
 interface ReservationView extends TicketingReservation {
   selected: boolean;
@@ -51,11 +61,10 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   accountingInProgress = false;
 
   todayLabel = '';
-  eventTitle = '';
 
-  memberProduct: Product | null = null;
-  nonMemberProduct: Product | null = null;
-  private batchProducts: Product[] = [];
+  /** Événement suivi : un produit « Billetterie » dédié (ex. « Repas de Noël 2026 »). */
+  eventProduct: Product | null = null;
+  eventProducts: Product[] = [];
 
   reservations: ReservationView[] = [];
   soldReservations: ReservationView[] = [];
@@ -72,6 +81,8 @@ export class BilletterieComponent implements OnInit, OnDestroy {
 
   soldCount = 0;
   notSoldCount = 0;
+  dueAmount = 0;
+  soldByChannelText = '';
   chequeAmountsByValue: Array<{ amount: number; count: number }> = [];
   cashAmount = 0;
   cbAccumulatedAmount = 0;
@@ -102,9 +113,13 @@ export class BilletterieComponent implements OnInit, OnDestroy {
 
     this.subs.push(
       this.productService.listProducts().subscribe((products) => {
-        this.batchProducts = products.filter((p) => !!p.batchEnabled && !!p.active);
-        this._resolvePricingProducts();
-        this._applyPricing();
+        this.eventProducts = products
+          .filter((p) => !!p.batchEnabled && !!p.active)
+          .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'fr'));
+        const current = this.eventProducts.find((p) => p.id === this.eventProduct?.id);
+        const remembered = this.eventProducts.find((p) => p.id === readStoredEventProductId());
+        this.eventProduct = current ?? remembered ?? (this.eventProducts.length === 1 ? this.eventProducts[0] : null);
+        void this.refreshFromDb();
       }),
     );
 
@@ -123,8 +138,18 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     this.subs.push(this.stripeTerminal.status$.subscribe((s) => (this.tpeStatus = s)));
     this.subs.push(this.shopInit.tpeScanning$.subscribe((v) => (this.tpeReaderScanning = v)));
 
-    void this.refreshFromDb();
     void this.loadAvailableSurveys();
+  }
+
+  get eventTitle(): string {
+    return this.eventProduct?.name?.trim() ?? '';
+  }
+
+  onEventProductSelected(product: Product | null): void {
+    this.eventProduct = product;
+    storeEventProductId(product?.id ?? '');
+    this.selectedSurveyId = '';
+    void this.refreshFromDb();
   }
 
   ngOnDestroy(): void {
@@ -162,13 +187,13 @@ export class BilletterieComponent implements OnInit, OnDestroy {
 
   get filteredReservations(): ReservationView[] {
     const term = this._normalize(this.memberFilter);
-    return this.reservations
-      .filter((row) => {
-        if (this.showOnlyUnpaid && row.reservationStatus === 'sold') return false;
-        if (!term) return true;
-        return this._normalize(row.memberName).includes(term);
-      })
+    return [...this.reservations, ...(this.showOnlyUnpaid ? [] : this.soldReservations)]
+      .filter((row) => !term || this._normalize(row.memberName).includes(term))
       .sort((a, b) => a.memberName.localeCompare(b.memberName, 'fr', { sensitivity: 'base' }));
+  }
+
+  paidChannelLabel(channel: string | null | undefined): string {
+    return paidChannelLabel(channel);
   }
 
   get selectedCount(): number {
@@ -187,7 +212,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     if (this.saleSubmitInProgress || this.accountingInProgress) return false;
     if (!this.eventTitle.trim()) return false;
     if (this.selectedCount === 0) return false;
-    if (!this.memberProduct || !this.nonMemberProduct) return false;
+    if (!this.eventProduct) return false;
     if (this.selectedPaymentMode !== PaymentMode.CARD) return true;
     return this.tpePaymentActive && this.tpeReaderConnected;
   }
@@ -253,7 +278,8 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       const payment = await this.ticketingService.createPayment({
         season: this.session.season,
         date: this.session.date,
-        eventTitle: this.eventTitle.trim(),
+        eventTitle: this.eventTitle,
+        productId: this.eventProduct!.id,
         paymentMode: this._toTicketingMode(this.selectedPaymentMode),
         totalAmount: total,
         reservationCount: selected.length,
@@ -402,21 +428,14 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `ticketing-${this.session.date}.csv`;
+    anchor.download = `billetterie-${this._slug(this.eventTitle) || this.session.date}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
 
   async refreshFromDb(): Promise<void> {
     try {
-      if (!this.eventTitle.trim()) {
-        const fromDate = await this.ticketingService.listReservationsForDate(this.session.date);
-        if (fromDate.length === 1) {
-          this.eventTitle = fromDate[0].eventTitle;
-        }
-      }
-
-      if (!this.eventTitle.trim()) {
+      if (!this.eventProduct) {
         this.reservations = [];
         this.soldReservations = [];
         this.payments = [];
@@ -425,14 +444,15 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       }
 
       const [allReservations, payments] = await Promise.all([
-        this.ticketingService.listReservations(this.session.date, this.eventTitle.trim()),
-        this.ticketingService.listPayments(this.session.date, this.eventTitle.trim()),
+        this.ticketingService.listEventReservations(this.eventProduct.id),
+        this.ticketingService.listEventPayments(this.eventProduct.id),
       ]);
-      this.reservations = allReservations
+      const active = allReservations.filter((row) => row.reservationStatus !== 'cancelled');
+      this.reservations = active
         .filter((row) => row.reservationStatus !== 'sold')
         .map((row) => ({ ...row, selected: false, ...this._priceForReservation(row) }));
 
-      this.soldReservations = allReservations
+      this.soldReservations = active
         .filter((row) => row.reservationStatus === 'sold')
         .map((row) => ({ ...row, selected: false, ...this._priceForReservation(row) }));
 
@@ -444,20 +464,18 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     }
   }
 
-  onEventTitleBlur(): void {
-    void this.refreshFromDb();
-  }
-
   onSurveySelected(surveyId: string): void {
-    if (!surveyId) {
-      this.eventTitle = '';
-      void this.refreshFromDb();
+    if (!surveyId) return;
+    const survey = this.availableSurveys.find(s => s.id === surveyId);
+    const product = this.eventProducts.find((p) => p.id === survey?.productTag);
+    if (!product) {
+      this.toastService.showWarning('Billetterie',
+        'Ce sondage n’est rattaché à aucun produit « Billetterie » : choisissez son « Code Produit » dans l’éditeur de sondage.');
+      this.selectedSurveyId = '';
       return;
     }
-    const survey = this.availableSurveys.find(s => s.id === surveyId);
-    if (survey?.title) {
-      this.eventTitle = survey.title;
-    }
+    this.eventProduct = product;
+    storeEventProductId(product.id);
     void this.importFromSurvey();
   }
 
@@ -477,8 +495,8 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       this.toastService.showWarning('Billetterie', 'Sélectionnez un sondage.');
       return;
     }
-    if (!this.eventTitle.trim()) {
-      this.toastService.showWarning('Billetterie', 'Renseignez le titre de l\'\u00e9vénement avant import.');
+    if (!this.eventProduct) {
+      this.toastService.showWarning('Billetterie', 'Choisissez l’événement avant l’import.');
       return;
     }
 
@@ -491,9 +509,10 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       }
 
       const result = await this.ticketingService.importReservations(rows, {
+        productId: this.eventProduct.id,
         date: this.session.date,
         season: this.session.season,
-        eventTitle: this.eventTitle.trim(),
+        eventTitle: this.eventTitle,
         source: `survey:${this.selectedSurveyId}`,
       });
 
@@ -562,7 +581,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       id: '',
       season: this.session.season,
       date: this.session.date,
-      tag: this.eventTitle.trim(),
+      tag: this.eventTitle,
       amounts: { [financialAccount]: total },
       operations: [{ label: `${reservations.length} encaissements billetterie`, values: valuesByAccount }],
       transaction_id: transactionId,
@@ -574,6 +593,14 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   private _refreshSummary(): void {
     this.soldCount = this.soldReservations.length;
     this.notSoldCount = this.reservations.length;
+    this.dueAmount = Math.round(this.reservations.reduce((sum, row) => sum + row.price, 0) * 100) / 100;
+
+    const byChannel = new Map<string, number>();
+    this.soldReservations.forEach((row) => {
+      const label = paidChannelLabel(row.paidChannel);
+      byChannel.set(label, (byChannel.get(label) ?? 0) + 1);
+    });
+    this.soldByChannelText = [...byChannel.entries()].map(([label, count]) => `${label} ${count}`).join(', ');
 
     this.cashAmount = Math.round(
       this.activePayments
@@ -600,24 +627,13 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       .sort((a, b) => b.amount - a.amount);
   }
 
-  private _resolvePricingProducts(): void {
-    const byText = (product: Product) => this._normalize(`${product.name} ${product.productCode ?? ''}`);
-
-    this.memberProduct = this.batchProducts.find((product) => /adh|member/.test(byText(product))) ?? this.batchProducts[0] ?? null;
-    this.nonMemberProduct = this.batchProducts.find((product) => /non|ext|guest|invite/.test(byText(product)))
-      ?? this.batchProducts.find((product) => product.id !== this.memberProduct?.id)
-      ?? this.memberProduct;
-  }
-
-  private _applyPricing(): void {
-    this.reservations = this.reservations.map((row) => ({ ...row, ...this._priceForReservation(row) }));
-    this.soldReservations = this.soldReservations.map((row) => ({ ...row, ...this._priceForReservation(row) }));
-  }
-
   private _priceForReservation(reservation: TicketingReservation): { price: number; product: Product | null } {
-    const product = this.batchProducts.find(candidate => candidate.id === reservation.expectedProductId)
-      ?? (reservation.isMember ? this.memberProduct : this.nonMemberProduct);
+    const product = this.eventProducts.find(candidate => candidate.id === reservation.expectedProductId) ?? this.eventProduct;
     return { price: product?.price ?? 0, product };
+  }
+
+  private _slug(text: string): string {
+    return this._normalize(text).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
   private _toTicketingMode(mode: PaymentMode): 'cash' | 'cheque' | 'card' | 'other' {
