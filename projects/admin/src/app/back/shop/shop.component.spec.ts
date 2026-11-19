@@ -37,6 +37,7 @@ describe('ShopComponent buyer list', () => {
     books.list_book_entries.and.returnValue(EMPTY);
     const cartService = jasmine.createSpyObj('CartService', [
       'clearCart', 'save_sale', 'setSeller', 'setDebt', 'setAsset', 'getCartItems', 'getCartAmount',
+      'addToCart', 'build_cart_item',
     ], { cart$: EMPTY });
     cartService.getCartItems.and.returnValue([]);
     const loggedMember$ = new BehaviorSubject<Member | null>(null);
@@ -52,6 +53,8 @@ describe('ShopComponent buyer list', () => {
     ], { checkoutState$: EMPTY });
     stripeCheckout.getCurrentPhase.and.returnValue('idle');
     stripeCheckout.getPendingSessionId.and.returnValue(null);
+    const eventTicketGuard = jasmine.createSpyObj('EventTicketGuardService', ['refusalReason']);
+    eventTicketGuard.refusalReason.and.resolveTo(null);
     const component = new ShopComponent(
       cartService,
       membersService,
@@ -73,8 +76,9 @@ describe('ShopComponent buyer list', () => {
       jasmine.createSpyObj('StripeTerminalService', ['disconnectReader']),
       jasmine.createSpyObj('CardPaymentOrchestratorService', ['cancelRemotePayment']),
       books,
+      eventTicketGuard,
     );
-    return { component, members$, membersService, toast, cartService, loggedMember$, buyerContext, stripeCheckout };
+    return { component, members$, membersService, toast, cartService, loggedMember$, buyerContext, stripeCheckout, eventTicketGuard };
   }
 
   for (const onlineMode of [false, true]) {
@@ -214,6 +218,29 @@ describe('ShopComponent buyer list', () => {
     await component.retryBuyerBalance();
     expect(component.checkoutBlocked).toBeFalse();
     expect(component.buyerBalanceMessage).toBe('');
+    component.ngOnDestroy();
+  });
+
+  it('refuses a meal to a member who did not answer its survey, without touching the cart', async () => {
+    const { component, members$, loggedMember$, cartService, eventTicketGuard, toast } = createComponent(true);
+    eventTicketGuard.refusalReason.and.resolveTo('TEST Jean n’a pas répondu « je viens » au sondage « Repas de Noël » : achat impossible.');
+    loggedMember$.next(buyer);
+    component.ngOnInit();
+    await Promise.resolve();
+    members$.next([buyer]);
+    await Promise.resolve();
+    const dinner = { id: 'product-noel', name: 'Repas de Noël', fulfillmentAction: 'SETTLE_TICKETING_RESERVATION' } as any;
+
+    await component.on_product_click(dinner);
+
+    expect(component.buyer).toEqual(buyer);
+    expect(eventTicketGuard.refusalReason).toHaveBeenCalledOnceWith(dinner, [buyer]);
+    expect(cartService.addToCart).not.toHaveBeenCalled();
+    expect(toast.showWarning).toHaveBeenCalledWith('Vente impossible', jasmine.stringContaining('achat impossible'));
+
+    eventTicketGuard.refusalReason.and.resolveTo(null);
+    await component.on_product_click(dinner);
+    expect(cartService.addToCart).toHaveBeenCalledTimes(1);
     component.ngOnDestroy();
   });
 

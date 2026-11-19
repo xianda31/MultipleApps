@@ -22,6 +22,7 @@ import { SystemDataService } from '../../common/services/system-data.service';
 import { CartItem, PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 import { BookService, FulfillmentError } from '../services/book.service';
+import { EventTicketGuardService, SETTLE_TICKETING_RESERVATION } from '../collecte/event-ticket-guard.service';
 import { Subscription } from 'rxjs';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -178,6 +179,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     private stripeTerminal: StripeTerminalService,
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
     private bookService: BookService,
+    private eventTicketGuard: EventTicketGuardService,
   ) {}
 
   ngAfterViewInit(): void {
@@ -415,7 +417,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     this.buyerInput?.focus();
   }
 
-  on_product_click(product: Product) {
+  async on_product_click(product: Product) {
     if (this.buyerBalanceLoading || !this.buyerBalanceReady || this.isSaving || this.tpePaymentInProgress) return;
 
     if (!this.buyerForm.valid || !this.ensureBuyerCanPurchase(this.buyer)) {
@@ -429,24 +431,48 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       this.pairedSecondMember = null;
       this.showPairedModal = true;
     } else {
-      const item = this.cartService.build_cart_item(product, this.buyer!);
+      const buyer = this.buyer!;
+      if (!await this.ensureEventTicketAllowed(product, [buyer])) return;
+      const item = this.cartService.build_cart_item(product, buyer);
       this.cartService.addToCart(item);
     }
   }
 
-  on_paired_confirmed() {
+  async on_paired_confirmed() {
     if (this.buyerBalanceLoading || !this.buyerBalanceReady || this.isSaving || this.tpePaymentInProgress) return;
     if (!this.pendingPairedProduct || !this.pairedSecondMember) return;
     if (!this.ensureBuyerCanPurchase(this.buyer) || !this.ensureBuyerCanPurchase(this.pairedSecondMember)) return;
-    const item = this.cartService.build_cart_item(
-      this.pendingPairedProduct,
-      this.buyer!,
-      this.pairedSecondMember
-    );
+    const product = this.pendingPairedProduct;
+    const members = [this.buyer!, this.pairedSecondMember];
+    if (!await this.ensureEventTicketAllowed(product, members)) return;
+    const item = this.cartService.build_cart_item(product, members[0], members[1]);
     this.cartService.addToCart(item);
     this.showPairedModal = false;
     this.pendingPairedProduct = null;
     this.pairedSecondMember = null;
+  }
+
+  /** Repas / événement : vendu uniquement aux adhérents ayant répondu « je viens » à son sondage, une seule fois. */
+  private async ensureEventTicketAllowed(product: Product, members: Member[]): Promise<boolean> {
+    if (product.fulfillmentAction !== SETTLE_TICKETING_RESERVATION) return true;
+    const inCart = members.find((member) => this.cartService.getCartItems().some((item) =>
+      item.product_id === product.id && (item.payee.id === member.id || item.paired_with?.id === member.id)));
+    if (inCart) {
+      this.toastService.showWarning('Vente', `« ${product.name} » est déjà dans le panier pour ${inCart.lastname} ${inCart.firstname}.`);
+      return false;
+    }
+    try {
+      const refusal = await this.eventTicketGuard.refusalReason(product, members);
+      if (refusal) {
+        this.toastService.showWarning('Vente impossible', refusal);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('[Shop] Contrôle de réponse au sondage impossible', error);
+      this.toastService.showError('Vente', 'Impossible de vérifier la réponse au sondage : réessayez.');
+      return false;
+    }
   }
 
   on_paired_cancelled() {

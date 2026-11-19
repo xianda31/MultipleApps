@@ -92,7 +92,22 @@ async function reportFailureToAssistance(
   actionType: ActionType = 'CREATE_PLAYBOOK',
 ): Promise<void> {
   const now = new Date().toISOString();
-  const assistanceRequestId = deterministicId('fulfillment-alert', executionId);
+  await createAssistanceRequest(deterministicId('fulfillment-alert', executionId), executionId, [
+    `[Auto-rapport Pilote fulfillment v1] ${actionType} a echoue`,
+    `Canal de paiement: ${paymentChannel}`,
+    `BookEntry: ${bookEntryId}`,
+    `Execution: ${executionId}`,
+    `Article achete (index): ${purchasedItemIndex}`,
+    `Erreur: ${error}`,
+    '',
+    FAILURE_CONSEQUENCE[actionType],
+    'Verifier le paiement et le BookEntry, puis relancer le fulfillment.',
+    `Date: ${now}`,
+  ]);
+}
+
+async function createAssistanceRequest(assistanceRequestId: string, executionId: string, lines: string[]): Promise<void> {
+  const now = new Date().toISOString();
   try {
     await documentClient.send(new PutCommand({
       TableName: ASSISTANCE_REQUEST_TABLE,
@@ -102,18 +117,7 @@ async function reportFailureToAssistance(
         prenom: 'Pilote fulfillment',
         email: 'bridge.saintorens@free.fr',
         type: 'Support technique',
-        texte: [
-          `[Auto-rapport Pilote fulfillment v1] ${actionType} a echoue`,
-          `Canal de paiement: ${paymentChannel}`,
-          `BookEntry: ${bookEntryId}`,
-          `Execution: ${executionId}`,
-          `Article achete (index): ${purchasedItemIndex}`,
-          `Erreur: ${error}`,
-          '',
-          FAILURE_CONSEQUENCE[actionType],
-          'Verifier le paiement et le BookEntry, puis relancer le fulfillment.',
-          `Date: ${now}`,
-        ].join('\n'),
+        texte: lines.join('\n'),
         status: 'nouveau',
         createdAt: now,
         updatedAt: now,
@@ -444,6 +448,20 @@ async function settleTicketingReservation(
         },
       ],
     }));
+    if (!existing) {
+      // Normalement impossible : la boutique refuse la vente sans réponse au sondage. Choix de menu inconnu.
+      await createAssistanceRequest(deterministicId('ticketing-without-survey', executionId), executionId, [
+        '[Auto-rapport Pilote fulfillment v1] Repas paye sans reponse au sondage',
+        `Adherent: ${memberName}`,
+        `Produit: ${String(product['name'] || productId)}`,
+        `Canal de paiement: ${channel}`,
+        `BookEntry: ${bookEntryId}`,
+        '',
+        'La reservation a ete creee et marquee payee, mais son choix de menu est inconnu.',
+        'Recueillir son choix et le saisir dans les resultats du sondage.',
+        `Date: ${now}`,
+      ]);
+    }
     return { executionId, actionType, status: 'completed', resultId: reservationId };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

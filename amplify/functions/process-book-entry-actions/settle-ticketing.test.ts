@@ -128,9 +128,10 @@ test('an online payment settles the reservation coming from the survey, once', a
   assert.equal(reservation['paidAccount'], 'PAF');
   assert.ok(reservation['accountedAt'], 'the sale is already accounted');
   assert.equal(reservation['paymentId'], undefined);
+  assert.equal(fake.tables.AssistanceRequest.size, 0);
 });
 
-test('a cash sale at the counter creates a paid reservation for a member who did not answer', async () => {
+test('a cash sale at the counter that bypassed the survey check still records the payment and alerts the club', async () => {
   const counterSale = {
     id: 'sale-counter', status: 'confirmed', season: '2026/2027', date: '2026-12-05',
     transaction_id: 'achat_adhérent_en_espèces',
@@ -151,6 +152,9 @@ test('a cash sale at the counter creates a paid reservation for a member who did
   assert.equal(reservation['paymentMode'], 'cash');
   assert.equal(reservation['date'], '2026-12-05');
   assert.equal(reservation['isMember'], true);
+  const [report] = [...fake.tables.AssistanceRequest.values()];
+  assert.match(String(report['texte']), /Repas paye sans reponse au sondage/);
+  assert.match(String(report['texte']), /Adherent: DUPONT Jean/);
 });
 
 test('a second payment for an already paid reservation is reported as a double payment', async () => {
