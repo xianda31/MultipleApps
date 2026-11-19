@@ -150,7 +150,7 @@ export class MailingComponent implements OnInit, AfterViewInit {
         <a href="[SURVEY_LINK]"
            style="background-color:#667eea;color:white;padding:14px 32px;border-radius:6px;
                   text-decoration:none;font-size:16px;font-weight:bold;display:inline-block">
-          Accès au sondage
+          Je réponds
         </a>
       </div>`;
   }

@@ -22,6 +22,7 @@ import {
 } from '../../common/interfaces/accounting.interface';
 import { TRANSACTION_DIRECTORY } from '../../common/interfaces/transaction.definition';
 import { TicketingPayment, TicketingService, TicketingReservation } from './ticketing.service';
+import { BILLETTERIE_CSV_HEADERS, billetterieCsvRows, paymentModeLabel } from './billetterie-export';
 
 interface ReservationView extends TicketingReservation {
   selected: boolean;
@@ -394,17 +395,9 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   }
 
   exportBilletterieCsv(): void {
-    const headers = ['nom', 'adhérent', 'montant réglé', 'type de paiement'];
-    const rows = this.soldReservations
-      .sort((a, b) => a.memberName.localeCompare(b.memberName, 'fr', { sensitivity: 'base' }))
-      .map((row) => [
-        row.memberName,
-        row.isMember ? 'oui' : 'non',
-        (row.paidAmount ?? 0).toFixed(2),
-        row.paymentId && this._paymentIsGrouped(row.paymentId) ? 'autre' : this._paymentLabel(row.paymentMode),
-      ]);
+    const rows = billetterieCsvRows(this.soldReservations);
 
-    const csv = [headers, ...rows].map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const csv = [BILLETTERIE_CSV_HEADERS, ...rows].map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -532,7 +525,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   }
 
   getPaymentModeLabel(mode: string | null | undefined): string {
-    return this._paymentLabel(mode);
+    return paymentModeLabel(mode);
   }
 
   async cancelPayment(payment: TicketingPayment): Promise<void> {
@@ -625,17 +618,6 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     const product = this.batchProducts.find(candidate => candidate.id === reservation.expectedProductId)
       ?? (reservation.isMember ? this.memberProduct : this.nonMemberProduct);
     return { price: product?.price ?? 0, product };
-  }
-
-  private _paymentIsGrouped(paymentId: string): boolean {
-    return this.soldReservations.filter((row) => row.paymentId === paymentId).length > 1;
-  }
-
-  private _paymentLabel(mode: string | null | undefined): string {
-    if (mode === 'cash') return 'espèces';
-    if (mode === 'cheque') return 'chèque';
-    if (mode === 'card') return 'CB';
-    return 'autre';
   }
 
   private _toTicketingMode(mode: PaymentMode): 'cash' | 'cheque' | 'card' | 'other' {

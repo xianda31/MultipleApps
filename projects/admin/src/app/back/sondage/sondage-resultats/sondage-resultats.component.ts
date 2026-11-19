@@ -15,6 +15,10 @@ import {
   sanitizeSurveyAnswers,
   SURVEY_COMMENT_MAX_LENGTH,
 } from '../../../common/survey/survey-flow';
+import {
+  commentHeader, detailHeader, hasCommentBox, hasDetailList, questionHeader,
+  RESULT_COLUMN_TITLE_MAX_LENGTH, truncateColumnTitle,
+} from '../survey-result-headers';
 
 @Component({
   selector: 'app-sondage-resultats',
@@ -23,7 +27,7 @@ import {
   templateUrl: './sondage-resultats.component.html',
 })
 export class SondageResultatsComponent implements OnInit {
-  static readonly RESULT_COLUMN_TITLE_MAX_LENGTH = 15;
+  static readonly RESULT_COLUMN_TITLE_MAX_LENGTH = RESULT_COLUMN_TITLE_MAX_LENGTH;
   static readonly COMMENT_PREVIEW_MAX_LENGTH = 40;
   /** Préfixes interprétés comme formule par Excel/LibreOffice. */
   private static readonly CSV_FORMULA_PREFIX = /^[=+\-@]/;
@@ -167,11 +171,11 @@ export class SondageResultatsComponent implements OnInit {
   }
 
   hasDetailList(question: QuestionResult): boolean {
-    return question.options.some(option => !!option.detailOptions?.length);
+    return hasDetailList(question);
   }
 
   hasCommentBox(question: QuestionResult): boolean {
-    return question.options.some(option => option.commentEnabled === true);
+    return hasCommentBox(question);
   }
 
   getAnswerComment(row: ResponseRow, questionId: string): string {
@@ -186,29 +190,19 @@ export class SondageResultatsComponent implements OnInit {
   }
 
   getCommentResultColumnTitle(question: QuestionResult): string {
-    return question.commentResultLabel?.trim() || 'Commentaire';
+    return commentHeader(question);
   }
 
   truncateColumnTitle(title: string): string {
-    const maxLength = SondageResultatsComponent.RESULT_COLUMN_TITLE_MAX_LENGTH;
-    if (title.length <= maxLength) return title;
-    const previousBoundary = title.lastIndexOf(' ', maxLength);
-    const nextBoundary = title.indexOf(' ', maxLength + 1);
-    const nearestBoundary = previousBoundary <= 0
-      ? maxLength
-      : nextBoundary < 0 || maxLength - previousBoundary <= nextBoundary - maxLength
-        ? previousBoundary
-        : nextBoundary;
-    const truncated = title.slice(0, nearestBoundary);
-    return `${truncated.trimEnd()}...`;
+    return truncateColumnTitle(title);
   }
 
   getResultColumnTitle(question: QuestionResult): string {
-    return question.resultLabel?.trim() || this.truncateColumnTitle(question.text);
+    return questionHeader(question);
   }
 
   getDetailResultColumnTitle(question: QuestionResult): string {
-    return question.detailResultLabel?.trim() || 'Valeur choisie';
+    return detailHeader(question);
   }
 
   // ── Vote manuel : ouvrir ───────────────────────────────────────────────────

@@ -17,6 +17,9 @@ import {
   SurveyQuestionDefinition,
   validatePaymentTag,
 } from '../../../common/survey/survey-flow';
+import {
+  DEFAULT_COMMENT_HEADER, DEFAULT_DETAIL_HEADER, hasCommentBox, hasDetailList, resultHeaders, truncateColumnTitle,
+} from '../survey-result-headers';
 
 interface QuestionForm {
   id?: string;
@@ -100,6 +103,21 @@ export class SondageEditorComponent implements OnInit {
 
   detailOptionCount(option: SurveyOptionDefinition): number {
     return option.detailOptions?.length ?? 0;
+  }
+
+  // ── Affichage dans les résultats ────────────────────────────────────────────
+  readonly defaultDetailHeader = DEFAULT_DETAIL_HEADER;
+  readonly defaultCommentHeader = DEFAULT_COMMENT_HEADER;
+  readonly hasDetailList = hasDetailList;
+  readonly hasCommentBox = hasCommentBox;
+
+  defaultQuestionHeader(question: QuestionForm): string {
+    return truncateColumnTitle(question.text.trim()) || 'Question';
+  }
+
+  /** En-têtes que produira la question dans le tableau de résultats et l'export CSV. */
+  resultHeadersPreview(question: QuestionForm): string[] {
+    return resultHeaders({ ...question, text: question.text.trim() || 'Question' });
   }
 
   async ngOnInit() {
