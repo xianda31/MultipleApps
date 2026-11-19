@@ -402,13 +402,18 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     this.accountingInProgress = true;
 
     try {
-      await this._writeModeAccounting(PaymentMode.CASH, pending.filter((row) => row.paymentMode === 'cash'));
-      await this._writeModeAccounting(PaymentMode.CHEQUE, pending.filter((row) => row.paymentMode === 'cheque'));
-      await this._writeModeAccounting(PaymentMode.CARD, pending.filter((row) => row.paymentMode === 'card'));
+      const bookEntryIdByReservationId: Record<string, string> = {};
+      for (const mode of [PaymentMode.CASH, PaymentMode.CHEQUE, PaymentMode.CARD]) {
+        const modeKey = mode === PaymentMode.CASH ? 'cash' : mode === PaymentMode.CHEQUE ? 'cheque' : 'card';
+        const rows = pending.filter((row) => row.paymentMode === modeKey);
+        const bookEntryId = await this._writeModeAccounting(mode, rows);
+        if (bookEntryId) rows.forEach((row) => { bookEntryIdByReservationId[row.id] = bookEntryId; });
+      }
 
       await this.ticketingService.markAccounted({
         reservationIds: pending.map((row) => row.id),
         paymentIds: [...new Set(pending.map((row) => row.paymentId).filter((id): id is string => !!id))],
+        bookEntryIdByReservationId,
       });
 
       this.toastService.showSuccess('Comptabilité', `${pending.length} réservation(s) intégrée(s) en compta`);
@@ -560,8 +565,8 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async _writeModeAccounting(mode: PaymentMode, reservations: ReservationView[]): Promise<void> {
-    if (reservations.length === 0) return;
+  private async _writeModeAccounting(mode: PaymentMode, reservations: ReservationView[]): Promise<string | null> {
+    if (reservations.length === 0) return null;
 
     const valuesByAccount: Record<string, number> = {};
     reservations.forEach((row) => {
@@ -571,7 +576,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       valuesByAccount[key] = Math.round(((valuesByAccount[key] ?? 0) + amount) * 100) / 100;
     });
 
-    if (Object.keys(valuesByAccount).length === 0) return;
+    if (Object.keys(valuesByAccount).length === 0) return null;
 
     const transactionId = this._transactionIdForMode(mode);
     const financialAccount = this._getCollecteFinancialAccount(transactionId);
@@ -587,7 +592,8 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       transaction_id: transactionId,
     };
 
-    await this.bookService.create_book_entry(entry);
+    const created = await this.bookService.create_book_entry(entry);
+    return created?.id ?? null;
   }
 
   private _refreshSummary(): void {

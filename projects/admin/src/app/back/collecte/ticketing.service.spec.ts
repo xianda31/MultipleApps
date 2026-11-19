@@ -193,6 +193,27 @@ describe('TicketingService', () => {
     expect(reservations.rows.every(row => row.accountedAt === accountedAt)).toBeTrue();
   });
 
+  it('puts back « à payer » the bookings settled by a deleted entry, and only those', async () => {
+    await service.importReservations([...couple, { memberId: 'member-paul', memberName: 'MARTIN Paul', isMember: true }], ctx);
+    const payment = await sell(['member-anne', 'member-jean']);
+    await service.markAccounted({
+      reservationIds: [reservationOf('member-anne').id, reservationOf('member-jean').id],
+      paymentIds: [payment.id],
+      bookEntryIdByReservationId: { [reservationOf('member-anne').id]: 'entry-cheques', [reservationOf('member-jean').id]: 'entry-cheques' },
+    });
+    Object.assign(reservationOf('member-paul'), { reservationStatus: 'sold', paidChannel: 'caisse', bookEntryId: 'entry-caisse' });
+
+    const released = await service.releaseReservationsOfBookEntry('entry-cheques');
+
+    expect(released.sort()).toEqual(['DUPONT Anne', 'DUPONT Jean']);
+    expect(reservationOf('member-anne')).toEqual(jasmine.objectContaining({
+      reservationStatus: 'reserved', paymentId: null, accountedAt: null, bookEntryId: null, paidChannel: null,
+    }));
+    expect(payments.get(payment.id).status).toBe('cancelled');
+    expect(reservationOf('member-paul')).toEqual(jasmine.objectContaining({ reservationStatus: 'sold', bookEntryId: 'entry-caisse' }));
+    expect(await service.releaseReservationsOfBookEntry('entry-cheques')).toEqual([]);
+  });
+
   it('lists the bookings and payments of the event whatever their date', async () => {
     await service.importReservations([couple[0]], ctx);
     await service.importReservations([couple[1]], { ...ctx, date: '2026-12-01' });

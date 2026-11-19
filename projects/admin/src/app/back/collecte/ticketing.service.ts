@@ -165,12 +165,49 @@ export class TicketingService {
   async markAccounted(input: {
     reservationIds: string[];
     paymentIds: string[];
+    bookEntryIdByReservationId?: Record<string, string>;
   }): Promise<void> {
     const accountedAt = new Date().toISOString();
     await Promise.all([
-      ...input.reservationIds.map((id) => this.models.TicketingReservation.update({ id, accountedAt })),
+      ...input.reservationIds.map((id) => this.models.TicketingReservation.update({
+        id, accountedAt, ...(input.bookEntryIdByReservationId?.[id] ? { bookEntryId: input.bookEntryIdByReservationId[id] } : {}),
+      })),
       ...input.paymentIds.map((id) => this.models.TicketingPayment.update({ id, accountedAt })),
     ]);
+  }
+
+  /** Réservations réglées par une écriture comptable (vente caisse/en ligne, ou encaissements billetterie comptabilisés). */
+  async listReservationsOfBookEntry(bookEntryId: string): Promise<TicketingReservation[]> {
+    const { data } = await this.models.TicketingReservation.list({ limit: 3000 });
+    return (data ?? []).filter((entry: TicketingReservation | null) =>
+      !!entry && entry.bookEntryId === bookEntryId && entry.reservationStatus === 'sold') as TicketingReservation[];
+  }
+
+  /**
+   * L'écriture qui avait réglé ces réservations est supprimée ou intégralement remboursée :
+   * elles redeviennent « réservées » (à payer) et les encaissements billetterie correspondants sont annulés.
+   * Retourne les noms des personnes concernées.
+   */
+  async releaseReservationsOfBookEntry(bookEntryId: string): Promise<string[]> {
+    const reservations = await this.listReservationsOfBookEntry(bookEntryId);
+    const paymentIds = [...new Set(reservations.map((reservation) => reservation.paymentId).filter((id): id is string => !!id))];
+    await Promise.all([
+      ...reservations.map((reservation) => this.models.TicketingReservation.update({
+        id: reservation.id,
+        reservationStatus: 'reserved',
+        paymentId: null,
+        paymentMode: null,
+        paidAmount: null,
+        paidAccount: null,
+        paidProductId: null,
+        paidChannel: null,
+        paidAt: null,
+        accountedAt: null,
+        bookEntryId: null,
+      })),
+      ...paymentIds.map((id) => this.models.TicketingPayment.update({ id, status: 'cancelled' })),
+    ]);
+    return reservations.map((reservation) => reservation.memberName);
   }
 
   buildReservationKey(memberName: string, memberId?: string): string {
