@@ -64,22 +64,6 @@
       <div class="mb-3">
         <input class="form-control" [(ngModel)]="q.text" placeholder="Texte de la question" />
       </div>
-      <div class="row g-2 mb-3">
-        <div class="col-md-6">
-          <label class="form-label small text-muted">Titre court dans les résultats</label>
-          <input class="form-control form-control-sm" [(ngModel)]="q.resultLabel" placeholder="Ex : Participation AG" />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label small text-muted">Titre de la valeur choisie</label>
-          <input class="form-control form-control-sm" [(ngModel)]="q.detailResultLabel" placeholder="Ex : Mandataire" />
-        </div>
-      </div>
-      <div class="row g-2 mb-3">
-        <div class="col-md-6">
-          <label class="form-label small text-muted">Titre du commentaire</label>
-          <input class="form-control form-control-sm" [(ngModel)]="q.commentResultLabel" placeholder="Ex : Précision" />
-        </div>
-      </div>
       <div class="mb-2">
         <label class="form-label text-muted small">Réponses — une seule sélection possible</label>
         @for (opt of q.options; track trackByIndex($index)) {
@@ -87,16 +71,16 @@
           <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">{{ $index + 1 }}</span>
             <input class="form-control" [(ngModel)]="opt.label" placeholder="Option {{ $index + 1 }}" />
-            <input class="form-control" [(ngModel)]="opt.keyword" placeholder="Mot-clé" style="max-width:120px" />
+            <input class="form-control" [(ngModel)]="opt.keyword" placeholder="Nom court" style="max-width:120px"
+              title="Facultatif : remplace le texte de la réponse dans les résultats (ex. « Oui » au lieu de « Oui, je viens »)." />
             <button type="button"
               class="btn btn-outline-primary "
               (click)="toggleNextAction(opt)"
               [title]="opt.nextAction === 'END' ? 'Termine le questionnaire' : 'Continue avec la question suivante'"
               [attr.aria-label]="opt.nextAction === 'END' ? 'Termine le questionnaire' : 'Continue avec la question suivante'"
               [attr.aria-pressed]="opt.nextAction === 'END'">
-              <i class="bi fs-5 lh-1" [class.bi-arrow-right-circle-fill]="opt.nextAction === 'NEXT'"
-                [class.bi-sign-stop-fill]="opt.nextAction === 'END'"></i>
-              <!-- <span class="">{{ opt.nextAction === 'END' ? 'final' : 'continu' }}</span> -->
+              <i class="bi lh-1 me-1" [class.bi-arrow-right-circle-fill]="opt.nextAction === 'NEXT'"
+                [class.bi-sign-stop-fill]="opt.nextAction === 'END'"></i>{{ opt.nextAction === 'END' ? 'Fin' : 'Suite' }}
             </button>
           </div>
           <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
@@ -104,24 +88,24 @@
               @if (!opt.detailOptions?.length) {
               <button type="button" class="btn btn-outline-primary" (click)="addDetailList(opt)"
                 title="Ajouter une liste déroulante à cette réponse">
-                <i class="bi bi-menu-button-wide"></i>
+                <i class="bi bi-menu-button-wide me-1"></i>Liste
               </button>
               <button type="button" class="btn btn-outline-primary" (click)="openMemberImport(opt)"
                 title="Ajouter une liste de membres à cette réponse">
-                <i class="bi bi-people"></i>
+                <i class="bi bi-people me-1"></i>Membres
               </button>
               }
               @if (!opt.commentEnabled) {
               <button type="button" class="btn btn-outline-primary" (click)="addCommentBox(opt)"
                 title="Ajouter un commentaire libre à cette réponse">
-                <i class="bi bi-chat-left-text"></i>
+                <i class="bi bi-chat-left-text me-1"></i>Commentaire
               </button>
               }
               @if (tag) {
               <button type="button" class="btn" [class.btn-success]="opt.payTag"
                 [class.btn-outline-secondary]="!opt.payTag" (click)="setPayTag(opt, !opt.payTag)"
                 [title]="opt.payTag ? 'Retirer le paiement de cette réponse' : 'Cette réponse déclenche le paiement'">
-                <i class="bi" [class.bi-x-lg]="opt.payTag" [class.bi-currency-euro]="!opt.payTag"></i>
+                <i class="bi bi-currency-euro me-1"></i>{{ opt.payTag ? 'Paiement ✓' : 'Paiement' }}
               </button>
               }
               <button class="btn btn-outline-secondary" (click)="removeOption(q, $index)"
@@ -192,6 +176,38 @@
           <i class="bi bi-plus me-1"></i>Ajouter une réponse
         </button>
       </div>
+      <details class="mt-3 border rounded px-2 py-1">
+        <summary class="small text-muted">
+          <i class="bi bi-bar-chart me-1"></i>Affichage dans les résultats (facultatif)
+        </summary>
+        <p class="small text-muted mt-2 mb-2">
+          Noms courts utilisés en en-tête du tableau de résultats et de l’export CSV. Laissés vides, les valeurs grisées s’appliquent.
+        </p>
+        <div class="row g-2 mb-2">
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Nom de la question</label>
+            <input class="form-control form-control-sm" [(ngModel)]="q.resultLabel" [placeholder]="defaultQuestionHeader(q)" />
+          </div>
+          @if (hasDetailList(q)) {
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Nom du choix dans la liste</label>
+            <input class="form-control form-control-sm" [(ngModel)]="q.detailResultLabel" [placeholder]="defaultDetailHeader" />
+          </div>
+          }
+          @if (hasCommentBox(q)) {
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Nom du commentaire</label>
+            <input class="form-control form-control-sm" [(ngModel)]="q.commentResultLabel" [placeholder]="defaultCommentHeader" />
+          </div>
+          }
+        </div>
+        <p class="small mb-1">
+          En-têtes des résultats :
+          @for (header of resultHeadersPreview(q); track $index) {
+          <code class="me-1">{{ header }}</code>
+          }
+        </p>
+      </details>
     </div>
   </div>
   }

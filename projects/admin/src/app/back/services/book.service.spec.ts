@@ -11,6 +11,7 @@ describe('BookService', () => {
     transactionOverrides: Record<string, unknown> = {},
     dbHandler: Record<string, unknown> = {},
     groups: Group_names[] = [Group_names.Admin],
+    ticketingService?: Record<string, unknown>,
   ) {
     const groupService = jasmine.createSpyObj<GroupService>('GroupService', ['getCurrentUserGroups']);
     groupService.getCurrentUserGroups.and.resolveTo(groups);
@@ -27,7 +28,7 @@ describe('BookService', () => {
           initializedSeason: '2026/2027', calendarSeason: '2026/2027', status: 'open', writesAllowed: true,
         }),
       } as any,
-      { showInfo: () => undefined, showError: () => undefined } as any,
+      { showInfo: () => undefined, showError: () => undefined, showWarning: () => undefined } as any,
       {
         get_transaction: () => ({ revenue_account_to_show: true, ...transactionOverrides }),
         get_entry_label: () => 'virement annoncé',
@@ -36,6 +37,7 @@ describe('BookService', () => {
       dbHandler as any,
       { logged_member$: of(null) } as any,
       groupService,
+      ticketingService as any,
     );
   }
 
@@ -162,6 +164,40 @@ describe('BookService', () => {
       await expectAsync(service.delete_book_entry(original)).toBeRejectedWithError('Saison verrouillée');
       expect(update).not.toHaveBeenCalled();
       expect(remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ticketing bookings settled by an entry', () => {
+    const sale: BookEntry = {
+      id: 'sale-entry', season: '2026/2027', date: '2026-11-19',
+      transaction_id: TRANSACTION_ID.achat_adhérent_par_carte, stripeTag: 'stripe:noel',
+      amounts: { [FINANCIAL_ACCOUNT.STRIPE_debit]: 15 },
+      operations: [{ label: 'repas', member: 'RENOUX Christian', values: { PAF: 15 } }],
+    };
+    function ticketing() {
+      return jasmine.createSpyObj('TicketingService', {
+        releaseReservationsOfBookEntry: Promise.resolve(['RENOUX Christian']),
+        listReservationsOfBookEntry: Promise.resolve([{ memberName: 'RENOUX Christian' }]),
+      });
+    }
+
+    it('puts them back « à payer » when the entry is deleted', async () => {
+      const ticketingService = ticketing();
+      const service = createService({}, { deleteBookEntry: async () => true }, undefined, ticketingService);
+      await service.delete_book_entry(sale);
+      expect(ticketingService.releaseReservationsOfBookEntry).toHaveBeenCalledOnceWith('sale-entry');
+    });
+
+    it('puts them back « à payer » on a full Stripe refund only', async () => {
+      const ticketingService = ticketing();
+      const service = createService({}, {}, undefined, ticketingService);
+      spyOn(service, 'create_book_entry').and.callFake(async entry => entry);
+
+      await service.create_refund_book_entry(sale, 500);
+      expect(ticketingService.releaseReservationsOfBookEntry).not.toHaveBeenCalled();
+
+      await service.create_refund_book_entry(sale, 1500);
+      expect(ticketingService.releaseReservationsOfBookEntry).toHaveBeenCalledOnceWith('sale-entry');
     });
   });
 

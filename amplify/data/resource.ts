@@ -434,7 +434,7 @@ const schema = a.schema({
     active: a.boolean().required(),
     shopEnabled: a.boolean(),          // visible dans Shop (vente nominative adhérent)
     batchEnabled: a.boolean(),         // visible dans CollecteVente (vente en batch/événement)
-    fulfillmentAction: a.enum(['CREATE_PLAYBOOK']),
+    fulfillmentAction: a.enum(['CREATE_PLAYBOOK', 'SETTLE_TICKETING_RESERVATION']),
     fulfillmentParameters: a.json(),
   })
     .identifier(['id'])
@@ -483,6 +483,8 @@ const schema = a.schema({
     paidAt: a.datetime(),
     accountedAt: a.datetime(),
     source: a.string(),
+    paidChannel: a.string(),                 // 'billetterie' | 'caisse' | 'en_ligne'
+    bookEntryId: a.string(),                 // écriture de la vente en caisse ou en ligne (déjà comptabilisée)
   })
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),
@@ -501,6 +503,7 @@ const schema = a.schema({
     totalAmount: a.float().required(),
     reservationCount: a.integer().required(),
     accountedAt: a.datetime(),
+    productId: a.string(),                   // produit (événement) encaissé
   })
     .authorization((allow) => [
       allow.group(Group_names.System).to(['read', 'create', 'update', 'delete']),

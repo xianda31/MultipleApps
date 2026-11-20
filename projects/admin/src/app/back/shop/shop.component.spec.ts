@@ -27,6 +27,7 @@ describe('ShopComponent buyer list', () => {
     });
     const products = jasmine.createSpyObj('ShopProductService', ['loadAndOrganizeProducts']);
     products.loadAndOrganizeProducts.and.returnValue(EMPTY);
+    const cart$ = new Subject<any>();
     const configuration = jasmine.createSpyObj('SystemDataService', ['get_configuration', 'get_season']);
     configuration.get_season.and.callFake((date: Date) => SystemDataService.prototype.get_season(date));
     configuration.get_configuration.and.returnValue(EMPTY);
@@ -37,7 +38,8 @@ describe('ShopComponent buyer list', () => {
     books.list_book_entries.and.returnValue(EMPTY);
     const cartService = jasmine.createSpyObj('CartService', [
       'clearCart', 'save_sale', 'setSeller', 'setDebt', 'setAsset', 'getCartItems', 'getCartAmount',
-    ], { cart$: EMPTY });
+      'addToCart', 'build_cart_item',
+    ], { cart$ });
     cartService.getCartItems.and.returnValue([]);
     const loggedMember$ = new BehaviorSubject<Member | null>(null);
     const buyerContext = jasmine.createSpyObj('BuyerContextService', [
@@ -52,6 +54,8 @@ describe('ShopComponent buyer list', () => {
     ], { checkoutState$: EMPTY });
     stripeCheckout.getCurrentPhase.and.returnValue('idle');
     stripeCheckout.getPendingSessionId.and.returnValue(null);
+    const eventTicketGuard = jasmine.createSpyObj('EventTicketGuardService', ['refusalReason']);
+    eventTicketGuard.refusalReason.and.resolveTo(null);
     const component = new ShopComponent(
       cartService,
       membersService,
@@ -73,8 +77,9 @@ describe('ShopComponent buyer list', () => {
       jasmine.createSpyObj('StripeTerminalService', ['disconnectReader']),
       jasmine.createSpyObj('CardPaymentOrchestratorService', ['cancelRemotePayment']),
       books,
+      eventTicketGuard,
     );
-    return { component, members$, membersService, toast, cartService, loggedMember$, buyerContext, stripeCheckout };
+    return { component, members$, membersService, toast, cartService, loggedMember$, buyerContext, stripeCheckout, eventTicketGuard, products, cart$ };
   }
 
   for (const onlineMode of [false, true]) {
@@ -214,6 +219,41 @@ describe('ShopComponent buyer list', () => {
     await component.retryBuyerBalance();
     expect(component.checkoutBlocked).toBeFalse();
     expect(component.buyerBalanceMessage).toBe('');
+    component.ngOnDestroy();
+  });
+
+  it('checks the meal beneficiary, not the buyer, and blocks checkout until every beneficiary answered', async () => {
+    const dinner = { id: 'product-noel', name: 'Repas de Noël', fulfillmentAction: 'SETTLE_TICKETING_RESERVATION' } as any;
+    const { component, loggedMember$, eventTicketGuard, products, cart$ } = createComponent(true);
+    products.loadAndOrganizeProducts.and.returnValue(new BehaviorSubject({ allProducts: [dinner], productsArray: [] }));
+    const other = { id: 'member-2', firstname: 'Marie', lastname: 'AUTRE', lifecycleStatus: 'ACTIVE' } as Member;
+    eventTicketGuard.refusalReason.and.callFake(async (_product: any, members: Member[]) =>
+      members.some((member) => member.id === buyer.id) ? 'TEST Jean n’a pas répondu « je viens » au sondage : achat impossible.' : null);
+    loggedMember$.next(buyer);
+    component.ngOnInit();
+    const settle = () => new Promise((resolve) => setTimeout(resolve));
+    await settle();
+
+    cart$.next({ items: [{ product_id: 'product-noel', payee: buyer, payee_name: 'TEST Jean', paied: 15 }] });
+    await settle();
+    expect(component.eventTicketCheckoutBlocked).toBeTrue();
+    expect(component.checkoutWarning).toContain('achat impossible');
+
+    cart$.next({ items: [{ product_id: 'product-noel', payee: other, payee_name: 'AUTRE Marie', paied: 15 }] });
+    await settle();
+    expect(eventTicketGuard.refusalReason).toHaveBeenCalledWith(dinner, [other]);
+    expect(component.eventTicketCheckoutBlocked).toBeFalse();
+
+    cart$.next({ items: [
+      { product_id: 'product-noel', payee: other, payee_name: 'AUTRE Marie', paied: 15 },
+      { product_id: 'product-noel', payee: other, payee_name: 'AUTRE Marie', paied: 15 },
+    ] });
+    await settle();
+    expect(component.eventTicketCheckoutWarning).toContain('deux fois');
+
+    cart$.next({ items: [] });
+    await settle();
+    expect(component.eventTicketCheckoutBlocked).toBeFalse();
     component.ngOnDestroy();
   });
 

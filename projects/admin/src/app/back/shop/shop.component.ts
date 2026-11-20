@@ -21,7 +21,8 @@ import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { CartItem, PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
-import { BookService } from '../services/book.service';
+import { BookService, FulfillmentError } from '../services/book.service';
+import { EventTicketGuardService, SETTLE_TICKETING_RESERVATION } from '../collecte/event-ticket-guard.service';
 import { Subscription } from 'rxjs';
 /**
  * ShopComponent — Interface de gestion des ventes (cartes, adhésions, produits)
@@ -112,14 +113,18 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
   membershipCheckoutWarning = '';
   accountingCheckoutBlocked = false;
   accountingCheckoutWarning = '';
+  eventTicketCheckoutBlocked = false;
+  eventTicketCheckoutWarning = '';
+  private eventTicketRevision = 0;
 
   get checkoutBlocked(): boolean {
     return !this.buyerBalanceReady || this.buyerBalanceLoading
-      || this.accountingCheckoutBlocked || this.membershipCheckoutBlocked;
+      || this.accountingCheckoutBlocked || this.membershipCheckoutBlocked || this.eventTicketCheckoutBlocked;
   }
 
   get checkoutWarning(): string {
-    return this.buyerBalanceMessage || this.accountingCheckoutWarning || this.membershipCheckoutWarning;
+    return this.buyerBalanceMessage || this.accountingCheckoutWarning || this.membershipCheckoutWarning
+      || this.eventTicketCheckoutWarning;
   }
 
   // ── TPE (Stripe Terminal) ──────────────────────────────────
@@ -178,6 +183,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     private stripeTerminal: StripeTerminalService,
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
     private bookService: BookService,
+    private eventTicketGuard: EventTicketGuardService,
   ) {}
 
   ngAfterViewInit(): void {
@@ -300,12 +306,14 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       this.cartSubscription = this.cartService.cart$.subscribe((cart) => {
         this.cartItemsSnapshot = cart.items || [];
         this.validateMembershipGuardrailBeforeCheckout();
+        void this.refreshEventTicketGuard();
       });
 
       // Load and organize products
       this.shopProducts.loadAndOrganizeProducts().subscribe((data) => {
         this.allProducts = data.allProducts;
         this.products_array = data.productsArray;
+        void this.refreshEventTicketGuard();
         // Try to complete Stripe checkout if pending
         this.tryCompleteStripeCheckout();
       });
@@ -438,15 +446,56 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.buyerBalanceLoading || !this.buyerBalanceReady || this.isSaving || this.tpePaymentInProgress) return;
     if (!this.pendingPairedProduct || !this.pairedSecondMember) return;
     if (!this.ensureBuyerCanPurchase(this.buyer) || !this.ensureBuyerCanPurchase(this.pairedSecondMember)) return;
-    const item = this.cartService.build_cart_item(
-      this.pendingPairedProduct,
-      this.buyer!,
-      this.pairedSecondMember
-    );
+    const item = this.cartService.build_cart_item(this.pendingPairedProduct, this.buyer!, this.pairedSecondMember);
     this.cartService.addToCart(item);
     this.showPairedModal = false;
     this.pendingPairedProduct = null;
     this.pairedSecondMember = null;
+  }
+
+  /**
+   * Repas / événement : le critère est le bénéficiaire (nom porté sur l'article), pas l'acheteur.
+   * Chaque bénéficiaire doit avoir répondu « je viens » au sondage du produit et ne pas l'avoir déjà réglé.
+   */
+  private async refreshEventTicketGuard(): Promise<void> {
+    const revision = ++this.eventTicketRevision;
+    const byProduct = new Map<string, { product: Product; members: Member[] }>();
+    for (const item of this.cartItemsSnapshot) {
+      const product = this.allProducts.find((candidate) => candidate.id === item.product_id);
+      if (!product || product.fulfillmentAction !== SETTLE_TICKETING_RESERVATION) continue;
+      const entry = byProduct.get(product.id) ?? { product, members: [] };
+      entry.members.push(...[item.payee, item.paired_with].filter((member): member is Member => !!member));
+      byProduct.set(product.id, entry);
+    }
+    if (byProduct.size === 0) {
+      this.eventTicketCheckoutBlocked = false;
+      this.eventTicketCheckoutWarning = '';
+      return;
+    }
+
+    this.eventTicketCheckoutBlocked = true;
+    this.eventTicketCheckoutWarning = 'Vérification des réponses au sondage…';
+    let warning = '';
+    try {
+      for (const { product, members } of byProduct.values()) {
+        const duplicate = members.find((member, index) => members.findIndex((other) => other.id === member.id) !== index);
+        if (duplicate) {
+          warning = `« ${product.name} » figure deux fois dans le panier pour ${duplicate.lastname} ${duplicate.firstname}.`;
+          break;
+        }
+        const refusal = await this.eventTicketGuard.refusalReason(product, members);
+        if (refusal) {
+          warning = `${refusal} Changez le bénéficiaire de l’article (clic sur le nom) ou retirez-le.`;
+          break;
+        }
+      }
+    } catch (error) {
+      console.error('[Shop] Contrôle de réponse au sondage impossible', error);
+      warning = 'Impossible de vérifier les réponses au sondage : modifiez le panier pour réessayer.';
+    }
+    if (revision !== this.eventTicketRevision) return;
+    this.eventTicketCheckoutBlocked = warning !== '';
+    this.eventTicketCheckoutWarning = warning;
   }
 
   on_paired_cancelled() {
@@ -469,6 +518,14 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       })
       .catch((error) => {
         console.error('error saving sale', error);
+        if (error instanceof FulfillmentError) {
+          this.toastService.showWarning(
+            'vente à ' + full_name + ' enregistrée',
+            `Attention : ${error.details.join(' ; ') || 'une action après vente a échoué'}. `
+            + 'Une demande d’assistance a été créée ; vérifiez s’il faut rembourser.',
+          );
+          return;
+        }
         this.toastService.showError('vente', 'erreur lors de l\'enregistrement de la vente');
       })
       .finally(() => {
@@ -812,6 +869,11 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
       );
     } catch (error) {
       console.error('error saving zero-total online sale', error);
+      if (error instanceof FulfillmentError) {
+        this.toastService.showWarning('Achat enregistré',
+          `Attention : ${error.details.join(' ; ') || 'une action après vente a échoué'}. Le club a été prévenu.`);
+        return;
+      }
       this.toastService.showError('Achat', 'Erreur lors de l’enregistrement de la vente');
     } finally {
       this.isSaving = false;

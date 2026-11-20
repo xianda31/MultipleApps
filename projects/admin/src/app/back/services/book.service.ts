@@ -13,8 +13,20 @@ import { DBhandler } from '../../common/services/graphQL.service';
 import { AuthentificationService } from '../../common/authentification/authentification.service';
 import { TransactionService } from './transaction.service';
 import { PaymentMode, SALE_ACCOUNTS } from '../shop/cart/cart.interface';
+import { TicketingService } from '../collecte/ticketing.service';
 
 export type Fields = 'date' | 'classe' | 'transaction' | 'montant' | 'tag' | 'invoice';
+
+/**
+ * La vente est enregistrée, mais une action après vente a échoué (ex. double paiement d'une réservation).
+ * Le détail est déjà transmis à l'assistance par le backend.
+ */
+export class FulfillmentError extends Error {
+  constructor(readonly bookEntryId: string, readonly details: string[]) {
+    super(`Le traitement métier de l'écriture ${bookEntryId} a échoué${details.length ? ` : ${details.join(' ; ')}` : ''}`);
+    this.name = 'FulfillmentError';
+  }
+}
 
 @Injectable({
   providedIn: 'root'
@@ -83,6 +95,7 @@ export class BookService {
     private dbHandler: DBhandler,
     private authService: AuthentificationService,
     private groupService: GroupService,
+    private ticketingService?: TicketingService,
   ) {
 
     // Chargement conditionné à l'authentification : BookEntry est une donnée métier
@@ -210,7 +223,10 @@ export class BookService {
   async process_book_entry_actions(bookEntryId: string): Promise<any> {
     const result = await this.dbHandler.processBookEntryActions(bookEntryId);
     if (Number(result?.failed || 0) > 0) {
-      throw new Error(`Le traitement métier de l'écriture ${bookEntryId} a échoué`);
+      const details = (Array.isArray(result?.results) ? result.results : [])
+        .filter((action: any) => action?.status === 'failed' && action?.error)
+        .map((action: any) => String(action.error));
+      throw new FulfillmentError(bookEntryId, details);
     }
     return result;
   }
@@ -306,8 +322,9 @@ export class BookService {
 
   async delete_book_entry(book_entry: BookEntry) {
     this.systemDataService.assert_accounting_write_allowed(book_entry.season);
+    let done: unknown;
     try {
-      let done = await this.dbHandler.deleteBookEntry(book_entry.id);
+      done = await this.dbHandler.deleteBookEntry(book_entry.id);
       if (done) {
         this.publishBookEntries(
           (this._book_entries ?? []).filter((entry) => entry.id !== book_entry.id)
@@ -317,6 +334,23 @@ export class BookService {
       console.error('error', error);
       this.toastService.showError('base comptabilité', 'Vous n\'êtes pas autorisé à supprimer une entrée comptable');
       throw error instanceof Error ? error.message : String(error);
+    }
+    if (done) await this.release_ticketing_reservations(book_entry.id, 'Écriture supprimée');
+  }
+
+  /** Les réservations billetterie réglées par cette écriture redeviennent « à payer ». */
+  private async release_ticketing_reservations(bookEntryId: string, reason: string): Promise<void> {
+    if (!this.ticketingService) return;
+    try {
+      const names = await this.ticketingService.releaseReservationsOfBookEntry(bookEntryId);
+      if (names.length > 0) {
+        this.toastService.showWarning('Billetterie',
+          `${reason} : réservation de ${names.join(', ')} remise « à payer ».`);
+      }
+    } catch (error) {
+      console.error('[BookService] Mise à jour de la billetterie impossible', error);
+      this.toastService.showError('Billetterie',
+        `${reason}, mais les réservations qu’elle réglait n’ont pas pu être remises « à payer » : à corriger en billetterie.`);
     }
   }
 
@@ -1107,7 +1141,17 @@ book_entries_to_revenues(book_entries: BookEntry[]): Revenue[] {
       tag: sourceEntry.tag ? `refund_${sourceEntry.tag}` : undefined
     };
 
-    return this.create_book_entry(refundEntry);
+    const created = await this.create_book_entry(refundEntry);
+    if (refundAmountCents === Math.round(sourceAmount * 100)) {
+      await this.release_ticketing_reservations(sourceEntry.id, 'Paiement intégralement remboursé');
+    } else if (this.ticketingService) {
+      const linked = await this.ticketingService.listReservationsOfBookEntry(sourceEntry.id).catch(() => []);
+      if (linked.length > 0) {
+        this.toastService.showWarning('Billetterie',
+          `Remboursement partiel : la réservation de ${linked.map((row) => row.memberName).join(', ')} reste « payée ».`);
+      }
+    }
+    return created;
   }
 
   get_total_revenues(key?: string): number {

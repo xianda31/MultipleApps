@@ -15,6 +15,18 @@ import { getGlyphForAccount } from '../../common/utilities/account-glyph.mapper'
     styleUrl: './products.component.scss'
 })
 export class ProductsComponent implements OnInit, OnDestroy {
+  /** Libellés et explications des réglages de diffusion, partagés par la liste et la fenêtre d'édition. */
+  readonly flagHelp = {
+    paired: { column: 'Couple', label: 'Produit pour un couple (2 membres)',
+      help: 'Vendu en une fois pour deux adhérents, par exemple une adhésion couple.' },
+    shopEnabled: { column: 'Caisse', label: 'Vendu à la caisse (Boutique)',
+      help: 'Proposé au vendeur dans Boutique, pour un acheteur choisi.' },
+    stripeEnabled: { column: 'En ligne', label: 'Achetable en ligne par l’adhérent (CB)',
+      help: 'Visible dans la boutique en ligne du site. Nécessite aussi « Caisse ».' },
+    batchEnabled: { column: 'Billetterie', label: 'Vendu en billetterie (événement)',
+      help: 'Proposé dans Billetterie pour encaisser les réservations d’un événement, par exemple un repas, importées d’un sondage.' },
+  } as const;
+
   products_subscription: any;
   products: Product[] = [];
   showModal = false;

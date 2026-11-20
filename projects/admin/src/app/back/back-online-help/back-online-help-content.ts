@@ -21,7 +21,7 @@ export type HelpTopic = {
 };
 
 // Base editable: suivre l'ordre et les libelles de back-navbar.definition.ts
-export const HELP_CONTENT_VERSION = '2026-11-03.1';
+export const HELP_CONTENT_VERSION = '2026-11-19.1';
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
@@ -118,11 +118,16 @@ export const HELP_TOPICS: HelpTopic[] = [
           'Verifier le membre avant validation.',
           'Confirmer le recapitulatif avant enregistrement.',
         ],
+        caution: [
+          'Repas ou événement (produit dont le pilote est « Régler la réservation billetterie ») : c’est le bénéficiaire inscrit sur l’article qui compte, pas l’acheteur. Un adhérent peut payer le repas d’un autre, à condition que ce dernier ait répondu « je viens » au sondage de l’événement et ne l’ait pas déjà réglé.',
+          'Si un bénéficiaire n’est pas en règle, la validation est bloquée et le motif s’affiche sous le bouton : cliquer sur le nom de l’article pour changer de bénéficiaire, ou retirer l’article.',
+          'La vente règle automatiquement la réservation en billetterie (« payé · caisse ») : ne pas l’encaisser une seconde fois en billetterie.',
+        ],
       },
       {
         id: 'boutique-billetterie',
         title: 'billetterie',
-        summary: 'Suivi des ventes de billetterie.',
+        summary: 'Encaissement et suivi des inscriptions à un événement payant (repas, sortie…), à partir des réponses à son sondage.',
         route: BACK_ROUTE_ABS_PATHS['Billetterie'],
         nav: {
           menuTitle: 'Boutique',
@@ -131,18 +136,33 @@ export const HELP_TOPICS: HelpTopic[] = [
           groupLevel: 'Contributeur',
         },
         functionalities: [
-          'Encaissement sur flux billetterie.',
-          'Verification des informations de vente.',
+          'Un événement = un produit dédié (ex. « Repas de Noël ») ; la billetterie regroupe toutes ses réservations, quelle que soit la date.',
+          'Import des réservations depuis le sondage rattaché au produit : une réservation par réponse « je viens ».',
+          'Encaissement groupé (espèces, chèque, carte) des réservations non réglées, puis écriture comptable.',
+          'Synthèse : inscrits, payés par canal (billetterie, caisse, en ligne), restant dus ; export CSV.',
         ],
         howTo: [
-          'Ouvrir billetterie depuis Boutique.',
-          'Controler les donnees avant validation.',
+          'Parcours complet d’un événement payant :',
+          '1. Produits à la vente : créer le produit de l’événement, cocher « Vendu en billetterie » (et « Caisse » / « En ligne » pour le vendre aussi en boutique), choisir le pilote « Régler la réservation billetterie ».',
+          '2. Sondage : créer le sondage, choisir le produit dans « Code Produit », et marquer « Paiement » sur la réponse qui vaut inscription (« je viens »). Les choix de menu se posent en questions du sondage.',
+          '3. Mailing : choisir le sondage dans « Sondage associé » et envoyer ; chaque destinataire reçoit son lien « Je réponds ». Les invités sans fiche membre s’ajoutent en « destinataire externe ».',
+          '4. Billetterie : choisir le sondage dans « Importer un sondage » (l’événement est sélectionné automatiquement) ; réimporter autant que nécessaire, les réservations payées ne sont jamais modifiées.',
+          '5. Encaisser : sélectionner les réservations non réglées, choisir le mode de règlement puis « Encaisser ». Les adhérents peuvent aussi payer en caisse ou en ligne : leur réservation passe alors seule à « payé ».',
+          '6. Déclencher l’écriture comptable pour les encaissements faits en billetterie (les ventes caisse/en ligne sont déjà comptabilisées).',
+          'Le décompte par menu pour le traiteur se lit dans les résultats du sondage.',
+        ],
+        caution: [
+          'Pas de réponse « je viens » au sondage = pas d’achat possible, ni en caisse ni en ligne. Pour une réponse reçue autrement (téléphone…), utiliser « Saisir un vote » dans les résultats du sondage, puis réimporter.',
+          'Un invité sans fiche membre ne peut pas être acheteur en boutique : il se règle uniquement en billetterie.',
+          'Si l’écriture qui avait réglé une réservation est supprimée, ou si le paiement Stripe est intégralement remboursé, la réservation redevient « à payer » (message affiché). Un remboursement partiel la laisse payée.',
+          'Un paiement saisi en billetterie ne peut être annulé (corbeille) que tant qu’il n’est pas comptabilisé.',
+          'Un double paiement (repas déjà réglé) est refusé en boutique ; s’il arrive malgré tout, une demande d’assistance est créée pour rembourser.',
         ],
       },
       {
         id: 'boutique-produits',
         title: 'produits a la vente',
-        summary: 'Maintenance du catalogue produits.',
+        summary: 'Catalogue des produits : prix, compte comptable et canaux de vente.',
         route: BACK_ROUTE_ABS_PATHS['Products'],
         nav: {
           menuTitle: 'Boutique',
@@ -151,12 +171,16 @@ export const HELP_TOPICS: HelpTopic[] = [
           groupLevel: 'Contributeur',
         },
         functionalities: [
-          'Creation et mise a jour des produits.',
-          'Pilotage des categories visibles en caisse.',
+          'Création et mise à jour des produits (nom, description, compte, prix).',
+          'Canaux de vente : « Caisse » (boutique, vendeur), « En ligne » (boutique du site, carte bancaire ; nécessite aussi « Caisse »), « Billetterie » (encaissement d’un événement).',
+          'Pilote : action automatique après la vente (création d’une carte d’admission, règlement de la réservation billetterie).',
         ],
         howTo: [
-          'Ajuster libelle, prix et categorie.',
-          'Verifier l apparition dans la boutique.',
+          'Ajuster libellé, prix, compte et canaux, puis vérifier l’apparition dans la boutique.',
+          'Pour un événement payant : cocher « Billetterie » et choisir le pilote « Régler la réservation billetterie » ; voir la rubrique billetterie pour le parcours complet.',
+        ],
+        caution: [
+          'Un produit inactif n’apparaît nulle part, même s’il est coché pour un canal.',
         ],
       },
     ],
@@ -786,10 +810,15 @@ export const HELP_TOPICS: HelpTopic[] = [
         functionalities: [
           'Preparation des campagnes.',
           'Validation du contenu avant diffusion.',
+          'Mode sondage : avec un « Sondage associé », chaque destinataire reçoit un lien personnel (bouton « Je réponds »).',
         ],
         howTo: [
           'Construire le message.',
           'Relire puis envoyer a la cible.',
+          'Pour un sondage : choisir le sondage dans « Sondage associé », puis « Envoyer le sondage ».',
+        ],
+        caution: [
+          'Pour inviter une personne sans fiche membre à répondre, l’ajouter en « destinataire externe » : les personnes en copie ne reçoivent pas de lien de sondage.',
         ],
       },
       {
@@ -826,10 +855,17 @@ export const HELP_TOPICS: HelpTopic[] = [
         functionalities: [
           'Creation/edition des sondages.',
           'Consultation des resultats.',
+          'Sondage d’événement payant : « Code Produit » rattache le sondage au produit de l’événement, et le bouton « Paiement » marque la réponse qui vaut inscription.',
+          'Saisie manuelle d’une réponse (« Saisir un vote ») pour une personne qui a répondu autrement que par le lien.',
         ],
         howTo: [
           'Configurer le sondage.',
           'Suivre les reponses puis ouvrir les resultats.',
+          'Le décompte par réponse (ex. par menu) sert de commande au traiteur.',
+        ],
+        caution: [
+          'Seules les personnes ayant une réponse « Paiement » peuvent acheter l’événement (caisse, en ligne) ou être encaissées en billetterie.',
+          'Modifier les questions d’un sondage déjà répondu demande aux répondants de reconfirmer ; tant qu’ils ne l’ont pas fait, ils ne peuvent pas acheter.',
         ],
       },
     ],

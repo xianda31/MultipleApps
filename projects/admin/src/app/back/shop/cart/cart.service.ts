@@ -174,7 +174,13 @@ export class CartService {
       this.bookService.create_book_entry(sale)
         .then(async (sale) => {
           if (fulfillmentMode === 'backend') {
-            await this.bookService.process_book_entry_actions(sale.id);
+            try {
+              await this.bookService.process_book_entry_actions(sale.id);
+            } catch (error) {
+              // La vente est enregistrée : vider le panier pour ne pas la ressaisir une seconde fois.
+              if (clearCartOnSuccess) this.clearCart();
+              throw error;
+            }
             await this.gameCardService.refreshCards();
           } else if (fulfillmentMode === 'frontend') {
             // Temporary online-checkout path until the Stripe webhook invokes the backend processor.
