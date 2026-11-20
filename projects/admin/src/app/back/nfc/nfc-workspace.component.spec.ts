@@ -83,6 +83,27 @@ describe('NFC workspace', () => {
     expect(fixture.nativeElement.textContent).toContain('Backend absent');
   });
 
+  it('lists active card recipients surname first, sorted by surname then first name', async () => {
+    const { fixture, service } = await setup();
+    service.snapshot.and.resolveTo({
+      ...snapshot,
+      members: [
+        { id: 'one', firstname: 'Alice', lastname: 'Zola', license_number: '00123456', lifecycleStatus: 'ACTIVE' },
+        { id: 'two', firstname: 'Zoé', lastname: 'Évrard', license_number: '00123457', lifecycleStatus: 'ACTIVE' },
+        { id: 'three', firstname: 'Bruno', lastname: 'Évrard', license_number: '00123458', lifecycleStatus: 'ACTIVE' },
+      ],
+    });
+    await fixture.componentInstance.readCard();
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    const options = Array.from(root.querySelectorAll<HTMLOptionElement>('#nfc-owner option')).slice(1);
+    expect(options.map(option => option.text)).toEqual([
+      'Évrard Bruno — 00123458',
+      'Évrard Zoé — 00123457',
+      'Zola Alice — 00123456',
+    ]);
+  });
+
   it('separates station availability from reader availability and keeps tests read-only', async () => {
     const { fixture, bridge, service } = await setup();
     bridge.status.and.resolveTo({

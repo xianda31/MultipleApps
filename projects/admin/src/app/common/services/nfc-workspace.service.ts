@@ -72,9 +72,15 @@ export class NfcWorkspaceService {
   async commit(action: string, changes: NfcChange[], cardChecks: { uid: string; updatedAt: string }[] = []): Promise<NfcChange[]> {
     const result = await this.client.mutations.manageNfc({ input: JSON.stringify({ action, changes, cardChecks }) });
     if (result.errors?.length) throw new Error(result.errors.map(error => error.message).join('; '));
-    const data: unknown = json(result.data);
-    if (!Array.isArray(data)) throw new Error('Enregistrement NFC non confirmé. Actualisez avant de réessayer.');
-    return data.map(change => nfcChangeSchema.parse(change));
+    try {
+      // AWSJSON peut encapsuler la chaîne JSON déjà renvoyée par la Lambda.
+      const data = json(json(result.data));
+      const saved = nfcChangeSchema.array().parse(data);
+      if (saved.length !== changes.length) throw new Error('Nombre de modifications confirmé incorrect.');
+      return saved;
+    } catch (cause) {
+      throw new Error('Enregistrement NFC non confirmé. Actualisez pour vérifier avant de réessayer.', { cause });
+    }
   }
 
   async card(action: CardAction, uid: string, snapshot: NfcSnapshot, license?: string): Promise<void> {

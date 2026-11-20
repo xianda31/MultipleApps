@@ -479,13 +479,28 @@ ACR1555U-A1 firmware 1.03.02, carte NTAG213 d'UID `04E50142E37384`.
 - [x] Ajouter à ppTPE le plugin natif `AcrReader` et son panneau de diagnostic.
 - [x] Valider ppTPE TEST avec le lecteur (UID affiché le 18/11/2026 à 10:01).
 - [ ] Valider la coexistence avec le WisePad 3 (reporté : WisePad indisponible le 18/11/2026).
+- [x] Réorganiser l'encart NFC de ppTPE : d'abord la liaison entre l'admin et
+  ppTPE (fonction connectée : pointage ou gestion NFC, et état de la liaison),
+  puis l'état du lecteur ACR1555U. Retirer le bouton de test du buzzer, sans
+  retirer les bips par verdict. Rendu à vérifier sur la tablette.
+- [ ] Retirer le mode « ppNFC sur ce PC » de l'Espace NFC seulement après
+  validation du WisePad 3 et de l'ACR1555U utilisés ensemble dans ppTPE.
 - [ ] Détecter le blocage NFC décrit ci-dessous et inviter à redémarrer le lecteur.
 - [ ] Reconnexion après redémarrage de ppTPE : le 18/11 à 11:43, la mise à jour
   de l'APK a coupé la liaison BLE et l'ACR1555U n'a plus émis d'annonce
   (aucun résultat de scan). À valider : un arrêt/redémarrage par POWER suffit-il,
   et faut-il un `disconnect` propre à l'arrêt de ppTPE pour l'éviter ?
-- [ ] Valider sur le matériel le buzzer piloté par ppTPE et la lecture de carte
-  depuis l'Espace NFC via la tablette (APK du 18/11 11:41 copié dans Download).
+  Le 20/11/2026, la reconnexion en rouvrant ppTPE TEST a réussi, l'ACR étant
+  resté alimenté en USB plusieurs jours. Le scénario de mise à jour reste à valider.
+- [x] Tester le buzzer de l'ACR depuis ppTPE TEST (20/11/2026, sur USB) :
+  le bouton « Tester » a produit un bip court bien audible. Les motifs selon
+  le verdict et l'audibilité en salle restent à valider.
+- [x] Valider la lecture de carte depuis l'Espace NFC via la tablette.
+  Le 20/11/2026, après ajout de la revérification de la demande dans AppSync,
+  l'Espace NFC a affiché l'UID et reconnu une carte non enregistrée,
+  sans pointage ni attribution.
+- [x] Confirmer l'attribution dans l'Espace NFC sans rechargement manuel :
+  l'admin décode le retour AWSJSON qui peut encapsuler la réponse JSON de la Lambda.
 - [x] Relayer les lectures vers fees-collector et afficher son verdict sur ppTPE (code).
 - [x] Valider le relais de bout en bout après déploiement du schéma (18/11/2026,
   sandbox, tournoi « COUPE DES CLUBS » : refus non-inscrit, acceptation,
@@ -496,7 +511,7 @@ ACR1555U-A1 firmware 1.03.02, carte NTAG213 d'UID `04E50142E37384`.
     1 bip court, refusé 3 bips, carte lue 1 bip très court, non traitée 1 bip
     long ; activable dans ppTPE (`pptpe-acr-buzzer`). Volume à valider en salle ;
   - son sur la tablette selon le verdict (accepté / refusé), via le haut-parleur
-    Android, avec un volume réglable dans ppTPE.
+    Android, avec un volume réglable dans ppTPE : pas encore implémenté.
 
 Relais tablette → fees-collector (18/11/2026), via AppSync, sans liaison locale :
 - `NfcReaderSession` (id = utilisateur Cognito de la tablette) : ppTPE y publie

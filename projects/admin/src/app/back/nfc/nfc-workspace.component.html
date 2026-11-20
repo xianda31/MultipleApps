@@ -9,7 +9,7 @@
         [disabled]="busy" (click)="tab = name">{{ name }}</button>
     }
   </nav>
-  @if (error) { <div class="alert alert-danger" role="alert">{{ error }} Actualisez avant de réessayer une écriture non confirmée.</div> }
+  @if (error) { <div class="alert alert-danger" role="alert">{{ error }}</div> }
   @if (notice) { <div class="alert alert-info" role="status">{{ notice }}</div> }
   @if (busy && !acquiring && !importing) { <p role="status">Opération en cours…</p> }
   @if (!loaded && !busy) { <p>Les données NFC ne sont pas disponibles. Vérifiez le déploiement du backend puis actualisez.</p> }
@@ -97,8 +97,8 @@
                 <label for="nfc-owner" class="form-label">Adhérent destinataire</label>
                 <select id="nfc-owner" class="form-select" [(ngModel)]="license" [disabled]="busy">
                   <option value="">Sélectionner un adhérent actif</option>
-                  @for (member of activeMembers; track member.id) {
-                    <option [value]="member.license_number">{{ member.firstname }} {{ member.lastname }} — {{ member.license_number }}</option>
+                  @for (member of activeMembersByName; track member.id) {
+                    <option [value]="member.license_number">{{ member.lastname }} {{ member.firstname }} — {{ member.license_number }}</option>
                   }
                 </select>
                 <button class="btn btn-success mt-2"

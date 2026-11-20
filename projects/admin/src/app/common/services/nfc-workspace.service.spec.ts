@@ -62,4 +62,25 @@ describe('NFC import persistence', () => {
     }) });
     await expectAsync(service.commit('IMPORT_START', [] as NfcChange[])).toBeRejectedWithError('Conflict');
   });
+
+  it('confirms an attribution when AWSJSON wraps the serialized Lambda result', async () => {
+    const service = new NfcWorkspaceService();
+    const card = changeCard('ASSIGN', row.uid, undefined, row.licenseNumber, snapshot.members, 'operator', now);
+    const changes: NfcChange[] = [{ entity: 'card', expectedVersion: null, record: card }];
+    Object.defineProperty(service, 'client', { get: () => ({
+      mutations: { manageNfc: async () => ({ data: JSON.stringify(JSON.stringify(changes)) }) },
+    }) });
+
+    await expectAsync(service.commit('ASSIGN', changes)).toBeResolvedTo(changes);
+  });
+
+  it('keeps an incomplete acknowledgement visibly unconfirmed', async () => {
+    const service = new NfcWorkspaceService();
+    const changes: NfcChange[] = [{ entity: 'batch', expectedVersion: null, record: batch }];
+    Object.defineProperty(service, 'client', { get: () => ({
+      mutations: { manageNfc: async () => ({ data: '[]' }) },
+    }) });
+
+    await expectAsync(service.commit('IMPORT_START', changes)).toBeRejectedWithError(/non confirmé.*Actualisez/);
+  });
 });

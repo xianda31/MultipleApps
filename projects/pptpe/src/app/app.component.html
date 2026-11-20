@@ -126,19 +126,13 @@
   @if (acrState().status !== 'unsupported') {
   <div class="checkin-card" aria-live="polite">
     <h6 class="checkin-card__heading">
-      <i class="bi bi-broadcast-pin me-1" aria-hidden="true"></i> Badgeuse — miroir de fees-collector
+      <i class="bi bi-broadcast-pin me-1" aria-hidden="true"></i> Liaison admin ↔ ppTPE
     </h6>
+    <p class="checkin-card__message">{{ relayActivity() }}</p>
     <div class="mirror-light" role="status">
-      <span [class]="'mirror-light__dot mirror-light__dot--' + readerLight().color" aria-hidden="true"></span>
-      <span>NFC : {{ readerLight().label }}</span>
+      <span [class]="'mirror-light__dot mirror-light__dot--' + relayLight().color" aria-hidden="true"></span>
+      <span>Liaison : {{ relayLight().label }}</span>
     </div>
-    <div class="mirror-light" role="status">
-      <span [class]="'mirror-light__dot mirror-light__dot--' + checkInLight().color" aria-hidden="true"></span>
-      <span>Pointage : {{ checkInLight().label }}</span>
-    </div>
-    @if (relayCollector().tournament) {
-    <p class="checkin-card__message">{{ relayCollector().tournament }}</p>
-    }
     @if (relayCollector().message && relayCollector().status !== 'active') {
     <p class="checkin-card__message checkin-card__message--muted">{{ relayCollector().message }}</p>
     }
@@ -155,10 +149,6 @@
           [checked]="buzzerEnabled()" (change)="onBuzzerToggle($any($event.target).checked)">
         <label class="form-check-label" for="acr-buzzer">Bip du lecteur selon le verdict</label>
       </div>
-      <button type="button" class="btn btn-outline-light btn-sm" [disabled]="readerLight().color !== 'success'"
-        (click)="onBuzzerTest()">
-        <i class="bi bi-volume-up me-1" aria-hidden="true"></i>Tester
-      </button>
     </div>
   </div>
   }
@@ -167,6 +157,7 @@
   <ng-container *ngTemplateOutlet="readerDiagnostic; context: {
     title: 'Lecteur ACR1555U',
     state: acrState(),
+    light: readerLight(),
     scans: acrScans(),
     error: acrReadError(),
     canRetry: ['permission', 'error', 'stopped'].includes(acrState().status)
@@ -188,15 +179,22 @@
 </div>
 
   <ng-template #readerDiagnostic let-title="title" let-state="state" let-scans="scans" let-error="error"
-    let-canRetry="canRetry">
+    let-canRetry="canRetry" let-light="light">
   <aside class="nfc-diagnostic" aria-live="polite">
     <div class="nfc-diagnostic__heading">
       <i class="bi bi-wifi" aria-hidden="true"></i>
       <strong>{{ title }}</strong>
+      @if (light) {
+      <span class="nfc-diagnostic__light" role="status">
+        <span [class]="'mirror-light__dot mirror-light__dot--' + light.color" aria-hidden="true"></span>
+        {{ light.label }}
+      </span>
+      } @else {
       <span class="nfc-diagnostic__status"
         [class.nfc-diagnostic__status--ready]="state.status === 'ready'">
         {{ state.status === 'ready' ? 'prêt' : state.status }}
       </span>
+      }
     </div>
     <p class="nfc-diagnostic__message">{{ state.message }}</p>
     @if (error) {

@@ -68,11 +68,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.nfcRelay.setBuzzer(enabled);
   }
 
-  onBuzzerTest(): void {
-    this.nfcRelay.testBuzzer();
-  }
+  readonly relayActivity = computed(() => {
+    const { status, tournament } = this.relayCollector();
+    if (status !== 'active' && status !== 'paused') return 'Aucune fonction active';
+    if (tournament.startsWith('Espace NFC — ')) return tournament;
+    return tournament ? `Pointage — ${tournament}` : 'Pointage';
+  });
 
-  /** Voyant « NFC » : miroir de l'indicateur lecteur de fees-collector. */
   readonly readerLight = computed<Light>(() => {
     switch (this.acrState().status) {
       case 'ready': return { color: 'success', label: 'Prêt' };
@@ -85,8 +87,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   });
 
-  /** Voyant « Pointage » : miroir de l'indicateur de session de fees-collector. */
-  readonly checkInLight = computed<Light>(() => {
+  readonly relayLight = computed<Light>(() => {
     if (!this.relayConnected()) return { color: 'secondary', label: 'Non relié (connexion requise)' };
     switch (this.nfcRelay.feedback()?.result) {
       case 'pending': return { color: 'warning', label: 'Vérification…' };
@@ -99,7 +100,7 @@ export class AppComponent implements OnInit, OnDestroy {
       case 'active': return { color: 'primary', label: 'Prêt' };
       case 'paused': return { color: 'secondary', label: 'Suspendu' };
       case 'stopped': return { color: 'secondary', label: 'Arrêté' };
-      default: return { color: 'secondary', label: 'fees-collector absent' };
+      default: return { color: 'secondary', label: 'En attente d’une demande' };
     }
   });
 

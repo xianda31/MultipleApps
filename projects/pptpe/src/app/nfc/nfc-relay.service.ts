@@ -72,6 +72,7 @@ export class NfcRelayService {
   private collectorTournament = '';
   private collectorMessage = '';
   private collectorUpdatedAt = 0;
+  private collectorRevision = 0;
 
   readonly collector = signal<CollectorState>({ status: 'absent', tournament: '', message: '' });
   readonly feedback = signal<ScanFeedback | null>(null);
@@ -82,10 +83,6 @@ export class NfcRelayService {
   setBuzzer(enabled: boolean): void {
     this.buzzerEnabled.set(enabled);
     try { localStorage.setItem(BUZZER_KEY, enabled ? 'on' : 'off'); } catch { /* stockage indisponible */ }
-  }
-
-  testBuzzer(): void {
-    void this.reader.beep(BUZZER_PATTERNS.accepted);
   }
 
   attach(sessionId: string): void {
@@ -167,9 +164,27 @@ export class NfcRelayService {
     if (!id || !client) return;
 
     if (!this.isCollectorActive()) {
+      // Une demande ponctuelle de l'Espace NFC peut précéder la notification AppSync.
+      const revision = this.collectorRevision;
+      try {
+        const { data, errors } = await client.models.NfcReaderSession.get({ id });
+        if (errors?.length) throw new Error(errors.map(error => error.message).join('; '));
+        if (this.client !== client || this.sessionId !== id) return;
+        if (data && this.collectorRevision === revision) this.applyCollector(data);
+      } catch (error) {
+        if (this.client !== client || this.sessionId !== id) return;
+        if (!this.isCollectorActive()) {
+          console.warn('[ppTPE][NFC] Vérification de la demande de lecture impossible', error);
+          this.showFeedback({ uid, result: 'unanswered', message: 'Demande de lecture non vérifiée : vérifiez la connexion réseau.' });
+          return;
+        }
+      }
+    }
+
+    if (!this.isCollectorActive()) {
       const { status, message } = this.collector();
       const reason = status === 'paused' ? 'pointage suspendu'
-        : status === 'stopped' ? 'pointage arrêté' : 'fees-collector absent';
+        : status === 'stopped' ? 'demande de lecture ou pointage terminé' : 'aucune demande de lecture ni pointage actif';
       this.zone.run(() => this.showFeedback({
         uid, result: 'unanswered', message: `Carte non traitée : ${reason}.${message ? ` ${message}` : ''}`,
       }));
@@ -206,6 +221,7 @@ export class NfcRelayService {
   }
 
   private applyCollector(session: Schema['NfcReaderSession']['type']): void {
+    this.collectorRevision++;
     this.collectorStatus = session.collectorStatus ?? null;
     this.collectorTournament = session.collectorTournament ?? '';
     this.collectorMessage = session.collectorMessage ?? '';

@@ -135,7 +135,7 @@ $accent: #6ea8fe;
   }
 }
 
-// ── Pointage NFC ───────────────────────────────────────────
+// ── Liaison NFC ────────────────────────────────────────────
 
 .checkin-card {
   display: flex;
@@ -204,10 +204,6 @@ $accent: #6ea8fe;
 }
 
 .checkin-card__buzzer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
   padding-top: 0.6rem;
   font-size: 0.85rem;
   border-top: 1px solid $card-border;
@@ -230,6 +226,20 @@ $accent: #6ea8fe;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.nfc-diagnostic__light {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  font-size: 0.85rem;
+
+  .mirror-light__dot {
+    flex-basis: 0.75rem;
+    width: 0.75rem;
+    height: 0.75rem;
+  }
 }
 
 .nfc-diagnostic__status {

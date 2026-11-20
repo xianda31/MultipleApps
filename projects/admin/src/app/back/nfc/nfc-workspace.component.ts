@@ -100,6 +100,13 @@ export class NfcWorkspaceComponent implements OnInit, OnDestroy {
       && `${card.uid} ${card.licenseNumber ?? ''} ${this.owner(card.licenseNumber)}`.toLocaleLowerCase('fr').includes(search));
   }
   get activeMembers(): NfcMember[] { return this.data.members.filter(member => member.lifecycleStatus === 'ACTIVE'); }
+  get activeMembersByName(): NfcMember[] {
+    const options = { sensitivity: 'base' } as const;
+    return this.activeMembers.sort((left, right) =>
+      (left.lastname ?? '').localeCompare(right.lastname ?? '', 'fr', options)
+      || (left.firstname ?? '').localeCompare(right.firstname ?? '', 'fr', options)
+      || left.license_number.localeCompare(right.license_number));
+  }
   get canImport(): boolean {
     return this.checks.length > 0 && this.expected === this.checks.length && !this.checks.some(row => row.outcome === 'ERROR');
   }
@@ -224,7 +231,7 @@ export class NfcWorkspaceComponent implements OnInit, OnDestroy {
       await this.service.card(action, this.selectedUid, this.data, this.license);
       await this.load();
       this.history = await this.service.history(`card:${this.selectedUid}`);
-      this.notice = 'Modification enregistrée.';
+      this.notice = action === 'ASSIGN' ? 'Attribution de la carte enregistrée.' : 'Modification enregistrée.';
     });
   }
 
