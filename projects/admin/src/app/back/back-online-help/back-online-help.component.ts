@@ -21,7 +21,7 @@ type GroupItem = {
 export class BackOnlineHelpComponent implements OnInit {
   readonly contentVersion = HELP_CONTENT_VERSION;
   readonly topics = HELP_TOPICS;
-  readonly contentSourceFile = 'projects/admin/src/app/back/back-online-help/back-online-help-content.ts';
+  readonly contentSourceFile = 'projects/admin/src/assets/documentation/back-online-help.json';
   private readonly defaultTopicId = 'documentation';
   private currentUserGroup: Group_names | null = null;
   readonly orderedGroups: GroupItem[] = [

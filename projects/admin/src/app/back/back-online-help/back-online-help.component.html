@@ -45,12 +45,18 @@
           </div>
 
           <p class="text-muted mb-4">
-            <span class="fw-semibold">Menu:</span> {{ selectedMenuTopic.title }}
-            <span *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id"> • <span class="fw-semibold">Sous-menu:</span>
+            <span class="fw-semibold">
+              {{ selectedMenuTopic.scope === 'general' ? 'Rubrique générale :' : 'Menu :' }}
+            </span>
+            {{ selectedMenuTopic.title }}
+            <span *ngIf="selectedDetailTopic.id !== selectedMenuTopic.id"> • <span class="fw-semibold">Section :</span>
               {{ selectedDetailTopic.title }}</span>
           </p>
 
-          <p class="text-muted mb-4">{{ selectedDetailTopic.summary }}</p>
+          <div class="alert alert-light border mb-4" role="status"
+            *ngIf="selectedDetailTopic.contentStatus === 'planned'">
+            Le contenu de cette section est prévu dans un prochain lot documentaire.
+          </div>
 
           <div class="back-help__section mb-4">
             <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
@@ -64,37 +70,73 @@
             </div>
           </div>
 
-          <div class="back-help__section">
-            <h4 class="h6 text-uppercase back-help__section-title">Fonctionnalités couvertes</h4>
-            <ng-container *ngIf="selectedMenuTopic.children?.length; else noSubMenuFeatures">
-              <div class="d-flex flex-column gap-2">
-                <button *ngFor="let child of selectedMenuTopic.children" class="btn text-start back-help__feature-btn"
-                  type="button" [class.back-help__feature-btn--selected]="selectedDetailTopic.id === child.id"
-                  (click)="selectSubTopic(child)">
-                  <div class="fw-semibold">{{ child.title }}</div>
-                  <div class="small">{{ child.summary }}</div>
-                </button>
-              </div>
+          <div class="back-help__section" *ngIf="selectedMenuTopic.children?.length">
+            <h4 class="h6 text-uppercase back-help__section-title">
+              {{ selectedMenuTopic.scope === 'general' ? 'Sections du chapitre' : 'Sous-rubriques' }}
+            </h4>
+            <div class="d-flex flex-column gap-2">
+              <button *ngFor="let child of selectedMenuTopic.children" class="btn text-start back-help__feature-btn"
+                type="button" [class.back-help__feature-btn--selected]="selectedDetailTopic.id === child.id"
+                (click)="selectSubTopic(child)">
+                <div class="fw-semibold">{{ child.title }}</div>
+                <div class="small">{{ child.summary }}</div>
+              </button>
+            </div>
+          </div>
+
+          <div class="back-help__blocks mt-4">
+            <ng-container *ngFor="let block of selectedDetailTopic.blocks" [ngSwitch]="block.type">
+              <section class="back-help__block" *ngSwitchCase="'text'">
+                <h4 *ngIf="block.title">{{ block.title }}</h4>
+                <p *ngFor="let paragraph of block.paragraphs">{{ paragraph }}</p>
+              </section>
+
+              <section class="back-help__block" *ngSwitchCase="'list'">
+                <h4 *ngIf="block.title">{{ block.title }}</h4>
+                <ul class="mb-0">
+                  <li *ngFor="let item of block.items">{{ item }}</li>
+                </ul>
+              </section>
+
+              <section class="back-help__block back-help__procedure" *ngSwitchCase="'procedure'">
+                <h4>{{ block.title }}</h4>
+                <ol class="mb-0">
+                  <li *ngFor="let step of block.steps">{{ step }}</li>
+                </ol>
+              </section>
+
+              <figure class="back-help__illustration mb-0" *ngSwitchCase="'illustration'">
+                <img [src]="block.illustration?.path" [alt]="block.illustration?.alt" loading="lazy">
+                <figcaption *ngIf="block.caption || block.illustration?.caption">
+                  {{ block.caption || block.illustration?.caption }}
+                </figcaption>
+              </figure>
+
+              <section class="back-help__block" *ngSwitchCase="'table'">
+                <h4 *ngIf="block.title">{{ block.title }}</h4>
+                <div class="table-responsive back-help__table">
+                  <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th scope="col" *ngFor="let column of block.columns">{{ column }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let row of block.rows">
+                        <td *ngFor="let cell of row">{{ cell }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <aside class="back-help__block back-help__attention" *ngSwitchCase="'attention'">
+                <h4 *ngIf="block.title">{{ block.title }}</h4>
+                <ul class="mb-0">
+                  <li *ngFor="let message of block.messages">{{ message }}</li>
+                </ul>
+              </aside>
             </ng-container>
-            <ng-template #noSubMenuFeatures>
-              <ul class="mb-0">
-                <li *ngFor="let item of selectedMenuTopic.functionalities">{{ item }}</li>
-              </ul>
-            </ng-template>
-          </div>
-
-          <div class="back-help__section mt-4">
-            <h4 class="h6 text-uppercase back-help__section-title">Parcours conseillé</h4>
-            <ol class="mb-0">
-              <li *ngFor="let step of selectedDetailTopic.howTo">{{ step }}</li>
-            </ol>
-          </div>
-
-          <div class="back-help__section mt-4" *ngIf="selectedDetailTopic.caution?.length">
-            <h4 class="h6 text-uppercase back-help__section-title">Points de vigilance</h4>
-            <ul class="mb-0">
-              <li *ngFor="let warning of selectedDetailTopic.caution">{{ warning }}</li>
-            </ul>
           </div>
         </div>
       </div>

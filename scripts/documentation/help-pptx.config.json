@@ -1,0 +1,7 @@
+{
+  "outputPath": "dist/documentation/bcsto-manuel-complet.pptx",
+  "coverageReportPath": "dist/documentation/bcsto-manuel-complet.couverture.json",
+  "presentationTitle": "BCSTO — Manuel utilisateur",
+  "presentationSubtitle": "Documentation commune de l’application",
+  "includePublishedTopics": true
+}

@@ -1,0 +1,31 @@
+export const HELP_PPTX_THEME = Object.freeze({
+  layout: 'LAYOUT_WIDE',
+  width: 13.333,
+  height: 7.5,
+  colors: {
+    background: 'FFFFFF',
+    title: '243228',
+    text: '34423A',
+    muted: '65736A',
+    green: '258348',
+    greenDark: '176135',
+    border: 'D7E2DA',
+  },
+  fontFamilies: {
+    heading: 'Aptos Display',
+    body: 'Aptos',
+  },
+  fontSizes: {
+    coverTitle: 30,
+    sectionTitle: 28,
+    slideTitle: 24,
+    procedureTitle: 19,
+    body: 17,
+    compactBody: 16,
+    cautionBody: 15.5,
+    caption: 10,
+    small: 10,
+  },
+  minimumBodyFontSize: 15.5,
+  appIconPath: 'projects/admin/public/assets/icons/android-chrome-192x192.png',
+});
