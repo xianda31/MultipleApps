@@ -609,6 +609,43 @@ describe('BooksEditorComponent accounting validation', () => {
     });
   }
 
+  it('preserves cents in a bank debit and its expense lines with either decimal separator', () => {
+    const component = createComponent();
+    component.products_accounts = [];
+    component.expenses_accounts = [{ key: 'LIC', description: 'Licence' }, { key: 'FFB', description: 'FFB' }];
+    component.init_form();
+    const entry: BookEntry = {
+      id: 'bank-debit', season: '2026/2027', date: '2026-11-20',
+      transaction_id: TRANSACTION_ID.dépense_par_prélèvement,
+      amounts: { [FINANCIAL_ACCOUNT.BANK_credit]: 937 },
+      operations: [{ label: 'Facture', values: { LIC: 406, FFB: 531 } }],
+    };
+    component.selected_book_entry = entry;
+    component.set_form(entry);
+    component.valueChanges_subscribe();
+    const bank = component.amounts.at(component.financial_accounts.findIndex(account => account.key === FINANCIAL_ACCOUNT.BANK_credit));
+    const values = component.operations.at(0).get('values') as FormArray;
+    bank.setValue('937,25');
+    expect(component.is_modified(bank)).toBeTrue();
+    expect(Math.abs(component.form_balance_error!)).toBe(0.25);
+    const save = spyOn(component, 'save_book_entry');
+    component.onSubmit();
+    expect(save).not.toHaveBeenCalled();
+
+    values.at(0).setValue('406,10');
+    values.at(1).setValue('531.15');
+    expect(component.form.valid).toBeTrue();
+    expect(component.form_balance_error).toBe(0);
+    component.onSubmit();
+    expect(component.correction_review).toBeTrue();
+    expect(save).not.toHaveBeenCalled();
+    component.onSubmit();
+    expect(save).toHaveBeenCalledOnceWith(
+      { [FINANCIAL_ACCOUNT.BANK_credit]: 937.25 },
+      [{ label: 'Facture', member: undefined, values: { LIC: 406.10, FFB: 531.15 } }],
+    );
+  });
+
   it('keeps an announced transfer as a debt without requiring a bank receipt', () => {
     const component = createComponent();
     component.protected_mode = true;
