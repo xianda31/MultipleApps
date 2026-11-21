@@ -111,4 +111,38 @@ describe('FFB team registration requests', () => {
 
     await expectAsync(service.getClubRegularityResultsGroup(38)).toBeResolvedTo(12345);
   });
+
+  it('returns a page of selectable clubs with validated identifiers', async () => {
+    fetchSpy.and.resolveTo(new Response(JSON.stringify({
+      items: [{ type: 'club', id: 1403, ffbCode: '5500020', label: 'Bridge Club de Saint Orens' }],
+      pagination: { has_next_page: true },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+
+    await expectAsync(service.searchClubs('Saint', 2)).toBeResolvedTo({
+      clubs: [{ name: 'Bridge Club de Saint Orens', code: '5500020', organizationId: '1403' }],
+      hasNextPage: true,
+    });
+    expect(String(fetchSpy.calls.mostRecent().args[0])).toContain('/api/ffb/v2/clubs/search?');
+    expect(String(fetchSpy.calls.mostRecent().args[0])).toContain('currentPage=2');
+  });
+
+  it('rejects invalid clubs or incomplete pagination instead of displaying them', async () => {
+    fetchSpy.and.resolveTo(new Response(JSON.stringify({
+      items: [{ type: 'club', id: 0, ffbCode: '5500020', label: 'Club' }],
+      pagination: { has_next_page: false },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    await expectAsync(service.searchClubs('Club', 1)).toBeRejected();
+
+    fetchSpy.and.resolveTo(new Response(JSON.stringify({ items: [], pagination: {} }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    }));
+    await expectAsync(service.searchClubs('Club', 1)).toBeRejected();
+  });
+
+  it('returns the official label when validating the club identity', async () => {
+    fetchSpy.and.resolveTo(new Response(JSON.stringify({
+      id: 1403, ffbCode: '5500020', type: 'club', label: 'Bridge Club de Saint Orens',
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    await expectAsync(service.validateClubIdentity('5500020', '1403')).toBeResolvedTo('Bridge Club de Saint Orens');
+  });
 });

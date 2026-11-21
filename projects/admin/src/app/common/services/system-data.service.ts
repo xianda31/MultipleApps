@@ -6,7 +6,7 @@ import { FileService } from './files.service';
 import { ToastService } from './toast.service';
 import { normalizeBreakpoints } from '../utils/ui-utils';
 import { DEFAULT_REMEMBERED_AUTH_SESSION_DAYS, normalizeRememberedSessionDays } from '../authentification/auth-session-persistence';
-import { LEGACY_FFB_CLUB_IDENTITY } from '../../../../../../amplify/functions/shared/ffb-club-identity';
+import { LEGACY_FFB_CLUB_IDENTITY, resolveFfbClubIdentity } from '../../../../../../amplify/functions/shared/ffb-club-identity';
 
 export type AccountingSeasonStatus = 'open' | 'closure_required' | 'preopened';
 
@@ -95,6 +95,11 @@ export class SystemDataService {
       }),
       switchMap(() => this._system_configuration$.asObservable().pipe(map(normalize)))
     );
+  }
+
+  getFfbClubIdentity() {
+    if (!this._system_configuration) throw new Error('Configuration système non chargée');
+    return resolveFfbClubIdentity(this._system_configuration).identity;
   }
 
   /**

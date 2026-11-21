@@ -37,6 +37,7 @@ export interface SystemConfiguration {
     club_identifier: string;
     ffb_club_code?: string;
     ffb_organization_id?: string;
+    ffb_club_name?: string;
     trace_mode: boolean;
     include_system_visits?: boolean;
     season?: string; // lecture seule depuis S3 (compatibilité anciens fichiers) — géré localement par SystemDataService

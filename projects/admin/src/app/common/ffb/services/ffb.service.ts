@@ -10,6 +10,7 @@ import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionRes
 import { environment } from '../../../../environments/environment';
 import { SystemDataService } from '../../services/system-data.service';
 import { resolveFfbClubIdentity } from '../../../../../../../amplify/functions/shared/ffb-club-identity';
+import { resolveFfbRegularityGroup } from '../../../../../../../amplify/functions/shared/ffb-regularity-group';
 import {
   toCompetitionList,
   toCompetitionListFromSearchResponse,
@@ -43,6 +44,7 @@ const FFB_ENDPOINTS = {
   competitionSearch: '/api/ffb/v2/results/search',
   clubResults: '/api/ffb/v2/club-results',
   clubIdentityValidate: '/api/ffb/v2/club-identity-validate',
+  clubSearch: '/api/ffb/v2/clubs/search',
   competitionDivisionResults: '/api/ffb/v2/results/competitionDivisions',
   entitySearch: '/api/ffb/v2/entities/search',
   clubTournaments: '/api/ffb/v2/club-sessions',
@@ -65,6 +67,17 @@ export interface PlayerSearchResult {
   totalItems: number;
   totalPages: number;
   currentPage: number;
+}
+
+export interface FfbClubSearchItem {
+  name: string;
+  code: string;
+  organizationId: string;
+}
+
+export interface FfbClubSearchPage {
+  clubs: FfbClubSearchItem[];
+  hasNextPage: boolean;
 }
 
 @Injectable({
@@ -578,40 +591,44 @@ export class FFB_proxyService {
     });
     const { body } = await operation.response;
     const data: unknown = await body.json();
-    if (!data || typeof data !== 'object' || !('items' in data) || !Array.isArray(data.items)
-      || !('pagination' in data) || !data.pagination || typeof data.pagination !== 'object'
-      || !('has_next_page' in data.pagination) || data.pagination.has_next_page !== false) {
-      throw new Error('Réponse FFB des résultats de club invalide ou incomplète');
-    }
-
-    const groups: number[] = [];
-    for (const item of data.items) {
-      if (!item || typeof item !== 'object' || item.organization?.ffbCode !== identity.code
-        || String(item.organization?.id) !== identity.organizationId
-        || !Array.isArray(item.phases)) {
-        throw new Error('Résultats FFB du club invalides');
-      }
-      for (const phase of item.phases) {
-        if (!phase || !Array.isArray(phase.groups)) {
-          throw new Error('Groupes FFB invalides');
-        }
-        for (const group of phase.groups) {
-          if (group?.label === 'A') {
-            if (!Number.isSafeInteger(group.id) || group.id <= 0) {
-              throw new Error('Identifiant du groupe FFB invalide');
-            }
-            groups.push(group.id);
-          }
-        }
-      }
-    }
-    if (groups.length !== 1) {
-      throw new Error(`Impossible d'identifier un groupe FFB de régularité unique (${groups.length} trouvés)`);
-    }
-    return groups[0];
+    return resolveFfbRegularityGroup(data, identity);
   }
 
-  async validateClubIdentity(code: string, organizationId: string): Promise<void> {
+  async searchClubs(label: string, page: number): Promise<FfbClubSearchPage> {
+    const search = label.trim();
+    if (search.length < 2 || search.length > 100 || !Number.isSafeInteger(page) || page < 1 || page > 9999) {
+      throw new Error('Nom de club ou page invalide');
+    }
+    await this.ensureConfigReady();
+    const operation = get({
+      apiName: this.API_NAME,
+      path: this.buildPath(FFB_ENDPOINTS.clubSearch),
+      options: this.withTraceHeaders({ queryParams: { label: search, currentPage: String(page) } }),
+    });
+    const { body } = await operation.response;
+    const data: unknown = await body.json();
+    if (!data || typeof data !== 'object' || !('items' in data) || !Array.isArray(data.items)
+      || !('pagination' in data) || !data.pagination || typeof data.pagination !== 'object'
+      || !('has_next_page' in data.pagination) || typeof data.pagination.has_next_page !== 'boolean') {
+      throw new Error('Réponse FFB de recherche des clubs invalide');
+    }
+    const clubs: FfbClubSearchItem[] = data.items.map((item: unknown) => {
+      if (!item || typeof item !== 'object' || !('type' in item) || item.type !== 'club'
+        || !('ffbCode' in item) || typeof item.ffbCode !== 'string'
+        || !('id' in item) || typeof item.id !== 'number' || !Number.isSafeInteger(item.id) || item.id <= 0
+        || !('label' in item) || typeof item.label !== 'string' || !item.label.trim()) {
+        throw new Error('Club FFB invalide dans les résultats');
+      }
+      const { identity } = resolveFfbClubIdentity({
+        ffb_club_code: item.ffbCode,
+        ffb_organization_id: String(item.id),
+      });
+      return { name: item.label.trim(), code: identity.code, organizationId: identity.organizationId };
+    });
+    return { clubs, hasNextPage: data.pagination.has_next_page };
+  }
+
+  async validateClubIdentity(code: string, organizationId: string): Promise<string> {
     resolveFfbClubIdentity({ ffb_club_code: code, ffb_organization_id: organizationId });
     await this.ensureConfigReady();
     const operation = get({
@@ -625,6 +642,10 @@ export class FFB_proxyService {
       || !('ffbCode' in data) || data.ffbCode !== code || !('type' in data) || data.type !== 'club') {
       throw new Error('La FFB n’a pas confirmé les identifiants du club');
     }
+    if (!('label' in data) || typeof data.label !== 'string' || !data.label.trim()) {
+      throw new Error('La FFB n’a pas fourni le nom du club');
+    }
+    return data.label.trim();
   }
 
   async getPreviousSeasons(): Promise<FFB_Season[]> {

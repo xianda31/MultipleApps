@@ -585,8 +585,9 @@ export const HELP_TOPICS: HelpTopic[] = [
         ],
         howTo: [
           'Modifier un parametre a la fois.',
-          'Renseigner le code FFB à 7 chiffres et l’identifiant actuel de l’organisation ; leur correspondance est vérifiée lors d’une modification.',
-          'Le groupe des prochaines sessions et la reconnaissance des licenciés restent spécifiques au club actuel.',
+          'Rechercher le club FFB par son nom, sélectionner le bon résultat puis sauvegarder. Les identifiants sont renseignés automatiquement et vérifiés auprès de la FFB.',
+          'Un changement de club nécessite une confirmation : la synchronisation peut ajouter et modifier des fiches membres sans retour automatique à l’état précédent. Sauvegarder les données avant de poursuivre.',
+          'Les tournois et résultats utilisent le groupe de régularité « A » de la saison FFB courante. La synchronisation reconnaît les licences du club grâce à ses identifiants FFB.',
           'Valider et controler l effet metier.',
         ],
       },
