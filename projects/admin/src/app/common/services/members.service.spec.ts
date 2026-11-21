@@ -6,14 +6,16 @@ describe('MembersService', () => {
   function createService(memberLoad$: Subject<Member[]>) {
     const dbHandler = jasmine.createSpyObj('DBhandler', ['listMembers', 'createMember', 'updateMember']);
     dbHandler.listMembers.and.returnValue(memberLoad$.asObservable());
+    const systemDataService = jasmine.createSpyObj('SystemDataService', ['getFfbClubIdentity']);
+    systemDataService.getFfbClubIdentity.and.returnValue({ code: '5500020', organizationId: '1403' });
 
     const service = new MembersService(
       jasmine.createSpyObj('ToastService', ['showError', 'showWarning', 'showSuccess']),
       dbHandler,
-      {} as any,
+      systemDataService,
     );
 
-    return { service, dbHandler };
+    return { service, dbHandler, systemDataService };
   }
 
   it('shares one initial database load between concurrent consumers', async () => {
@@ -141,5 +143,33 @@ describe('MembersService', () => {
     } as Member;
 
     expect(service.resolveMemberStatus(member)).toBe('OUTSIDE_FFB_CLUB');
+  });
+
+  it('uses the synchronized status instead of a hard-coded club name', () => {
+    const { service } = createService(new Subject<Member[]>());
+    const licensedMember = {
+      id: 'licensed',
+      license_status: 'duly_registered',
+      license_taken_at: 'Autre club',
+      memberStatus: 'CLUB_LICENSEE',
+      person_id: 123,
+    } as Member;
+    expect(service.getMemberStatus(licensedMember, new Set([123]))).toBe('CLUB_LICENSEE');
+    expect(service.getMemberStatus({
+      ...licensedMember,
+      license_taken_at: 'Bridge Club de Saint Orens',
+      memberStatus: 'SYMPATHISANT',
+    }, new Set([123]))).toBe('SYMPATHISANT');
+  });
+
+  it('uses the historical club name only as a fallback for legacy Saint-Orens records', () => {
+    const { service, systemDataService } = createService(new Subject<Member[]>());
+    const legacy = { id: 'legacy', license_taken_at: 'Bridge Club de Saint Orens' } as Member;
+    expect(service.isLicenseAtClub(legacy)).toBeTrue();
+
+    systemDataService.getFfbClubIdentity.and.returnValue({ code: '5500055', organizationId: '1438' });
+    spyOn(console, 'warn');
+    expect(service.isLicenseAtClub(legacy)).toBeFalse();
+    expect(console.warn).toHaveBeenCalled();
   });
 });

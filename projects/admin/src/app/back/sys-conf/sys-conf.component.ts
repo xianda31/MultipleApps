@@ -4,6 +4,10 @@ import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { SystemConfiguration } from '../../common/interfaces/system-conf.interface';
 import { ToastService } from '../../common/services/toast.service';
+import { FFB_proxyService, FfbClubSearchItem } from '../../common/ffb/services/ffb.service';
+import { LEGACY_FFB_CLUB_IDENTITY } from '../../../../../../amplify/functions/shared/ffb-club-identity';
+import { ModalDismissReasons, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { GetConfirmationComponent } from '../../common/modals/get-confirmation.component';
 
 
 
@@ -36,16 +40,38 @@ export class SysConfComponent {
   newBankKey = '';
   newBankName = '';
   traceModeEnabled = false;
+  saving = false;
+  clubSearchTerm = '';
+  clubSearchResults: FfbClubSearchItem[] = [];
+  clubSearchPage = 1;
+  clubSearchHasNextPage = false;
+  clubSearchCompleted = false;
+  clubSearching = false;
+  clubSearchError = '';
+  clubSearchOpen = false;
+  activeClubIndex = -1;
+  clubNameError = '';
+  private clubSearchRequestedPage = 1;
+  private clubSearchVersion = 0;
+  private clubSearchTimer: ReturnType<typeof setTimeout> | undefined;
+  private clubNameLookupVersion = 0;
+  private clubNameLookup: Promise<void> | null = null;
+  private initialFfbIdentity = { ...LEGACY_FFB_CLUB_IDENTITY };
   bankOptionsList: { key: string; name: string }[] = [];
 
   constructor(
     private systemDataService: SystemDataService,
     private toastService: ToastService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private ffbService: FFB_proxyService,
+    private modalService: NgbModal,
   ) {
 
     this.systemFormGroup = this.fb.group({
       club_identifier: [''],
+      ffb_club_code: ['', [Validators.required, Validators.pattern(/^\d{7}$/)]],
+      ffb_organization_id: ['', [Validators.required, Validators.pattern(/^[1-9]\d*$/)]],
+      ffb_club_name: [''],
       trace_mode: [false],
       include_system_visits: [false],
       club_bank_key: [''],
@@ -124,16 +150,193 @@ export class SysConfComponent {
     });
   }
 
-  save_configuration() {
+  async save_configuration(): Promise<void> {
+    if (this.saving) return;
     if (this.systemFormGroup.invalid) {
       this.systemFormGroup.markAllAsTouched();
       this.toastService.showWarning('Configuration', 'Corrigez les paramètres invalides avant de sauvegarder');
       return;
     }
     const new_configuration: SystemConfiguration = this.systemFormGroup.value;
-    console.log('nouvelle configuration', new_configuration);
-    this.systemDataService.save_configuration(new_configuration);
-    this.toastService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
+    const code = new_configuration.ffb_club_code!;
+    const organizationId = new_configuration.ffb_organization_id!;
+    const clubChanged = code !== this.initialFfbIdentity.code || organizationId !== this.initialFfbIdentity.organizationId;
+    this.saving = true;
+    try {
+      if (clubChanged) {
+        const modal = this.modalService.open(GetConfirmationComponent, { centered: true });
+        modal.componentInstance.title = 'Changement de club FFB';
+        modal.componentInstance.subtitle = `Nouveau club : ${new_configuration.ffb_club_name || 'Nom non renseigné'}`;
+        modal.componentInstance.message = 'La synchronisation des membres peut ajouter et modifier des fiches. Revenir au club précédent ne rétablit pas automatiquement les données. Sauvegardez-les avant de poursuivre.';
+        modal.componentInstance.confirmLabel = 'Confirmer le changement';
+        modal.componentInstance.cancelLabel = 'Annuler';
+        modal.componentInstance.confirmButtonClass = 'btn-danger';
+        modal.componentInstance.cancelButtonClass = 'btn-secondary';
+        modal.componentInstance.confirmFirst = false;
+        const confirmed = await modal.result.then(
+          (result: unknown) => result === true,
+          (reason: unknown) => {
+            if (reason === ModalDismissReasons.ESC || reason === ModalDismissReasons.BACKDROP_CLICK) return false;
+            throw reason;
+          },
+        );
+        if (!confirmed) return;
+      }
+      if (!new_configuration.ffb_club_name && this.clubNameLookup) {
+        await this.clubNameLookup;
+        if (this.systemFormGroup.get('ffb_club_code')?.value === code
+          && this.systemFormGroup.get('ffb_organization_id')?.value === organizationId) {
+          new_configuration.ffb_club_name = this.systemFormGroup.get('ffb_club_name')?.value || '';
+        }
+      }
+      if (clubChanged) {
+        new_configuration.ffb_club_name = await this.ffbService.validateClubIdentity(code, organizationId);
+      }
+      await this.systemDataService.save_configuration(new_configuration);
+      this.initialFfbIdentity = { code, organizationId };
+      this.systemFormGroup.get('ffb_club_name')?.setValue(new_configuration.ffb_club_name || '', { emitEvent: false });
+      this.systemFormGroup.markAsPristine();
+      this.toastService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
+    } catch (error) {
+      console.error('Erreur de sauvegarde de la configuration', error);
+      this.toastService.showError('Configuration', 'Sauvegarde impossible : vérifiez les identifiants FFB et la connexion.');
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  onClubSearchChange(value: string): void {
+    if (this.clubSearchTimer) clearTimeout(this.clubSearchTimer);
+    this.clubSearchTimer = undefined;
+    this.clubSearchTerm = value;
+    this.clubSearchVersion++;
+    this.clubSearching = false;
+    this.clubSearchResults = [];
+    this.clubSearchCompleted = false;
+    this.clubSearchError = '';
+    this.clubSearchHasNextPage = false;
+    this.clubSearchOpen = value.trim().length >= 2 && value.trim().length <= 100;
+    this.activeClubIndex = -1;
+    if (value.trim().length >= 2 && value.trim().length <= 100) {
+      this.clubSearchTimer = setTimeout(() => {
+        this.clubSearchTimer = undefined;
+        void this.searchClubs();
+      }, 300);
+    }
+  }
+
+  async searchClubs(page = 1): Promise<void> {
+    if (this.clubSearchTimer) clearTimeout(this.clubSearchTimer);
+    this.clubSearchTimer = undefined;
+    const label = this.clubSearchTerm.trim();
+    if (label.length < 2 || label.length > 100) {
+      this.clubSearchError = 'Saisissez entre 2 et 100 caractères.';
+      return;
+    }
+    const version = ++this.clubSearchVersion;
+    this.clubSearchRequestedPage = page;
+    this.clubSearching = true;
+    this.clubSearchCompleted = false;
+    this.clubSearchError = '';
+    this.activeClubIndex = -1;
+    try {
+      const result = await this.ffbService.searchClubs(label, page);
+      if (version !== this.clubSearchVersion) return;
+      this.clubSearchResults = result.clubs;
+      this.clubSearchPage = page;
+      this.clubSearchHasNextPage = result.hasNextPage;
+      this.clubSearchCompleted = true;
+      this.activeClubIndex = result.clubs.length ? 0 : -1;
+    } catch (error) {
+      if (version !== this.clubSearchVersion) return;
+      console.error('Erreur de recherche des clubs FFB', error);
+      this.clubSearchResults = [];
+      this.clubSearchHasNextPage = false;
+      this.clubSearchError = 'Recherche FFB impossible. Réessayez.';
+    } finally {
+      if (version === this.clubSearchVersion) this.clubSearching = false;
+    }
+  }
+
+  get clubSearchPanelVisible(): boolean {
+    return this.clubSearchOpen && (this.clubSearching || this.clubSearchCompleted || !!this.clubSearchError);
+  }
+
+  onClubSearchFocus(): void {
+    const length = this.clubSearchTerm.trim().length;
+    this.clubSearchOpen = length >= 2 && length <= 100;
+  }
+
+  onClubSearchFocusOut(event: FocusEvent): void {
+    const container = event.currentTarget as HTMLElement;
+    if (!(event.relatedTarget instanceof Node) || !container.contains(event.relatedTarget)) {
+      this.clubSearchOpen = false;
+    }
+  }
+
+  onClubSearchKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.clubSearchOpen = false;
+      return;
+    }
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (!this.clubSearchResults.length || this.clubSearching) return;
+      event.preventDefault();
+      this.clubSearchOpen = true;
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      this.activeClubIndex = this.activeClubIndex < 0
+        ? (step > 0 ? 0 : this.clubSearchResults.length - 1)
+        : (this.activeClubIndex + step + this.clubSearchResults.length) % this.clubSearchResults.length;
+      const input = event.currentTarget as HTMLInputElement;
+      input.ownerDocument.getElementById(`ffb-club-option-${this.activeClubIndex}`)?.scrollIntoView({ block: 'nearest' });
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      if (this.clubSearchPanelVisible && !this.clubSearching && this.activeClubIndex >= 0) {
+        this.selectClub(this.clubSearchResults[this.activeClubIndex]);
+      } else if (!this.clubSearchCompleted && !this.clubSearching) {
+        this.clubSearchOpen = true;
+        void this.searchClubs();
+      }
+    }
+  }
+
+  retryClubSearch(): void {
+    void this.searchClubs(this.clubSearchRequestedPage);
+  }
+
+  selectClub(club: FfbClubSearchItem): void {
+    this.clubNameLookupVersion++;
+    this.clubNameLookup = null;
+    this.clubNameError = '';
+    this.systemFormGroup.patchValue({
+      ffb_club_name: club.name,
+      ffb_club_code: club.code,
+      ffb_organization_id: club.organizationId,
+    });
+    this.systemFormGroup.markAsDirty();
+    this.onClubSearchChange('');
+  }
+
+  ngOnDestroy(): void {
+    if (this.clubSearchTimer) clearTimeout(this.clubSearchTimer);
+    this.clubSearchVersion++;
+    this.clubNameLookupVersion++;
+  }
+
+  private async loadMissingClubName(code: string, organizationId: string): Promise<void> {
+    const version = ++this.clubNameLookupVersion;
+    try {
+      const name = await this.ffbService.validateClubIdentity(code, organizationId);
+      if (version !== this.clubNameLookupVersion) return;
+      if (this.systemFormGroup.get('ffb_club_code')?.value !== code
+        || this.systemFormGroup.get('ffb_organization_id')?.value !== organizationId
+        || this.systemFormGroup.get('ffb_club_name')?.value) return;
+      this.systemFormGroup.get('ffb_club_name')?.setValue(name, { emitEvent: false });
+    } catch (error) {
+      if (version !== this.clubNameLookupVersion) return;
+      console.warn('Nom du club FFB indisponible', error);
+      this.clubNameError = 'Nom du club indisponible ; recherchez-le pour le renseigner.';
+    }
   }
 
   get expenses() {
@@ -243,9 +446,19 @@ export class SysConfComponent {
   }
 
   loadDataInFormGroup(configuration: SystemConfiguration) {
+    const legacy = configuration.ffb_club_code == null && configuration.ffb_organization_id == null;
+    const code = legacy ? LEGACY_FFB_CLUB_IDENTITY.code : configuration.ffb_club_code ?? '';
+    const organizationId = legacy ? LEGACY_FFB_CLUB_IDENTITY.organizationId : configuration.ffb_organization_id ?? '';
+    this.initialFfbIdentity = { code, organizationId };
+    this.clubNameLookupVersion++;
+    this.clubNameLookup = null;
+    this.clubNameError = '';
     this.systemFormGroup.patchValue({
       ...configuration,
       nfc_check_in_active: configuration.nfc_check_in_active ?? false,
+      ffb_club_code: code,
+      ffb_organization_id: organizationId,
+      ffb_club_name: configuration.ffb_club_name ?? '',
       membership_payment_warning_month: configuration.membership_payment_warning_month ?? 11,
     }, { emitEvent: false });
     // patchValue doest not work for FormArray ; work-around method : clear and re-populate
@@ -282,6 +495,9 @@ export class SysConfComponent {
 
     this.refreshBankOptions();
     this.traceModeEnabled = !!this.systemFormGroup.get('trace_mode')?.value;
+    if (!configuration.ffb_club_name && /^\d{7}$/.test(code) && /^[1-9]\d*$/.test(organizationId)) {
+      this.clubNameLookup = this.loadMissingClubName(code, organizationId);
+    }
 
   }
 

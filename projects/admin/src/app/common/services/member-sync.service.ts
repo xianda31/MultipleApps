@@ -12,6 +12,7 @@ import { MemberStatus } from './members.service';
 import { MembersService } from './members.service';
 import { SystemDataService } from './system-data.service';
 import { hasSameNormalizedMemberName } from './member-identity.util';
+import { FfbClubIdentity, resolveFfbClubIdentity } from '../../../../../../amplify/functions/shared/ffb-club-identity';
 
 export interface MemberMergeConflict {
     clubMember: ClubMember;
@@ -30,6 +31,8 @@ export interface MemberSyncProgress {
 export class MemberSyncService {
     private syncInFlight: Promise<Member[]> | null = null;
     private lastSynchronizedSeason: string | null = null;
+    private lastSynchronizedClub: string | null = null;
+    private syncingClub: string | null = null;
     private pendingMergeConflicts: MemberMergeConflict[] = [];
     private readonly syncProgressSubject = new BehaviorSubject<MemberSyncProgress>({
         percent: 0,
@@ -53,26 +56,36 @@ export class MemberSyncService {
             return this.getSortedMembersSnapshot();
         }
 
+        const identity = await this.loadClubIdentity();
+        const clubKey = `${identity.code}:${identity.organizationId}`;
         if (this.syncInFlight) {
+            if (this.syncingClub !== clubKey) {
+                throw new Error('Une synchronisation est déjà en cours pour une autre configuration FFB');
+            }
             return this.syncInFlight;
         }
 
-        if (!force && this.lastSynchronizedSeason === synchronizationSeason) {
+        if (!force && this.lastSynchronizedSeason === synchronizationSeason && this.lastSynchronizedClub === clubKey) {
             return this.getSortedMembersSnapshot();
         }
 
         this.lastSynchronizedSeason = null;
-        this.syncInFlight = this.runSynchronization(synchronizationSeason).finally(() => {
+        this.lastSynchronizedClub = null;
+        this.syncingClub = clubKey;
+        this.syncInFlight = this.runSynchronization(synchronizationSeason, identity).finally(() => {
             this.syncInFlight = null;
+            this.syncingClub = null;
         });
 
         return this.syncInFlight;
     }
 
-    async createMemberWithComputedStatus(member: Member): Promise<void> {
+    async createMemberWithComputedStatus(member: Member, clubMember?: ClubMember): Promise<void> {
         const nextMember: Member = {
             ...member,
-            memberStatus: this.membersService.resolveMemberStatus(member),
+            memberStatus: clubMember
+                ? this.computeMemberStatusFromClubMember(clubMember, await this.loadClubIdentity())
+                : this.membersService.resolveMemberStatus(member),
             lifecycleStatus: member.lifecycleStatus,
         };
         await this.membersService.createMember(nextMember);
@@ -91,7 +104,8 @@ export class MemberSyncService {
             throw new Error(`Member merge candidate ${memberId} is no longer available`);
         }
 
-        const updatedMember = this.buildUpdatedMember(candidate, conflict.clubMember, conflict.person);
+        const status = this.computeMemberStatusFromClubMember(conflict.clubMember, await this.loadClubIdentity());
+        const updatedMember = this.buildUpdatedMember(candidate, conflict.clubMember, conflict.person, status);
         if (updatedMember) {
             await this.membersService.updateMember(updatedMember);
         }
@@ -99,11 +113,12 @@ export class MemberSyncService {
     }
 
     async createDistinctMember(conflict: MemberMergeConflict): Promise<void> {
-        await this.membersService.createMember(this.createNewMember(conflict.clubMember, conflict.person));
+        const status = this.computeMemberStatusFromClubMember(conflict.clubMember, await this.loadClubIdentity());
+        await this.membersService.createMember(this.createNewMember(conflict.clubMember, conflict.person, status));
         this.removePendingConflict(conflict.clubMember.id);
     }
 
-    private async runSynchronization(synchronizationSeason: string): Promise<Member[]> {
+    private async runSynchronization(synchronizationSeason: string, identity: FfbClubIdentity): Promise<Member[]> {
         this.pendingMergeConflicts = [];
         this.reportProgress(3, 'Chargement des données FFB et comptables...');
         const [operations, licensees, initialMembers] = await Promise.all([
@@ -123,13 +138,16 @@ export class MemberSyncService {
             throw new Error('La FFB n’a retourné aucun adhérent ; synchronisation annulée');
         }
 
+        this.assertClubIdentityUnchanged(identity);
+        const statuses = licensees.map((licensee) => this.computeMemberStatusFromClubMember(licensee, identity));
         let members = initialMembers;
 
         for (const [index, licensee] of licensees.entries()) {
             if (!this.canSynchronizeSeason(synchronizationSeason)) {
                 return this.getSortedMembersSnapshot();
             }
-            await this.createOrUpdateMember(members, licensee);
+            this.assertClubIdentityUnchanged(identity);
+            await this.createOrUpdateMember(members, licensee, statuses[index]);
             members = await this.getMembersSnapshot();
             this.reportProgress(
                 8 + Math.round(((index + 1) / licensees.length) * 47),
@@ -141,24 +159,28 @@ export class MemberSyncService {
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.assertClubIdentityUnchanged(identity);
         this.reportProgress(58, 'Contrôle des rattachements FFB...');
         members = await this.commitPhase(() => this.resetObsoleteLicenses(members, licensees));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.assertClubIdentityUnchanged(identity);
         this.reportProgress(65, 'Mise à jour des adhésions...');
         members = await this.commitPhase(() => this.syncMembershipDates(members, operations, synchronizationSeason));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.assertClubIdentityUnchanged(identity);
         this.reportProgress(72, 'Recherche des licences prises dans un autre club...');
         members = await this.commitPhase(() => this.syncExternalLicenseDetails(members, licensees));
 
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.getSortedMembersSnapshot();
         }
+        this.assertClubIdentityUnchanged(identity);
         this.reportProgress(96, 'Finalisation des statuts...');
         members = await this.commitPhase(() => this.ensureMemberStatuses(members));
 
@@ -166,7 +188,9 @@ export class MemberSyncService {
         if (!this.canSynchronizeSeason(synchronizationSeason)) {
             return this.sortMembers(members);
         }
+        this.assertClubIdentityUnchanged(identity);
         this.lastSynchronizedSeason = synchronizationSeason;
+        this.lastSynchronizedClub = `${identity.code}:${identity.organizationId}`;
         this.reportProgress(100, 'Synchronisation terminée');
 
         return this.sortMembers(members);
@@ -215,7 +239,8 @@ export class MemberSyncService {
         return members;
     }
 
-    private async createOrUpdateMember(members: Member[], clubMember: ClubMember): Promise<void> {
+    private async createOrUpdateMember(members: Member[], clubMember: ClubMember, status?: MemberStatus): Promise<void> {
+        const resolvedStatus = status ?? this.computeMemberStatusFromClubMember(clubMember, await this.loadClubIdentity());
         const licenseNumber = clubMember.license_number?.trim();
         const existingMember = members.find((member) => member.person_id === clubMember.id)
             ?? (licenseNumber
@@ -226,7 +251,7 @@ export class MemberSyncService {
             const personV2 = existingMember.email?.trim()
                 ? null
                 : await this.ffbService.getFFBPerson(clubMember.id).catch(() => null);
-            const updatedMember = this.buildUpdatedMember(existingMember, clubMember, personV2);
+            const updatedMember = this.buildUpdatedMember(existingMember, clubMember, personV2, resolvedStatus);
             if (updatedMember) {
                 await this.membersService.updateMember(updatedMember);
             }
@@ -249,11 +274,11 @@ export class MemberSyncService {
             return;
         }
 
-        const newMember = this.createNewMember(clubMember, personV2);
+        const newMember = this.createNewMember(clubMember, personV2, resolvedStatus);
         await this.membersService.createMember(newMember);
     }
 
-    private buildUpdatedMember(member: Member, clubMember: ClubMember, personV2: PersonV2 | null): Member | null {
+    private buildUpdatedMember(member: Member, clubMember: ClubMember, personV2: PersonV2 | null, status: MemberStatus): Member | null {
         const nextMember: Member = {
             id: member.id,
             license_number: clubMember.license_number,
@@ -264,14 +289,14 @@ export class MemberSyncService {
             city: member.city?.trim() || personV2?.city || '',
             email: member.email?.trim() || personV2?.email?.trim() || '',
             phone_one: member.phone_one?.trim() || personV2?.phone || '',
-            license_taken_at: clubMember.club?.label ?? 'BCSTO',
+            license_taken_at: clubMember.club?.label || clubMember.club?.name || '',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
             orga_license_name: member.orga_license_name ? '' : member.orga_license_name,
             license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
             accept_mailing: member.accept_mailing,
             membership_date: member.membership_date,
             person_id: clubMember.id,
-            memberStatus: this.computeMemberStatusFromClubMember(clubMember),
+            memberStatus: status,
             lifecycleStatus: member.lifecycleStatus,
             lifecycleChangedAt: member.lifecycleChangedAt,
             lifecycleChangedBy: member.lifecycleChangedBy,
@@ -300,7 +325,7 @@ export class MemberSyncService {
         );
     }
 
-    private createNewMember(clubMember: ClubMember, personV2: PersonV2 | null): Member {
+    private createNewMember(clubMember: ClubMember, personV2: PersonV2 | null, status: MemberStatus): Member {
         const nextMember: Member = {
             id: '',
             gender: normalizeGender(clubMember.gender),
@@ -313,12 +338,12 @@ export class MemberSyncService {
             accept_mailing: !!personV2?.email,
             phone_one: personV2?.phone ?? '',
             license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
-            license_taken_at: clubMember.club?.label ?? 'BCSTO',
+            license_taken_at: clubMember.club?.label || clubMember.club?.name || '',
             register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
             orga_license_name: '',
             membership_date: '',
             person_id: clubMember.id,
-            memberStatus: this.computeMemberStatusFromClubMember(clubMember),
+            memberStatus: status,
             lifecycleStatus: 'ACTIVE',
             iv: undefined,
             iv_code: undefined,
@@ -497,11 +522,33 @@ export class MemberSyncService {
         await Promise.all(updates);
     }
 
-    private computeMemberStatusFromClubMember(clubMember: ClubMember): MemberStatus {
-        if (clubMember.licence && (clubMember.club?.label ?? 'BCSTO') === 'Bridge Club de Saint Orens') {
-            return MemberStatus.CLUB_LICENSEE;
-        }
+    private async loadClubIdentity(): Promise<FfbClubIdentity> {
+        const configuration = await firstValueFrom(this.systemDataService.get_configuration().pipe(take(1)));
+        return resolveFfbClubIdentity(configuration).identity;
+    }
 
-        return MemberStatus.SYMPATHISANT;
+    private assertClubIdentityUnchanged(identity: FfbClubIdentity): void {
+        const current = this.systemDataService.getFfbClubIdentity();
+        if (current.code !== identity.code || current.organizationId !== identity.organizationId) {
+            throw new Error('La configuration FFB a changé pendant la synchronisation');
+        }
+    }
+
+    private computeMemberStatusFromClubMember(clubMember: ClubMember, identity: FfbClubIdentity): MemberStatus {
+        if (!clubMember.licence) return MemberStatus.SYMPATHISANT;
+
+        const code = clubMember.club?.ffbCode?.trim();
+        const id = clubMember.club?.id;
+        const hasCode = !!code && /^\d{7}$/.test(code);
+        const hasId = Number.isSafeInteger(id) && id > 0;
+        if (!hasCode && !hasId) {
+            throw new Error(`Club de licence FFB non identifié pour ${clubMember.license_number}`);
+        }
+        const matchesCode = hasCode && code === identity.code;
+        const matchesId = hasId && String(id) === identity.organizationId;
+        if (hasCode && hasId && matchesCode !== matchesId) {
+            throw new Error(`Identifiants du club de licence FFB incohérents pour ${clubMember.license_number}`);
+        }
+        return matchesCode || matchesId ? MemberStatus.CLUB_LICENSEE : MemberStatus.SYMPATHISANT;
     }
 }

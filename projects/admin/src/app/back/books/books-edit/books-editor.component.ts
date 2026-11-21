@@ -42,8 +42,7 @@ interface Account {
 })
 export class BooksEditorComponent {
 
-  NumberRegexPattern: string = '([-,+]?[0-9]+([.,][0-9]*)?|[.][0-9]+)';
-  // NumberRegexPattern: string = '([0-9]+([.,][0-9]*)?|[.][0-9]+)';
+  NumberRegexPattern: string = '[+-]?([0-9]+([.,][0-9]*)?|[.,][0-9]+)';
 
   protected_mode: boolean = false; // pour le mode protégé
   documentary_mode = false;
@@ -1069,8 +1068,8 @@ export class BooksEditorComponent {
   parse_to_string(value: number): string {
     return value !== undefined ? value.toString() : '';
   }
-  parse_to_float(value: string): number {
-    return (!Number.isNaN(value) && value !== '') ? parseFloat(value) : 0;
+  parse_to_float(value: string | number | null | undefined): number {
+    return typeof value === 'string' ? Number(value.replace(',', '.')) : (value ?? 0);
   }
 
   atLeastOneFieldValidator(control: AbstractControl): ValidationErrors | null {

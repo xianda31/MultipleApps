@@ -1611,6 +1611,9 @@
               "title": "Parcours conseillé",
               "steps": [
                 "Modifier un parametre a la fois.",
+                "Rechercher le club FFB par son nom, sélectionner le bon résultat puis sauvegarder. Les identifiants sont renseignés automatiquement et vérifiés auprès de la FFB.",
+                "Un changement de club nécessite une confirmation : la synchronisation peut ajouter et modifier des fiches membres sans retour automatique à l’état précédent. Sauvegarder les données avant de poursuivre.",
+                "Les tournois et résultats utilisent le groupe de régularité « A » de la saison FFB courante. La synchronisation reconnaît les licences du club grâce à ses identifiants FFB.",
                 "Valider et controler l effet metier."
               ]
             }
@@ -1759,6 +1762,7 @@
               "steps": [
                 "Si la sandbox est vide, copier la navigation de production vers la sandbox.",
                 "Activer la visualisation Sandbox, puis ajouter, modifier, déplacer ou supprimer les entrées nécessaires.",
+                "Pour les résultats FFB de régularité, choisir le plugin ffb_regularity_results : la saison et le groupe sont déterminés automatiquement.",
                 "Contrôler les simulations de la barre de navigation et du pied de page, en mode utilisateur connecté puis non connecté.",
                 "Lorsque la navigation est validée, promouvoir la sandbox vers la production."
               ]

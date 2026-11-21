@@ -6,6 +6,7 @@ import { FileService } from './files.service';
 import { ToastService } from './toast.service';
 import { normalizeBreakpoints } from '../utils/ui-utils';
 import { DEFAULT_REMEMBERED_AUTH_SESSION_DAYS, normalizeRememberedSessionDays } from '../authentification/auth-session-persistence';
+import { LEGACY_FFB_CLUB_IDENTITY, resolveFfbClubIdentity } from '../../../../../../amplify/functions/shared/ffb-club-identity';
 
 export type AccountingSeasonStatus = 'open' | 'closure_required' | 'preopened';
 
@@ -40,6 +41,10 @@ export class SystemDataService {
     // Normalise la conf : injecte la saison locale + valeurs par défaut pour les champs optionnels
     const normalize = (conf: SystemConfiguration): SystemConfiguration => conf ? {
       ...conf,
+      ...(conf.ffb_club_code == null && conf.ffb_organization_id == null ? {
+        ffb_club_code: LEGACY_FFB_CLUB_IDENTITY.code,
+        ffb_organization_id: LEGACY_FFB_CLUB_IDENTITY.organizationId,
+      } : {}),
       season: this._active_season,
       include_system_visits: conf.include_system_visits ?? false,
       assistance_request_retention_days: conf.assistance_request_retention_days ?? 90,
@@ -74,6 +79,9 @@ export class SystemDataService {
         }
         this._system_configuration$.next(this._system_configuration);
         const missing: string[] = [];
+        if (conf.ffb_club_code == null && conf.ffb_organization_id == null) {
+          missing.push('identifiants FFB (valeurs historiques Saint-Orens)');
+        }
         if (conf.include_system_visits == null) missing.push('include_system_visits');
         if (conf.assistance_request_retention_days == null) missing.push('assistance_request_retention_days');
         if (conf.remembered_auth_session_days == null) missing.push('remembered_auth_session_days');
@@ -89,6 +97,11 @@ export class SystemDataService {
       }),
       switchMap(() => this._system_configuration$.asObservable().pipe(map(normalize)))
     );
+  }
+
+  getFfbClubIdentity() {
+    if (!this._system_configuration) throw new Error('Configuration système non chargée');
+    return resolveFfbClubIdentity(this._system_configuration).identity;
   }
 
   /**
@@ -381,23 +394,15 @@ export class SystemDataService {
 
 
   async save_configuration(conf: SystemConfiguration) {
-    // Update local cache and notify subscribers immediately so UI can react without waiting for S3 upload
-    try {
-      this._system_configuration = {
-        ...conf,
-        accounting_initialized_season: conf.accounting_initialized_season
-          ?? this._system_configuration?.accounting_initialized_season
-          ?? this.get_today_season(),
-      };
-      try { this._system_configuration$.next(this._system_configuration); } catch (e) { /* ignore */ }
-    } catch (e) { /* ignore */ }
-    // Persist to S3 — season is NOT persisted (managed locally)
-    try {
-      await this.persistConfiguration(this._system_configuration);
-    } catch (e) {
-      console.warn('save_configuration: unable to prepare payload', e);
-      throw e;
-    }
+    const updated = {
+      ...conf,
+      accounting_initialized_season: conf.accounting_initialized_season
+        ?? this._system_configuration?.accounting_initialized_season
+        ?? this.get_today_season(),
+    };
+    await this.persistConfiguration(updated);
+    this._system_configuration = updated;
+    this._system_configuration$.next(updated);
   }
 
   private async persistConfiguration(conf: SystemConfiguration): Promise<void> {

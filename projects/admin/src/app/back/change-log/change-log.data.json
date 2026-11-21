@@ -1,5 +1,125 @@
 [
   {
+    "id": "2026-11-21-resultats-ffb-saison-courante",
+    "publishedOn": "2026-11-21",
+    "site": "FRONT",
+    "area": "TOURNOIS_COMPETITIONS",
+    "kind": "FIX",
+    "summary": "Les résultats FFB affichent la saison courante et s'adaptent à l'écran."
+  },
+  {
+    "id": "2026-11-21-identifiants-ffb-configurables",
+    "publishedOn": "2026-11-21",
+    "site": "BACK_OFFICE",
+    "area": "GENERAL",
+    "kind": "IMPROVEMENT",
+    "summary": "Les identifiants FFB du club sont configurables dans les paramètres système."
+  },
+  {
+    "id": "2026-11-19-billetterie-evenements-payants",
+    "publishedOn": "2026-11-19",
+    "site": "BACK_OFFICE",
+    "area": "BOUTIQUE",
+    "kind": "NEW",
+    "summary": "La billetterie permet de suivre et d'encaisser les inscriptions aux événements payants."
+  },
+  {
+    "id": "2026-11-19-billetterie-reglements-automatiques",
+    "publishedOn": "2026-11-19",
+    "site": "BACK_OFFICE",
+    "area": "BOUTIQUE",
+    "kind": "IMPROVEMENT",
+    "summary": "Les règlements en caisse ou en ligne mettent automatiquement à jour la réservation correspondante."
+  },
+  {
+    "id": "2026-11-17-pointage-suivi-droits-table",
+    "publishedOn": "2026-11-17",
+    "site": "BACK_OFFICE",
+    "area": "TOURNOIS",
+    "kind": "IMPROVEMENT",
+    "summary": "Le pointage des joueurs et le suivi des droits de table ont été simplifiés."
+  },
+  {
+    "id": "2026-11-09-repertoire-synchronisation",
+    "publishedOn": "2026-11-09",
+    "site": "BACK_OFFICE",
+    "area": "ADHERENTS",
+    "kind": "IMPROVEMENT",
+    "summary": "Le répertoire reste consultable pendant la synchronisation, avec indication des données provisoires."
+  },
+  {
+    "id": "2026-11-08-synchronisation-adherents-doublons-licences",
+    "publishedOn": "2026-11-08",
+    "site": "BACK_OFFICE",
+    "area": "ADHERENTS",
+    "kind": "FIX",
+    "summary": "La synchronisation limite les créations en double et affiche les licences prises dans un autre club."
+  },
+  {
+    "id": "2026-11-08-saisie-ecritures-compacte",
+    "publishedOn": "2026-11-08",
+    "site": "BACK_OFFICE",
+    "area": "COMPTABILITE",
+    "kind": "IMPROVEMENT",
+    "summary": "La saisie des écritures est plus compacte et met en évidence les modifications."
+  },
+  {
+    "id": "2026-11-08-corrections-documentaires-saison-cloturee",
+    "publishedOn": "2026-11-08",
+    "site": "BACK_OFFICE",
+    "area": "COMPTABILITE",
+    "kind": "IMPROVEMENT",
+    "summary": "Les libellés, tags et factures d'une saison clôturée peuvent être corrigés par les personnes autorisées."
+  },
+  {
+    "id": "2026-11-06-refus-inscription-tournoi",
+    "publishedOn": "2026-11-06",
+    "site": "FRONT",
+    "area": "TOURNOIS_COMPETITIONS",
+    "kind": "FIX",
+    "summary": "Les refus d'inscription à un tournoi sont désormais expliqués directement sur la page."
+  },
+  {
+    "id": "2026-11-06-verification-avoirs-dettes-paiement",
+    "publishedOn": "2026-11-06",
+    "site": "BACK_OFFICE",
+    "area": "BOUTIQUE",
+    "kind": "FIX",
+    "summary": "Les avoirs et dettes sont vérifiés avant le paiement en ligne."
+  },
+  {
+    "id": "2026-11-03-trop-percu-avoir",
+    "publishedOn": "2026-11-03",
+    "site": "BACK_OFFICE",
+    "area": "COMPTABILITE",
+    "kind": "IMPROVEMENT",
+    "summary": "Un trop-perçu peut être enregistré en avoir lors de la correction d'un règlement."
+  },
+  {
+    "id": "2026-11-03-tableau-bord-historique",
+    "publishedOn": "2026-11-03",
+    "site": "BACK_OFFICE",
+    "area": "GENERAL",
+    "kind": "IMPROVEMENT",
+    "summary": "Le tableau de bord présente l'évolution des bilans et résultats par saison."
+  },
+  {
+    "id": "2026-10-26-export-resultats-ffb-clubnet",
+    "publishedOn": "2026-10-26",
+    "site": "BACK_OFFICE",
+    "area": "TOURNOIS",
+    "kind": "IMPROVEMENT",
+    "summary": "L'export des résultats vers FFB ClubNet est accessible en un seul bouton."
+  },
+  {
+    "id": "2026-10-26-vente-presence-recherche-adherents",
+    "publishedOn": "2026-10-26",
+    "site": "BACK_OFFICE",
+    "area": "BOUTIQUE",
+    "kind": "IMPROVEMENT",
+    "summary": "La vente en présence a été clarifiée et la recherche d'adhérents accélérée."
+  },
+  {
     "id": "2026-10-23-nouveau-look-type-calendar",
     "publishedOn": "2026-10-23",
     "site": "FRONT",

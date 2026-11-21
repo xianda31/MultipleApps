@@ -5,6 +5,7 @@ import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
 import { ClubMember } from '../ffb/interface/club-member.interface';
 import { SystemDataService } from './system-data.service';
+import { LEGACY_FFB_CLUB_IDENTITY } from '../../../../../../amplify/functions/shared/ffb-club-identity';
 
 export enum MemberStatus {
   FFB_CLUB_ATTACHED = 'FFB_CLUB_ATTACHED',
@@ -394,7 +395,17 @@ get_birthdays_this_month(): Observable<Member[]> {
   }
 
   isLicenseAtClub(member: Member): boolean {
-    return member.license_taken_at === this.CLUB_LICENSE_NAME;
+    if (member.memberStatus === MemberStatus.CLUB_LICENSEE) return true;
+    if (member.memberStatus === MemberStatus.SYMPATHISANT) return false;
+
+    const identity = this.systemDataService.getFfbClubIdentity();
+    if (identity.code === LEGACY_FFB_CLUB_IDENTITY.code
+      && identity.organizationId === LEGACY_FFB_CLUB_IDENTITY.organizationId) {
+      return member.license_taken_at === this.CLUB_LICENSE_NAME;
+    }
+
+    console.warn('[MembersService] Statut FFB inconnu : synchronisation nécessaire', { memberId: member.id });
+    return false;
   }
 
   getMemberStatus(member: Member, ffbBaseReferences: FfbBaseReferences): MemberStatus {

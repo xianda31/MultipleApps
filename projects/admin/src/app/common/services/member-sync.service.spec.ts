@@ -78,11 +78,13 @@ describe('MemberSyncService', () => {
     licenseesService.getClubMembers$.and.returnValue(of([clubMember]));
     const systemDataService = jasmine.createSpyObj(
       'SystemDataService',
-      ['get_local_season', 'get_accounting_season_state', 'start_date'],
+      ['get_local_season', 'get_accounting_season_state', 'start_date', 'get_configuration', 'getFfbClubIdentity'],
     );
     systemDataService.get_local_season.and.returnValue(localSeason);
     systemDataService.get_accounting_season_state.and.returnValue({ initializedSeason });
     systemDataService.start_date.and.returnValue('2026-07-01');
+    systemDataService.get_configuration.and.returnValue(of({ ffb_club_code: '5500020', ffb_organization_id: '1403' }));
+    systemDataService.getFfbClubIdentity.and.returnValue({ code: '5500020', organizationId: '1403' });
     const bookService = jasmine.createSpyObj(
       'BookService',
       ['list_book_entries', 'is_book_entries_loaded', 'get_operations'],
@@ -185,6 +187,106 @@ describe('MemberSyncService', () => {
     await service.ensureMembersSynchronized();
 
     expect(licenseesService.getClubMembers$).toHaveBeenCalledTimes(2);
+  });
+
+  it('updates existing members using the configured FFB identity rather than the club label', async () => {
+    const { service, systemDataService, licenseesService, membersService } = createService();
+    systemDataService.get_configuration.and.returnValue(of({ ffb_club_code: '5500055', ffb_organization_id: '1438' }));
+    systemDataService.getFfbClubIdentity.and.returnValue({ code: '5500055', organizationId: '1438' });
+    licenseesService.getClubMembers$.and.returnValue(of([{
+      ...clubMember,
+      licence: true,
+      club: { ...clubMember.club, id: 1438, ffbCode: '5500055', label: 'Nom différent' },
+    }]));
+
+    await service.ensureMembersSynchronized(true);
+
+    expect(membersService.updateMember).toHaveBeenCalledWith(jasmine.objectContaining({
+      id: member.id,
+      memberStatus: 'CLUB_LICENSEE',
+      license_taken_at: 'Nom différent',
+    }));
+  });
+
+  it('recognizes a license taken in another club even if its label matches the configured club', async () => {
+    const { service, systemDataService, membersService } = createService();
+    systemDataService.get_configuration.and.returnValue(of({ ffb_club_code: '5500055', ffb_organization_id: '1438' }));
+    const otherClubMember = {
+      ...clubMember,
+      licence: true,
+      club: { ...clubMember.club, id: 1403, ffbCode: '5500020', label: 'Nom du club configuré' },
+    };
+
+    await service.createMemberWithComputedStatus({ ...member, memberStatus: 'CLUB_LICENSEE' }, otherClubMember);
+
+    expect(membersService.createMember).toHaveBeenCalledWith(jasmine.objectContaining({
+      memberStatus: 'SYMPATHISANT',
+    }));
+  });
+
+  it('recognizes the configured club when the FFB supplies only its code or only its organization id', async () => {
+    const { service, membersService } = createService();
+    for (const club of [
+      { ...clubMember.club, id: 0, ffbCode: '5500020' },
+      { ...clubMember.club, id: 1403, ffbCode: '' },
+    ]) {
+      await service.createMemberWithComputedStatus(member, { ...clubMember, licence: true, club });
+    }
+
+    expect(membersService.createMember).toHaveBeenCalledTimes(2);
+    for (const [created] of membersService.createMember.calls.allArgs()) {
+      expect(created.memberStatus).toBe('CLUB_LICENSEE');
+    }
+  });
+
+  it('cancels synchronization before updating members when a licensed club cannot be identified', async () => {
+    const { service, licenseesService, membersService } = createService();
+    licenseesService.getClubMembers$.and.returnValue(of([{ ...clubMember, licence: true }]));
+
+    await expectAsync(service.ensureMembersSynchronized()).toBeRejectedWithError(/Club de licence FFB non identifié/);
+    expect(membersService.updateMember).not.toHaveBeenCalled();
+    expect(membersService.createMember).not.toHaveBeenCalled();
+  });
+
+  it('rejects inconsistent FFB club identifiers', async () => {
+    const { service } = createService();
+    const inconsistent = {
+      ...clubMember,
+      licence: true,
+      club: { ...clubMember.club, id: 1403, ffbCode: '5500055' },
+    };
+
+    await expectAsync(service.createMemberWithComputedStatus(member, inconsistent))
+      .toBeRejectedWithError(/Identifiants du club de licence FFB incohérents/);
+  });
+
+  it('does not reuse a synchronization after the FFB club is changed', async () => {
+    const { service, systemDataService, licenseesService } = createService();
+    await service.ensureMembersSynchronized();
+    systemDataService.get_configuration.and.returnValue(of({ ffb_club_code: '5500055', ffb_organization_id: '1438' }));
+    systemDataService.getFfbClubIdentity.and.returnValue({ code: '5500055', organizationId: '1438' });
+
+    await service.ensureMembersSynchronized();
+
+    expect(licenseesService.getClubMembers$).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not update members when the FFB club changes during loading', async () => {
+    const { service, systemDataService, licenseesService, membersService } = createService();
+    const ffbMembers = new Subject<ClubMember[]>();
+    licenseesService.getClubMembers$.and.returnValue(ffbMembers);
+    const initialSnapshot = firstValueFrom(service.syncMembers$.pipe(
+      filter((snapshot): snapshot is Member[] => snapshot !== null),
+      take(1),
+    ));
+    const synchronization = service.ensureMembersSynchronized();
+    await initialSnapshot;
+    systemDataService.getFfbClubIdentity.and.returnValue({ code: '5500055', organizationId: '1438' });
+    ffbMembers.next([clubMember]);
+
+    await expectAsync(synchronization).toBeRejectedWithError(/configuration FFB a changé/);
+    expect(membersService.updateMember).not.toHaveBeenCalled();
+    expect(membersService.createMember).not.toHaveBeenCalled();
   });
 
   it('retries after a forced synchronization fails', async () => {
@@ -514,6 +616,7 @@ describe('MemberSyncService', () => {
       lastName: 'RAMOS',
       license_number: '24827406',
       licence: true,
+      club: { ...clubMember.club, id: 1403, ffbCode: '5500020' },
     } as ClubMember;
 
     await (service as any).createOrUpdateMember([historicalMember], ramosFfb);

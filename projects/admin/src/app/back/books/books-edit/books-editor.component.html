@@ -354,7 +354,7 @@
                 style="font-size: 0.875rem;"
                 [ngbTooltip]="optional_accounts[i].description" tooltipClass="my-custom-class"
                 placement="top">{{optional_accounts[i].label}}</label>
-              <input type="text"
+              <input type="text" inputmode="decimal"
                 [class]="account.invalid ? 'form-control form-control-sm border-danger' : 'form-control form-control-sm'"
                 [formControlName]="i" [id]="'customer_account' + i"
                 style="padding: 0.25rem 0.35rem; font-size: 0.875rem;">

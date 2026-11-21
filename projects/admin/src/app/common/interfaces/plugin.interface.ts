@@ -12,6 +12,7 @@ import { AlbumComponent } from "../../front/album/album.component";
 import { CompetitionsComponent } from "../../back/competitions/competitions";
 import { PdfViewerComponent } from "../../back/pdf-viewer/pdf-viewer.component";
 import { ShopComponent } from "../../back/shop/shop.component";
+import { FfbRegularityResultsComponent } from "../../front/front/ffb-regularity-results/ffb-regularity-results.component";
 
 export enum NAVITEM_PLUGIN {
   TOURNAMENTS = 'tournaments',
@@ -20,6 +21,7 @@ export enum NAVITEM_PLUGIN {
   PURCHASES = 'purchases',
   GAME_CARDS_OWNED = 'game_cards_owned',
   IFRAME = 'iframe',
+  FFB_REGULARITY_RESULTS = 'ffb_regularity_results',
   HOME = 'homePage',
   ASSISTANCE = 'assistance',
   PDF_VIEWER = 'pdf_viewer',
@@ -65,6 +67,7 @@ export const PLUGINS: Record<string, Type<any>> = {
   [NAVITEM_PLUGIN.GAME_CARDS_OWNED]: GameCardsOwnedComponent,
   // [NAVITEM_PLUGIN.AUTHENTICATION]: ConnexionPageComponent,
   [NAVITEM_PLUGIN.IFRAME]: IframeComponent,
+  [NAVITEM_PLUGIN.FFB_REGULARITY_RESULTS]: FfbRegularityResultsComponent,
   [NAVITEM_PLUGIN.HOME]: HomePage,
   [NAVITEM_PLUGIN.ASSISTANCE]: AssistanceComponent,
   [NAVITEM_PLUGIN.ALBUM]: AlbumComponent,

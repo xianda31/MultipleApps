@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { club_tournament } from '../ffb/interface/club_tournament.interface';
 import { TournamentTeams, Tournament } from '../ffb/interface/tournament.interface';
 import { IsolatedPlayersResponse } from '../ffb/interface/isolated-players.interface';
-import { BehaviorSubject, from, map, Observable, tap, of, catchError } from 'rxjs';
+import { BehaviorSubject, from, map, Observable, tap, of, catchError, switchMap, take } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { FFB_proxyService } from '../ffb/services/ffb.service';
 import { ToastService } from './toast.service';
+import { SystemDataService } from './system-data.service';
+import { resolveFfbClubIdentity } from '../../../../../../amplify/functions/shared/ffb-club-identity';
 
 const TOURNAMENTS_WINDOW = 28; // Days (4 weeks) for searching tournaments
 
@@ -22,7 +24,8 @@ export class TournamentService {
 
     constructor(
         private ffbService: FFB_proxyService,
-        private toastService: ToastService
+        private toastService: ToastService,
+        private systemDataService: SystemDataService
     ) {
     }
 
@@ -61,7 +64,22 @@ export class TournamentService {
             throw new Error('La date de fin des tournois doit être postérieure à la date de début');
         }
 
-        const cacheKey = `${dateFrom.toISOString().slice(0, 10)}:${dateTo.toISOString().slice(0, 10)}`;
+        return this.systemDataService.get_configuration().pipe(
+            take(1),
+            switchMap(configuration => {
+                const { identity } = resolveFfbClubIdentity(configuration);
+                return this.loadTournaments(dateFrom, dateTo, `${identity.code}:${identity.organizationId}`, options);
+            })
+        );
+    }
+
+    private loadTournaments(
+        dateFrom: Date,
+        dateTo: Date,
+        identityKey: string,
+        options: { refresh?: boolean }
+    ): Observable<Tournament[]> {
+        const cacheKey = `${identityKey}:${dateFrom.toISOString().slice(0, 10)}:${dateTo.toISOString().slice(0, 10)}`;
         if (!options.refresh && this._tournamentCache.has(cacheKey)) {
             const cachedTournaments = this._tournamentCache.get(cacheKey)!;
             this._tournaments = cachedTournaments;
@@ -70,6 +88,10 @@ export class TournamentService {
 
         return this.ffbService._getTournaments(dateFrom, dateTo).pipe(
             map((tournaments: Tournament[]) => {
+                const currentIdentity = this.systemDataService.getFfbClubIdentity();
+                if (`${currentIdentity.code}:${currentIdentity.organizationId}` !== identityKey) {
+                    throw new Error('Le club FFB a changé pendant le chargement des tournois.');
+                }
                 if (!Array.isArray(tournaments)) {
                     this.toastService.showError('connexion au serveur FFB', 'Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
                     console.error('Erreur serveur FFB ou format inattendu lors de la récupération des tournois');
@@ -81,6 +103,11 @@ export class TournamentService {
             }),
             catchError((err: any) => {
                 console.warn('[TournamentService] Erreur lors de la récupération des tournois', err);
+                const currentIdentity = this.systemDataService.getFfbClubIdentity();
+                if (`${currentIdentity.code}:${currentIdentity.organizationId}` !== identityKey) {
+                    this.toastService.showError('Club FFB modifié', 'Rechargez les tournois pour le club sélectionné.');
+                    return of([] as Tournament[]);
+                }
                 return from(this.ffbService.checkAlive()).pipe(
                     map((health) => {
                         const maintenanceDetected = health.maintenance || (!health.alive && this.isFfbMaintenanceError(err));
@@ -110,7 +137,7 @@ export class TournamentService {
                             );
                         }
                         return of([]);
-                    })
+            })
                 );
             })
         );

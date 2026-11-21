@@ -370,7 +370,7 @@ export class MembersComponent implements OnInit {
         email,
         accept_mailing: acceptMailing,
       };
-      await this.memberSyncService.createMemberWithComputedStatus(newMember);
+      await this.memberSyncService.createMemberWithComputedStatus(newMember, player);
       await this.refreshMembersAsync();
     } catch (error) {
       console.error('Erreur lors de l’ajout d’une personne FFB:', error);
@@ -412,7 +412,7 @@ export class MembersComponent implements OnInit {
       city: this.capitalizeFirst(newbee.city.trim()),
       email,
       phone_one: newbee.phone.trim(),
-      license_taken_at: 'BCSTO',
+      license_taken_at: '',
       license_status: LicenseStatus.UNREGISTERED,
       accept_mailing: newbee.acceptMailing,
       membership_date: '',
@@ -691,7 +691,7 @@ export class MembersComponent implements OnInit {
       accept_mailing: personV2?.email ? true : false,
       phone_one: personV2?.phone ?? '',
       license_status: clubMember.licence ? LicenseStatus.DULY_REGISTERED : LicenseStatus.UNREGISTERED,
-      license_taken_at: clubMember.club?.label ?? 'BCSTO',
+      license_taken_at: clubMember.club?.label || clubMember.club?.name || '',
       register_date: clubMember.mainRegistration?.createdAt ? clubMember.mainRegistration.createdAt.split('T')[0] : '',
       membership_date: '',
       person_id: clubMember.id,

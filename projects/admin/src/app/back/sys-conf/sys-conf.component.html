@@ -2,6 +2,61 @@
   <h1 class="h3 mt-2 mb-3">Configuration des paramètres du système</h1>
   <form *ngIf="loaded" [formGroup]="systemFormGroup">
     <div>
+      <div class="card mt-2">
+        <h5 class="card-header">Club FFB : <strong>{{systemFormGroup.get('ffb_club_name')?.value || 'Nom non renseigné'}}</strong>
+          <span class="small text-body-secondary fw-normal">
+            (code FFB : {{systemFormGroup.get('ffb_club_code')?.value || '—'}},
+            organisation : {{systemFormGroup.get('ffb_organization_id')?.value || '—'}})
+          </span>
+        </h5>
+        <div class="card-body">
+          <div class="ffb-club-search" (focusout)="onClubSearchFocusOut($event)">
+            <div class="input-group">
+              <label for="ffbClubSearch" class="input-group-text">Changer de club</label>
+              <input #clubSearchInput id="ffbClubSearch" type="search" class="form-control" [ngModel]="clubSearchTerm"
+                [ngModelOptions]="{standalone: true}" (ngModelChange)="onClubSearchChange($event)"
+                (focus)="onClubSearchFocus()" (keydown)="onClubSearchKeydown($event)"
+                role="combobox" aria-autocomplete="list" aria-haspopup="listbox"
+                [attr.aria-expanded]="clubSearchPanelVisible" [attr.aria-controls]="clubSearchPanelVisible ? 'ffb-club-results' : null"
+                [attr.aria-activedescendant]="clubSearchPanelVisible && !clubSearching && activeClubIndex >= 0 ? 'ffb-club-option-' + activeClubIndex : null"
+                autocomplete="off"
+                [disabled]="saving" maxlength="100" placeholder="Nom du club (2 caractères minimum)">
+            </div>
+            <div *ngIf="clubSearchPanelVisible" class="ffb-club-suggestions">
+              <div *ngIf="clubSearching" class="px-3 py-2" role="status">Recherche FFB en cours...</div>
+              <div *ngIf="clubSearchError" class="text-danger px-3 py-2" role="alert">
+                {{clubSearchError}}
+                <button type="button" class="btn btn-sm btn-link" (click)="retryClubSearch(); clubSearchInput.focus()" [disabled]="saving">Réessayer</button>
+              </div>
+              <div *ngIf="clubSearchCompleted && !clubSearchResults.length" class="px-3 py-2" role="status">Aucun club trouvé.</div>
+              <div id="ffb-club-results" role="listbox" aria-label="Clubs FFB trouvés" class="ffb-club-options">
+                <button *ngFor="let club of clubSearchResults; let i = index" type="button" role="option"
+                  [id]="'ffb-club-option-' + i" [attr.aria-selected]="i === activeClubIndex && !clubSearching"
+                  class="ffb-club-option" [class.active]="i === activeClubIndex && !clubSearching"
+                  tabindex="-1" [disabled]="saving || clubSearching" (mousedown)="$event.preventDefault()" (click)="selectClub(club)">
+                  <span>{{club.name}}</span><span class="small text-body-secondary">{{club.code}}</span>
+                </button>
+              </div>
+              <div *ngIf="clubSearchResults.length && (clubSearchPage > 1 || clubSearchHasNextPage)"
+                class="d-flex align-items-center justify-content-between gap-2 border-top p-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="searchClubs(clubSearchPage - 1); clubSearchInput.focus()"
+                  [disabled]="saving || clubSearching || clubSearchPage <= 1">Précédent</button>
+                <span class="small">Page {{clubSearchPage}}</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="searchClubs(clubSearchPage + 1); clubSearchInput.focus()"
+                  [disabled]="saving || clubSearching || !clubSearchHasNextPage">Suivant</button>
+              </div>
+            </div>
+          </div>
+          <div class="small text-warning-emphasis mt-2">
+            Attention : changer de club peut ajouter ou modifier des fiches membres lors de la synchronisation.
+            Revenir au club précédent ne rétablit pas automatiquement les données.
+          </div>
+          <div *ngIf="clubNameError" class="text-warning-emphasis mt-2" role="status">{{clubNameError}}</div>
+          <div *ngIf="(systemFormGroup.get('ffb_club_code')?.invalid && systemFormGroup.get('ffb_club_code')?.touched) ||
+            (systemFormGroup.get('ffb_organization_id')?.invalid && systemFormGroup.get('ffb_organization_id')?.touched)"
+            class="text-danger mt-2" role="alert">Sélectionnez un club FFB valide.</div>
+        </div>
+      </div>
       <div class="row g-3 mt-2">
         <div class="col-12 col-md-6">
           <div class="card h-100">
@@ -310,6 +365,7 @@
       </div>
     </div>
     <button type="button" class="btn sys-conf-save-button"
+      [disabled]="saving"
       [class.btn-primary]="systemFormGroup.dirty"
       [class.btn-outline-primary]="!systemFormGroup.dirty"
       (click)="save_configuration()" title="Sauvegarder la configuration"
