@@ -107,6 +107,24 @@
           </div>
         </div>
       </div>
+      <div class="card mt-2">
+        <h5 class="card-header">Club FFB</h5>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label for="ffbClubCode" class="form-label">Code FFB du club</label>
+              <input id="ffbClubCode" type="text" inputmode="numeric" class="form-control" formControlName="ffb_club_code">
+              <div *ngIf="systemFormGroup.get('ffb_club_code')?.invalid && systemFormGroup.get('ffb_club_code')?.touched" class="text-danger">Le code doit comporter 7 chiffres.</div>
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="ffbOrganizationId" class="form-label">Identifiant FFB de l'organisation</label>
+              <input id="ffbOrganizationId" type="text" inputmode="numeric" class="form-control" formControlName="ffb_organization_id">
+              <div *ngIf="systemFormGroup.get('ffb_organization_id')?.invalid && systemFormGroup.get('ffb_organization_id')?.touched" class="text-danger">Saisissez un identifiant numérique positif.</div>
+            </div>
+          </div>
+          <p class="form-text mb-0">Les identifiants sont vérifiés auprès de la FFB lors de leur modification. Le groupe des prochaines sessions et la reconnaissance des licenciés ne sont pas encore paramétrables.</p>
+        </div>
+      </div>
       <!-- </div>
         </div> -->
       <!-- paramètres comptabilité -->
@@ -299,6 +317,7 @@
       </div>
     </div>
     <button type="button" class="btn sys-conf-save-button"
+      [disabled]="saving"
       [class.btn-primary]="systemFormGroup.dirty"
       [class.btn-outline-primary]="!systemFormGroup.dirty"
       (click)="save_configuration()" title="Sauvegarder la configuration"

@@ -1,7 +1,10 @@
 ﻿import { Handler } from "aws-lambda";
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { resolveFfbClubIdentity } from "../shared/ffb-club-identity";
 
 const ssmClient = new SSMClient({ region: process.env.AWS_REGION || "eu-west-3" });
+export const s3Client = new S3Client({});
 
 function isProxyDebugEnabled(): boolean {
   return (process.env.FFB_PROXY_DEBUG || "false").toLowerCase() === "true";
@@ -68,8 +71,22 @@ async function loadV2Token(): Promise<void> {
   }
 }
 
-const CLUB_CODE = process.env.FFB_CLUB_CODE || "5500020";
 const CLUB_GROUP_ID = process.env.FFB_GROUP_ID || "21334";
+
+async function loadFfbClubIdentity() {
+  const bucket = process.env.STORAGE_BUCKET_NAME;
+  if (!bucket) throw new Error("STORAGE_BUCKET_NAME absent pour la configuration FFB");
+  const response = await s3Client.send(new GetObjectCommand({
+    Bucket: bucket,
+    Key: "system/system_configuration.txt",
+  }));
+  if (!response.Body) throw new Error("Configuration système vide");
+  const configuration: unknown = JSON.parse(await response.Body.transformToString());
+  if (!configuration || typeof configuration !== "object") throw new Error("Configuration système invalide");
+  const resolved = resolveFfbClubIdentity(configuration);
+  if (resolved.legacy) console.warn("[FFB API] Identifiants FFB absents : configuration historique de Saint-Orens utilisée");
+  return resolved.identity;
+}
 
 function formatDateYYYYMMDD(date: Date): string {
   const year = date.getFullYear();
@@ -177,6 +194,8 @@ function requiresAuthentication(route: string): boolean {
     "seasons/search",
     "seasons/next",
     "organizations",
+    "club-results",
+    "club-identity-validate",
   ];
   return !publicEndpoints.includes(route);
 }
@@ -288,8 +307,9 @@ export const handler: Handler = async (event) => {
 
       case "club-members":
         {
+          const identity = await loadFfbClubIdentity();
           const params = new URLSearchParams();
-          params.set("ffbCode", CLUB_CODE);
+          params.set("ffbCode", identity.code);
           if (queryParams.seasonId) params.set("seasonId", queryParams.seasonId);
           params.set("currentPage", queryParams.currentPage || "1");
           params.set("maxPerPage", "80");
@@ -328,6 +348,36 @@ export const handler: Handler = async (event) => {
 
       case "organizations":
         ffbEndpoint = "organizations/all";
+        break;
+
+      case "club-results":
+        {
+          if (!/^\d+$/.test(queryParams.season || "")) {
+            return httpResponse(400, { error: "Missing or invalid season" });
+          }
+          const identity = await loadFfbClubIdentity();
+          const params = new URLSearchParams({
+            competitionType: "club",
+            season: queryParams.season,
+            organizationId: identity.organizationId,
+            currentPage: "1",
+            maxPerPage: "80",
+          });
+          ffbEndpoint = `results/search/?${params.toString()}`;
+        }
+        break;
+
+      case "club-identity-validate":
+        {
+          if (!/^\d{7}$/.test(queryParams.code || "") || !/^[1-9]\d*$/.test(queryParams.organizationId || "")) {
+            return httpResponse(400, { error: "Missing or invalid FFB club identifiers" });
+          }
+          const { identity } = resolveFfbClubIdentity({
+            ffb_club_code: queryParams.code,
+            ffb_organization_id: queryParams.organizationId,
+          });
+          ffbEndpoint = `organizations/clubs/${identity.organizationId}`;
+        }
         break;
 
       case "results/search":
@@ -535,6 +585,12 @@ export const handler: Handler = async (event) => {
 
     const requiresAuth = requiresAuthentication(route);
     const data = await fetchFFBApi(ffbEndpoint, options, clientToken, requiresAuth);
+
+    if (route === "club-identity-validate" && !data?.upstreamStatus && !data?.error) {
+      if (String(data?.id) !== queryParams.organizationId || data?.ffbCode !== queryParams.code || data?.type !== "club") {
+        return httpResponse(400, { error: "Le code FFB ne correspond pas à cette organisation" });
+      }
+    }
 
     if (route === "alive") {
       const upstreamStatus = Number((data as any)?.upstreamStatus || 200);

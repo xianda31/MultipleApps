@@ -96,4 +96,20 @@ describe('SystemDataService accounting season', () => {
     expect(fileService.upload_to_S3).toHaveBeenCalled();
     expect(service.get_local_season()).toBe(nextSeason);
   });
+
+  it('does not publish an FFB identity if saving the configuration fails', async () => {
+    const fileService = jasmine.createSpyObj('FileService', ['download_json_file', 'upload_to_S3']);
+    const service = new SystemDataService(fileService, {} as any);
+    fileService.download_json_file.and.resolveTo(configuration(service.get_today_season()));
+    const original = await firstValueFrom(service.get_configuration());
+    fileService.upload_to_S3.and.rejectWith(new Error('S3 unavailable'));
+
+    await expectAsync(service.save_configuration({
+      ...original, ffb_club_code: '5500055', ffb_organization_id: '1438',
+    })).toBeRejected();
+
+    const current = await firstValueFrom(service.get_configuration());
+    expect(current.ffb_club_code).toBe('5500020');
+    expect(current.ffb_organization_id).toBe('1403');
+  });
 });

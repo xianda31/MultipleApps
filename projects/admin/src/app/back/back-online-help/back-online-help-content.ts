@@ -585,6 +585,8 @@ export const HELP_TOPICS: HelpTopic[] = [
         ],
         howTo: [
           'Modifier un parametre a la fois.',
+          'Renseigner le code FFB à 7 chiffres et l’identifiant actuel de l’organisation ; leur correspondance est vérifiée lors d’une modification.',
+          'Le groupe des prochaines sessions et la reconnaissance des licenciés restent spécifiques au club actuel.',
           'Valider et controler l effet metier.',
         ],
       },
@@ -668,6 +670,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         ],
         howTo: [
           'Mettre a jour une entree.',
+          'Pour les résultats FFB de régularité, choisir le plugin ffb_regularity_results : la saison et le groupe sont déterminés automatiquement.',
           'Valider le rang et le comportement de navigation.',
         ],
       },

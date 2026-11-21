@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { SystemConfiguration } from '../../common/interfaces/system-conf.interface';
 import { ToastService } from '../../common/services/toast.service';
+import { FFB_proxyService } from '../../common/ffb/services/ffb.service';
+import { LEGACY_FFB_CLUB_IDENTITY } from '../../../../../../amplify/functions/shared/ffb-club-identity';
 
 
 
@@ -36,16 +38,21 @@ export class SysConfComponent {
   newBankKey = '';
   newBankName = '';
   traceModeEnabled = false;
+  saving = false;
+  private initialFfbIdentity = { ...LEGACY_FFB_CLUB_IDENTITY };
   bankOptionsList: { key: string; name: string }[] = [];
 
   constructor(
     private systemDataService: SystemDataService,
     private toastService: ToastService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private ffbService: FFB_proxyService,
   ) {
 
     this.systemFormGroup = this.fb.group({
       club_identifier: [''],
+      ffb_club_code: ['', [Validators.required, Validators.pattern(/^\d{7}$/)]],
+      ffb_organization_id: ['', [Validators.required, Validators.pattern(/^[1-9]\d*$/)]],
       trace_mode: [false],
       include_system_visits: [false],
       club_bank_key: [''],
@@ -123,16 +130,30 @@ export class SysConfComponent {
     });
   }
 
-  save_configuration() {
+  async save_configuration(): Promise<void> {
     if (this.systemFormGroup.invalid) {
       this.systemFormGroup.markAllAsTouched();
       this.toastService.showWarning('Configuration', 'Corrigez les paramètres invalides avant de sauvegarder');
       return;
     }
     const new_configuration: SystemConfiguration = this.systemFormGroup.value;
-    console.log('nouvelle configuration', new_configuration);
-    this.systemDataService.save_configuration(new_configuration);
-    this.toastService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
+    const code = new_configuration.ffb_club_code!;
+    const organizationId = new_configuration.ffb_organization_id!;
+    this.saving = true;
+    try {
+      if (code !== this.initialFfbIdentity.code || organizationId !== this.initialFfbIdentity.organizationId) {
+        await this.ffbService.validateClubIdentity(code, organizationId);
+      }
+      await this.systemDataService.save_configuration(new_configuration);
+      this.initialFfbIdentity = { code, organizationId };
+      this.systemFormGroup.markAsPristine();
+      this.toastService.showSuccess('configuration sauvegardée', 'les nouvelles données ont été enregistrées');
+    } catch (error) {
+      console.error('Erreur de sauvegarde de la configuration', error);
+      this.toastService.showError('Configuration', 'Sauvegarde impossible : vérifiez les identifiants FFB et la connexion.');
+    } finally {
+      this.saving = false;
+    }
   }
 
   get expenses() {
@@ -242,8 +263,14 @@ export class SysConfComponent {
   }
 
   loadDataInFormGroup(configuration: SystemConfiguration) {
+    const legacy = configuration.ffb_club_code == null && configuration.ffb_organization_id == null;
+    const code = legacy ? LEGACY_FFB_CLUB_IDENTITY.code : configuration.ffb_club_code ?? '';
+    const organizationId = legacy ? LEGACY_FFB_CLUB_IDENTITY.organizationId : configuration.ffb_organization_id ?? '';
+    this.initialFfbIdentity = { code, organizationId };
     this.systemFormGroup.patchValue({
       ...configuration,
+      ffb_club_code: code,
+      ffb_organization_id: organizationId,
       membership_payment_warning_month: configuration.membership_payment_warning_month ?? 11,
     }, { emitEvent: false });
     // patchValue doest not work for FormArray ; work-around method : clear and re-populate

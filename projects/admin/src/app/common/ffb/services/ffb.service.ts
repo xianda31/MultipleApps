@@ -9,6 +9,7 @@ import { catchError, firstValueFrom, from, Observable, of, take } from 'rxjs';
 import { Competition, CompetitionOrganization, CompetitionPhases, CompetitionResultStade_V2, CompetitionTeam, Competition_V2, Entity_V2, SessionRankingEntry } from '../../../back/competitions/competitions.interface';
 import { environment } from '../../../../environments/environment';
 import { SystemDataService } from '../../services/system-data.service';
+import { resolveFfbClubIdentity } from '../../../../../../../amplify/functions/shared/ffb-club-identity';
 import {
   toCompetitionList,
   toCompetitionListFromSearchResponse,
@@ -40,6 +41,8 @@ const FFB_ENDPOINTS = {
   groupSessions: '/api/ffb/v2/group-sessions',
   phases: '/api/ffb/v2/competition-phases',
   competitionSearch: '/api/ffb/v2/results/search',
+  clubResults: '/api/ffb/v2/club-results',
+  clubIdentityValidate: '/api/ffb/v2/club-identity-validate',
   competitionDivisionResults: '/api/ffb/v2/results/competitionDivisions',
   entitySearch: '/api/ffb/v2/entities/search',
   clubTournaments: '/api/ffb/v2/club-sessions',
@@ -557,6 +560,70 @@ export class FFB_proxyService {
     } catch (error) {
       console.error('[FFB Service] getCurrentSeason failed:', error);
       return null;
+    }
+  }
+
+  async getClubRegularityResultsGroup(seasonId: number): Promise<number> {
+    if (!Number.isSafeInteger(seasonId) || seasonId <= 0) {
+      throw new Error('Identifiant de saison FFB invalide');
+    }
+
+    await this.ensureConfigReady();
+    const configuration = await firstValueFrom(this.systemDataService.get_configuration().pipe(take(1)));
+    const { identity } = resolveFfbClubIdentity(configuration);
+    const operation = get({
+      apiName: this.API_NAME,
+      path: this.buildPath(FFB_ENDPOINTS.clubResults),
+      options: this.withTraceHeaders({ queryParams: { season: String(seasonId) } }),
+    });
+    const { body } = await operation.response;
+    const data: unknown = await body.json();
+    if (!data || typeof data !== 'object' || !('items' in data) || !Array.isArray(data.items)
+      || !('pagination' in data) || !data.pagination || typeof data.pagination !== 'object'
+      || !('has_next_page' in data.pagination) || data.pagination.has_next_page !== false) {
+      throw new Error('Réponse FFB des résultats de club invalide ou incomplète');
+    }
+
+    const groups: number[] = [];
+    for (const item of data.items) {
+      if (!item || typeof item !== 'object' || item.organization?.ffbCode !== identity.code
+        || String(item.organization?.id) !== identity.organizationId
+        || !Array.isArray(item.phases)) {
+        throw new Error('Résultats FFB du club invalides');
+      }
+      for (const phase of item.phases) {
+        if (!phase || !Array.isArray(phase.groups)) {
+          throw new Error('Groupes FFB invalides');
+        }
+        for (const group of phase.groups) {
+          if (group?.label === 'A') {
+            if (!Number.isSafeInteger(group.id) || group.id <= 0) {
+              throw new Error('Identifiant du groupe FFB invalide');
+            }
+            groups.push(group.id);
+          }
+        }
+      }
+    }
+    if (groups.length !== 1) {
+      throw new Error(`Impossible d'identifier un groupe FFB de régularité unique (${groups.length} trouvés)`);
+    }
+    return groups[0];
+  }
+
+  async validateClubIdentity(code: string, organizationId: string): Promise<void> {
+    resolveFfbClubIdentity({ ffb_club_code: code, ffb_organization_id: organizationId });
+    await this.ensureConfigReady();
+    const operation = get({
+      apiName: this.API_NAME,
+      path: this.buildPath(FFB_ENDPOINTS.clubIdentityValidate),
+      options: this.withTraceHeaders({ queryParams: { code, organizationId } }),
+    });
+    const { body } = await operation.response;
+    const data: unknown = await body.json();
+    if (!data || typeof data !== 'object' || !('id' in data) || String(data.id) !== organizationId
+      || !('ffbCode' in data) || data.ffbCode !== code || !('type' in data) || data.type !== 'club') {
+      throw new Error('La FFB n’a pas confirmé les identifiants du club');
     }
   }
 

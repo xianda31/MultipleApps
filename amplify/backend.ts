@@ -71,6 +71,8 @@ for (const [model, variable] of [
 }
 
 const storageBucket = backend.storage.resources.bucket;
+storageBucket.grantRead(backend.ffbProxy.resources.lambda, 'system/system_configuration.txt');
+backend.ffbProxy.addEnvironment('STORAGE_BUCKET_NAME', storageBucket.bucketName);
 const processCmsImageLambda = backend.processCmsImage.resources.lambda;
 const sharpLayer = new LayerVersion(Stack.of(processCmsImageLambda), "CmsSharpLayer", {
   code: Code.fromAsset(path.join(import.meta.dirname, "functions/process-cms-image"), {
