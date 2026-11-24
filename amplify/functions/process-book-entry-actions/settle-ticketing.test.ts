@@ -9,6 +9,7 @@ process.env['PLAYBOOK_TABLE_NAME'] = 'PlayBook';
 process.env['FULFILLMENT_EXECUTION_TABLE_NAME'] = 'FulfillmentExecution';
 process.env['ASSISTANCE_REQUEST_TABLE_NAME'] = 'AssistanceRequest';
 process.env['TICKETING_RESERVATION_TABLE_NAME'] = 'TicketingReservation';
+process.env['SURVEY_RESPONSE_TABLE_NAME'] = 'SurveyResponse';
 
 type Item = Record<string, any>;
 
@@ -22,7 +23,12 @@ const members: Record<string, Item> = {
 };
 
 /** DynamoDB simulé en mémoire pour les tables utilisées par l'action. */
-function fakeDynamo(products: Item[], bookEntries: Item[], reservations: Item[] = []) {
+function fakeDynamo(
+  products: Item[],
+  bookEntries: Item[],
+  reservations: Item[] = [],
+  surveyResponses: Item[] = [],
+) {
   const tables: Record<string, Map<string, Item>> = {
     BookEntry: new Map(bookEntries.map(item => [item.id, item])),
     SaleItem: new Map(products.map(item => [item.id, item])),
@@ -30,6 +36,7 @@ function fakeDynamo(products: Item[], bookEntries: Item[], reservations: Item[] 
     FulfillmentExecution: new Map(),
     AssistanceRequest: new Map(),
     TicketingReservation: new Map(reservations.map(item => [item.id, { ...item }])),
+    SurveyResponse: new Map(surveyResponses.map(item => [item.id, { ...item }])),
   };
 
   function conditionFailed(): never {
@@ -44,8 +51,16 @@ function fakeDynamo(products: Item[], bookEntries: Item[], reservations: Item[] 
     }
     if (command instanceof ScanCommand) {
       const values = command.input.ExpressionAttributeValues!;
-      const items = [...tables[command.input.TableName!].values()].filter(item =>
-        item['expectedProductId'] === values[':productId'] && item['reservationKey'] === values[':reservationKey']);
+      const items = [...tables[command.input.TableName!].values()].filter(item => {
+        if (command.input.TableName === 'SurveyResponse') {
+          return item['memberId'] === values[':memberId']
+            && item['paymentProductId'] === values[':productId']
+            && item['paymentStatus'] === values[':payable']
+            && item['requiresReconfirmation'] !== true;
+        }
+        return item['expectedProductId'] === values[':productId']
+          && item['reservationKey'] === values[':reservationKey'];
+      });
       return { Items: items };
     }
     if (command instanceof PutCommand) {
@@ -131,6 +146,34 @@ test('an online payment settles the reservation coming from the survey, once', a
   assert.equal(fake.tables.AssistanceRequest.size, 0);
 });
 
+test('an online payment creates a missing reservation without alert when a payable survey response exists', async () => {
+  const fake = fakeDynamo([dinner], [onlineSale], [], [{
+    id: 'response-anne',
+    memberId: 'member-anne',
+    paymentProductId: 'product-noel',
+    paymentStatus: 'payable',
+  }]);
+
+  const result = await run(fake, 'sale-online');
+
+  assert.equal(result.completed, 1);
+  const [reservation] = [...fake.tables.TicketingReservation.values()];
+  assert.equal(reservation['reservationStatus'], 'sold');
+  assert.equal(reservation['paidChannel'], 'en_ligne');
+  assert.equal(fake.tables.AssistanceRequest.size, 0);
+});
+
+test('an online payment without a payable survey response creates an assistance request', async () => {
+  const fake = fakeDynamo([dinner], [onlineSale]);
+
+  const result = await run(fake, 'sale-online');
+
+  assert.equal(result.completed, 1);
+  assert.equal(fake.tables.AssistanceRequest.size, 1);
+  const [report] = [...fake.tables.AssistanceRequest.values()];
+  assert.match(String(report['texte']), /sans reponse payable au sondage/);
+});
+
 test('a cash sale at the counter that bypassed the survey check still records the payment and alerts the club', async () => {
   const counterSale = {
     id: 'sale-counter', status: 'confirmed', season: '2026/2027', date: '2026-12-05',
@@ -153,7 +196,7 @@ test('a cash sale at the counter that bypassed the survey check still records th
   assert.equal(reservation['date'], '2026-12-05');
   assert.equal(reservation['isMember'], true);
   const [report] = [...fake.tables.AssistanceRequest.values()];
-  assert.match(String(report['texte']), /Repas paye sans reponse au sondage/);
+  assert.match(String(report['texte']), /Repas paye sans reponse payable au sondage/);
   assert.match(String(report['texte']), /Adherent: DUPONT Jean/);
 });
 

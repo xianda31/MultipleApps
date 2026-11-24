@@ -19,6 +19,7 @@ const PLAYBOOK_TABLE = process.env['PLAYBOOK_TABLE_NAME'] || '';
 const FULFILLMENT_EXECUTION_TABLE = process.env['FULFILLMENT_EXECUTION_TABLE_NAME'] || '';
 const ASSISTANCE_REQUEST_TABLE = process.env['ASSISTANCE_REQUEST_TABLE_NAME'] || '';
 const TICKETING_RESERVATION_TABLE = process.env['TICKETING_RESERVATION_TABLE_NAME'] || '';
+const SURVEY_RESPONSE_TABLE = process.env['SURVEY_RESPONSE_TABLE_NAME'] || '';
 const DEFAULT_PLAYBOOK_CREDITS = 12;
 
 export const playBookNotifier = {
@@ -51,6 +52,7 @@ function requireEnvironment(): void {
     ['FULFILLMENT_EXECUTION_TABLE_NAME', FULFILLMENT_EXECUTION_TABLE],
     ['ASSISTANCE_REQUEST_TABLE_NAME', ASSISTANCE_REQUEST_TABLE],
     ['TICKETING_RESERVATION_TABLE_NAME', TICKETING_RESERVATION_TABLE],
+    ['SURVEY_RESPONSE_TABLE_NAME', SURVEY_RESPONSE_TABLE],
   ].filter(([, value]) => !value).map(([name]) => name);
 
   if (missing.length > 0) {
@@ -333,10 +335,30 @@ async function findReservations(productId: string, reservationKey: string): Prom
   return reservations.filter((reservation) => reservation['reservationStatus'] !== 'cancelled');
 }
 
+async function hasPayableSurveyResponse(memberId: string, productId: string): Promise<boolean> {
+  let exclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const page = await documentClient.send(new ScanCommand({
+      TableName: SURVEY_RESPONSE_TABLE,
+      FilterExpression: 'memberId = :memberId AND paymentProductId = :productId AND paymentStatus = :payable AND (attribute_not_exists(requiresReconfirmation) OR requiresReconfirmation = :notRequired)',
+      ExpressionAttributeValues: {
+        ':memberId': memberId,
+        ':productId': productId,
+        ':payable': 'payable',
+        ':notRequired': false,
+      },
+      ExclusiveStartKey: exclusiveStartKey,
+    }));
+    if ((page.Items ?? []).length > 0) return true;
+    exclusiveStartKey = page.LastEvaluatedKey;
+  } while (exclusiveStartKey);
+  return false;
+}
+
 /**
  * Règle la réservation billetterie d'un adhérent après une vente en caisse ou en ligne :
- * la réservation issue du sondage passe à « payée », ou est créée payée si l'adhérent n'avait pas répondu.
- * La vente étant déjà comptabilisée, la réservation est marquée comptabilisée.
+ * la réservation issue du sondage passe à « payée », ou est créée payée si elle n'a pas encore été importée.
+ * Une alerte n'est créée que si aucune réponse payable au sondage n'existe.
  */
 async function settleTicketingReservation(
   bookEntry: BookEntryRecord,
@@ -366,6 +388,7 @@ async function settleTicketingReservation(
     const productId = String(product['id']);
     const reservationKey = `member:${memberId}`;
     const [existing] = await findReservations(productId, reservationKey);
+    const hasSurveyResponse = existing ? true : await hasPayableSurveyResponse(memberId, productId);
     if (existing?.['reservationStatus'] === 'sold') {
       throw new Error(`${memberName} avait déjà réglé ce repas (${existing['paidChannel'] || 'billetterie'}) : double paiement`);
     }
@@ -448,17 +471,16 @@ async function settleTicketingReservation(
         },
       ],
     }));
-    if (!existing) {
-      // Normalement impossible : la boutique refuse la vente sans réponse au sondage. Choix de menu inconnu.
+    if (!existing && !hasSurveyResponse) {
       await createAssistanceRequest(deterministicId('ticketing-without-survey', executionId), executionId, [
-        '[Auto-rapport Pilote fulfillment v1] Repas paye sans reponse au sondage',
+        '[Auto-rapport Pilote fulfillment v1] Repas paye sans reponse payable au sondage',
         `Adherent: ${memberName}`,
         `Produit: ${String(product['name'] || productId)}`,
         `Canal de paiement: ${channel}`,
         `BookEntry: ${bookEntryId}`,
         '',
-        'La reservation a ete creee et marquee payee, mais son choix de menu est inconnu.',
-        'Recueillir son choix et le saisir dans les resultats du sondage.',
+        'La reservation a ete creee et marquee payee, mais aucune reponse payable correspondante n a ete retrouvee.',
+        'Verifier la reponse au sondage et completer le choix de menu si necessaire.',
         `Date: ${now}`,
       ]);
     }

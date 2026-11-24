@@ -388,6 +388,7 @@ const playBookTable = backend.data.resources.tables['PlayBook'];
 const fulfillmentExecutionTable = backend.data.resources.tables['FulfillmentExecution'];
 const assistanceRequestTable = backend.data.resources.tables['AssistanceRequest'];
 const ticketingReservationTable = backend.data.resources.tables['TicketingReservation'];
+const surveyResponseTable = backend.data.resources.tables['SurveyResponse'];
 bookEntryTable.grantReadData(backend.processBookEntryActions.resources.lambda);
 saleItemTable.grantReadData(backend.processBookEntryActions.resources.lambda);
 fulfillmentMemberTable.grantReadData(backend.processBookEntryActions.resources.lambda);
@@ -395,7 +396,9 @@ playBookTable.grantWriteData(backend.processBookEntryActions.resources.lambda);
 fulfillmentExecutionTable.grantReadWriteData(backend.processBookEntryActions.resources.lambda);
 assistanceRequestTable.grantWriteData(backend.processBookEntryActions.resources.lambda);
 ticketingReservationTable.grantReadWriteData(backend.processBookEntryActions.resources.lambda);
+surveyResponseTable.grantReadData(backend.processBookEntryActions.resources.lambda);
 backend.processBookEntryActions.addEnvironment('TICKETING_RESERVATION_TABLE_NAME', ticketingReservationTable.tableName);
+backend.processBookEntryActions.addEnvironment('SURVEY_RESPONSE_TABLE_NAME', surveyResponseTable.tableName);
 backend.processBookEntryActions.addEnvironment('BOOK_ENTRY_TABLE_NAME', bookEntryTable.tableName);
 backend.processBookEntryActions.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
 backend.processBookEntryActions.addEnvironment('MEMBER_TABLE_NAME', fulfillmentMemberTable.tableName);
@@ -445,7 +448,9 @@ playBookTable.grantWriteData(backend.stripeWebhooks.resources.lambda);
 fulfillmentExecutionTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
 assistanceRequestTable.grantWriteData(backend.stripeWebhooks.resources.lambda);
 ticketingReservationTable.grantReadWriteData(backend.stripeWebhooks.resources.lambda);
+surveyResponseTable.grantReadData(backend.stripeWebhooks.resources.lambda);
 backend.stripeWebhooks.addEnvironment('TICKETING_RESERVATION_TABLE_NAME', ticketingReservationTable.tableName);
+backend.stripeWebhooks.addEnvironment('SURVEY_RESPONSE_TABLE_NAME', surveyResponseTable.tableName);
 backend.stripeWebhooks.addEnvironment('BOOK_ENTRY_TABLE_NAME', bookEntryTable.tableName);
 backend.stripeWebhooks.addEnvironment('SALE_ITEM_TABLE_NAME', saleItemTable.tableName);
 backend.stripeWebhooks.addEnvironment('MEMBER_TABLE_NAME', fulfillmentMemberTable.tableName);
@@ -502,7 +507,6 @@ surveyTokenTable.grantReadWriteData(backend.sesMailing.resources.lambda);
 backend.sesMailing.addEnvironment('SURVEY_TOKEN_TABLE_NAME', surveyTokenTable.tableName);
 
 // Grant surveyRespond access to all survey tables (public Lambda — token-based auth)
-const surveyResponseTable = backend.data.resources.tables['SurveyResponse'];
 const surveyTable = backend.data.resources.tables['Survey'];
 const surveyQuestionTable = backend.data.resources.tables['SurveyQuestion'];
 
