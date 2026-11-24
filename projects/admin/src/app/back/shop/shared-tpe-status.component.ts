@@ -9,7 +9,7 @@ import { StripeTerminalService, SharedTpeRequest } from './services/stripe-termi
   template: `
     <div *ngIf="terminal.sharedTpeEnabled" class="small mt-1" role="status">
       <ng-container *ngIf="terminal.sharedRequest$ | async as request; else noReservation">
-        <span *ngIf="request.status === 'available'">{{ connected ? 'TPE disponible' : 'TPE hors ligne' }}</span>
+        <span *ngIf="request.status === 'available' && showAvailability">{{ connected ? 'TPE disponible' : 'TPE hors ligne' }}</span>
         <span *ngIf="request.status === 'reserved' || request.status === 'pending' || request.status === 'processing'">
           TPE occupé : {{ origin(request) }}.
         </span>
@@ -26,8 +26,10 @@ import { StripeTerminalService, SharedTpeRequest } from './services/stripe-termi
         </span>
       </ng-container>
       <ng-template #noReservation>
-        {{ terminal.sharedRequest$.value === undefined ? 'État du TPE non vérifié' :
-          connected ? 'TPE disponible' : 'TPE hors ligne' }}
+        <span *ngIf="terminal.sharedRequest$.value === undefined">État du TPE non vérifié</span>
+        <span *ngIf="terminal.sharedRequest$.value === null && showAvailability">
+          {{ connected ? 'TPE disponible' : 'TPE hors ligne' }}
+        </span>
         <button *ngIf="terminal.sharedRequest$.value === undefined" type="button"
           class="btn btn-sm btn-outline-secondary ms-2" (click)="terminal.retrySharedTpeObservation()">
           Réessayer
@@ -39,6 +41,7 @@ import { StripeTerminalService, SharedTpeRequest } from './services/stripe-termi
 })
 export class SharedTpeStatusComponent {
   @Input() connected = false;
+  @Input() showAvailability = true;
   working = false;
   message = '';
 

@@ -32,6 +32,7 @@ import { CardPaymentOrchestratorService } from '../../services/card-payment-orch
 import { CardSaleService } from '../../services/card-sale.service';
 import { StripeTerminalService } from '../../shop/services/stripe-terminal.service';
 import { SharedTpeStatusComponent } from '../../shop/shared-tpe-status.component';
+import { TpeReaderIndicatorComponent } from '../../shop/tpe-reader-indicator.component';
 import { Bank } from '../../../common/interfaces/system-conf.interface';
 import { GameCardAdvanceRequest } from '../../../../../../common/game-card-advance';
 import { environment } from '../../../../environments/environment';
@@ -44,7 +45,7 @@ const COLLECTOR_SESSION_KEY = 'fees-collector.operational-session';
 @Component({
   selector: 'app-fees-collector',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, InputMemberComponent, NgbTooltipModule, NgbDropdownModule, FeesNfcControlComponent, FeesCheckInConfirmationComponent, SharedTpeStatusComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, InputPlayerComponent, InputMemberComponent, NgbTooltipModule, NgbDropdownModule, FeesNfcControlComponent, FeesCheckInConfirmationComponent, SharedTpeStatusComponent, TpeReaderIndicatorComponent],
   providers: [CartService],
   templateUrl: './fees-collector.component.html',
   styleUrl: './fees-collector.component.scss'
@@ -97,6 +98,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   private readonly tpeSubscriptions = new Subscription();
   tpePaymentActive = false;
   tpeReaderConnected = false;
+  tpeReaderScanning = false;
   tpeReaderLabel = '';
   minimumCbAmount: number | null = null;
   quickSaleTpeInProgress = false;
@@ -148,6 +150,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
 
     });
     this.tpeSubscriptions.add(this.shopInit.tpeReaderConnected$.subscribe(value => this.tpeReaderConnected = value));
+    this.tpeSubscriptions.add(this.shopInit.tpeScanning$.subscribe(value => this.tpeReaderScanning = value));
     this.tpeSubscriptions.add(this.shopInit.tpeReaderLabel$.subscribe(value => this.tpeReaderLabel = value));
 
     this.membersService.listMembers().subscribe(members => {
@@ -544,14 +547,12 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       if (!saved) return;
       if (this.destroyed || tournamentId == null || this.selected_tournament?.id !== tournamentId
         || this.game?.tournament?.id !== tournamentId || this.manualConfirmationGeneration !== generation) return;
-      if (this.operationalMode === 'classic') {
-        window.clearTimeout(this.manualConfirmationTimer);
-        this.manualCheckInConfirmation = { gamer, alreadyCheckedIn: false };
-        this.manualConfirmationTimer = window.setTimeout(() => {
-          this.manualCheckInConfirmation = null;
-          this.manualConfirmationTimer = undefined;
-        }, 3000);
-      }
+      window.clearTimeout(this.manualConfirmationTimer);
+      this.manualCheckInConfirmation = { gamer, alreadyCheckedIn: false };
+      this.manualConfirmationTimer = window.setTimeout(() => {
+        this.manualCheckInConfirmation = null;
+        this.manualConfirmationTimer = undefined;
+      }, 3000);
       this.check_status();
     } finally {
       this.pendingCheckIns.delete(gamer.license);
@@ -716,7 +717,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     this.quickSaleGamer = gamer;
     this.quickSaleForm = {
       titulaire: member,
-      cartePartagee: true,
+      cartePartagee: null,
       coTitulaire: null,
       accepted: false,
       mode: null,
@@ -752,7 +753,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   quickSaleModalOpen = false;
   quickSaleGamer: Gamer | null = null;
   quickSaleForm: {
-    titulaire: Member; cartePartagee: boolean; coTitulaire: Member | null; accepted: boolean;
+    titulaire: Member; cartePartagee: boolean | null; coTitulaire: Member | null; accepted: boolean;
     mode: PaymentMode | null; bank: string; chequeNo: string; takeDebt: boolean; takeAsset: boolean;
   } | null = null;
   quickSaleError: string = '';
@@ -843,7 +844,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   private async confirmAdvance(): Promise<void> {
     const form = this.quickSaleForm;
     if (!form || this.quickSaleSaving || this.quickSaleUncertain || this.quickSaleSuccess) return;
-    if (!this.advancePending && (!form.accepted || !this.cardProductId
+    if (!this.advancePending && (form.cartePartagee === null || !form.accepted || !this.cardProductId
       || !Number.isFinite(this.CARD_PRICE) || this.CARD_PRICE < 0
       || (form.cartePartagee && (!form.coTitulaire?.id || !form.coTitulaire.license_number
         || form.coTitulaire.id === form.titulaire.id)))) return;
@@ -942,6 +943,12 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     return Math.round(this.quickSaleTotalAmount * 100) > 0;
   }
 
+  get quickSaleTpeAvailable(): boolean {
+    const request = this.stripeTerminal.sharedRequest$.value;
+    return this.quickSaleTpeEnabled && this.tpePaymentActive && this.tpeReaderConnected
+      && (request === null || request?.status === 'available');
+  }
+
   private quickSaleKey(member: Member): string {
     return `fees-card-advance:${member.id}`;
   }
@@ -949,7 +956,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   async confirmQuickSale() {
     const form = this.quickSaleForm;
     if (!form || !this.quickSaleGamer || this.quickSaleSaving || this.quickSaleUncertain || this.quickSaleSuccess
-      || !this.quickSaleBalanceReady || this.quickSaleBalanceLoading
+      || !this.quickSaleBalanceReady || this.quickSaleBalanceLoading || form.cartePartagee === null
       || (form.cartePartagee && (!form.coTitulaire?.id || !form.coTitulaire.license_number
         || form.coTitulaire.id === form.titulaire.id))) return;
     if (!Number.isFinite(this.CARD_PRICE) || this.CARD_PRICE < 0) {
@@ -964,9 +971,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
     const mode = Math.round(total * 100) === 0 ? PaymentMode.CASH : form.mode;
     if (!mode || (mode === PaymentMode.CHEQUE && (!form.bank || !form.chequeNo.trim()))) return;
     if (mode === PaymentMode.CARD) {
-      if (!this.quickSaleTpeEnabled || !this.tpePaymentActive || !this.tpeReaderConnected
-          || (this.stripeTerminal.sharedRequest$.value !== null
-            && this.stripeTerminal.sharedRequest$.value?.status !== 'available')) {
+      if (!this.quickSaleTpeAvailable) {
         this.quickSaleError = 'Le terminal de paiement est indisponible.';
         return;
       }

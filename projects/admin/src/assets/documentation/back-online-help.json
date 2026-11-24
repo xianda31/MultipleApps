@@ -277,7 +277,7 @@
           "title": "Parcours conseillé",
           "steps": [
             "Sélectionner le tournoi concerné pour afficher les joueurs inscrits.",
-            "Choisir le mode du poste : classique pour le pointage manuel et les ventes, ou NFC pour le pointage par badgeuse. Le mode NFC nécessite l’autorisation du pointage par badgeuse dans la configuration.",
+            "Choisir le mode du poste : classique pour le pointage manuel et les ventes, ou NFC pour le pointage par badgeuse. Le mode NFC nécessite l’autorisation du pointage par badgeuse dans la configuration et le lecteur connecté à la tablette ppTPE.",
             "Un pointage confirmé, classique ou NFC, affiche brièvement une grande fiche du joueur, même si sa ligne est hors écran ; en NFC, une carte déjà pointée est signalée comme telle.",
             "Pour chaque joueur présent, pointer le mode de règlement choisi (carte, espèces) ou utiliser le bouton NP pour non présent ou non payant.",
             "Quand tous les joueurs ont été pointés, accepter l’enregistrement des droits de table."
@@ -289,7 +289,7 @@
           "title": "Vendre une carte depuis le poste de pointage",
           "steps": [
             "En mode classique ou NFC, sur la fiche d’un joueur dont le crédit restant est inférieur ou égal à quatre admissions, cliquer sur l’icône chariot.",
-            "Pour une carte individuelle, désactiver « Carte partagée ». Pour une carte partagée, sélectionner un cotitulaire distinct.",
+            "Choisir « Partagée » ou « Individuelle ». Pour une carte partagée, sélectionner un cotitulaire distinct.",
             "Choisir si la dette doit être réglée et l’avoir utilisé. Si le solde a changé, vérifier le nouveau total et confirmer à nouveau.",
             "Choisir espèces, chèque, virement ou avance. Lorsque le partage TPE est activé, la carte bancaire est également proposée si le TPE est disponible. Pour une avance, informer le titulaire et recueillir son accord. Si le total est nul, aucun paiement n’est nécessaire.",
             "La vente ferme le panneau. Le poste de pointage reste sur cette page ; les autres achats nécessitent un poste de vente distinct."

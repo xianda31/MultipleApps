@@ -3,7 +3,6 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { NfcWorkspaceComponent } from './nfc-workspace.component';
 import { NfcWorkspaceService } from '../../common/services/nfc-workspace.service';
-import { MemberNfcCardService } from '../../common/services/member-nfc-card.service';
 import { TabletNfcBridgeService } from '../../common/services/tablet-nfc-bridge.service';
 import { MembersService } from '../../common/services/members.service';
 import { MemberSettingsService } from '../../common/services/member-settings.service';
@@ -22,16 +21,12 @@ describe('NFC workspace', () => {
     const service = jasmine.createSpyObj<NfcWorkspaceService>('NfcWorkspaceService', ['snapshot', 'history', 'card', 'commit']);
     service.snapshot.and.resolveTo(snapshot);
     service.history.and.resolveTo([]);
-    const bridge = jasmine.createSpyObj<MemberNfcCardService>('MemberNfcCardService', ['acquire', 'status']);
-    bridge.acquire.and.resolveTo(snapshot.cards[0].uid);
     const tablet = jasmine.createSpyObj<TabletNfcBridgeService>('TabletNfcBridgeService', ['readOnce', 'status']);
     tablet.readOnce.and.resolveTo(snapshot.cards[0].uid);
-    localStorage.removeItem('fees-nfc-source');
     await TestBed.configureTestingModule({
       imports: [NfcWorkspaceComponent],
       providers: [
         { provide: NfcWorkspaceService, useValue: service },
-        { provide: MemberNfcCardService, useValue: bridge },
         { provide: TabletNfcBridgeService, useValue: tablet },
         { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ license: '00123456' })) } },
         { provide: MembersService, useValue: {} },
@@ -42,16 +37,15 @@ describe('NFC workspace', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    return { fixture, service, bridge, tablet };
+    return { fixture, service, tablet };
   }
 
-  it('identifies a card read on the ppTPE tablet when that source is selected', async () => {
-    const { fixture, bridge, tablet, service } = await setup();
-    fixture.componentInstance.setSource('tablet');
+  it('uses the ppTPE tablet even when the previous preference was PC', async () => {
+    localStorage.setItem('fees-nfc-source', 'pc');
+    const { fixture, tablet, service } = await setup();
     await fixture.componentInstance.readCard();
     fixture.detectChanges();
     expect(tablet.readOnce).toHaveBeenCalledOnceWith(jasmine.any(AbortSignal), jasmine.any(String), jasmine.any(String));
-    expect(bridge.acquire).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Alex Exemple');
     expect(service.commit).not.toHaveBeenCalled();
     localStorage.removeItem('fees-nfc-source');
@@ -105,9 +99,9 @@ describe('NFC workspace', () => {
   });
 
   it('separates station availability from reader availability and keeps tests read-only', async () => {
-    const { fixture, bridge, service } = await setup();
-    bridge.status.and.resolveTo({
-      version: '1.0', readerStatus: 'Disconnected', readerName: null, message: 'Absent', capturing: false,
+    const { fixture, tablet, service } = await setup();
+    tablet.status.and.resolveTo({
+      version: 'ppTPE', readerStatus: 'Disconnected', readerName: null, message: 'Absent', capturing: false, sessionId: 'tablet-1',
     });
     fixture.componentInstance.tab = 'Poste de lecture';
     await fixture.componentInstance.checkBridge();

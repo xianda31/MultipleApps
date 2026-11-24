@@ -7,18 +7,9 @@
       <span class="fw-semibold">{{onlineMode ? 'Boutique en ligne' : 'Vente aux adhérents'}}</span>
       @if (tpePaymentActive && !onlineMode) {
       <div class="tpe-header-center">
-        <img src="/wisepad-3.jpg" class="tpe-reader-img"
-          [class.state-connected]="tpeReaderConnected"
-          [class.state-scanning]="!tpeReaderConnected && tpeReaderScanning"
-          [class.state-disconnected]="!tpeReaderConnected && !tpeReaderScanning"
-          [title]="tpeReaderConnected ? tpeReaderLabel : (tpeReaderScanning ? 'Recherche du TPE…' : 'Cliquer pour réessayer')"
-          [style.cursor]="!tpeRemoteMode && !tpeReaderConnected && !tpeReaderScanning ? 'pointer' : 'default'"
-          (click)="!tpeRemoteMode && !tpeReaderConnected && !tpeReaderScanning && onRetryConnect()" alt="WisePad 3">
-        @if (!tpeRemoteMode && tpeReaderConnected) {
-        <button type="button" class="btn-tpe-disconnect-xs" (click)="onDisconnectReader()" title="Déconnecter">
-          <i class="bi bi-x-circle"></i>
-        </button>
-        }
+        <app-tpe-reader-indicator [connected]="tpeReaderConnected" [scanning]="tpeReaderScanning"
+          [label]="tpeReaderLabel" [remote]="tpeRemoteMode"
+          (retry)="onRetryConnect()" (disconnect)="onDisconnectReader()"></app-tpe-reader-indicator>
       </div>
       }
       <div *ngIf="!onlineMode" class="d-flex align-items-center gap-2 ms-auto">

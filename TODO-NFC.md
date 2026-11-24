@@ -1,10 +1,40 @@
-# TODO NFC - Badgeuse murale ppNFC
+# TODO NFC - Badgeuse via ppTPE Android
+
+## Situation actuelle
+
+La branche utilise exclusivement l'ACR1555U connecté en Bluetooth à ppTPE
+Android, pour le pointage et l'Espace NFC. Le prototype Windows ppNFC, son
+diagnostic PowerShell et le choix de source PC ont été retirés. Une ancienne
+préférence de source mémorisée dans le navigateur n'est plus utilisée.
+
+La liaison est relayée par AppSync ; voir la phase Android ci-dessous. Le statut
+connecté ne prouve pas qu'une carte est effectivement détectée.
+Restent notamment à vérifier la lecture réelle avec l'ACR et le WisePad
+connectés simultanément, les reprises après interruption et un paiement accepté.
+
+**Protection entre pointage et Espace NFC non implémentée.** Pendant un
+pointage, ne pas utiliser l'Espace NFC pour lire ou modifier des cartes,
+commandes ou imports ; suspendre ou clôturer d'abord le pointage sur tous les
+postes concernés. Le mode classique ne fournit pas non plus de verrou.
+Un simple contrôle des boutons ou de l'état de la tablette ne suffit pas :
+les lectures, les verdicts et les écritures peuvent encore se concurrencer.
+
+La protection attendue doit donner la priorité au pointage avec un bail court
+renouvelé, expirant après interruption, sans déblocage administratif. Une
+opération NFC déjà engagée doit finir avant l'activation du pointage. Le contrôle
+doit être atomique avec les écritures NFC et les pointages NFC, et préserver
+la transmission des états et verdicts à ppTPE. À recetter : concurrence entre
+postes, lecture déjà engagée, expiration et perte réseau, reprise d'un ancien
+poste, ainsi que propagation des verdicts.
+
+Les sections Windows ci-dessous décrivent des essais et décisions historiques ;
+elles ne constituent plus des instructions d'installation ou de développement.
 
 ## Statut
 
 Nouvelle baseline définie le 01/11/2026.
 
-### Commandes de badgeuse et session locale du 16/11/2026
+### Historique : commandes et session Windows du 16/11/2026
 
 - Dans **Configuration > Pointage tournois**, le réglage
   **Autoriser le pointage par badgeuse NFC** (`nfc_check_in_active`) est
@@ -327,7 +357,7 @@ historique. Il n'est plus la cible d'exploitation :
   appelée ppNFC ;
 - ppNFC est un passe-plat entre la badgeuse et le pointage métier.
 
-## Objectif
+## Historique : objectif initial
 
 Permettre aux joueurs de se pointer avec une carte NTAG213 attribuée à un membre.
 ppNFC lit l'UID avec l'ACR1555U et le transmet à la page de pointage active.
@@ -338,7 +368,7 @@ Chaîne fonctionnelle :
 
 `NTAG213 -> ACR1555U -> ppNFC local -> fees-collector -> backend (GameCheckIn)`
 
-## Architecture cible
+## Historique : architecture Windows initiale
 
 ### ppTPE
 
@@ -483,8 +513,8 @@ ACR1555U-A1 firmware 1.03.02, carte NTAG213 d'UID `04E50142E37384`.
   ppTPE (fonction connectée : pointage ou gestion NFC, et état de la liaison),
   puis l'état du lecteur ACR1555U. Retirer le bouton de test du buzzer, sans
   retirer les bips par verdict. Rendu à vérifier sur la tablette.
-- [ ] Retirer le mode « ppNFC sur ce PC » de l'Espace NFC seulement après
-  validation du WisePad 3 et de l'ACR1555U utilisés ensemble dans ppTPE.
+- [x] Retirer le mode « ppNFC sur ce PC » et le prototype Windows de cette branche.
+  La validation du WisePad 3 et de l'ACR1555U utilisés ensemble reste à faire.
 - [ ] Détecter le blocage NFC décrit ci-dessous et inviter à redémarrer le lecteur.
 - [ ] Reconnexion après redémarrage de ppTPE : le 18/11 à 11:43, la mise à jour
   de l'APK a coupé la liaison BLE et l'ACR1555U n'a plus émis d'annonce
@@ -492,6 +522,15 @@ ACR1555U-A1 firmware 1.03.02, carte NTAG213 d'UID `04E50142E37384`.
   et faut-il un `disconnect` propre à l'arrêt de ppTPE pour l'éviter ?
   Le 20/11/2026, la reconnexion en rouvrant ppTPE TEST a réussi, l'ACR étant
   resté alimenté en USB plusieurs jours. Le scénario de mise à jour reste à valider.
+  Le 24/11, ppTPE recherche l'ACR sans le trouver après une déconnexion BLE ;
+  les permissions Bluetooth sont accordées. BLETest et nRF Connect ne l'ont pas
+  trouvé non plus ; le scan nRF détectait d'autres appareils. Redémarrer l'ACR
+  par POWER, puis désactiver et réactiver son mode Bluetooth par MODE n'a pas
+  rétabli la détection. Le WisePad était aussi introuvable ; les deux recherches
+  ppTPE ne recevaient aucune annonce correspondante, même après désactivation
+  puis réactivation du Bluetooth Android. Après redémarrage de la tablette,
+  l'utilisateur indique que les deux lecteurs sont connectés. Cause non
+  déterminée ; lecture de carte non vérifiée à cette occasion.
 - [x] Tester le buzzer de l'ACR depuis ppTPE TEST (20/11/2026, sur USB) :
   le bouton « Tester » a produit un bip court bien audible. Les motifs selon
   le verdict et l'audibilité en salle restent à valider.
@@ -525,9 +564,8 @@ Relais tablette → fees-collector (18/11/2026), via AppSync, sans liaison local
 - ppTPE ne publie qu'une fois connecté : utiliser de préférence un compte
   dédié à la tablette dans le groupe Support. Sans session de pointage active,
   la tablette n'envoie pas la carte et l'indique au joueur.
-- Dans le panneau NFC de fees-collector, choisir **Tablette ppTPE** ; ce choix
-  est mémorisé dans le navigateur (`fees-nfc-source`) et partagé avec l'Espace
-  NFC, qui peut lire une carte sur la tablette pour l'attribuer (résultat
+- Le panneau NFC de fees-collector utilise la **Tablette ppTPE** ; l'Espace
+  NFC peut lire une carte sur la tablette pour l'attribuer (résultat
   `read`, sans pointage). Limite : si fees-collector pointe en même temps sur
   la même tablette, une carte lue pour l'Espace NFC est aussi soumise au pointage.
 - En paysage, ppTPE affiche le TPE et la badgeuse côte à côte.
@@ -553,7 +591,7 @@ Compilation : Gradle 8.14.3 du wrapper avec un JDK 21 ; le JDK 25 d'Android
 Studio et Gradle 9.6+ sont incompatibles avec le plugin Android du projet.
 L'APK de débogage s'installe sous le nom « ppTPE TEST », à côté de ppTPE.
 
-## Phase 1 - Validation matérielle Windows
+## Historique : phase 1 - Validation matérielle Windows
 
 - [x] Connecter l'ACR1555U en Bluetooth avec le poste Windows cible via ACS.
 - [x] Installer et documenter les pilotes ou outils ACS strictement nécessaires.
@@ -572,7 +610,7 @@ L'APK de débogage s'installe sous le nom « ppTPE TEST », à côté de ppTPE.
 
 Les validations restantes de l'ampoule sont regroupees en phase 7.
 
-## Phase 2 - Prototype ppNFC
+## Historique : phase 2 - Prototype ppNFC
 
 - [x] Choisir la pile Windows : .NET 10 / Windows Forms.
 - [x] Creer les sources de l'application Windows en zone de notification,
@@ -588,7 +626,12 @@ Les validations restantes de l'ampoule sont regroupees en phase 7.
 - [ ] Ajouter des journaux locaux avec rotation et sans secret.
 - [ ] Produire un `.exe` et un mécanisme d'installation ou de mise à jour.
 
-## Phase 3 - Attribution des cartes
+## Phases historiques 3 à 7
+
+Ces phases conservent le suivi initial ; leurs références à ppNFC ou à Windows
+ne s'appliquent plus à l'architecture Android.
+
+### Phase 3 - Attribution des cartes
 
 - [x] Ajouter un modèle `MemberNfcCard`.
 - [x] Enregistrer au minimum l'UID, le membre ou la licence, le statut, la date
@@ -622,9 +665,9 @@ unique membre explicitement `ACTIVE`.
 L'import par script ponctuel est remplace par une ingestion de lots dans
 l'espace NFC ; voir le perimetre et les limites du 14/11 ci-dessus.
 La validation matérielle et la configuration des origines du navigateur sont décrites dans
-le [README ppNFC](desktop/ppNFC/README.md).
+le README du prototype Windows, retiré de cette branche.
 
-## Phase 4 - Session de pointage
+### Phase 4 - Session de pointage
 
 - [x] Autoriser globalement la badgeuse dans sys-conf ; démarrer automatiquement à la sélection d'un tournoi éligible.
 - [x] Permettre à fees-collector d'activer une session locale pour un tournoi.
@@ -637,7 +680,7 @@ le [README ppNFC](desktop/ppNFC/README.md).
 Le choix du mode piloté par la page remplace la publication d'une session
 autonome à ppNFC. Il n'y a pas de nouveau modèle backend de session.
 
-## Phase 5 - Intégration métier
+### Phase 5 - Intégration métier
 
 - [x] Résoudre l'UID vers la licence du membre.
 - [x] Exiger un membre explicitement `ACTIVE` ; refuser les membres
@@ -652,7 +695,7 @@ autonome à ppNFC. Il n'y a pas de nouveau modèle backend de session.
 - [x] Synchroniser le résultat en temps réel dans fees-collector.
 - [ ] Retourner à ppNFC un résultat explicite et stable.
 
-## Phase 6 - Validation du pointage sans signalisation lumineuse
+### Phase 6 - Validation du pointage sans signalisation lumineuse
 
 - [ ] Tester succès, déjà pointé, carte inconnue, carte désactivée, crédits
   insuffisants, joueur non inscrit et absence de session.
@@ -667,7 +710,7 @@ autonome à ppNFC. Il n'y a pas de nouveau modèle backend de session.
 - [ ] Vérifier l'absence d'UID tronqué, fusionné ou dupliqué.
 - [ ] Vérifier que chaque pointage accepté apparaît dans fees-collector.
 
-## Phase 7 - Signalisation lumineuse et validation finale
+### Phase 7 - Signalisation lumineuse et validation finale
 
 Cette phase intervient en dernier, apres validation du pointage metier.
 
@@ -693,48 +736,3 @@ Cette phase intervient en dernier, apres validation du pointage metier.
 - [ ] Tester les pertes et reprises Bluetooth, réseau et connexion Tuya locale.
 - [ ] Rejouer les scenarios de la phase 6 avec la signalisation lumineuse,
   y compris les lectures rapprochees et un test continu de plusieurs heures.
-
-## Premier jalon
-
-Prototype ppNFC : voir [construction, utilisation et limites de validation](desktop/ppNFC/README.md).
-
-Diagnostic UID Windows, sans backend :
-
-```powershell
-powershell -NoProfile -File .\scripts\test-nfc-reader.ps1 -ListReaders
-powershell -NoProfile -File .\scripts\test-nfc-reader.ps1 -Count 20
-```
-
-Le pilote ACS BLE PC/SC doit etre installe et le lecteur ajoute dans Bluetooth
-Reader Management Tool en mode Reader. Fermer QuickView avant le diagnostic.
-Retirer la carte entre les lectures ; interrompre avec Ctrl+C si necessaire.
-Le script affiche l'UID en hexadecimal majuscule, sans separateur, et sa longueur.
-Le mode lecture UID ne pilote ni le buzzer ni la signaletique.
-Le test historique du buzzer reste disponible à titre de diagnostic uniquement,
-hors du périmètre ppNFC, et ne requiert aucune carte :
-
-```powershell
-powershell -NoProfile -File .\scripts\test-nfc-reader.ps1 -Beep
-```
-
-Cette option envoie une seule commande de 200 ms et verifie la reponse du
-lecteur ; un bip faible a ete confirme physiquement.
-Commande issue du manuel ACS ACR1555U 2.02, sections 5.3.4 et 6.3.4 :
-`SCardControl(SCARD_CTL_CODE(3500))`, donnees `E0 00 00 28 01 14`.
-Le support de cette commande par le pilote BLE a ete confirme sur le materiel.
-Une indisponibilite PC/SC `0x80100017` est signalee et attendue pendant au plus
-10 secondes avant arret en erreur. La presentation interrompue n'est pas comptee ;
-retirer puis representer la carte apres le retablissement du lecteur.
-
-Depuis Windows, lire une NTAG213 avec l'ACR1555U en Bluetooth, obtenir un UID
-normalisé identique au prototype Android, puis commander localement l'ampoule
-Tuya sans encore modifier le backend.
-
-Critères de validation :
-
-- lecture de 20 présentations consécutives sans UID tronqué ni saisie clavier ;
-- même UID que sur Android ;
-- reconnexion après extinction et rallumage du lecteur ;
-- bleu, vert et rouge pilotés sans accès aux serveurs Tuya ;
-- retour au bleu après une temporisation de 2 secondes ;
-- passage à l'orange lorsqu'un composant requis est indisponible.

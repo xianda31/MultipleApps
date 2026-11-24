@@ -107,7 +107,9 @@
                 </button>
             </div>
             <div *ngIf="tpePaymentActive && quickSaleTpeEnabled" class="col-auto">
-                <app-shared-tpe-status [connected]="tpeReaderConnected"></app-shared-tpe-status>
+                <app-tpe-reader-indicator [connected]="tpeReaderConnected" [scanning]="tpeReaderScanning"
+                    [label]="tpeReaderLabel"></app-tpe-reader-indicator>
+                <app-shared-tpe-status [connected]="tpeReaderConnected" [showAvailability]="false"></app-shared-tpe-status>
             </div>
 
             <div class="col-12 col-md d-flex flex-wrap justify-content-md-center align-items-center gap-2">
@@ -358,13 +360,21 @@
                         (click)="refreshPaidQuickSale()">Actualiser la carte</button>
                 </div>
                 <div class="mb-2"><strong>Titulaire :</strong> {{ form.titulaire.firstname }} {{ form.titulaire.lastname }}</div>
-                <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" role="switch" id="cartePartagee"
-                        [(ngModel)]="form.cartePartagee" (ngModelChange)="onAdvanceHoldersChanged(); updateQuickSaleTotal()"
-                        [disabled]="quickSaleSaving || quickSaleSuccess || !!advancePending">
-                    <label class="form-check-label" for="cartePartagee">Carte partagée</label>
-                </div>
                 <fieldset [disabled]="quickSaleSaving || quickSaleSuccess || !!advancePending">
+                    <legend class="visually-hidden">Type de carte</legend>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span aria-hidden="true">Type de carte</span>
+                        <div class="btn-group" role="group" aria-label="Type de carte">
+                            <input class="btn-check" type="radio" name="quickSaleCardType" id="quickSaleShared"
+                                [value]="true" [(ngModel)]="form.cartePartagee"
+                                (ngModelChange)="onAdvanceHoldersChanged(); updateQuickSaleTotal()">
+                            <label class="btn btn-sm btn-outline-primary" for="quickSaleShared">Partagée</label>
+                            <input class="btn-check" type="radio" name="quickSaleCardType" id="quickSaleIndividual"
+                                [value]="false" [(ngModel)]="form.cartePartagee"
+                                (ngModelChange)="onAdvanceHoldersChanged(); updateQuickSaleTotal()">
+                            <label class="btn btn-sm btn-outline-primary" for="quickSaleIndividual">Individuelle</label>
+                        </div>
+                    </div>
                     <app-input-member *ngIf="form.cartePartagee"
                         [(ngModel)]="form.coTitulaire" (ngModelChange)="onAdvanceHoldersChanged(); updateQuickSaleTotal()" [members]="members"
                         placeholder="Nom ou prénom du cotitulaire" class="form-control form-control-sm mb-2"
@@ -460,9 +470,10 @@
                 <button type="button" class="btn btn-sm btn-primary w-100" (click)="confirmQuickSale()"
                     [disabled]="quickSaleSaving || quickSaleUncertain || quickSaleSuccess
                         || !!quickSalePaidEntryId || !quickSaleBalanceReady || quickSaleBalanceLoading
+                        || form.cartePartagee === null
                         || (quickSaleNeedsPayment()
                             && (!form.mode || (form.mode === paymentModes.CHEQUE && (!form.bank || !form.chequeNo.trim()))))
-                        || (form.mode === paymentModes.CARD && !tpeReaderConnected)
+                        || (quickSaleNeedsPayment() && form.mode === paymentModes.CARD && !quickSaleTpeAvailable)
                         || (form.cartePartagee && (!form.coTitulaire?.id || !form.coTitulaire?.license_number
                             || form.coTitulaire?.id === form.titulaire.id))">
                     {{ quickSaleSaving ? 'Enregistrement…' : 'Valider la vente' }}

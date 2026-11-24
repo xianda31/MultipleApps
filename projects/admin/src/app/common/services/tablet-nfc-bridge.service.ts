@@ -13,22 +13,7 @@ const MAX_SCAN_AGE_MS = 10_000;
 
 const nowSeconds = (): number => Math.floor(Date.now() / 1000);
 
-export type NfcSource = 'pc' | 'tablet';
-const NFC_SOURCE_KEY = 'fees-nfc-source';
 const COLLECTOR_HEARTBEAT_MS = 15_000;
-
-/** Source de lecture NFC choisie sur ce navigateur, partagée par le pointage et l'espace NFC. */
-export function readStoredNfcSource(): NfcSource {
-  try {
-    return localStorage.getItem(NFC_SOURCE_KEY) === 'tablet' ? 'tablet' : 'pc';
-  } catch {
-    return 'pc';
-  }
-}
-
-export function storeNfcSource(source: NfcSource): void {
-  try { localStorage.setItem(NFC_SOURCE_KEY, source); } catch { /* stockage indisponible */ }
-}
 
 export function isFreshReaderSession(session: ReaderSession, now = nowSeconds()): boolean {
   return !!session.readerUpdatedAt && now - session.readerUpdatedAt <= STALE_SECONDS;

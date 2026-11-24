@@ -3,10 +3,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom, Subscription } from 'rxjs';
-import { MemberNfcCardService, NfcReaderStatus } from '../../common/services/member-nfc-card.service';
-import {
-  readStoredNfcSource, storeNfcSource, TabletNfcBridgeService, type NfcSource,
-} from '../../common/services/tablet-nfc-bridge.service';
+import { NfcReaderStatus } from '../../common/services/member-nfc-card.service';
+import { TabletNfcBridgeService } from '../../common/services/tablet-nfc-bridge.service';
 import { NfcWorkspaceService } from '../../common/services/nfc-workspace.service';
 import {
   type CardAction, type CardRequest, type ImportBatch, type ImportCheck, type ImportRow,
@@ -44,7 +42,6 @@ export class NfcWorkspaceComponent implements OnInit, OnDestroy {
   history: NfcHistory[] = [];
   reader: NfcReaderStatus | null = null;
   bridgeError = '';
-  source: NfcSource = readStoredNfcSource();
   orderReference = '';
   orderQuantity = 10;
   requestUids: Record<string, string> = {};
@@ -59,20 +56,11 @@ export class NfcWorkspaceComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly service: NfcWorkspaceService,
-    private readonly bridge: MemberNfcCardService,
     private readonly route: ActivatedRoute,
     private readonly membersService: MembersService,
     private readonly memberSettings: MemberSettingsService,
     private readonly tablet: TabletNfcBridgeService,
   ) {}
-
-  setSource(source: NfcSource): void {
-    if (this.busy || source === this.source) return;
-    this.source = source;
-    storeNfcSource(source);
-    this.reader = null;
-    this.bridgeError = '';
-  }
 
   ngOnInit(): void {
     this.routeSubscription = this.route.queryParamMap.subscribe(params => {
@@ -173,10 +161,8 @@ export class NfcWorkspaceComponent implements OnInit, OnDestroy {
     this.abort = abort;
     const timeout = window.setTimeout(() => abort.abort('timeout'), 35000);
     await this.run(async () => {
-      const uid = this.source === 'tablet'
-        ? await this.tablet.readOnce(abort.signal, 'Espace NFC — identification d’une carte',
-          'Carte lue par l’espace NFC : aucun pointage.')
-        : await this.bridge.acquire(abort.signal);
+      const uid = await this.tablet.readOnce(abort.signal, 'Espace NFC — identification d’une carte',
+        'Carte lue par l’espace NFC : aucun pointage.');
       if (abort.signal.aborted || this.destroyed) return;
       await this.load();
       this.selectedUid = uid;
@@ -200,13 +186,9 @@ export class NfcWorkspaceComponent implements OnInit, OnDestroy {
     const timeout = window.setTimeout(() => abort.abort('timeout'), 5000);
     await this.run(async () => {
       try {
-        this.reader = this.source === 'tablet'
-          ? await this.tablet.status(abort.signal)
-          : await this.bridge.status(abort.signal);
+        this.reader = await this.tablet.status(abort.signal);
       } catch (error) {
-        this.bridgeError = this.source === 'tablet'
-          ? 'Tablette non joignable. Ouvrez ppTPE, connectez-vous et vérifiez le lecteur ACR1555U.'
-          : 'Liaison non vérifiée. Contrôlez ppNFC, ses origines autorisées et la permission réseau local du navigateur.';
+        this.bridgeError = 'Tablette non joignable. Ouvrez ppTPE, connectez-vous et vérifiez le lecteur ACR1555U.';
         throw error;
       }
     }, abort);
@@ -338,7 +320,7 @@ export class NfcWorkspaceComponent implements OnInit, OnDestroy {
       if (abort?.signal.reason !== 'cancelled' && !this.destroyed) {
         console.error('[Espace NFC]', error);
         this.error = abort?.signal.reason === 'timeout'
-          ? `Délai dépassé. Vérifiez ${this.source === 'tablet' ? 'la tablette ppTPE' : 'ppNFC'} et réessayez.`
+          ? 'Délai dépassé. Vérifiez la tablette ppTPE et réessayez.'
           : error instanceof Error ? error.message : 'Opération NFC impossible.';
       }
     } finally { this.busy = false; }

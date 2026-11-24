@@ -37,15 +37,7 @@ describe('FeesNfcControlComponent', () => {
       gender: 'M', birthdate: '', city: '', email: '', phone_one: '', license_status: '',
       license_taken_at: '', membership_date: '', accept_mailing: false,
     };
-    const bridge = jasmine.createSpyObj<MemberNfcCardService>('MemberNfcCardService', ['status', 'acquire', 'get']);
-    bridge.status.and.resolveTo({
-      version: '1.0', readerStatus: 'Ready', readerName: 'ACR1555U', message: 'Déclaré par Windows', capturing: false,
-    });
-    let first = true;
-    bridge.acquire.and.callFake(signal => {
-      if (first) { first = false; return Promise.resolve(uid); }
-      return waitingForAbort(signal);
-    });
+    const bridge = jasmine.createSpyObj<MemberNfcCardService>('MemberNfcCardService', ['get']);
     bridge.get.and.resolveTo(card);
     const members = jasmine.createSpyObj<MembersService>('MembersService', ['readMember']);
     members.readMember.and.resolveTo(member);
@@ -67,7 +59,6 @@ describe('FeesNfcControlComponent', () => {
     tablet.report.and.resolveTo();
     tablet.publishCollector.and.resolveTo();
     const component = new FeesNfcControlComponent(bridge, members, fees, toast, tablet);
-    component.source = 'pc';
     component.game = game;
     return { component, bridge, members, fees, game, gamer, member, toast, tablet };
   }
@@ -92,7 +83,7 @@ describe('FeesNfcControlComponent', () => {
 
   it('keeps diagnostics and a read-only test available with euro priority', async () => {
     const { bridge, members, fees, game, toast, tablet } = setup();
-    localStorage.removeItem('fees-nfc-source');
+    localStorage.setItem('fees-nfc-source', 'pc');
     Object.assign(fees, { sys_conf: { trace_mode: true } });
     await TestBed.configureTestingModule({
       imports: [FeesNfcControlComponent],
@@ -123,16 +114,18 @@ describe('FeesNfcControlComponent', () => {
     expect(panel.getBoundingClientRect().height).toBeLessThan(window.innerHeight);
     expect(getComputedStyle(panel).overflowY).toBe('auto');
     expect(panel.textContent).toContain('Joignable');
-    expect(panel.textContent).toContain('Détecté par Windows — disponibilité physique non vérifiée');
+    expect(panel.textContent).toContain('Lecteur connecté');
+    expect(panel.textContent).not.toContain('ppNFC');
+    expect(tablet.acquire).toHaveBeenCalled();
     expect(panel.textContent).toContain('priorité Euro');
     expect(panel.textContent).toContain('aucun pointage effectué');
     const readerButton = root.querySelector<HTMLButtonElement>('button.nfc-reader-indicator')!;
     expect(root.querySelectorAll('.nfc-reader-indicator').length).toBe(1);
-    expect(readerButton.textContent).toContain('Détecté (Windows)');
+    expect(readerButton.textContent).toContain('Prêt');
     expect(readerButton.textContent).not.toContain('Éveil non vérifié');
-    expect(readerButton.querySelector('.nfc-status-light.text-warning')).not.toBeNull();
-    expect(readerButton.querySelector('.nfc-status-light.text-success')).toBeNull();
-    expect(readerButton.getAttribute('aria-label')).toContain('disponibilité physique non vérifiée');
+    expect(readerButton.querySelector('.nfc-status-light.text-warning')).toBeNull();
+    expect(readerButton.querySelector('.nfc-status-light.text-success')).not.toBeNull();
+    expect(readerButton.getAttribute('aria-label')).toContain('Vérifiez la lecture avec une carte');
     expect(root.querySelector('.nfc-checkin-indicator')?.textContent).toContain('Arrêté');
     const activate = Array.from(panel.querySelectorAll('button')).find(button => button.textContent?.includes('Activer le pointage'));
     expect(activate?.disabled).toBeTrue();
@@ -141,16 +134,17 @@ describe('FeesNfcControlComponent', () => {
     expect(toast.showSuccess).not.toHaveBeenCalled();
     expect(toast.showWarning).not.toHaveBeenCalled();
     fixture.destroy();
+    localStorage.removeItem('fees-nfc-source');
   });
 
   for (const [accepted, alreadyCheckedIn] of [[true, false], [true, true], [false, false]] as const) {
     it(`separates reader status from pointage and resets feedback after three seconds (accepted: ${accepted}, already checked in: ${alreadyCheckedIn})`, fakeAsync(() => {
-      const { component, bridge, fees, gamer } = setup();
+      const { component, bridge, fees, gamer, tablet } = setup();
       gamer.validated = alreadyCheckedIn;
       let resolveUid!: (value: string) => void;
       let resolveCheckIn!: (value: boolean) => void;
-      bridge.acquire.and.callFake(signal => {
-        if (bridge.acquire.calls.count() === 1) {
+      tablet.acquire.and.callFake(signal => {
+        if (tablet.acquire.calls.count() === 1) {
           return new Promise<string>(resolve => { resolveUid = resolve; });
         }
         return waitingForAbort(signal);
@@ -161,7 +155,7 @@ describe('FeesNfcControlComponent', () => {
       flushMicrotasks();
       const reader = component.reader;
       expect(component.checkInState).toBe('ready');
-      expect(component.readerIndicatorColor).toBe('warning');
+      expect(component.readerIndicatorColor).toBe('success');
 
       resolveUid(uid);
       flushMicrotasks();
@@ -177,7 +171,7 @@ describe('FeesNfcControlComponent', () => {
       expect(component.highlightedPlayer?.gamer).toBe(accepted ? gamer : undefined);
       if (accepted) expect(component.highlightedPlayer?.alreadyCheckedIn).toBe(alreadyCheckedIn);
       expect(component.reader).toBe(reader);
-      expect(component.readerIndicatorColor).toBe('warning');
+      expect(component.readerIndicatorColor).toBe('success');
       tick(2999);
       expect(component.checkInState).toBe(accepted ? 'accepted' : 'refused');
       tick(1);
@@ -188,16 +182,16 @@ describe('FeesNfcControlComponent', () => {
       flushMicrotasks();
       expect(component.checkInState).toBe('inactive');
       expect(component.checkInIndicatorLabel).toBe('Suspendu');
-      expect(component.readerIndicatorColor).toBe('warning');
+      expect(component.readerIndicatorColor).toBe('success');
     }));
   }
 
   it('restarts the feedback duration when another card is read before the previous result expires', fakeAsync(() => {
-    const { component, bridge } = setup();
+    const { component, bridge, tablet } = setup();
     let resolveNextUid!: (value: string) => void;
-    bridge.acquire.and.callFake(signal => {
-      if (bridge.acquire.calls.count() === 1) return Promise.resolve(uid);
-      if (bridge.acquire.calls.count() === 2) {
+    tablet.acquire.and.callFake(signal => {
+      if (tablet.acquire.calls.count() === 1) return Promise.resolve(uid);
+      if (tablet.acquire.calls.count() === 2) {
         return new Promise<string>(resolve => { resolveNextUid = resolve; });
       }
       return waitingForAbort(signal);
@@ -233,7 +227,6 @@ describe('FeesNfcControlComponent', () => {
     });
     const fixture = TestBed.createComponent(FeesNfcControlComponent);
     const component = fixture.componentInstance;
-    component.source = 'pc';
     component.game = game;
     const root: HTMLElement = fixture.nativeElement;
     root.style.position = 'absolute';
@@ -265,49 +258,29 @@ describe('FeesNfcControlComponent', () => {
   }));
 
   it('does not infer reader sleep or disconnection from a read test timeout', fakeAsync(() => {
-    const { component, bridge, fees } = setup();
+    const { component, bridge, fees, tablet } = setup();
     void component.refreshStatus();
     flushMicrotasks();
     const reader = component.reader;
-    bridge.acquire.and.rejectWith(new NfcCaptureTimeoutError('Aucune carte détectée'));
+    tablet.acquire.and.rejectWith(new NfcCaptureTimeoutError('Aucune carte détectée'));
     void component.testRead();
     flushMicrotasks();
     expect(component.error).toBe('Aucune carte détectée');
     expect(component.reader).toBe(reader);
-    expect(component.readerIndicatorColor).toBe('warning');
-    expect(component.readerIndicatorMessage).toContain('disponibilité physique non vérifiée');
+    expect(component.readerIndicatorColor).toBe('success');
+    expect(component.readerIndicatorMessage).toContain('Vérifiez la lecture avec une carte');
     expect(component.checkInState).toBe('inactive');
     expect(fees.checkInByNfc).not.toHaveBeenCalled();
   }));
 
-  it('shows a real ACS response separately from the cached Windows state', fakeAsync(() => {
-    const { component, bridge } = setup();
-    bridge.status.and.resolveTo({
-      version: '1.0', readerStatus: 'Ready', readerName: 'ACR1555U',
-      message: 'Déclaré par Windows', capturing: false,
-      hardwareProbe: {
-        state: 'Responsive', pcdPiccStatus: 1,
-        message: 'Le lecteur répond ; aucune carte.', checkedAt: '2026-11-16T08:00:00Z',
-      },
-    });
-
-    void component.refreshStatus();
-    flushMicrotasks();
-
-    expect(component.readerIndicatorLabel).toBe('Prêt');
-    expect(component.readerIndicatorColor).toBe('success');
-    expect(component.readerIndicatorMessage).toContain('interrogation ponctuelle');
-    expect(component.readerIndicatorMessage).toContain('ne maintient pas le lecteur éveillé');
-  }));
-
-  it('does not start pointage when the ACS probe cannot reach the reader', fakeAsync(() => {
-    const { component, bridge, fees } = setup();
-    bridge.status.and.resolveTo({
-      version: '1.0', readerStatus: 'Ready', readerName: 'ACR1555U',
-      message: 'Déclaré par Windows', capturing: false,
+  it('does not start pointage when the tablet reports an unavailable reader', fakeAsync(() => {
+    const { component, bridge, fees, tablet } = setup();
+    tablet.status.and.resolveTo({
+      sessionId: 'tablet-1', version: 'ppTPE', readerStatus: 'Ready', readerName: 'ACR1555U',
+      message: 'Lecteur indisponible', capturing: false,
       hardwareProbe: {
         state: 'Unresponsive', pcdPiccStatus: null,
-        message: 'PC/SC error 0x0000048F', checkedAt: '2026-11-16T08:00:00Z',
+        message: 'Lecteur déconnecté', checkedAt: '2026-11-16T08:00:00Z',
       },
     });
 
@@ -317,12 +290,13 @@ describe('FeesNfcControlComponent', () => {
     expect(component.readerIndicatorLabel).toBe('Non joignable');
     expect(component.readerIndicatorColor).toBe('danger');
     expect(component.active).toBeFalse();
-    expect(bridge.acquire).not.toHaveBeenCalled();
+    expect(tablet.acquire).not.toHaveBeenCalled();
     expect(fees.checkInByNfc).not.toHaveBeenCalled();
+    component.stopSession();
   }));
 
   it('binds reads to the selected tournament and delegates card pointage, then stops reading', fakeAsync(() => {
-    const { component, bridge, fees } = setup();
+    const { component, bridge, fees, tablet } = setup();
     const checkedIn = spyOn(component.checkedIn, 'emit');
     void component.startSession();
     flushMicrotasks();
@@ -330,21 +304,20 @@ describe('FeesNfcControlComponent', () => {
     expect(fees.checkInByNfc).toHaveBeenCalledOnceWith('00000001', jasmine.any(AbortSignal));
     expect(component.lastReading?.accepted).toBeTrue();
     expect(checkedIn).toHaveBeenCalledTimes(1);
-    expect(bridge.acquire).toHaveBeenCalledTimes(2);
+    expect(tablet.acquire).toHaveBeenCalledTimes(2);
     component.stopSession();
     flushMicrotasks();
     expect(component.active).toBeFalse();
     expect(component.sessionPending).toBeFalse();
-    expect(bridge.acquire).toHaveBeenCalledTimes(2);
+    expect(tablet.acquire).toHaveBeenCalledTimes(2);
   }));
 
   describe('with the ppTPE tablet as source', () => {
     it('announces the session to the tablet, points the card and returns the verdict', fakeAsync(() => {
       const { component, bridge, fees, tablet } = setup();
-      component.source = 'tablet';
       void component.startSession();
       flushMicrotasks();
-      expect(bridge.status).not.toHaveBeenCalled();
+      expect(tablet.status).toHaveBeenCalled();
       expect(tablet.watch).toHaveBeenCalledOnceWith('tablet-1');
       expect(tablet.publishCollector).toHaveBeenCalledWith('tablet-1', 'active', 'Tournoi test');
       expect(fees.checkInByNfc).toHaveBeenCalledOnceWith('00000001', jasmine.any(AbortSignal));
@@ -361,7 +334,6 @@ describe('FeesNfcControlComponent', () => {
 
     it('returns a refusal to the tablet for an unknown card', fakeAsync(() => {
       const { component, bridge, fees, tablet } = setup();
-      component.source = 'tablet';
       bridge.get.and.resolveTo(null);
       void component.startSession();
       flushMicrotasks();
@@ -373,7 +345,6 @@ describe('FeesNfcControlComponent', () => {
 
     it('stops pointage when the tablet reader is no longer ready after an idle wait', fakeAsync(() => {
       const { component, tablet } = setup();
-      component.source = 'tablet';
       const ready = {
         version: 'ppTPE', readerStatus: 'Ready' as const, readerName: 'ACR1555U-A1-001714 PICC', message: 'Lecteur prêt',
         capturing: false, sessionId: 'tablet-1',
@@ -397,7 +368,6 @@ describe('FeesNfcControlComponent', () => {
 
     it('resumes on the same tablet after reader reconnection', fakeAsync(() => {
       const { component, tablet } = setup();
-      component.source = 'tablet';
       const ready = {
         version: 'ppTPE', readerStatus: 'Ready' as const, readerName: 'ACR1555U', message: 'Prêt',
         capturing: false, sessionId: 'tablet-1',
@@ -427,7 +397,6 @@ describe('FeesNfcControlComponent', () => {
 
     it('does not resume automatically after a manual suspension during recovery', fakeAsync(() => {
       const { component, tablet } = setup();
-      component.source = 'tablet';
       tablet.status.and.rejectWith(new Error('Tablette indisponible'));
       void component.startSession();
       flushMicrotasks();
@@ -441,7 +410,6 @@ describe('FeesNfcControlComponent', () => {
 
     it('distinguishes an unregistered player from duplicate registrations', fakeAsync(() => {
       const { component, tablet, game, gamer } = setup();
-      component.source = 'tablet';
       game.gamers = [];
       void component.startSession();
       flushMicrotasks();
@@ -459,30 +427,6 @@ describe('FeesNfcControlComponent', () => {
       flushMicrotasks();
     }));
 
-    it('retries the failed automatic activation when switching to the tablet', fakeAsync(() => {
-      const { component, bridge, tablet } = setup();
-      bridge.status.and.rejectWith(new Error('ppNFC indisponible'));
-      component.ngOnChanges();
-      flushMicrotasks();
-      expect(component.sessionPending).toBeFalse();
-      component.setSource('tablet');
-      flushMicrotasks();
-      expect(component.active).toBeTrue();
-      expect(tablet.publishCollector).toHaveBeenCalledWith('tablet-1', 'active', 'Tournoi test');
-      component.stopSession();
-      flushMicrotasks();
-    }));
-
-    it('keeps the source unchanged while a session is running', fakeAsync(() => {
-      const { component } = setup();
-      component.source = 'tablet';
-      void component.startSession();
-      flushMicrotasks();
-      component.setSource('pc');
-      expect(component.source).toBe('tablet');
-      component.stopSession();
-      flushMicrotasks();
-    }));
   });
 
   it('starts pointage automatically for an eligible tournament without opening the panel', fakeAsync(() => {
@@ -496,15 +440,27 @@ describe('FeesNfcControlComponent', () => {
     flushMicrotasks();
   }));
 
+  it('starts on the tablet despite an old PC preference', fakeAsync(() => {
+    localStorage.setItem('fees-nfc-source', 'pc');
+    const { component, tablet } = setup();
+    component.ngOnChanges();
+    flushMicrotasks();
+    expect(component.active).toBeTrue();
+    expect(tablet.watch).toHaveBeenCalledOnceWith('tablet-1');
+    component.stopSession();
+    flushMicrotasks();
+    localStorage.removeItem('fees-nfc-source');
+  }));
+
   for (const restriction of ['euro', 'locked']) {
     it(`starts automatically only after the ${restriction} restriction is lifted`, fakeAsync(() => {
-      const { component, bridge } = setup();
-      bridge.acquire.and.callFake(waitingForAbort);
+      const { component, bridge, tablet } = setup();
+      tablet.acquire.and.callFake(waitingForAbort);
       if (restriction === 'euro') component.paymentPreference = 'euro';
       else component.blocked = true;
       component.ngOnChanges();
       flushMicrotasks();
-      expect(bridge.status).not.toHaveBeenCalled();
+      expect(tablet.status).not.toHaveBeenCalled();
       component.paymentPreference = 'card';
       component.blocked = false;
       component.ngOnChanges();
@@ -516,8 +472,8 @@ describe('FeesNfcControlComponent', () => {
   }
 
   it('preserves a manual pause across pointage updates and resumes only on request or a different tournament', fakeAsync(() => {
-    const { component, bridge, game } = setup();
-    bridge.acquire.and.callFake(waitingForAbort);
+    const { component, bridge, game, tablet } = setup();
+    tablet.acquire.and.callFake(waitingForAbort);
     component.ngOnChanges();
     flushMicrotasks();
     component.stopSession();
@@ -531,12 +487,12 @@ describe('FeesNfcControlComponent', () => {
     flushMicrotasks();
     expect(component.paused).toBeTrue();
     expect(component.active).toBeFalse();
-    expect(bridge.status).toHaveBeenCalledTimes(1);
+    expect(tablet.status).toHaveBeenCalledTimes(1);
     void component.startSession();
     flushMicrotasks();
     expect(component.active).toBeTrue();
     expect(component.paused).toBeFalse();
-    expect(bridge.status).toHaveBeenCalledTimes(2);
+    expect(tablet.status).toHaveBeenCalledTimes(2);
     component.stopSession();
     flushMicrotasks();
     if (game.tournament) component.game = { ...game, tournament: { ...game.tournament, id: 2 } };
@@ -544,13 +500,13 @@ describe('FeesNfcControlComponent', () => {
     flushMicrotasks();
     expect(component.active).toBeTrue();
     expect(component.paused).toBeFalse();
-    expect(bridge.status).toHaveBeenCalledTimes(3);
+    expect(tablet.status).toHaveBeenCalledTimes(3);
     component.stopSession();
     flushMicrotasks();
   }));
 
   it('finishes cancelling the old tournament before automatically starting the next one', fakeAsync(() => {
-    const { component, bridge, fees, game } = setup();
+    const { component, bridge, fees, game, tablet } = setup();
     let resolve!: (value: MemberNfcCard) => void;
     bridge.get.and.returnValue(new Promise(done => { resolve = done; }));
     component.ngOnChanges();
@@ -561,28 +517,28 @@ describe('FeesNfcControlComponent', () => {
     component.ngOnChanges();
     flushMicrotasks();
     expect(component.active).toBeFalse();
-    expect(bridge.status).toHaveBeenCalledTimes(1);
+    expect(tablet.status).toHaveBeenCalledTimes(1);
     resolve(card);
     flushMicrotasks();
     expect(fees.checkInByNfc).not.toHaveBeenCalled();
-    expect(bridge.status).toHaveBeenCalledTimes(2);
+    expect(tablet.status).toHaveBeenCalledTimes(2);
     expect(component.active).toBeTrue();
-    expect(bridge.acquire.calls.mostRecent().args[0].aborted).toBeFalse();
+    expect(tablet.acquire.calls.mostRecent().args[0].aborted).toBeFalse();
     component.stopSession();
     flushMicrotasks();
   }));
 
   it('does not retry a failed automatic activation on every pointage update', fakeAsync(() => {
-    const { component, bridge, game } = setup();
-    bridge.status.and.rejectWith(new Error('ppNFC indisponible'));
+    const { component, bridge, game, tablet } = setup();
+    tablet.status.and.rejectWith(new Error('Tablette indisponible'));
     component.ngOnChanges();
     flushMicrotasks();
     component.game = { ...game };
     component.ngOnChanges();
     flushMicrotasks();
-    expect(bridge.status).toHaveBeenCalledTimes(1);
+    expect(tablet.status).toHaveBeenCalledTimes(1);
     expect(component.active).toBeFalse();
-    expect(component.error).toBe('ppNFC indisponible');
+    expect(component.error).toBe('Tablette indisponible');
   }));
 
   for (const traceMode of [false, true]) {
@@ -643,7 +599,7 @@ describe('FeesNfcControlComponent', () => {
       expect(component.lastReading?.accepted).toBeFalse();
       expect(component.lastReading?.message).toBeTruthy();
       expect(component.checkInState).toBe('refused');
-      expect(component.readerIndicatorColor).toBe('warning');
+      expect(component.readerIndicatorColor).toBe('success');
       expect(fees.checkInByNfc).not.toHaveBeenCalled();
       component.stopSession();
       flushMicrotasks();
@@ -652,8 +608,8 @@ describe('FeesNfcControlComponent', () => {
 
   for (const interruption of ['destroy', 'pagehide', 'euro', 'blocked']) {
     it(`aborts a pending capture on ${interruption} without pointing the next card`, fakeAsync(() => {
-      const { component, bridge, fees } = setup();
-      bridge.acquire.and.callFake(waitingForAbort);
+      const { component, bridge, fees, tablet } = setup();
+      tablet.acquire.and.callFake(waitingForAbort);
       component.ngOnChanges();
       flushMicrotasks();
       if (interruption === 'destroy') component.ngOnDestroy();
@@ -662,7 +618,7 @@ describe('FeesNfcControlComponent', () => {
       if (interruption === 'blocked') component.blocked = true;
       component.ngOnChanges();
       flushMicrotasks();
-      expect(bridge.acquire.calls.mostRecent().args[0].aborted).toBeTrue();
+      expect(tablet.acquire.calls.mostRecent().args[0].aborted).toBeTrue();
       expect(component.active).toBeFalse();
       expect(component.sessionPending).toBeFalse();
       expect(fees.checkInByNfc).not.toHaveBeenCalled();
@@ -683,29 +639,30 @@ describe('FeesNfcControlComponent', () => {
   }));
 
   it('continues waiting through an idle capture but stops with an explicit error on disconnection', fakeAsync(() => {
-    const { component, bridge, fees } = setup();
+    const { component, bridge, fees, tablet } = setup();
     let calls = 0;
-    bridge.acquire.and.callFake(() => {
+    tablet.acquire.and.callFake(() => {
       calls++;
       return Promise.reject(calls === 1 ? new NfcCaptureTimeoutError('Aucune carte') : new Error('Lecteur déconnecté'));
     });
     void component.startSession();
     flushMicrotasks();
-    expect(bridge.acquire).toHaveBeenCalledTimes(2);
+    expect(tablet.acquire).toHaveBeenCalledTimes(2);
     expect(fees.checkInByNfc).not.toHaveBeenCalled();
     expect(component.active).toBeFalse();
     expect(component.error).toBe('Lecteur déconnecté');
     expect(component.readerIndicatorColor).toBe('danger');
     expect(component.checkInState).toBe('inactive');
+    component.stopSession();
   }));
 
   it('stops a pending capture if a status refresh reports a disconnected reader', fakeAsync(() => {
-    const { component, bridge } = setup();
-    bridge.acquire.and.callFake(waitingForAbort);
+    const { component, bridge, tablet } = setup();
+    tablet.acquire.and.callFake(waitingForAbort);
     void component.startSession();
     flushMicrotasks();
-    bridge.status.and.resolveTo({
-      version: '1.0', readerStatus: 'Disconnected', readerName: null, message: 'Absent', capturing: false,
+    tablet.status.and.resolveTo({
+      sessionId: 'tablet-1', version: 'ppTPE', readerStatus: 'Disconnected', readerName: null, message: 'Absent', capturing: false,
     });
     void component.refreshStatus();
     flushMicrotasks();
@@ -713,19 +670,19 @@ describe('FeesNfcControlComponent', () => {
     expect(component.readerIndicatorLabel).toBe('Déconnecté');
     expect(component.readerIndicatorColor).toBe('danger');
     expect(component.checkInState).toBe('inactive');
-    expect(bridge.acquire.calls.mostRecent().args[0].aborted).toBeTrue();
+    expect(tablet.acquire.calls.mostRecent().args[0].aborted).toBeTrue();
     expect(component.notice).toContain('lecteur est indisponible');
   }));
 
   it('does not take over a reader already capturing in another tab', fakeAsync(() => {
-    const { component, bridge } = setup();
-    bridge.status.and.resolveTo({
-      version: '1.0', readerStatus: 'Ready', readerName: 'ACR1555U', message: '', capturing: true,
+    const { component, bridge, tablet } = setup();
+    tablet.status.and.resolveTo({
+      sessionId: 'tablet-1', version: 'ppTPE', readerStatus: 'Ready', readerName: 'ACR1555U', message: '', capturing: true,
     });
     void component.startSession();
     flushMicrotasks();
     expect(component.active).toBeFalse();
-    expect(bridge.acquire).not.toHaveBeenCalled();
+    expect(tablet.acquire).not.toHaveBeenCalled();
     expect(component.error).toContain('autre écran ou onglet');
   }));
 });

@@ -55,11 +55,8 @@ describe('FeesCollectorComponent player cards', () => {
     const configuration$ = new BehaviorSubject({
       banks: [], membership_payment_warning_month: 12, nfc_check_in_active: false,
     });
-    const bridge = jasmine.createSpyObj<MemberNfcCardService>('MemberNfcCardService', ['status', 'acquire']);
+    const bridge = jasmine.createSpyObj<MemberNfcCardService>('MemberNfcCardService', ['get']);
     const modal = { open: jasmine.createSpy('open') };
-    bridge.status.and.resolveTo({
-      version: '1.0', readerStatus: 'Ready', readerName: 'ACR1555U', message: '', capturing: false,
-    });
     const feesService = {
       game$: new BehaviorSubject(game),
       get_tournament: () => ({ id: 1, status: Game_status.RECOVERED }),
@@ -97,7 +94,7 @@ describe('FeesCollectorComponent player cards', () => {
         { provide: GameCardService, useValue: {} },
         { provide: BuyerContextService, useValue: { loadBalance: () => Promise.resolve({ debtAmount: 2, assetAmount: 0 }) } },
         { provide: ShopInitializationService, useValue: {
-          tpeReaderConnected$: of(false), tpeReaderLabel$: of(''), initTPE: () => Promise.resolve(),
+          tpeReaderConnected$: of(false), tpeReaderLabel$: of(''), tpeScanning$: of(false), initTPE: () => Promise.resolve(),
         } },
         { provide: CardPaymentOrchestratorService, useValue: { isRemoteMode: true } },
         { provide: CardSaleService, useValue: {} },
@@ -202,10 +199,12 @@ describe('FeesCollectorComponent player cards', () => {
     const setPayment = spyOn(fixture.componentInstance, 'setGamerPayment');
     gamer.debt = 0;
     cards[0].querySelector<HTMLButtonElement>('.quick-sale-btn')!.click();
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.quick-sale-panel')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.quick-sale-panel').textContent).toContain('Mode de paiement');
     const panel = fixture.nativeElement.querySelector('.quick-sale-panel') as HTMLElement;
+    expect(panel.querySelector<HTMLInputElement>('input[name="quickSaleCardType"]:checked')).toBeNull();
     expect(panel.querySelectorAll('input[name="quickSalePayment"]').length).toBe(4);
     expect(panel.querySelector<HTMLInputElement>('input[name="quickSalePayment"]:checked')).toBeNull();
     panel.querySelector<HTMLInputElement>('#quickSaleCheque')!.click();
@@ -216,6 +215,18 @@ describe('FeesCollectorComponent player cards', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.quickSaleForm!.mode).toBe(PaymentMode.CREDIT);
     expect(panel.querySelector('[aria-label="Banque du chèque"]')).toBeNull();
+    const validate = panel.querySelector<HTMLButtonElement>('.btn-primary')!;
+    expect(validate.disabled).toBeTrue();
+    panel.querySelector<HTMLInputElement>('#quickSaleShared')!.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.quickSaleForm!.cartePartagee).toBeTrue();
+    expect(panel.querySelector('app-input-member')).not.toBeNull();
+    expect(validate.disabled).toBeTrue();
+    panel.querySelector<HTMLInputElement>('#quickSaleIndividual')!.click();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.quickSaleForm!.cartePartagee).toBeFalse();
+    expect(panel.querySelector('app-input-member')).toBeNull();
+    expect(validate.disabled).toBeFalse();
     fixture.componentInstance.quickSaleSaving = true;
     fixture.detectChanges();
     expect(panel.querySelector<HTMLInputElement>('#quickSaleCash')!.matches(':disabled')).toBeTrue();
@@ -223,6 +234,9 @@ describe('FeesCollectorComponent player cards', () => {
     fixture.componentInstance.tpePaymentActive = true;
     Object.defineProperty(fixture.componentInstance, 'quickSaleTpeEnabled', { value: true, configurable: true });
     fixture.detectChanges();
+    const tpeImage = fixture.nativeElement.querySelector('app-tpe-reader-indicator img') as HTMLImageElement;
+    expect(tpeImage.classList.contains('state-disconnected')).toBeTrue();
+    expect(tpeImage.alt).toBe('TPE hors ligne');
     expect(panel.querySelectorAll('input[name="quickSalePayment"]').length).toBe(5);
     const paymentLabels = Array.from(panel.querySelectorAll<HTMLLabelElement>('.quick-sale-payment-option'));
     expect(paymentLabels.every(label => label.textContent!.trim() === '')).toBeTrue();
@@ -236,7 +250,28 @@ describe('FeesCollectorComponent player cards', () => {
     panel.querySelector<HTMLInputElement>('#quickSaleCard')!.click();
     fixture.detectChanges();
     expect(fixture.componentInstance.quickSaleForm!.mode).toBe(PaymentMode.CARD);
-    expect(panel.querySelector<HTMLButtonElement>('.btn-primary')!.disabled).toBeTrue();
+    expect(validate.disabled).toBeTrue();
+    fixture.componentInstance.tpeReaderConnected = true;
+    fixture.componentInstance.stripeTerminal.sharedRequest$.next(null);
+    fixture.detectChanges();
+    expect(tpeImage.classList.contains('state-connected')).toBeTrue();
+    expect(fixture.nativeElement.querySelector('app-shared-tpe-status').textContent).not.toContain('TPE disponible');
+    expect(validate.disabled).toBeFalse();
+    fixture.componentInstance.stripeTerminal.sharedRequest$.next({
+      id: 'shared-tpe-v1', reservationId: 'other', origin: 'shop', status: 'processing', paymentIntentId: 'pi_test',
+    });
+    fixture.detectChanges();
+    expect(validate.disabled).toBeTrue();
+    panel.querySelector<HTMLInputElement>('#quickSaleCash')!.click();
+    fixture.detectChanges();
+    expect(validate.disabled).toBeFalse();
+    fixture.componentInstance.stripeTerminal.sharedRequest$.next(undefined);
+    panel.querySelector<HTMLInputElement>('#quickSaleCard')!.click();
+    fixture.detectChanges();
+    expect(validate.disabled).toBeTrue();
+    fixture.componentInstance.stripeTerminal.sharedRequest$.next(null);
+    fixture.detectChanges();
+    expect(validate.disabled).toBeFalse();
     fixture.componentInstance.tpePaymentActive = false;
     Object.defineProperty(fixture.componentInstance, 'quickSaleTpeEnabled', { value: false, configurable: true });
     fixture.componentInstance.quickSaleForm!.mode = null;
@@ -413,6 +448,13 @@ describe('FeesCollectorComponent player cards', () => {
     void component.cancelCheckIn(gamer);
     flushMicrotasks();
     expect(component.manualCheckInConfirmation).toBeNull();
+    component.operationalMode = 'nfc';
+    fees.setGamerPayment.and.resolveTo(true);
+    void component.setGamerPayment(gamer, 'card');
+    flushMicrotasks();
+    expect(component.manualCheckInConfirmation?.gamer).toBe(gamer);
+    tick(3000);
+    expect(component.manualCheckInConfirmation).toBeNull();
   }));
 
   it('does not show a late manual confirmation after the session changes, even for the same tournament', fakeAsync(() => {
@@ -462,7 +504,13 @@ describe('FeesCollectorComponent player cards', () => {
       component.quickSale(gamer);
       await Promise.resolve();
       expect(component.quickSaleForm?.titulaire).toBe(member);
+      expect(component.quickSaleForm?.cartePartagee).toBeNull();
+      component.quickSaleForm!.mode = PaymentMode.CREDIT;
+      await component.confirmQuickSale();
+      expect(fees.create_game_card_cart_sale).not.toHaveBeenCalled();
+      expect(localStorage.getItem(key)).toBeNull();
       component.quickSaleForm!.cartePartagee = false;
+      component.quickSaleForm!.mode = null;
       await component.confirmQuickSale();
       expect(fees.create_game_card_cart_sale).not.toHaveBeenCalled();
       component.quickSaleForm!.mode = PaymentMode.CREDIT;

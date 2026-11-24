@@ -16,32 +16,24 @@
   <div ngbDropdownMenu class="nfc-panel p-3">
     <section aria-label="Contrôle de la badgeuse NFC">
       <h6>Badgeuse NFC</h6>
-      <div class="btn-group btn-group-sm w-100 mb-2" role="group" aria-label="Source des lectures NFC">
-        <button type="button" class="btn" [class.btn-primary]="source === 'pc'" [class.btn-outline-primary]="source !== 'pc'"
-          [disabled]="busy || starting || sessionPending" [attr.aria-pressed]="source === 'pc'"
-          (click)="setSource('pc')">ppNFC sur ce PC</button>
-        <button type="button" class="btn" [class.btn-primary]="source === 'tablet'" [class.btn-outline-primary]="source !== 'tablet'"
-          [disabled]="busy || starting || sessionPending" [attr.aria-pressed]="source === 'tablet'"
-          (click)="setSource('tablet')">Tablette ppTPE</button>
-      </div>
       <dl class="small mb-2">
-        <dt>{{ sourceLabel }}</dt>
-        <dd>{{ checking || starting ? 'Vérification…' : (reader ? 'Joignable — version ' + reader.version : 'Liaison non vérifiée') }}</dd>
+        <dt>Tablette ppTPE</dt>
+        <dd>{{ checking || starting ? 'Vérification…' : (reader ? 'Joignable — ' + reader.version : 'Liaison non vérifiée') }}</dd>
         <dt>Lecteur</dt>
         <dd>{{ readerLabel }}<span *ngIf="reader?.readerName"> — {{ reader?.readerName }}</span></dd>
-        <dt>{{ source === 'tablet' ? 'État du lecteur' : 'Sonde ACS' }}</dt>
+        <dt>État du lecteur</dt>
         <dd *ngIf="reader?.hardwareProbe as probe">
           {{ probe.message }} — {{ probe.checkedAt | date:'HH:mm:ss' }}
         </dd>
-        <dd *ngIf="!reader?.hardwareProbe">Aucune interrogation matérielle disponible.</dd>
+        <dd *ngIf="!reader?.hardwareProbe">État du lecteur non disponible.</dd>
         <dt>Session de pointage</dt>
         <dd [class.text-success]="active">
           {{ active ? 'Active' : (starting ? 'Activation…' : (recovering ? 'En attente de reconnexion' : (paused ? 'Suspendue' : 'Arrêtée'))) }} — {{ game.tournament?.name }}
         </dd>
       </dl>
-      <p *ngIf="reader" class="small text-muted mb-2">Dernier message {{ source === 'tablet' ? 'ppTPE' : 'ppNFC' }} : {{ reader.message }}</p>
+      <p *ngIf="reader" class="small text-muted mb-2">Dernier message ppTPE : {{ reader.message }}</p>
       <p class="small text-muted">
-        La sonde ACS vérifie une réponse réelle, sans modifier la configuration ni maintenir le lecteur éveillé.
+        La connexion du lecteur ne garantit pas la détection des cartes : vérifiez par une lecture réelle.
         Face NFC vers vous, prise USB en haut : le bouton MODE/Bluetooth est à gauche et le bouton POWER est à droite.
         Maintenez POWER environ 3 secondes pour allumer le lecteur ; un appui bref le réveille.
         Si aucune carte n’est détectée, vérifiez les voyants puis utilisez « Tester une lecture ».

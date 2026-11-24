@@ -23,6 +23,7 @@ import { CartItem, PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
 import { CardSaleService } from '../services/card-sale.service';
 import { SharedTpeStatusComponent } from './shared-tpe-status.component';
+import { TpeReaderIndicatorComponent } from './tpe-reader-indicator.component';
 import { BookService, FulfillmentError } from '../services/book.service';
 import { EventTicketGuardService, SETTLE_TICKETING_RESERVATION } from '../collecte/event-ticket-guard.service';
 import { Subscription } from 'rxjs';
@@ -60,7 +61,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, MoveToEndPipe, SharedTpeStatusComponent],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, MoveToEndPipe, SharedTpeStatusComponent, TpeReaderIndicatorComponent],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
