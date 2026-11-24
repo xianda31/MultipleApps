@@ -34,6 +34,7 @@ export class ShopInitializationService implements OnDestroy {
   readonly tpeScanning$        = new BehaviorSubject<boolean>(false);
 
   private tpeSessionSub: any = null;
+  private sharedTpeSub: { unsubscribe(): void } | null = null;
   private tpeInitialized = false;
   private tpeToastShown  = false;
   private lastKnownConnectedTtl = 0; // Unix s — utilisé par le staleness timer
@@ -118,6 +119,21 @@ export class ShopInitializationService implements OnDestroy {
 
     if (!this.stripeTerminal.isNativeAndroid) {
       // ── Mode distant (PC) ──
+      this.stripeTerminal.observeSharedTpe();
+      if (this.stripeTerminal.sharedTpeEnabled && !this.sharedTpeSub) {
+        let wasOccupied = false;
+        this.sharedTpeSub = this.stripeTerminal.sharedRequest$.subscribe(request => {
+          if (request === undefined) return;
+          const occupied = !!request && request.status !== 'available';
+          if (wasOccupied && !occupied && this.bookService.is_book_entries_loaded()) {
+            void this.bookService.refresh_book_entries().catch(error => {
+              console.error('[TPE] Actualisation comptable impossible:', error);
+              this.toastService.showWarning('TPE', 'Actualisation comptable impossible : rechargez avant une nouvelle vente.');
+            });
+          }
+          wasOccupied = occupied;
+        });
+      }
       this.subscribeTPESession();
       setTimeout(() => {
         if (!this.tpeReaderConnected$.value && !this.tpeToastShown) {
@@ -237,6 +253,7 @@ export class ShopInitializationService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.tpeSessionSub?.unsubscribe();
+    this.sharedTpeSub?.unsubscribe();
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     if (this.stalenessTimer !== null) {
       clearInterval(this.stalenessTimer);

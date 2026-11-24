@@ -3,8 +3,72 @@ import { Member } from '../../../common/interfaces/member.interface';
 import { FeesCollectorService } from './fees-collector.service';
 import { GameCardService } from '../../services/game-card.service';
 import { Game } from '../fees.interface';
+import { PaymentMode } from '../../shop/cart/cart.interface';
+import { CartService } from '../../shop/cart/cart.service';
+import { BookService } from '../../services/book.service';
+import { ProductService } from '../../../common/services/product.service';
+import { CUSTOMER_ACCOUNT, FINANCIAL_ACCOUNT } from '../../../common/interfaces/accounting.interface';
 
 describe('FeesCollectorService game-card synchronization', () => {
+  it('records selected debt and asset with the card and links the resulting entry', async () => {
+    const buyer = { id: 'buyer', firstname: 'Jean', lastname: 'TEST', license_number: '00000001' } as Member;
+    const coBuyer = { id: 'co-buyer', firstname: 'Anne', lastname: 'TEST', license_number: '00000002' } as Member;
+    const book = jasmine.createSpyObj<BookService>('BookService', ['create_book_entry', 'process_book_entry_actions']);
+    book.create_book_entry.and.callFake(async entry => ({ ...entry, id: 'entry-1' }));
+    book.process_book_entry_actions.and.resolveTo({});
+    const cards = jasmine.createSpyObj<GameCardService>('GameCardService', ['refreshCards']);
+    cards.refreshCards.and.resolveTo();
+    const products = jasmine.createSpyObj<ProductService>('ProductService', ['getProduct']);
+    products.getProduct.and.returnValue({ fulfillmentAction: 'CREATE_PLAYBOOK' } as never);
+    const cart = new CartService(book, products, cards);
+    cart.setBuyer('TEST Jean');
+    cart.addToCart({ product_id: 'card-product', product_account: 'CAR', payee: buyer, payee_name: 'TEST Jean',
+      paied: 30, paired_with: coBuyer, paired_name: 'TEST Anne' });
+    cart.setDebt('TEST Jean', 20);
+    cart.setAsset('TEST Jean', 10);
+    const total = cart.getCartAmount();
+    cart.payment = { mode: PaymentMode.CASH, amount: total, payer_id: buyer.id, bank: '', cheque_no: '' };
+    const service = Object.create(FeesCollectorService.prototype) as FeesCollectorService;
+    Object.assign(service, {
+      BookService: book, gameCardService: cards,
+      systemDataService: { get_season: () => '2026/2027' },
+      update_members_debts: () => {}, update_members_credits: () => {},
+    });
+
+    await service.create_game_card_cart_sale([buyer, coBuyer], cart);
+    const entry = book.create_book_entry.calls.mostRecent().args[0];
+    expect(entry.amounts[FINANCIAL_ACCOUNT.CASHBOX_debit]).toBe(40);
+    expect(entry.operations[0].values['CAR']).toBe(30);
+    expect(entry.operations[0].values[CUSTOMER_ACCOUNT.DEBT_credit]).toBe(20);
+    expect(entry.operations[0].values[CUSTOMER_ACCOUNT.ASSET_debit]).toBe(10);
+    expect(entry.operations[1].values['CAR']).toBe(0);
+    expect(entry.purchasedItems).toEqual([{ productId: 'card-product', beneficiaryMemberIds: ['buyer', 'co-buyer'], quantity: 1 }]);
+    expect(book.process_book_entry_actions).toHaveBeenCalledOnceWith('entry-1');
+    expect(cards.refreshCards).toHaveBeenCalled();
+  });
+
+  it('records an advance for the primary owner and links the shared card to the entry', async () => {
+    const buyer = { id: 'buyer', firstname: 'Jean', lastname: 'TEST', license_number: '00000001' } as Member;
+    const coBuyer = { id: 'co-buyer', firstname: 'Anne', lastname: 'TEST', license_number: '00000002' } as Member;
+    const book = jasmine.createSpyObj('BookService', ['create_game_card_sale']);
+    book.create_game_card_sale.and.resolveTo({ id: 'entry-1' });
+    const cards = jasmine.createSpyObj('GameCardService', ['createCard']);
+    cards.createCard.and.resolveTo({ id: 'card-1' });
+    const service = Object.create(FeesCollectorService.prototype) as FeesCollectorService;
+    Object.assign(service, {
+      membersService: { full_name: (member: Member) => `${member.lastname} ${member.firstname}` },
+      BookService: book,
+      gameCardService: cards,
+      update_members_debts: () => {},
+      update_members_credits: () => {},
+    });
+    await service.create_game_card_advance([buyer, coBuyer], 30);
+    expect(book.create_game_card_sale).toHaveBeenCalledOnceWith('TEST Jean', 30, PaymentMode.CREDIT, 'TEST Anne', undefined);
+    expect(cards.createCard).toHaveBeenCalledOnceWith([buyer, coBuyer], undefined, undefined, false, 'entry-1');
+    cards.createCard.and.rejectWith(new Error('network'));
+    await expectAsync(service.create_game_card_advance([buyer], 30)).toBeRejectedWithError(/entry-1/);
+  });
+
   it('updates credits when another client creates a card', () => {
     const member = {
       id: 'member-1',

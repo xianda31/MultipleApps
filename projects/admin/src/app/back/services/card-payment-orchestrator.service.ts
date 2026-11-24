@@ -14,6 +14,8 @@ export interface CardPaymentParams {
   buyerMemberId?: string;
   buyerEmail?: string;
   bookEntryId?: string;
+  origin?: 'shop' | 'pointage' | 'ticketing';
+  reservationId?: string;
 }
 
 export interface CardPaymentCallbacks {

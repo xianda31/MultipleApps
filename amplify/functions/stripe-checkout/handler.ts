@@ -11,7 +11,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, DeleteCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
 const ddbClient = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(ddbClient);
+export const docClient = DynamoDBDocumentClient.from(ddbClient);
 
 // Variables d'environnement
 const SALE_ITEM_TABLE = process.env['SALE_ITEM_TABLE_NAME'];
@@ -21,7 +21,7 @@ const STRIPE_SECRET_KEY = process.env['STRIPE_SECRET_KEY'];
 const STRIPE_LIVE_SECRET_KEY = process.env['STRIPE_LIVE_SECRET_KEY'];
 const STRIPE_PUBLISHABLE_KEY = process.env['STRIPE_PUBLISHABLE_KEY'];
 
-const stripe = new Stripe(STRIPE_SECRET_KEY || 'dummy', {
+export const stripe = new Stripe(STRIPE_SECRET_KEY || 'dummy', {
   apiVersion: '2024-04-10' as any,
 });
 
@@ -1266,6 +1266,40 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
 
   const { action, paymentIntentId: cancelId, amountCents, memberName, memberFirstName, buyerMemberId, buyerEmail, season, date, bookEntryId } = body;
 
+  if (action === 'cleanup') {
+    if (!BOOK_ENTRY_TABLE || !bookEntryId || typeof bookEntryId !== 'string'
+        || !cancelId || typeof cancelId !== 'string') {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'bookEntryId and paymentIntentId required' }) };
+    }
+    try {
+      const pi = await stripe.paymentIntents.retrieve(cancelId);
+      if (pi.status !== 'canceled' || pi.metadata?.bookEntryId !== bookEntryId) {
+        throw new Error('PaymentIntent is not canceled or does not match the entry');
+      }
+      const current = await docClient.send(new GetCommand({
+        TableName: BOOK_ENTRY_TABLE, Key: { id: bookEntryId }, ConsistentRead: true,
+      }));
+      if (!current.Item) return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: 'removed' }) };
+      await docClient.send(new DeleteCommand({
+        TableName: BOOK_ENTRY_TABLE,
+        Key: { id: bookEntryId },
+        ConditionExpression: '#status = :pending AND stripeSessionId = :intent',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: { ':pending': 'pending', ':intent': cancelId },
+      }));
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: 'removed' }) };
+    } catch (error: any) {
+      if (error?.name === 'ConditionalCheckFailedException') {
+        const current = await docClient.send(new GetCommand({
+          TableName: BOOK_ENTRY_TABLE, Key: { id: bookEntryId }, ConsistentRead: true,
+        }));
+        if (!current.Item) return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: 'removed' }) };
+      }
+      console.error('[terminal-payment-intent] Pending entry cleanup failed:', error);
+      return { statusCode: 409, headers: CORS, body: JSON.stringify({ error: 'Pending entry cleanup not confirmed' }) };
+    }
+  }
+
   // ── Action : annulation d'un PaymentIntent en attente ──
   if (action === 'cancel') {
     if (!cancelId || typeof cancelId !== 'string') {
@@ -1277,7 +1311,15 @@ async function handleTerminalPaymentIntent(event: any): Promise<any> {
     } catch (err: any) {
       // Déjà capturé ou annulé : ne pas traiter comme une erreur côté client
       if (err?.code === 'payment_intent_unexpected_state') {
-        return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: 'already_processed' }) };
+        if (body.verifyExisting !== true) {
+          return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: 'already_processed' }) };
+        }
+        try {
+          const current = await stripe.paymentIntents.retrieve(cancelId);
+          return { statusCode: 200, headers: CORS, body: JSON.stringify({ status: current.status }) };
+        } catch (retrieveError: any) {
+          return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: retrieveError.message }) };
+        }
       }
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) };
     }

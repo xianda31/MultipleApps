@@ -68,11 +68,14 @@ export class TabletNfcBridgeService {
     return generateClient<Schema>({ authMode: 'userPool' });
   }
 
-  async status(signal: AbortSignal): Promise<NfcReaderStatus & { sessionId: string }> {
-    const { data, errors } = await this.client.models.NfcReaderSession.list();
+  async status(signal: AbortSignal, sessionId?: string): Promise<NfcReaderStatus & { sessionId: string }> {
+    const result = sessionId
+      ? await this.client.models.NfcReaderSession.get({ id: sessionId })
+      : await this.client.models.NfcReaderSession.list();
     if (signal.aborted) throw signal.reason;
-    if (errors?.length) throw new Error(errors.map(error => error.message).join('; '));
-    const session = data
+    if (result.errors?.length) throw new Error(result.errors.map(error => error.message).join('; '));
+    const sessions = Array.isArray(result.data) ? result.data : result.data ? [result.data] : [];
+    const session = sessions
       .filter(item => isFreshReaderSession(item))
       .sort((left, right) => (right.readerUpdatedAt ?? 0) - (left.readerUpdatedAt ?? 0))[0];
     if (!session) {
@@ -90,7 +93,10 @@ export class TabletNfcBridgeService {
         this.queue.push({ uid: scan.uid, scanId: scan.id, receivedAt: Date.now() });
         this.waiter?.();
       },
-      error: error => console.error('[Pointage NFC] Abonnement aux lectures de la tablette interrompu', error),
+      error: error => {
+        console.error('[Pointage NFC] Abonnement aux lectures de la tablette interrompu', error);
+        this.waiter?.();
+      },
     });
   }
 
@@ -103,11 +109,11 @@ export class TabletNfcBridgeService {
     this.waiter?.();
   }
 
-  async acquire(signal: AbortSignal): Promise<string> {
-    const deadline = Date.now() + CAPTURE_TIMEOUT_MS;
+  async acquire(signal: AbortSignal, timeoutMs = CAPTURE_TIMEOUT_MS): Promise<string> {
+    const deadline = Date.now() + timeoutMs;
     while (true) {
       if (signal.aborted) throw signal.reason;
-      if (!this.subscription) throw new Error('Liaison avec la tablette ppTPE interrompue.');
+      if (!this.subscription || this.subscription.closed) throw new Error('Liaison avec la tablette ppTPE interrompue.');
       const scan = this.queue.shift();
       if (scan) {
         if (Date.now() - scan.receivedAt > MAX_SCAN_AGE_MS) continue;

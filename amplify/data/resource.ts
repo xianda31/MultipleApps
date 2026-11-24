@@ -11,6 +11,7 @@ import { stripeWebhooks } from '../functions/stripe-webhooks/resource';
 import { sendWebPush } from '../functions/send-web-push/resource';
 import { nfcManagement } from '../functions/nfc-management/resource';
 import { gamePlayers } from '../functions/game-players/resource';
+import { gameCardAdvance } from '../functions/game-card-advance/resource';
 
 
 // import { Group_names } from '../../projects/admin/src/app/common/authentification/group.interface';
@@ -25,6 +26,15 @@ enum Group_names {
 
 
 const schema = a.schema({
+  gameCardAdvance: a.mutation()
+    .arguments({ input: a.json().required() })
+    .returns(a.json())
+    .authorization(allow => [
+      allow.group(Group_names.System), allow.group(Group_names.Admin),
+      allow.group(Group_names.Editor), allow.group(Group_names.Support),
+    ])
+    .handler(a.handler.function(gameCardAdvance)),
+
   mutateGamePlayers: a.mutation()
     .arguments({ gameId: a.id().required(), expectedRoster: a.string(), action: a.json().required() })
     .returns(a.ref('Game'))
@@ -857,8 +867,11 @@ AssistanceRequest: a.model({
     season: a.string().required(),
     date: a.string().required(),
     bookEntryId: a.string(),                 // BookEntry à mettre à jour après paiement
+    buyerMemberId: a.id(),
     stripeTag: a.string(),                   // pour réconciliation
-    status: a.enum(['pending', 'processing', 'success', 'failed', 'cancelled']),
+    status: a.enum(['available', 'reserved', 'pending', 'processing', 'success', 'failed', 'cancelled']),
+    reservationId: a.string(),
+    origin: a.enum(['shop', 'pointage', 'ticketing']),
     errorMessage: a.string(),                // message d'erreur si status=failed
     ttl: a.integer(),                        // purge auto DynamoDB (epoch seconds, ~24h)
   })
@@ -867,6 +880,20 @@ AssistanceRequest: a.model({
       allow.group(Group_names.Admin).to(['read', 'create', 'update', 'delete']),
       allow.group(Group_names.Editor).to(['read', 'create', 'update']),
       allow.group(Group_names.Support).to(['read', 'create', 'update']),
+    ]),
+  TPEPaymentResult: a.model({
+    reservationId: a.string().required(),
+    origin: a.enum(['shop', 'pointage', 'ticketing']),
+    status: a.enum(['success', 'failed', 'cancelled']),
+    paymentIntentId: a.string().required(),
+    bookEntryId: a.string(),
+    buyerMemberId: a.id(),
+  })
+    .authorization((allow) => [
+      allow.group(Group_names.System).to(['read', 'create']),
+      allow.group(Group_names.Admin).to(['read', 'create']),
+      allow.group(Group_names.Editor).to(['read', 'create']),
+      allow.group(Group_names.Support).to(['read', 'create']),
     ]),
   // ─── État de connexion ppTPE (Android publie, PC souscrit) ───
   // ppTPE Android crée/met à jour cette entrée quand il connecte un reader.

@@ -269,8 +269,9 @@ $accent: #6ea8fe;
 
 .nfc-diagnostic__last-scan {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.15rem 0.5rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.5rem;
   margin-top: 0.7rem;
   padding-top: 0.65rem;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
@@ -281,28 +282,16 @@ $accent: #6ea8fe;
   }
 
   code {
-    grid-column: 1 / -1;
     color: #9ec5fe;
     font-size: 1rem;
     letter-spacing: 0.06em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   small {
-    grid-column: 2;
-    grid-row: 1;
     color: rgba(255, 255, 255, 0.4);
-  }
-}
-
-.nfc-diagnostic__history {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.5rem;
-
-  code {
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 0.68rem;
   }
 }
 

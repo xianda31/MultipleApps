@@ -17,6 +17,7 @@ import {
 import outputs from '../../../../amplify_outputs.json';
 import { environment } from '../environments/environment';
 import type { Schema } from '../../../../amplify/data/resource';
+import { SHARED_TPE_REQUEST_ID } from '../../../common/tpe-shared';
 import { NfcTagReaderService } from './nfc/nfc-tag-reader.service';
 import { AcrBleReaderService } from './nfc/acr-ble-reader.service';
 import { NfcRelayService } from './nfc/nfc-relay.service';
@@ -115,6 +116,8 @@ export class AppComponent implements OnInit, OnDestroy {
   private paymentRequestSub: any = null;
   private capacitorInitialized = false;
   private readonly processedPaymentIds = new Set<string>();
+  private paymentClaimInFlight = false;
+  private latestPaymentRequests: any[] = [];
   private heartbeatInterval: any = null;
   private resumeWatchdog: any = null;
   private lastResumeTime = 0;
@@ -490,34 +493,68 @@ export class AppComponent implements OnInit, OnDestroy {
     // observeQuery = état initial + mises à jour temps réel
     this.paymentRequestSub = (this.client.models.PaymentRequest.observeQuery() as any).subscribe({
       next: ({ items }: any) => {
-        const pending = items.find(
-          (pr: any) => pr.status === 'pending' && !this.processedPaymentIds.has(pr.id),
-        );
-        if (pending) {
-          this.handlePaymentRequest(pending);
-        }
+        this.latestPaymentRequests = items ?? [];
+        this.processNextPaymentRequest();
       },
       error: (e: any) => console.warn('[ppTPE] PaymentRequest subscription error:', e?.message),
     });
   }
 
+  private processNextPaymentRequest(): void {
+    if (this.paymentClaimInFlight || this.state !== 'connected') return;
+    const pending = this.latestPaymentRequests.find(
+      (pr: any) => pr.status === 'pending'
+        && (!environment.tpe_shared_enabled || (pr.id === SHARED_TPE_REQUEST_ID && !!pr.reservationId))
+        && !this.processedPaymentIds.has(this.paymentRequestKey(pr)),
+    );
+    if (pending) void this.handlePaymentRequest(pending);
+  }
+
+  private paymentRequestKey(pr: { id: string; reservationId?: string }): string {
+    return environment.tpe_shared_enabled ? `${pr.id}:${pr.reservationId}` : pr.id;
+  }
+
   private async handlePaymentRequest(pr: any): Promise<void> {
-    // Marquer immédiatement pour éviter le double-traitement
-    this.processedPaymentIds.add(pr.id);
-    this.currentMemberName = pr.memberName;
-    this.currentAmountCents = pr.amountCents;
-    this.state = 'processing';
-    this.cdr.detectChanges();
+    if (this.paymentClaimInFlight || this.state !== 'connected') return;
+    if (environment.tpe_shared_enabled && (pr.id !== SHARED_TPE_REQUEST_ID || !pr.reservationId)) return;
+    this.paymentClaimInFlight = true;
+    this.processedPaymentIds.add(this.paymentRequestKey(pr));
+    let paymentConfirmed = false;
+    const claimCondition = environment.tpe_shared_enabled
+      ? { and: [{ status: { eq: 'pending' } }, { reservationId: { eq: pr.reservationId } }] }
+      : { status: { eq: 'pending' } };
+    const resultCondition = environment.tpe_shared_enabled
+      ? { condition: { and: [{ status: { eq: 'processing' } }, { reservationId: { eq: pr.reservationId } }] } }
+      : undefined;
 
     try {
-      await this.client.models.PaymentRequest.update({ id: pr.id, status: 'processing' } as any);
+      try {
+        const { data, errors } = await (this.client.models.PaymentRequest.update(
+          { id: pr.id, status: 'processing' } as any,
+          { condition: claimCondition } as any,
+        ) as any);
+        if (errors?.length || !data) {
+          console.warn('[ppTPE] Demande non acquise; aucune collecte lancée', errors);
+          return;
+        }
+      } catch (error) {
+        console.warn('[ppTPE] Prise en charge non confirmée; aucune collecte lancée', error);
+        return;
+      }
+
+      this.currentMemberName = pr.memberName;
+      this.currentAmountCents = pr.amountCents;
+      this.state = 'processing';
+      this.cdr.detectChanges();
 
       // Utiliser la chaîne de Promises directement — plus fiable que les événements
       // ConfirmedPaymentIntent (Capacitor addListener est async, risque de race condition)
-      await StripeTerminal.collectPaymentMethod({ paymentIntent: pr.clientSecret });
-      await StripeTerminal.confirmPaymentIntent();
+      await this.collectAndConfirmPayment(pr.clientSecret);
+      paymentConfirmed = true;
 
-      const { errors } = await (this.client.models.PaymentRequest.update({ id: pr.id, status: 'success' } as any) as any);
+      const { errors } = await (this.client.models.PaymentRequest.update(
+        { id: pr.id, status: 'success' } as any, resultCondition as any,
+      ) as any);
       if (errors?.length) {
         console.error('[ppTPE] update success error:', JSON.stringify(errors));
       } else {
@@ -527,20 +564,36 @@ export class AppComponent implements OnInit, OnDestroy {
     } catch (e: any) {
       const msg: string = e?.message ?? 'Erreur TPE';
       console.warn('[ppTPE] handlePaymentRequest error:', msg);
+      if (paymentConfirmed) {
+        console.error('[ppTPE] Paiement confirmé mais résultat non publié; rapprochement nécessaire', pr.id);
+        return;
+      }
       const isCancelled = /annul|cancel/i.test(msg);
-      await this.client.models.PaymentRequest.update({
-        id: pr.id,
-        status: isCancelled ? 'cancelled' : 'failed',
-        errorMessage: msg,
-      } as any).catch(() => {});
+      try {
+        const { errors } = await this.client.models.PaymentRequest.update({
+          id: pr.id,
+          status: isCancelled ? 'cancelled' : 'failed',
+          errorMessage: msg,
+        } as any, resultCondition as any);
+        if (errors?.length) console.error('[ppTPE] Résultat TPE non publié:', errors);
+      } catch (error) {
+        console.error('[ppTPE] Résultat TPE non publié:', error);
+      }
     } finally {
+      this.paymentClaimInFlight = false;
       if (this.state === 'processing') {
         this.state = 'connected';
       }
       this.currentMemberName = '';
       this.currentAmountCents = 0;
       this.cdr.detectChanges();
+      this.processNextPaymentRequest();
     }
+  }
+
+  private async collectAndConfirmPayment(clientSecret: string): Promise<void> {
+    await StripeTerminal.collectPaymentMethod({ paymentIntent: clientSecret });
+    await StripeTerminal.confirmPaymentIntent();
   }
 
   // ──────────────────────────────────────────────────────────

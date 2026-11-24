@@ -78,6 +78,7 @@ describe('ShopComponent buyer list', () => {
       jasmine.createSpyObj('CardPaymentOrchestratorService', ['cancelRemotePayment']),
       books,
       eventTicketGuard,
+      jasmine.createSpyObj('CardSaleService', ['start']),
     );
     return { component, members$, membersService, toast, cartService, loggedMember$, buyerContext, stripeCheckout, eventTicketGuard, products, cart$ };
   }

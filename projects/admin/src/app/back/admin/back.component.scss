@@ -37,3 +37,7 @@
   max-width: 100%;
   min-width: 0;
 }
+
+.admin-scrollable-content:has(app-fees-collector) {
+  overflow-x: clip;
+}

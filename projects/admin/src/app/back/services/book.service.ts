@@ -396,6 +396,14 @@ export class BookService {
     return this._book_entries$.asObservable();
   }
 
+  async refresh_book_entries(): Promise<void> {
+    const season = this.season_filter;
+    if (!season || !this.syncAvailable) throw new Error('Les données comptables ne sont pas chargées.');
+    const entries = await firstValueFrom(this.dbHandler.listBookEntries(season));
+    if (season !== this.season_filter || !this.syncAvailable) throw new Error('La saison comptable a changé.');
+    this.publishBookEntries(entries);
+  }
+
   book_entries_bulk_delete$(season: string): Observable<number> {
     return this.dbHandler.bulkDeleteBookEntries(season).pipe(
       tap(() => {

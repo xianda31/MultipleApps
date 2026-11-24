@@ -5,6 +5,7 @@ import { TRANSACTION_CLASS } from '../../common/interfaces/transaction.definitio
 import { BookService } from './book.service';
 import { Group_names } from '../../common/authentification/group.interface';
 import { GroupService } from '../../common/authentification/group.service';
+import { PaymentMode } from '../shop/cart/cart.interface';
 
 describe('BookService', () => {
   function createService(
@@ -18,6 +19,7 @@ describe('BookService', () => {
     return new BookService(
       {
         get_configuration: () => of({ season: '2026/2027' }),
+        get_season: () => '2026/2027',
         start_date: (season: string) => `${season.slice(0, 4)}-07-01`,
         assert_accounting_write_allowed: (season: string) => {
           if (season !== '2026/2027') throw new Error('Saison verrouillée');
@@ -40,6 +42,18 @@ describe('BookService', () => {
       ticketingService as any,
     );
   }
+
+  it('records a card advance as a debt of the primary buyer without receiving cash or using assets', async () => {
+    const service = createService();
+    const create = spyOn(service, 'create_book_entry').and.callFake(async entry => entry);
+    await service.create_game_card_sale('TEST Jean', 30, PaymentMode.CREDIT, 'TEST Anne');
+    const entry = create.calls.mostRecent().args[0];
+    expect(entry.amounts).toEqual({ [FINANCIAL_ACCOUNT.CASHBOX_debit]: 0 });
+    expect(entry.operations[0].member).toBe('TEST Jean');
+    expect(entry.operations[0].values).toEqual({ CAR: 30, [CUSTOMER_ACCOUNT.DEBT_debit]: 30 });
+    expect(entry.operations[1].member).toBe('TEST Anne');
+    expect(entry.operations[1].values).toEqual({ CAR: 0 });
+  });
 
   describe('past-season documentation', () => {
     const original: BookEntry = {

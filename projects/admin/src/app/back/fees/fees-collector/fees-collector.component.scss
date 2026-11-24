@@ -6,11 +6,71 @@
 .fees-collector-root {
   border: 1px solid #dfe6ef;
   border-radius: 0.75rem;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .fees-collector-body {
   background: #eef2f7;
+}
+
+.fees-workspace {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.fees-gamers-scroll {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.quick-sale-panel {
+  flex: 0 0 min(24rem, 40%);
+  max-height: calc(100dvh - 12rem);
+  overflow-y: auto;
+  border-color: #9cb7d3;
+}
+
+.quick-sale-payment-option {
+  flex: 1 1 0;
+  min-width: 0;
+  padding-inline: 0.25rem;
+  font-size: 1.25rem;
+  line-height: 1.25rem;
+}
+
+.quick-sale-cheque-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1.25rem;
+  vertical-align: middle;
+}
+
+.quick-sale-cheque-icon .bi-card-text {
+  font-size: 1.25rem;
+}
+
+.quick-sale-cheque-icon .bi-pen-fill {
+  padding: 0.1rem;
+  font-size: 0.65rem;
+  line-height: 1;
+  transform: translate(25%, 25%);
+}
+
+@media (max-width: 700px) {
+  .fees-workspace {
+    flex-direction: column-reverse;
+  }
+
+  .fees-gamers-scroll,
+  .quick-sale-panel {
+    width: 100%;
+  }
+
+  .quick-sale-panel {
+    flex: none;
+    max-height: 45dvh;
+  }
 }
 
 .fees-footer-actions {
@@ -18,6 +78,13 @@
   align-items: stretch;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+.fees-collector-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: #fff;
 }
 
 .fees-footer-actions > * {
@@ -218,32 +285,6 @@
   color: #17653a;
 }
 
-// Boutons de mode de paiement harmonisés avec cart
-.btn-pay {
-  flex: 1;
-  min-width: calc(50% - 0.2rem);
-  padding: 0.45rem 0.5rem;
-  border: 1.5px solid #bdc3c7;
-  border-radius: 8px;
-  background: white;
-  color: #5f5f5f;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-
-  &:hover {
-    border-color: #667eea;
-    color: #667eea;
-  }
-
-  &.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-color: transparent;
-    font-weight: 600;
-  }
-}
 // Large radio buttons with visible selection - squared with rounded corners
 .fee-radio-lg {
   width: 1.6rem;
@@ -500,19 +541,6 @@
     background: #fff;
     padding-top: 0.2rem;
     padding-bottom: 0.2rem;
-  }
-
-  .fees-collector-footer:not(.compact-footer-visible) .fees-footer-secondary {
-    display: none;
-  }
-
-  .fees-collector-footer:not(.compact-footer-visible) .fees-footer-actions {
-    justify-content: flex-end;
-  }
-
-  .fees-collector-footer:not(.compact-footer-visible) .fees-footer-actions > .btn {
-    flex: 0 1 auto;
-    width: auto;
   }
 
   .fees-collector-footer .text-muted {

@@ -3,6 +3,28 @@ import { Game_status } from '../fees.interface';
 import { FeesCollectorComponent } from './fees-collector.component';
 
 describe('FeesCollectorComponent restored tournament', () => {
+  for (const savedMode of ['nfc-one', 'nfc-two', 'nfc']) {
+    it(`restores ${savedMode} as NFC for the same tournament`, async () => {
+      const key = 'fees-collector.operational-session';
+      const previous = sessionStorage.getItem(key);
+      sessionStorage.setItem(key, JSON.stringify({ tournamentId: '338133', mode: savedMode }));
+      try {
+        const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
+        const tournament = { id: 338133, date: '2026-11-11', title: 'Tournoi', entryCount: 0, status: Game_status.INITIAL };
+        Object.assign(component, {
+          GAME_STATUS: Game_status, operationalMode: 'classic',
+          feesCollectorService: { set_tournament: async () => {} },
+        });
+        await component.set_tournament(tournament);
+        expect(component.operationalMode).toBe('nfc');
+        expect(component.protectCollectorExit).toBeTrue();
+      } finally {
+        if (previous === null) sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key, previous);
+      }
+    });
+  }
+
   it('closes the restore choice without offering settlement when no gamer was saved', async () => {
     const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
     const tournament = {

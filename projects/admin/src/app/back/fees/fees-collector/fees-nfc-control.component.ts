@@ -11,15 +11,17 @@ import {
 import { ToastService } from '../../../common/services/toast.service';
 import { Game } from '../fees.interface';
 import { FeesCollectorService } from './fees-collector.service';
+import { CheckInConfirmation, FeesCheckInConfirmationComponent } from './fees-check-in-confirmation.component';
 
 type CheckInFeedback = 'checking' | 'accepted' | 'refused';
 
 const COLLECTOR_HEARTBEAT_MS = 15_000;
+const TABLET_STATUS_INTERVAL_MS = 5_000;
 
 @Component({
   selector: 'app-fees-nfc-control',
   standalone: true,
-  imports: [CommonModule, NgbDropdownModule, NgbTooltipModule],
+  imports: [CommonModule, NgbDropdownModule, NgbTooltipModule, FeesCheckInConfirmationComponent],
   templateUrl: './fees-nfc-control.component.html',
   styles: [`
     :host { display: inline-block; }
@@ -60,11 +62,15 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
   active = false;
   starting = false;
   paused = false;
+  recovering = false;
   error = '';
   notice = '';
   lastReading: { uid: string; message: string; accepted: boolean; at: Date } | null = null;
+  highlightedPlayer: CheckInConfirmation | null = null;
   private operation?: AbortController;
   private session?: AbortController;
+  private sessionFinished?: Promise<void>;
+  private finishSession?: () => void;
   private sessionKey = '';
   private previousGameKey = '';
   private wasEligible = false;
@@ -76,6 +82,8 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
   source: NfcSource = readStoredNfcSource();
   private tabletSessionId: string | null = null;
   private collectorHeartbeat?: number;
+  private recoveryTimer?: number;
+  private recoveryAbort?: AbortController;
 
   constructor(
     private readonly bridge: MemberNfcCardService,
@@ -93,6 +101,8 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     if (source === this.source || this.busy || this.starting || this.sessionPending) return;
     this.source = source;
     storeNfcSource(source);
+    this.cancelTabletRecovery();
+    this.tabletSessionId = null;
     this.reader = null;
     this.error = '';
     this.notice = '';
@@ -104,13 +114,15 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
 
   private async readStatus(signal: AbortSignal): Promise<NfcReaderStatus> {
     if (this.source === 'pc') return this.bridge.status(signal);
-    const status = await this.tablet.status(signal);
+    const status = await this.tablet.status(signal, this.tabletSessionId ?? undefined);
     this.tabletSessionId = status.sessionId;
     return status;
   }
 
   private acquireUid(signal: AbortSignal): Promise<string> {
-    return this.source === 'tablet' ? this.tablet.acquire(signal) : this.bridge.acquire(signal);
+    return this.source === 'tablet'
+      ? this.tablet.acquire(signal, TABLET_STATUS_INTERVAL_MS)
+      : this.bridge.acquire(signal);
   }
 
   /** En mode tablette, ouvre le flux des lectures et annonce la session à ppTPE (heartbeat). */
@@ -265,7 +277,10 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     if (this.session && !this.session.signal.aborted && (this.sessionKey !== key || !eligible)) {
       this.stopSession('Pointage NFC arrêté : le tournoi ou ses conditions d’activation ont changé.', false);
     }
-    if (!eligible) this.autoStartRequested = false;
+    if (!eligible) {
+      this.autoStartRequested = false;
+      this.cancelTabletRecovery();
+    }
     else if (tournamentChanged || !this.wasEligible) this.autoStartRequested = !this.paused;
     this.wasEligible = eligible;
     this.startAutomaticallyIfRequested();
@@ -302,12 +317,15 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
         if (this.sessionPending && (reader.readerStatus === 'Disconnected' || reader.readerStatus === 'Error'
           || reader.hardwareProbe?.state === 'Unresponsive')) {
           this.stopSession('Pointage NFC arrêté : le lecteur est indisponible.', false);
+          if (this.source === 'tablet') this.recovering = true;
         }
       }
     } catch (error) {
       this.reportError(error, abort);
       if (!abort.signal.aborted || abort.signal.reason === 'timeout') {
+        const recover = this.source === 'tablet' && this.sessionPending && !this.paused;
         this.stopSession('Pointage NFC arrêté : la liaison ppNFC n’est plus vérifiée.', false);
+        if (recover) this.recovering = true;
       }
     } finally {
       this.checking = false;
@@ -357,11 +375,13 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
       this.error = this.unavailableReason;
       return;
     }
+    this.cancelTabletRecovery();
     this.paused = false;
     this.autoStartRequested = false;
     const abort = new AbortController();
     const key = this.gameKey;
     this.session = abort;
+    this.sessionFinished = new Promise<void>(resolve => { this.finishSession = resolve; });
     this.sessionKey = key;
     this.starting = true;
     this.error = '';
@@ -403,6 +423,10 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
       }
     } catch (error) {
       this.reportError(error, abort);
+      if (this.source === 'tablet' && (!abort.signal.aborted || abort.signal.reason === 'timeout')
+        && !this.destroyed && !this.paused && !this.unavailableReason) {
+        this.recovering = true;
+      }
     } finally {
       if (this.session === abort) {
         this.closeTabletSession();
@@ -410,12 +434,17 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
         this.active = false;
         this.starting = false;
         this.session = undefined;
-        this.startAutomaticallyIfRequested();
+        this.finishSession?.();
+        this.finishSession = undefined;
+        this.sessionFinished = undefined;
+        if (this.recovering) this.scheduleTabletRecovery();
+        else this.startAutomaticallyIfRequested();
       }
     }
   }
 
   stopSession(message = 'Pointage NFC suspendu.', manualPause = true): void {
+    this.cancelTabletRecovery();
     if (manualPause) this.paused = true;
     this.autoStartRequested = false;
     this.session?.abort('cancelled');
@@ -423,6 +452,62 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     this.active = false;
     this.starting = false;
     this.notice = message;
+  }
+
+  private cancelTabletRecovery(): void {
+    this.recovering = false;
+    window.clearTimeout(this.recoveryTimer);
+    this.recoveryTimer = undefined;
+    this.recoveryAbort?.abort('cancelled');
+    this.recoveryAbort = undefined;
+  }
+
+  private scheduleTabletRecovery(): void {
+    if (!this.recovering || this.recoveryTimer !== undefined || this.recoveryAbort) return;
+    this.recoveryTimer = window.setTimeout(() => {
+      this.recoveryTimer = undefined;
+      void this.recoverTablet();
+    }, TABLET_STATUS_INTERVAL_MS);
+  }
+
+  private async recoverTablet(): Promise<void> {
+    if (!this.recovering || this.destroyed || this.paused || this.unavailableReason || this.source !== 'tablet') {
+      this.cancelTabletRecovery();
+      return;
+    }
+    if (this.busy || this.sessionPending) {
+      this.scheduleTabletRecovery();
+      return;
+    }
+    const abort = new AbortController();
+    this.recoveryAbort = abort;
+    try {
+      const reader = await this.timed(abort, 5000, signal => this.readStatus(signal));
+      if (!this.recovering || abort.signal.aborted || this.destroyed || this.paused || this.unavailableReason) return;
+      this.reader = reader;
+      if (!this.busy && !this.sessionPending && reader.readerStatus === 'Ready'
+        && reader.hardwareProbe?.state !== 'Unresponsive') {
+        this.recovering = false;
+        this.error = '';
+        this.notice = '';
+        void this.startSession();
+      }
+    } catch (error) {
+      if (!abort.signal.aborted || abort.signal.reason === 'timeout') {
+        console.warn('[Pointage NFC] Vérification de reconnexion de la tablette impossible', error);
+      }
+    } finally {
+      if (this.recoveryAbort === abort) this.recoveryAbort = undefined;
+      this.scheduleTabletRecovery();
+    }
+  }
+
+  async stopForModeChange(): Promise<boolean> {
+    if (this.busy) return false;
+    const finished = this.sessionFinished;
+    this.stopSession();
+    if (finished) await finished;
+    return true;
   }
 
   private startAutomaticallyIfRequested(): void {
@@ -448,7 +533,8 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
       }
       const license = card.licenseNumber.trim().padStart(8, '0');
       const players = this.game.gamers.filter(gamer => gamer.license.padStart(8, '0') === license);
-      if (players.length !== 1) throw new Error('Le titulaire n’est pas inscrit de manière unique à ce tournoi.');
+      if (players.length === 0) throw new Error('Le titulaire n’est pas inscrit à ce tournoi.');
+      if (players.length > 1) throw new Error('Plusieurs inscriptions correspondent au titulaire : vérifiez la liste des joueurs.');
       const gamer = players[0];
       if (!gamer.is_member || !gamer.member_id) throw new Error('Le titulaire ne correspond pas à un adhérent du tournoi.');
       const member = await this.members.readMember(gamer.member_id);
@@ -466,6 +552,9 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
           : `${gamer.firstname} ${gamer.lastname} : pointage refusé ou non confirmé. Consultez le message de pointage.`,
       };
       this.showCheckInFeedback(accepted);
+      if (accepted) {
+        this.highlightedPlayer = { gamer, alreadyCheckedIn };
+      }
       this.showTraceReading();
       this.reportToTablet();
       if (accepted && !alreadyCheckedIn) this.checkedIn.emit();
@@ -498,6 +587,7 @@ export class FeesNfcControlComponent implements OnChanges, OnDestroy {
     window.clearTimeout(this.feedbackTimer);
     this.feedbackTimer = undefined;
     this.checkInFeedback = undefined;
+    this.highlightedPlayer = null;
   }
 
   private showTraceReading(): void {

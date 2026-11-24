@@ -1,3 +1,4 @@
+<app-fees-check-in-confirmation [feedback]="manualCheckInConfirmation"></app-fees-check-in-confirmation>
 <div class="card shadow-lg mt-3 g-0 fees-collector-root" [class.compact-footer-visible]="compactFooterVisible">
     <div class="card-header fees-collector-header">
         <!-- bandeau tournoi date, mode roy rené , alread_charges ? , add_team -->
@@ -13,6 +14,14 @@
                 <button class="btn btn-sm btn-outline-primary ms-2" (click)="extend_week()" title="fin de recherche +7 jours">
                     <i class="bi bi-chevron-double-right"></i>
                 </button>
+            </div>
+            <div *ngIf="resumeTournament" class="col-12">
+                <div class="alert alert-info py-2 mb-0 d-flex flex-wrap align-items-center gap-2">
+                    Un pointage précédent est disponible : {{ resumeTournament.title || 'Tournoi' }}.
+                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="set_tournament(resumeTournament)">
+                        Reprendre
+                    </button>
+                </div>
             </div>
             <div *ngFor="let chrono of ['passed', 'today', 'upcoming']; let i = index">
                 <div class="row row-cols-1 row-cols-md-6 g-2 justify-content-start">
@@ -71,9 +80,34 @@
                     {{ checkedInCount }} / {{ game.gamers.length }} pointés
                 </span>
             </div>
-            <div *ngIf="nfcCheckInEnabled && game.tournament" class="col-auto">
+            <div class="col-auto" *ngIf="game.tournament">
+                <div class="small">Mode du poste</div>
+                <div class="btn-group" role="group" aria-label="Mode du poste"
+                    [attr.aria-describedby]="!nfcCheckInEnabled ? 'nfcModeDisabled' : null">
+                    <ng-container *ngFor="let mode of operationalModes">
+                        <input class="btn-check" type="radio" name="operationalMode"
+                            [id]="'operationalMode-' + mode.value" [checked]="operationalMode === mode.value"
+                            [disabled]="changingOperationalMode || quickSaleModalOpen || quickSaleSaving || pairChangePending || pendingCheckIns.size > 0 || (mode.value !== 'classic' && !nfcCheckInEnabled)"
+                            (click)="onOperationalModeChange($event, mode.value)">
+                        <label class="btn btn-outline-primary btn-sm fw-semibold text-nowrap" [for]="'operationalMode-' + mode.value">{{ mode.label }}</label>
+                    </ng-container>
+                </div>
+                <div *ngIf="!nfcCheckInEnabled" id="nfcModeDisabled" class="small text-muted">
+                    Activez « Autoriser le pointage par badgeuse NFC » dans la configuration.
+                </div>
+            </div>
+            <div *ngIf="nfcCheckInEnabled && operationalMode !== 'classic' && game.tournament" class="col-auto">
                 <app-fees-nfc-control [game]="game" [paymentPreference]="paymentPreference"
                     [blocked]="pairManagementDisabled" (checkedIn)="check_status()"></app-fees-nfc-control>
+            </div>
+            <div *ngIf="protectCollectorExit" class="col-auto">
+                <button type="button" class="btn btn-sm btn-outline-warning" (click)="suspendCollector()"
+                    [disabled]="quickSaleModalOpen || quickSaleSaving || changingOperationalMode || pairChangePending || pendingCheckIns.size > 0">
+                    <i class="bi bi-pause-circle-fill me-1" aria-hidden="true"></i>Suspendre le pointage
+                </button>
+            </div>
+            <div *ngIf="tpePaymentActive && quickSaleTpeEnabled" class="col-auto">
+                <app-shared-tpe-status [connected]="tpeReaderConnected"></app-shared-tpe-status>
             </div>
 
             <div class="col-12 col-md d-flex flex-wrap justify-content-md-center align-items-center gap-2">
@@ -132,18 +166,20 @@
 
     <div *ngIf="game " class="card-body fees-collector-body">
 
-        <!-- loop sur les gamers -->
-        <div class="fees-gamers-scroll" #feesGamersScroll (scroll)="onGamersScroll($event)">
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2 fees-gamers-grid">
-                <ng-container *ngFor="let gamer of game.gamers">
-                    <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
-                        [class.gamer-placeholder]="hideValidated && gamer.validated"
-                        [attr.inert]="hideValidated && gamer.validated ? '' : null">
-                        <ng-container
-                            *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
-                    </div>
-                </ng-container>
+        <div class="fees-workspace">
+            <div class="fees-gamers-scroll" #feesGamersScroll (scroll)="onGamersScroll($event)">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 row-cols-xl-6 g-2 fees-gamers-grid">
+                    <ng-container *ngFor="let gamer of game.gamers">
+                        <div class="col gamer-container" *ngIf="shouldShowGamer(gamer)"
+                            [class.gamer-placeholder]="hideValidated && gamer.validated"
+                            [attr.inert]="hideValidated && gamer.validated ? '' : null">
+                            <ng-container
+                                *ngTemplateOutlet="fee_editor; context:{gamer: gamer, doubled: (game.fees_doubled)}"></ng-container>
+                        </div>
+                    </ng-container>
+                </div>
             </div>
+            <ng-container *ngIf="quickSaleModalOpen" [ngTemplateOutlet]="quickSalePanel"></ng-container>
         </div>
 
         <div class="fee-receipt mt-2">
@@ -166,17 +202,23 @@
             </button>
             <div class="fees-footer-secondary">
                 <button (click)="downloadTournamentPdf()" type="button" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-cloud-download" aria-hidden="true"></i> pointages
+                    <i class="bi bi-printer-fill" aria-hidden="true"></i> pointages
                 </button>
             </div>
             <div class="fees-footer-secondary">
                 <button (click)="export_csv_files()" type="button" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-cloud-download" aria-hidden="true"></i> .csv FFBclubnet
+                    <i class="bi bi-filetype-csv" aria-hidden="true"></i> FFBclubnet
                 </button>
             </div>
             <div class="fees-footer-secondary">
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="clear_session()">
+                <button *ngIf="!protectCollectorExit" type="button" class="btn btn-sm btn-outline-primary" (click)="clear_session()"
+                    [disabled]="quickSaleSaving || changingOperationalMode">
                     <i class="bi bi-x-circle-fill"> fermer</i>
+                </button>
+                <button *ngIf="protectCollectorExit" type="button" class="btn btn-sm btn-outline-warning"
+                    (click)="suspendCollector()"
+                    [disabled]="quickSaleModalOpen || quickSaleSaving || changingOperationalMode || pairChangePending || pendingCheckIns.size > 0">
+                    <i class="bi bi-pause-circle-fill me-1" aria-hidden="true"></i>Suspendre le pointage
                 </button>
             </div>
         </div>
@@ -221,12 +263,18 @@
                             [class.fee-credit-low]="displayedGameCredits(gamer) <= 1">
                             {{ displayedGameCredits(gamer) }} {{ displayedGameCredits(gamer) > 1 ? 'crédits' : 'crédit' }}
                         </span>
-                        <button *ngIf="gamer.enabled && gamer.is_member && displayedGameCredits(gamer) <= 4"
-                            type="button" class="btn btn-outline-primary btn-sm quick-sale-btn"
-                            ngbTooltip="Acheter une carte" placement="top" (click)="quickSale(gamer)"
-                            [attr.aria-label]="'Acheter une carte pour ' + gamer.firstname + ' ' + gamer.lastname">
-                            <i class="bi bi-cart-fill" aria-hidden="true"></i>
-                        </button>
+                        <span *ngIf="gamer.enabled && gamer.is_member && displayedGameCredits(gamer) <= 4"
+                            class="d-inline-block"
+                            ngbTooltip="Acheter une carte"
+                            container="body" placement="top"
+                            >
+                            <button type="button" class="btn btn-outline-primary btn-sm quick-sale-btn"
+                                (click)="quickSale(gamer)"
+                                [disabled]="quickSaleModalOpen || changingOperationalMode"
+                                [attr.aria-label]="'Acheter une carte pour ' + gamer.firstname + ' ' + gamer.lastname">
+                                <i class="bi bi-cart-fill" aria-hidden="true"></i>
+                            </button>
+                        </span>
                     </div>
                     <div *ngIf="gamer.is_member && (gamer.debt > 0 || gamer.credit > 0)" class="fee-financial-info">
                         <span *ngIf="gamer.debt > 0">Dette : {{ gamer.debt | currency:'EUR':'symbol' }}</span>
@@ -282,114 +330,146 @@
             </div>
         </div>
     </ng-template>
-    <!-- Modal inline : Vente rapide de carte (QuickSale) -->
-    <div *ngIf="quickSaleModalOpen" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.45);">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header py-2">
-                    <h6 class="modal-title d-flex align-items-center gap-3">
-                        <i class="bi bi-cart-plus me-2"></i>
-                        Vente rapide de carte
-
-                    </h6>
-                    <button type="button" class="btn-close" (click)="cancelQuickSale()"></button>
-                </div>
-                <div class="modal-body">
-                    <div *ngIf="quickSaleError" class="alert alert-danger py-2">{{ quickSaleError }}</div>
-                    <div class="mb-3">
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <label class="form-label fw-semibold small">Titulaire</label>
-                                <div class="form-control form-control-sm bg-light">
-                                    <i class="bi bi-person-check-fill text-success me-1"></i>
-                                    {{ quickSaleForm?.titulaire?.firstname }} {{ quickSaleForm?.titulaire?.lastname }}
-                                </div>
-                            </div>
-
-                            <div class="col-6" style="min-height:56px;">
-                                <span class="form-switch mb-0 ">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="cartePartagee"
-                                        [(ngModel)]="quickSaleForm.cartePartagee">
-                                    <label class="form-label fw-semibold small ms-1" for="cartePartagee">
-                                        {{ quickSaleForm.cartePartagee ? 'partagée avec' : 'individuelle' }}
-                                    </label>
-                                </span>
-                                <app-input-member *ngIf="quickSaleForm.cartePartagee"
-                                    [(ngModel)]="quickSaleForm.coTitulaire" [members]="members"
-                                    placeholder="Nom ou prénom du co-titulaire" class="form-control form-control-sm"
-                                    listeId="quick_sale_cotitulaire">
-                                </app-input-member>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold small">Mode de paiement</label>
-                            <div class="payment-buttons row g-2">
-                                <div class="col-6">
-                                    <button type="button" class="btn-pay w-100"
-                                        [class.active]="quickSaleForm.mode === 'espèces'"
-                                        (click)="quickSaleForm.mode = 'espèces'">
-                                        <i class="bi bi-cash me-1"></i>Espèces
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button type="button" class="btn-pay w-100"
-                                        [class.active]="quickSaleForm.mode === 'chèque'"
-                                        (click)="quickSaleForm.mode = 'chèque'">
-                                        <i class="bi bi-file-earmark-text me-1"></i>Chèque
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button type="button" class="btn-pay w-100"
-                                        [class.active]="quickSaleForm.mode === 'virement'"
-                                        (click)="quickSaleForm.mode = 'virement'">
-                                        <i class="bi bi-bank me-1"></i>Virement
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button type="button" class="btn-pay w-100"
-                                        [class.active]="quickSaleForm.mode === 'crédit'"
-                                        (click)="quickSaleForm.mode = 'crédit'">
-                                        <i class="bi bi-arrow-up-circle me-1"></i>Avance
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3" *ngIf="quickSaleForm.mode === 'chèque'">
-                            <div class="row g-2">
-                                <div class="col">
-                                    <select class="form-select form-select-sm" [(ngModel)]="quickSaleForm.bank">
-                                        <option value="">Sélectionner une banque</option>
-                                        <option *ngFor="let b of banks" [value]="b.key">{{b.name}}</option>
-                                    </select>
-                                </div>
-                                <div class="col">
-                                    <input type="text" class="form-control form-control-sm" placeholder="N° de chèque"
-                                        [(ngModel)]="quickSaleForm.chequeNo">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Prix</label>
-                            <div class="form-control form-control-sm bg-light">{{ CARD_PRICE |
-                                currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
-                        </div>
-                    </div>
-                    <div class="modal-footer py-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                            (click)="cancelQuickSale()">Annuler</button>
-                        <button type="button" class="btn btn-sm btn-primary" (click)="confirmQuickSale()" [disabled]="
-                                                    (quickSaleForm.cartePartagee && !quickSaleForm.coTitulaire)
-                                                    || quickSaleForm.mode === null
-                                                    || quickSaleForm.mode === undefined
-                                                    || (quickSaleForm.mode === 'chèque' && (!quickSaleForm.bank || !quickSaleForm.chequeNo))
-                                                ">
-                            <i class="bi bi-check-circle me-1"></i>Valider la vente
-                        </button>
-                    </div>
-                </div>
+    <ng-template #quickSalePanel>
+        <aside class="card quick-sale-panel" aria-labelledby="advanceTitle" *ngIf="quickSaleForm as form">
+            <div class="card-header d-flex align-items-center">
+                <h6 id="advanceTitle" class="mb-0"><i class="bi bi-cart-plus me-2"></i>Vente rapide de carte</h6>
+                <button type="button" class="btn-close ms-auto" aria-label="Fermer la vente"
+                    [disabled]="quickSaleSaving || !!quickSalePaidEntryId" (click)="cancelQuickSale()"></button>
             </div>
-        </div>
-    </div>
+            <div class="card-body">
+                <div *ngIf="quickSaleSuccess" class="alert alert-success py-2" role="status">
+                    Vente enregistrée et carte créée.
+                </div>
+                <div *ngIf="quickSaleError" class="alert alert-danger py-2" role="alert">{{ quickSaleError }}</div>
+                <div *ngIf="quickSaleUncertain" class="alert alert-warning py-2" role="alert">
+                    Vérifiez la vente précédente avant toute nouvelle tentative, y compris sur un autre poste.
+                    <button *ngIf="quickSaleReservationId" type="button" class="btn btn-sm btn-outline-secondary"
+                        [disabled]="quickSaleSaving" (click)="recoverQuickSale()">Vérifier la vente précédente</button>
+                    <span *ngIf="!quickSaleReservationId">Contactez un responsable.</span>
+                </div>
+                <div *ngIf="quickSaleTpeInProgress" class="alert alert-info py-2" role="status">
+                    Paiement en cours sur {{ tpeReaderLabel || 'le TPE' }}.
+                    <button *ngIf="cardPayment.isRemoteMode" type="button" class="btn btn-sm btn-outline-secondary"
+                        (click)="cancelQuickSalePayment()">Annuler le paiement</button>
+                </div>
+                <div *ngIf="quickSalePaidEntryId" class="mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="quickSaleSaving"
+                        (click)="refreshPaidQuickSale()">Actualiser la carte</button>
+                </div>
+                <div class="mb-2"><strong>Titulaire :</strong> {{ form.titulaire.firstname }} {{ form.titulaire.lastname }}</div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" role="switch" id="cartePartagee"
+                        [(ngModel)]="form.cartePartagee" (ngModelChange)="onAdvanceHoldersChanged(); updateQuickSaleTotal()"
+                        [disabled]="quickSaleSaving || quickSaleSuccess || !!advancePending">
+                    <label class="form-check-label" for="cartePartagee">Carte partagée</label>
+                </div>
+                <fieldset [disabled]="quickSaleSaving || quickSaleSuccess || !!advancePending">
+                    <app-input-member *ngIf="form.cartePartagee"
+                        [(ngModel)]="form.coTitulaire" (ngModelChange)="onAdvanceHoldersChanged(); updateQuickSaleTotal()" [members]="members"
+                        placeholder="Nom ou prénom du cotitulaire" class="form-control form-control-sm mb-2"
+                        listeId="quick_sale_cotitulaire">
+                    </app-input-member>
+                </fieldset>
+                <div class="mb-3">
+                    <div *ngIf="quickSaleBalanceLoading" class="small text-muted">Vérification du solde…</div>
+                    <button *ngIf="!quickSaleBalanceReady && !quickSaleBalanceLoading && !quickSaleUncertain"
+                        type="button" class="btn btn-sm btn-outline-secondary mb-2"
+                        (click)="loadQuickSaleBalance(form)">Réessayer la vérification du solde</button>
+                    <ng-container *ngIf="quickSaleBalanceReady">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="quickSaleDebt"
+                                [(ngModel)]="form.takeDebt" (ngModelChange)="updateQuickSaleTotal()" [disabled]="quickSaleSaving || quickSaleDebt === 0">
+                            <label class="form-check-label" for="quickSaleDebt">
+                                Régler la dette : {{ quickSaleDebt | currency:'EUR':'symbol':'1.2-2':'fr' }}
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="quickSaleAsset"
+                                [(ngModel)]="form.takeAsset" (ngModelChange)="updateQuickSaleTotal()" [disabled]="quickSaleSaving || quickSaleAsset === 0">
+                            <label class="form-check-label" for="quickSaleAsset">
+                                Utiliser l’avoir : {{ quickSaleAsset | currency:'EUR':'symbol':'1.2-2':'fr' }}
+                            </label>
+                        </div>
+                        <div class="small mb-2">Carte : {{ CARD_PRICE | currency:'EUR':'symbol':'1.2-2':'fr' }} —
+                            Total : <strong>{{ quickSaleTotalAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong>
+                        </div>
+                    </ng-container>
+                    <fieldset [disabled]="quickSaleSaving || quickSaleSuccess">
+                        <legend class="form-label fs-6">Mode de paiement</legend>
+                        <div class="d-flex gap-1">
+                            <input type="radio" class="btn-check" name="quickSalePayment" id="quickSaleCash"
+                                aria-label="Espèces" [value]="paymentModes.CASH" [(ngModel)]="form.mode">
+                            <label class="btn btn-sm btn-outline-primary quick-sale-payment-option" for="quickSaleCash"
+                                ngbTooltip="Espèces" container="body" placement="top">
+                                <i class="bi bi-cash" aria-hidden="true"></i>
+                            </label>
+                            <input type="radio" class="btn-check" name="quickSalePayment" id="quickSaleCheque"
+                                aria-label="Chèque" [value]="paymentModes.CHEQUE" [(ngModel)]="form.mode">
+                            <label class="btn btn-sm btn-outline-primary quick-sale-payment-option" for="quickSaleCheque"
+                                ngbTooltip="Chèque" container="body" placement="top">
+                                <span class="quick-sale-cheque-icon position-relative d-inline-block" aria-hidden="true">
+                                    <i class="bi bi-card-text"></i>
+                                    <i class="bi bi-pen-fill position-absolute bottom-0 end-0 bg-white text-primary rounded-circle"></i>
+                                </span>
+                            </label>
+                            <input type="radio" class="btn-check" name="quickSalePayment" id="quickSaleTransfer"
+                                aria-label="Virement" [value]="paymentModes.TRANSFER" [(ngModel)]="form.mode">
+                            <label class="btn btn-sm btn-outline-primary quick-sale-payment-option" for="quickSaleTransfer"
+                                ngbTooltip="Virement" container="body" placement="top">
+                                <i class="bi bi-bank" aria-hidden="true"></i>
+                            </label>
+                            <input type="radio" class="btn-check" name="quickSalePayment" id="quickSaleCredit"
+                                aria-label="Avance" [value]="paymentModes.CREDIT" [(ngModel)]="form.mode">
+                            <label class="btn btn-sm btn-outline-primary quick-sale-payment-option" for="quickSaleCredit"
+                                ngbTooltip="Avance" container="body" placement="top">
+                                <i class="bi bi-journal-bookmark" aria-hidden="true"></i>
+                            </label>
+                            <ng-container *ngIf="tpePaymentActive && quickSaleTpeEnabled">
+                                <input type="radio" class="btn-check" name="quickSalePayment" id="quickSaleCard"
+                                    aria-label="Carte bancaire (TPE)" [value]="paymentModes.CARD" [(ngModel)]="form.mode">
+                                <label class="btn btn-sm btn-outline-primary quick-sale-payment-option" for="quickSaleCard"
+                                    ngbTooltip="Carte bancaire (TPE)" container="body" placement="top">
+                                    <i class="bi bi-calculator" aria-hidden="true"></i>
+                                </label>
+                            </ng-container>
+                        </div>
+                    </fieldset>
+                    <div *ngIf="tpePaymentActive && quickSaleTpeEnabled" class="small mt-1" role="status">
+                        {{ tpeReaderConnected ? 'TPE connecté : ' + tpeReaderLabel : 'TPE indisponible' }}
+                    </div>
+                    <div *ngIf="tpePaymentActive && !quickSaleTpeEnabled" class="small mt-1 text-muted">
+                        Paiement TPE en vente rapide indisponible en attendant la validation du partage entre postes.
+                    </div>
+                    <div *ngIf="form.mode === paymentModes.CHEQUE" class="mt-2">
+                        <select class="form-select form-select-sm mb-2" aria-label="Banque du chèque" [(ngModel)]="form.bank"
+                            [disabled]="quickSaleSaving || quickSaleSuccess">
+                            <option value="">Sélectionner une banque</option>
+                            <option *ngFor="let bank of banks" [value]="bank.key">{{ bank.name }}</option>
+                        </select>
+                        <input class="form-control form-control-sm" placeholder="N° de chèque" [(ngModel)]="form.chequeNo"
+                            [disabled]="quickSaleSaving || quickSaleSuccess">
+                    </div>
+                    <div *ngIf="form.mode === paymentModes.CREDIT && quickSaleNeedsPayment()" class="small mt-2">
+                        Le total sera ajouté à la dette du titulaire, sans encaissement.
+                    </div>
+                    <div *ngIf="quickSaleBalanceReady && !quickSaleNeedsPayment()" class="small mt-2">
+                        Aucun paiement nécessaire.
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary w-100" (click)="confirmQuickSale()"
+                    [disabled]="quickSaleSaving || quickSaleUncertain || quickSaleSuccess
+                        || !!quickSalePaidEntryId || !quickSaleBalanceReady || quickSaleBalanceLoading
+                        || (quickSaleNeedsPayment()
+                            && (!form.mode || (form.mode === paymentModes.CHEQUE && (!form.bank || !form.chequeNo.trim()))))
+                        || (form.mode === paymentModes.CARD && !tpeReaderConnected)
+                        || (form.cartePartagee && (!form.coTitulaire?.id || !form.coTitulaire?.license_number
+                            || form.coTitulaire?.id === form.titulaire.id))">
+                    {{ quickSaleSaving ? 'Enregistrement…' : 'Valider la vente' }}
+                </button>
+            </div>
+        </aside>
+    </ng-template>
 
     <div *ngIf="pairsModalOpen" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true"
         aria-labelledby="pairsModalTitle" style="background:rgba(0,0,0,0.45);">

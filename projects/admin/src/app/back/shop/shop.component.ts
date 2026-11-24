@@ -21,6 +21,8 @@ import { StripeTerminalService } from './services/stripe-terminal.service';
 import { SystemDataService } from '../../common/services/system-data.service';
 import { CartItem, PaymentMode } from './cart/cart.interface';
 import { CardPaymentOrchestratorService } from '../services/card-payment-orchestrator.service';
+import { CardSaleService } from '../services/card-sale.service';
+import { SharedTpeStatusComponent } from './shared-tpe-status.component';
 import { BookService, FulfillmentError } from '../services/book.service';
 import { EventTicketGuardService, SETTLE_TICKETING_RESERVATION } from '../collecte/event-ticket-guard.service';
 import { Subscription } from 'rxjs';
@@ -51,15 +53,14 @@ import { Subscription } from 'rxjs';
  * • Bootstrapping session (date, saison, droits, opérations compta)
  *
  * INTEGRATION:
- * • FeesCollectorComponent redirect vers Shop avec ?buyerId=xxx en offline
- * • QuickSale depuis tournoi → Shop avec buyer pré-sélectionné
+ * • Acheteur éventuellement présélectionné via ?buyerId=xxx en offline
  * • Réconciliation Stripe via observables isSuccess$/receiptUrl$
  */
 
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent,  MoveToEndPipe],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, InputMemberComponent, CartComponent, MoveToEndPipe, SharedTpeStatusComponent],
   templateUrl: './shop.component.html',
   styleUrl: './shop.component.scss'
 })
@@ -140,6 +141,12 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.cardPaymentOrchestrator.isRemoteMode;
   }
 
+  get tpeSharedAvailable(): boolean {
+    if (!this.stripeTerminal.sharedTpeEnabled) return true;
+    const request = this.stripeTerminal.sharedRequest$.value;
+    return request === null || request?.status === 'available';
+  }
+
   /** Montant en attente du paiement distant (pour affichage dans le bandeau). */
   get remotePendingAmount(): number {
     return this.stripeTerminal.remotePendingAmount$.value;
@@ -184,6 +191,7 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
     private bookService: BookService,
     private eventTicketGuard: EventTicketGuardService,
+    private cardSale: CardSaleService,
   ) {}
 
   ngAfterViewInit(): void {
@@ -330,7 +338,12 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loggedMemberSubscription?.unsubscribe();
     ++this.buyerRevision;
     this.clearSuccessBannerTimer();
-    this.cardPaymentOrchestrator.cancelRemotePayment();
+    if (this.tpePaymentInProgress && this.tpeRemoteMode) {
+      void this.cardPaymentOrchestrator.cancelRemotePayment().catch(error => {
+        console.error('[Shop] TPE cancellation could not be confirmed', error);
+        this.toastService.showWarning('TPE', 'Paiement non confirmé : vérifiez son résultat avant un nouvel essai.');
+      });
+    }
     // shopInit (singleton root) gère sa propre subscription TPESession
   }
 
@@ -933,6 +946,10 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.tpePaymentInProgress || this.checkoutBlocked || this.isSaving) {
       return;
     }
+    if (!this.tpeSharedAvailable) {
+      this.toastService.showWarning('TPE', 'TPE occupé ou état non vérifié.');
+      return;
+    }
 
     if (!this.buyer) {
       this.toastService.showWarning('TPE', 'Sélectionner un acheteur');
@@ -960,150 +977,41 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.tpePaymentInProgress = true;
     const buyer = this.buyer;
-    const memberName = buyer.lastname + ' ' + buyer.firstname;
-    this.cartService.payment = {
-      amount: this.cartService.getCartAmount(),
-      payer_id: buyer.id,
-      mode: PaymentMode.CARD,
-      bank: '',
-      cheque_no: '',
-    };
-
-    let pendingBookEntry: BookEntry;
     try {
-      pendingBookEntry = await this.cartService.save_sale(this.session, buyer, 'deferred', false);
-    } catch (err: any) {
+      await this.cardSale.start(this.cartService, buyer, this.session, {
+        onSuccess: () => {
+          this.cartService.clearCart();
+          this.buyerForm.reset();
+          this.tpePaymentInProgress = false;
+          this.toastService.showSuccess('Paiement CB', 'Carte acceptée — confirmation de la vente en cours');
+        },
+        onFailed: (msg, cleanupComplete) => {
+          this.tpePaymentInProgress = !cleanupComplete;
+          if (cleanupComplete) this.validateMembershipGuardrailBeforeCheckout();
+          this.toastService.showError('Paiement CB',
+            cleanupComplete ? msg : `${msg} — nettoyage incomplet, nouvel essai bloqué`);
+        },
+        onCancelled: (cleanupComplete) => {
+          this.tpePaymentInProgress = !cleanupComplete;
+          if (cleanupComplete) this.validateMembershipGuardrailBeforeCheckout();
+          this.toastService.showWarning('Paiement CB',
+            cleanupComplete ? 'Paiement annulé' : 'Paiement annulé — nettoyage incomplet, nouvel essai bloqué');
+        },
+        onTimeout: () => {
+          this.tpePaymentInProgress = false;
+          this.validateMembershipGuardrailBeforeCheckout();
+          this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
+        },
+        onError: () => {
+          this.tpePaymentInProgress = true;
+          this.toastService.showError('TPE', 'Résultat non confirmé — vérifier le paiement avant un nouvel essai');
+        },
+      });
+    } catch (error) {
       this.tpePaymentInProgress = false;
       this.validateMembershipGuardrailBeforeCheckout();
-      this.toastService.showError('Paiement CB', err?.message ?? 'Impossible de préparer la vente');
-      return;
-    }
-
-    const paymentParams = {
-      amountCents,
-      memberName,
-      memberFirstName: buyer.firstname,
-      buyerMemberId: buyer.id,
-      buyerEmail: buyer.email || '',
-      season: this.session.season,
-      date: this.session.date,
-      bookEntryId: pendingBookEntry.id,
-    };
-    let paymentIntentId: string | null = null;
-
-    const paymentSucceeded = () => {
-      this.cartService.clearCart();
-      this.buyerForm.reset();
-      this.tpePaymentInProgress = false;
-      this.toastService.showSuccess('Paiement CB', 'Carte acceptée — confirmation de la vente en cours');
-    };
-
-    // ── Conf A : mode distant — PC crée le PaymentRequest, ppTPE gère le TPE ──
-    if (this.tpeRemoteMode) {
-      this.cardPaymentOrchestrator.payByCard(
-        paymentParams,
-        {
-          onPaymentIntentCreated: (stripeTag, createdPaymentIntentId) => {
-            paymentIntentId = createdPaymentIntentId;
-            this.cartService.setStripeTag(stripeTag);
-          },
-          onSuccess: paymentSucceeded,
-          onFailed: (msg, cleanupComplete) => {
-            this.tpePaymentInProgress = !cleanupComplete;
-            if (cleanupComplete) {
-              this.validateMembershipGuardrailBeforeCheckout();
-            }
-            this.toastService.showError(
-              'Paiement CB',
-              cleanupComplete ? msg : `${msg} — nettoyage incomplet, nouvel essai bloqué`,
-            );
-          },
-          onCancelled: (cleanupComplete) => {
-            this.tpePaymentInProgress = !cleanupComplete;
-            if (cleanupComplete) {
-              this.validateMembershipGuardrailBeforeCheckout();
-            }
-            this.toastService.showWarning(
-              'Paiement CB',
-              cleanupComplete ? 'Paiement annulé' : 'Paiement annulé — nettoyage incomplet, nouvel essai bloqué',
-            );
-          },
-          onTimeout: () => {
-            this.tpePaymentInProgress = false;
-            this.validateMembershipGuardrailBeforeCheckout();
-            this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé');
-          },
-          onError: () => {
-            this.tpePaymentInProgress = true;
-            this.toastService.showError('TPE', 'Connexion AppSync perdue — vérifier le paiement avant un nouvel essai');
-          },
-        },
-      ).catch(async err => {
-        const cleanupComplete = await this.cleanupLocalCardPayment(pendingBookEntry, paymentIntentId);
-        this.toastService.showError(
-          'Paiement CB',
-          cleanupComplete
-            ? (err.message || 'Erreur PaymentRequest')
-            : `${err.message || 'Erreur PaymentRequest'} — nettoyage incomplet, nouvel essai bloqué`,
-        );
-        this.tpePaymentInProgress = !cleanupComplete;
-        if (cleanupComplete) {
-          this.validateMembershipGuardrailBeforeCheckout();
-        }
-      });
-      return;
-    }
-
-    let cleanupComplete = true;
-    try {
-      await this.cardPaymentOrchestrator.payByCard(
-        paymentParams,
-        {
-          onPaymentIntentCreated: (stripeTag, createdPaymentIntentId) => {
-            paymentIntentId = createdPaymentIntentId;
-            this.cartService.setStripeTag(stripeTag);
-          },
-          onSuccess: paymentSucceeded,
-          onFailed: (msg) => this.toastService.showError('Paiement CB', msg),
-          onCancelled: () => this.toastService.showWarning('Paiement CB', 'Paiement annulé'),
-          onTimeout: () => this.toastService.showWarning('TPE', 'TPE ne répond pas — paiement annulé'),
-          onError: () => this.toastService.showError('TPE', 'Connexion AppSync perdue'),
-        },
-      );
-    } catch (err: any) {
-      cleanupComplete = await this.cleanupLocalCardPayment(pendingBookEntry, paymentIntentId);
-      this.toastService.showError(
-        'Paiement CB',
-        cleanupComplete
-          ? (err.message || 'Erreur paiement TPE')
-          : `${err.message || 'Erreur paiement TPE'} — nettoyage incomplet, nouvel essai bloqué`,
-      );
-      this.stripeTerminal.resetStatus();
-    } finally {
-      this.tpePaymentInProgress = !cleanupComplete;
-      if (cleanupComplete) {
-        this.validateMembershipGuardrailBeforeCheckout();
-      }
-    }
-  }
-
-  private async cleanupLocalCardPayment(
-    pendingBookEntry: BookEntry,
-    paymentIntentId: string | null,
-  ): Promise<boolean> {
-    try {
-      if (paymentIntentId) {
-        await this.stripeTerminal.cancelPaymentIntent(paymentIntentId);
-      }
-      await this.bookService.delete_book_entry(pendingBookEntry);
-      return true;
-    } catch (error) {
-      console.error('[TPE] Failed local payment cleanup incomplete:', {
-        bookEntryId: pendingBookEntry.id,
-        paymentIntentId,
-        error,
-      });
-      return false;
+      this.toastService.showError('Paiement CB',
+        error instanceof Error ? error.message : 'Impossible de préparer la vente');
     }
   }
 
@@ -1111,8 +1019,13 @@ export class ShopComponent implements OnInit, OnDestroy, AfterViewInit {
    * Annule le PaymentRequest en attente (mode distant) — délégué au service.
    */
   async cancelRemotePayment(): Promise<void> {
-    await this.cardPaymentOrchestrator.cancelRemotePayment();
-    this.tpePaymentInProgress = false;
-    this.validateMembershipGuardrailBeforeCheckout();
+    try {
+      await this.cardPaymentOrchestrator.cancelRemotePayment();
+      this.tpePaymentInProgress = false;
+      this.validateMembershipGuardrailBeforeCheckout();
+    } catch (error) {
+      console.error('[Shop] TPE cancellation could not be confirmed', error);
+      this.toastService.showWarning('TPE', 'Annulation non confirmée : vérifiez le paiement avant un nouvel essai.');
+    }
   }
 }

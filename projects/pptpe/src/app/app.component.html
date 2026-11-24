@@ -207,17 +207,10 @@
     }
     @if (scans.length > 0) {
     <div class="nfc-diagnostic__last-scan">
-      <span>Dernier UID</span>
-      <code>{{ scans[0].uid }}</code>
+      <span>Dernier UID :</span>
+      <code [title]="scans[0].uid">{{ scans[0].uid }}</code>
       <small>{{ scans[0].scannedAt | date:'HH:mm:ss' }}</small>
     </div>
-    @if (scans.length > 1) {
-    <div class="nfc-diagnostic__history">
-      @for (scan of scans.slice(1); track scan.scannedAt) {
-      <code>{{ scan.uid }}</code>
-      }
-    </div>
-    }
     }
   </aside>
   </ng-template>

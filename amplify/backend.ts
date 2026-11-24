@@ -2,7 +2,7 @@ import * as path from "path";
 import { execFileSync } from "child_process";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { defineBackend } from "@aws-amplify/backend";
-import { ArnFormat, Duration, Stack } from "aws-cdk-lib";
+import { ArnFormat, Duration, RemovalPolicy, Stack } from "aws-cdk-lib";
 import { Rule, Schedule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { Architecture, CfnFunction, Code, LayerVersion, Runtime } from "aws-cdk-lib/aws-lambda";
@@ -15,7 +15,7 @@ import {
 import {  HttpUserPoolAuthorizer} from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
-import { CfnTable } from "aws-cdk-lib/aws-dynamodb";
+import { AttributeType, BillingMode, CfnTable, Table } from "aws-cdk-lib/aws-dynamodb";
 import { BlockPublicAccess, Bucket, BucketEncryption, EventType } from "aws-cdk-lib/aws-s3";
 import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 import { ffbProxy } from "./functions/ffb-proxy/resource";
@@ -31,6 +31,7 @@ import { expireFeaturedSnippets } from "./functions/expire-featured-snippets/res
 import { sendWebPush } from "./functions/send-web-push/resource";
 import { nfcManagement } from "./functions/nfc-management/resource";
 import { gamePlayers } from "./functions/game-players/resource";
+import { gameCardAdvance } from "./functions/game-card-advance/resource";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { configureGamePlayersSubscription } from "./data/game-players-subscription";
@@ -54,6 +55,7 @@ const backend = defineBackend({
   sendWebPush,
   nfcManagement,
   gamePlayers,
+  gameCardAdvance,
 });
 
 configureGamePlayersSubscription(backend.data);
@@ -81,6 +83,35 @@ for (const [model, variable] of [
 }
 
 const storageBucket = backend.storage.resources.bucket;
+const advanceLambda = backend.gameCardAdvance.resources.lambda;
+const advanceStack = Stack.of(advanceLambda);
+for (const [name, variable] of [
+  ['CardAdvance', 'ADVANCES_TABLE'],
+  ['CardAdvanceParticipant', 'ADVANCE_PARTICIPANTS_TABLE'],
+] as const) {
+  const table = new Table(advanceStack, name, {
+    partitionKey: { name: 'id', type: AttributeType.STRING },
+    billingMode: BillingMode.PAY_PER_REQUEST,
+    removalPolicy: RemovalPolicy.RETAIN,
+  });
+  table.grantReadWriteData(advanceLambda);
+  backend.gameCardAdvance.addEnvironment(variable, table.tableName);
+}
+for (const [model, variable] of [
+  ['Game', 'GAME_TABLE'],
+  ['GameSettlement', 'GAME_SETTLEMENT_TABLE'],
+  ['Member', 'MEMBER_TABLE'],
+  ['SaleItem', 'PRODUCT_TABLE'],
+  ['BookEntry', 'BOOK_ENTRY_TABLE'],
+  ['PlayBook', 'PLAY_BOOK_TABLE'],
+] as const) {
+  const table = backend.data.resources.tables[model];
+  table.grant(advanceLambda, 'dynamodb:GetItem', 'dynamodb:ConditionCheckItem');
+  if (model === 'BookEntry' || model === 'PlayBook') table.grantWriteData(advanceLambda);
+  backend.gameCardAdvance.addEnvironment(variable, table.tableName);
+}
+storageBucket.grantRead(advanceLambda, 'system/system_configuration.txt');
+backend.gameCardAdvance.addEnvironment('STORAGE_BUCKET_NAME', storageBucket.bucketName);
 storageBucket.grantRead(backend.ffbProxy.resources.lambda, 'system/system_configuration.txt');
 backend.ffbProxy.addEnvironment('STORAGE_BUCKET_NAME', storageBucket.bucketName);
 const processCmsImageLambda = backend.processCmsImage.resources.lambda;

@@ -72,6 +72,24 @@ describe('FeesNfcControlComponent', () => {
     return { component, bridge, members, fees, game, gamer, member, toast, tablet };
   }
 
+  it('waits for an in-flight NFC check-in before completing a mode change', fakeAsync(() => {
+    const { component, fees } = setup();
+    let finish!: (value: boolean) => void;
+    fees.checkInByNfc.and.returnValue(new Promise<boolean>(resolve => finish = resolve));
+    void component.startSession();
+    flushMicrotasks();
+    expect(fees.checkInByNfc).toHaveBeenCalled();
+
+    let stopped = false;
+    void component.stopForModeChange().then(result => stopped = result);
+    flushMicrotasks();
+    expect(stopped).toBeFalse();
+    finish(true);
+    flushMicrotasks();
+    expect(stopped).toBeTrue();
+    expect(component.sessionPending).toBeFalse();
+  }));
+
   it('keeps diagnostics and a read-only test available with euro priority', async () => {
     const { bridge, members, fees, game, toast, tablet } = setup();
     localStorage.removeItem('fees-nfc-source');
@@ -156,12 +174,15 @@ describe('FeesNfcControlComponent', () => {
       expect(component.checkInIndicatorMessage).toContain(accepted
         ? alreadyCheckedIn ? 'déjà pointé par carte' : 'pointage carte confirmé'
         : 'pointage refusé ou non confirmé');
+      expect(component.highlightedPlayer?.gamer).toBe(accepted ? gamer : undefined);
+      if (accepted) expect(component.highlightedPlayer?.alreadyCheckedIn).toBe(alreadyCheckedIn);
       expect(component.reader).toBe(reader);
       expect(component.readerIndicatorColor).toBe('warning');
       tick(2999);
       expect(component.checkInState).toBe(accepted ? 'accepted' : 'refused');
       tick(1);
       expect(component.checkInState).toBe('ready');
+      expect(component.highlightedPlayer).toBeNull();
       expect(component.lastReading?.accepted).toBe(accepted);
       component.stopSession();
       flushMicrotasks();
@@ -184,9 +205,11 @@ describe('FeesNfcControlComponent', () => {
     void component.startSession();
     flushMicrotasks();
     expect(component.checkInState).toBe('accepted');
+    const firstHighlight = component.highlightedPlayer;
     tick(2000);
     resolveNextUid(uid);
     flushMicrotasks();
+    expect(component.highlightedPlayer).not.toBe(firstHighlight);
     tick(1000);
     expect(component.checkInState).toBe('accepted');
     tick(2000);
@@ -194,6 +217,51 @@ describe('FeesNfcControlComponent', () => {
     component.ngOnDestroy();
     flushMicrotasks();
     expect(component.checkInState).toBe('inactive');
+  }));
+
+  it('renders the confirmed player in a fixed, non-interactive overlay', fakeAsync(() => {
+    const { bridge, members, fees, game, toast, tablet } = setup();
+    TestBed.configureTestingModule({
+      imports: [FeesNfcControlComponent],
+      providers: [
+        { provide: MemberNfcCardService, useValue: bridge },
+        { provide: MembersService, useValue: members },
+        { provide: FeesCollectorService, useValue: fees },
+        { provide: ToastService, useValue: toast },
+        { provide: TabletNfcBridgeService, useValue: tablet },
+      ],
+    });
+    const fixture = TestBed.createComponent(FeesNfcControlComponent);
+    const component = fixture.componentInstance;
+    component.source = 'pc';
+    component.game = game;
+    const root: HTMLElement = fixture.nativeElement;
+    root.style.position = 'absolute';
+    root.style.top = '-10000px';
+    root.style.overflow = 'hidden';
+    fixture.detectChanges();
+    void component.startSession();
+    flushMicrotasks();
+    fixture.detectChanges();
+    const layer: HTMLElement = root.querySelector('.confirmation-layer')!;
+    expect(layer.textContent).toContain('Pointage confirmé');
+    expect(layer.textContent).toContain('Jean Exemple');
+    expect(getComputedStyle(layer).position).toBe('fixed');
+    expect(getComputedStyle(layer).pointerEvents).toBe('none');
+    const confirmation = layer.querySelector<HTMLElement>('.confirmation')!;
+    const bounds = confirmation.getBoundingClientRect();
+    expect(bounds.width).toBeGreaterThan(200);
+    expect(bounds.height).toBeGreaterThan(50);
+    expect(bounds.top).toBeGreaterThanOrEqual(0);
+    expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight);
+    component.highlightedPlayer = { gamer: game.gamers[0], alreadyCheckedIn: true };
+    fixture.detectChanges();
+    expect(layer.textContent).toContain('Déjà pointé par carte');
+    component.stopSession();
+    flushMicrotasks();
+    fixture.detectChanges();
+    expect(layer.querySelector('.confirmation')).toBeNull();
+    fixture.destroy();
   }));
 
   it('does not infer reader sleep or disconnection from a read test timeout', fakeAsync(() => {
@@ -324,6 +392,71 @@ describe('FeesNfcControlComponent', () => {
       expect(component.error).toContain('ACR1555U introuvable');
       expect(tablet.publishCollector).toHaveBeenCalledWith(
         'tablet-1', 'stopped', 'Tournoi test', 'Pointage NFC arrêté : ACR1555U introuvable');
+      component.stopSession();
+    }));
+
+    it('resumes on the same tablet after reader reconnection', fakeAsync(() => {
+      const { component, tablet } = setup();
+      component.source = 'tablet';
+      const ready = {
+        version: 'ppTPE', readerStatus: 'Ready' as const, readerName: 'ACR1555U', message: 'Prêt',
+        capturing: false, sessionId: 'tablet-1',
+        hardwareProbe: { state: 'Responsive' as const, pcdPiccStatus: 1, message: 'Prêt', checkedAt: '' },
+      };
+      const lost = {
+        ...ready, readerStatus: 'Disconnected' as const,
+        hardwareProbe: { ...ready.hardwareProbe, state: 'Unresponsive' as const, pcdPiccStatus: null, message: 'Déconnecté' },
+      };
+      tablet.status.and.returnValues(Promise.resolve(ready), Promise.resolve(lost), Promise.resolve(ready), Promise.resolve(ready));
+      tablet.acquire.and.callFake(signal => tablet.acquire.calls.count() === 1
+        ? Promise.reject(new NfcCaptureTimeoutError('Aucune carte'))
+        : waitingForAbort(signal));
+      void component.startSession();
+      flushMicrotasks();
+      expect(component.recovering).toBeTrue();
+      expect(component.active).toBeFalse();
+      tick(5000);
+      flushMicrotasks();
+      expect(tablet.status).toHaveBeenCalledWith(jasmine.any(AbortSignal), 'tablet-1');
+      expect(component.recovering).toBeFalse();
+      expect(component.active).toBeTrue();
+      expect(tablet.watch).toHaveBeenCalledTimes(2);
+      component.stopSession();
+      flushMicrotasks();
+    }));
+
+    it('does not resume automatically after a manual suspension during recovery', fakeAsync(() => {
+      const { component, tablet } = setup();
+      component.source = 'tablet';
+      tablet.status.and.rejectWith(new Error('Tablette indisponible'));
+      void component.startSession();
+      flushMicrotasks();
+      expect(component.recovering).toBeTrue();
+      component.stopSession();
+      tick(10000);
+      expect(tablet.status).toHaveBeenCalledTimes(1);
+      expect(component.paused).toBeTrue();
+      expect(component.active).toBeFalse();
+    }));
+
+    it('distinguishes an unregistered player from duplicate registrations', fakeAsync(() => {
+      const { component, tablet, game, gamer } = setup();
+      component.source = 'tablet';
+      game.gamers = [];
+      void component.startSession();
+      flushMicrotasks();
+      expect(tablet.report).toHaveBeenCalledWith(false, 'Le titulaire n’est pas inscrit à ce tournoi.');
+      component.stopSession();
+      flushMicrotasks();
+
+      game.gamers = [gamer, { ...gamer }];
+      tablet.acquire.and.callFake(signal => tablet.acquire.calls.count() === 3
+        ? Promise.resolve(uid) : waitingForAbort(signal));
+      void component.startSession();
+      flushMicrotasks();
+      expect(tablet.report).toHaveBeenCalledWith(false, 'Plusieurs inscriptions correspondent au titulaire : vérifiez la liste des joueurs.');
+      component.stopSession();
+      flushMicrotasks();
     }));
 
     it('retries the failed automatic activation when switching to the tablet', fakeAsync(() => {

@@ -28,6 +28,7 @@ import { classifyMemberLookupError, sanitizeGraphqlErrors } from '../authentific
 import { collectStripeTransactionPages } from './stripe-transaction-pagination';
 import { canResumeGameSettlement } from '../../back/fees/fees-collector/fees-settlement.util';
 import { decodeGamePlayers } from '../../back/fees/fees-collector/fees-pairs.util';
+import { GameCardAdvanceRequest, GameCardAdvanceResult, PreviousGameCardAdvance } from '../../../../../common/game-card-advance';
 
 @Injectable({
   providedIn: 'root'
@@ -1273,6 +1274,34 @@ export class DBhandler {
     return this.decodeSharedGame(data);
   }
 
+  private async callGameCardAdvance(input: object): Promise<unknown> {
+    const client = generateClient<Schema>({ authMode: 'userPool' });
+    const { data, errors } = await client.mutations.gameCardAdvance({ input: JSON.stringify(input) });
+    if (errors?.length) throw new Error(errors.map(error => error.message).join('\n'));
+    if (data == null) throw new Error('Réponse de l’avance indisponible.');
+    return typeof data === 'string' ? JSON.parse(data) : data;
+  }
+
+  async previousGameCardAdvances(gameId: string, memberIds: string[]): Promise<PreviousGameCardAdvance[]> {
+    const result = await this.callGameCardAdvance({ action: 'previous', gameId, memberIds });
+    if (!Array.isArray(result) || !result.every(item => item && typeof item.memberId === 'string'
+      && typeof item.operationId === 'string')) {
+      throw new Error('Réponse des avances précédentes invalide.');
+    }
+    return result;
+  }
+
+  async createGameCardAdvance(request: GameCardAdvanceRequest): Promise<GameCardAdvanceResult> {
+    const result = await this.callGameCardAdvance({ action: 'create', ...request });
+    if (!result || typeof result !== 'object'
+      || !('bookEntryId' in result) || typeof result.bookEntryId !== 'string'
+      || !('playBookId' in result) || typeof result.playBookId !== 'string'
+      || !('replayed' in result) || typeof result.replayed !== 'boolean') {
+      throw new Error('Réponse de l’avance invalide.');
+    }
+    return { bookEntryId: result.bookEntryId, playBookId: result.playBookId, replayed: result.replayed };
+  }
+
   observeGamePlayers(gameId: string): Observable<Game> {
     return this._authMode().pipe(switchMap(authMode => new Observable<Game>(observer => {
       const client = generateClient<Schema>({ authMode });
@@ -1661,6 +1690,21 @@ export class DBhandler {
     );
   }
   // QUERY (all) OBSERVABLE
+  listAllPlayBooks(): Observable<PlayBook[]> {
+    return this._authMode().pipe(switchMap(authMode => from((async () => {
+      const client = generateClient<Schema>({ authMode });
+      const cards: PlayBook[] = [];
+      let nextToken: string | null | undefined;
+      do {
+        const page = await client.models.PlayBook.list({ limit: 300, nextToken: nextToken || undefined });
+        if (page.errors?.length) throw new Error(page.errors.map(error => error.message).join('\n'));
+        cards.push(...(page.data as unknown as PlayBook[]));
+        nextToken = page.nextToken;
+      } while (nextToken);
+      return cards;
+    })())));
+  }
+
   // onlySynced=true: skip the initial partial page and emit when fully synced; keeps live updates
   // onlySynced=false: emit immediately with partial results and continue with updates
   queryPlayBooks(onlySynced: boolean = true): Observable<PlayBook[]> {

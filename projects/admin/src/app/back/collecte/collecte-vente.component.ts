@@ -328,6 +328,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       memberName: 'Ticketing',
       season: this.session.season,
       date: this.session.date,
+      origin: 'ticketing' as const,
     };
 
     const onSuccess = async () => {

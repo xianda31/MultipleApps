@@ -364,8 +364,8 @@ export class GameCardService {
       switchMap(() => this.gameCards$.asObservable()));
   }
 
-  async refreshCards(): Promise<void> {
-    await firstValueFrom(this.listCards().pipe(take(1)));
+  async refreshCards(fresh = false): Promise<void> {
+    await firstValueFrom(this.listCards(fresh).pipe(take(1)));
   }
 
   static readonly ORPHAN_CHECK_FROM = '2026-08-05';
@@ -516,11 +516,11 @@ export class GameCardService {
   }
 
   // use of query Observable  !!! //
-  private listCards(): Observable<GameCard[]> {
+  private listCards(fresh = false): Observable<GameCard[]> {
     return this.membersService.listMembers().pipe(
       switchMap((members) => {
         this.members = members;
-        return this.dbHandler.queryPlayBooks().pipe(
+        return (fresh ? this.dbHandler.listAllPlayBooks() : this.dbHandler.queryPlayBooks()).pipe(
           map((cards) => {
             const missingOwnerLicenses = new Set<string>();
             this._gameCards = cards.map(card => {

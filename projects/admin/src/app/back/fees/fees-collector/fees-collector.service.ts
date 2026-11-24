@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { TournamentService } from '../../../common/services/tournament.service';
 import { TournamentTeams } from '../../../common/ffb/interface/tournament.interface';
-import { BehaviorSubject, map, Observable, Subscription } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, map, Observable, Subscription } from 'rxjs';
 import { SystemDataService } from '../../../common/services/system-data.service';
 import { Member } from '../../../common/interfaces/member.interface';
 import {
@@ -28,10 +28,12 @@ import { ToastService } from '../../../common/services/toast.service';
 import { DBhandler } from "../../../common/services/graphQL.service";
 import { MemberSettingsService } from '../../../common/services/member-settings.service';
 import { PaymentMode } from '../../shop/cart/cart.interface';
+import { CartService } from '../../shop/cart/cart.service';
 import { safeGetCurrentUserPromise } from '../../../common/authentification/safe-auth';
 import { canSelectGameCard, checkInState, feeModeConfiguration, gamerFeePrice, requiredGameCredits, TournamentFeeMode, tournamentFeeMode } from './fees-check-in.util';
 import { environment } from '../../../../environments/environment';
 import { ClubMember } from '../../../common/ffb/interface/club-member.interface';
+import { GameCardAdvanceRequest, GameCardAdvanceResult, PreviousGameCardAdvance } from '../../../../../../common/game-card-advance';
 
 export interface SettlementProgress {
   message: string;
@@ -553,6 +555,43 @@ export class FeesCollectorService {
     this.applyCheckIns(await this.DBhandler.listGameCheckIns(gameId));
   }
 
+  async previousCardAdvances(memberIds: string[]): Promise<PreviousGameCardAdvance[]> {
+    const gameId = this.gameId;
+    if (!gameId) throw new Error('Aucun tournoi sélectionné.');
+    return this.DBhandler.previousGameCardAdvances(gameId, memberIds);
+  }
+
+  async createCardAdvance(request: GameCardAdvanceRequest): Promise<GameCardAdvanceResult> {
+    if (request.gameId !== this.gameId) throw new Error('Le tournoi de l’avance a changé.');
+    return this.DBhandler.createGameCardAdvance(request);
+  }
+
+  get advanceGameId(): string | null {
+    return this.gameId;
+  }
+
+  async refreshAdvanceData(expected?: GameCardAdvanceResult): Promise<void> {
+    const game = this.game;
+    await Promise.all([this.BookService.refresh_book_entries(), this.gameCardService.refreshCards(true)]);
+    if (game !== this.game || !game.tournament) throw new Error('Le tournoi a changé pendant la synchronisation.');
+    if (expected) {
+      const cards = await firstValueFrom(this.gameCardService.gameCards);
+      if (!this.BookService.get_book_entries().some(entry => entry.id === expected.bookEntryId)
+        || !cards.some(card => card.id === expected.playBookId)) {
+        throw new Error('L’avance est enregistrée, mais sa synchronisation est en attente.');
+      }
+    }
+    this.update_members_debts();
+    this.update_members_credits();
+    this._game$.next(this.game);
+  }
+
+  async refreshCardSale(bookEntryId: string): Promise<boolean> {
+    await this.refreshAdvanceData();
+    const cards = await firstValueFrom(this.gameCardService.gameCards);
+    return cards.some(card => card.bookEntry_id === bookEntryId);
+  }
+
   private async runSettlementPreflight(): Promise<void> {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -561,6 +600,7 @@ export class FeesCollectorService {
           await this.refreshGamePlayers();
           await this.refreshFeeConfiguration();
           await this.refreshGameCheckIns();
+          await this.refreshAdvanceData();
         })(),
         new Promise<never>((_, reject) => {
           timeoutId = setTimeout(
@@ -1329,24 +1369,35 @@ export class FeesCollectorService {
     }
   }
 
-  create_game_card_sale(members: Member[], card_price: number, mode: PaymentMode, check_ref?: string): Promise<boolean> {
+  async create_game_card_advance(members: Member[], card_price: number): Promise<void> {
+    return this.create_game_card_sale(members, card_price, PaymentMode.CREDIT);
+  }
+
+  async create_game_card_cart_sale(members: Member[], cart: CartService): Promise<void> {
+    const today = new Date();
+    cart.setSeller('pointage');
+    await cart.save_sale({
+      season: this.systemDataService.get_season(today),
+      date: today.toISOString().split('T')[0],
+    }, members[0], 'backend', false);
+    this.update_members_debts();
+    this.update_members_credits();
+  }
+
+  async create_game_card_sale(
+    members: Member[], card_price: number, mode: PaymentMode, chequeRef?: string,
+  ): Promise<void> {
     const buyer = this.membersService.full_name(members[0]);
     const co_buyer = (members.length > 1) ? this.membersService.full_name(members[1]) : undefined;
-    return new Promise<boolean>(async (resolve, reject) => {
-      try {
-        const bookEntry = await this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, check_ref);
-        const card = await this.gameCardService.createCard(members, undefined, undefined, false, bookEntry.id);
-        if (card) {
-          this.update_members_debts();  // update debts after sale
-          this.update_members_credits(); // update credits after sale
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      } catch (error) {
-        reject(error);
-      }
-    });
+    const bookEntry = await this.BookService.create_game_card_sale(buyer, card_price, mode, co_buyer, chequeRef);
+    try {
+      await this.gameCardService.createCard(members, undefined, undefined, false, bookEntry.id);
+    } catch (error) {
+      console.error('[FeesCollector] Card sale incomplete', { bookEntryId: bookEntry.id, error });
+      throw new Error(`L'écriture ${bookEntry.id} a été enregistrée, mais la création de la carte n'a pas été confirmée.`);
+    }
+    this.update_members_debts();
+    this.update_members_credits();
   }
 
 }

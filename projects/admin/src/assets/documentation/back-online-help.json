@@ -277,6 +277,8 @@
           "title": "Parcours conseillé",
           "steps": [
             "Sélectionner le tournoi concerné pour afficher les joueurs inscrits.",
+            "Choisir le mode du poste : classique pour le pointage manuel et les ventes, ou NFC pour le pointage par badgeuse. Le mode NFC nécessite l’autorisation du pointage par badgeuse dans la configuration.",
+            "Un pointage confirmé, classique ou NFC, affiche brièvement une grande fiche du joueur, même si sa ligne est hors écran ; en NFC, une carte déjà pointée est signalée comme telle.",
             "Pour chaque joueur présent, pointer le mode de règlement choisi (carte, espèces) ou utiliser le bouton NP pour non présent ou non payant.",
             "Quand tous les joueurs ont été pointés, accepter l’enregistrement des droits de table."
           ]
@@ -284,12 +286,13 @@
         {
           "id": "acheter-carte-rapidement",
           "type": "procedure",
-          "title": "Acheter rapidement une carte depuis le pointage",
+          "title": "Vendre une carte depuis le poste de pointage",
           "steps": [
-            "Sur la fiche d’un joueur dont le crédit restant est inférieur ou égal à quatre admissions, cliquer sur l’icône chariot. Le joueur est prérempli comme titulaire.",
-            "Pour une carte individuelle, désactiver « partagée avec ». Pour une carte partagée, laisser l’option activée et sélectionner le cotitulaire.",
-            "Choisir le mode de règlement : espèces, chèque, virement ou avance. Pour un chèque, renseigner la banque et le numéro.",
-            "Contrôler le titulaire, le cotitulaire éventuel et le règlement, puis valider la vente."
+            "En mode classique ou NFC, sur la fiche d’un joueur dont le crédit restant est inférieur ou égal à quatre admissions, cliquer sur l’icône chariot.",
+            "Pour une carte individuelle, désactiver « Carte partagée ». Pour une carte partagée, sélectionner un cotitulaire distinct.",
+            "Choisir si la dette doit être réglée et l’avoir utilisé. Si le solde a changé, vérifier le nouveau total et confirmer à nouveau.",
+            "Choisir espèces, chèque, virement ou avance. Lorsque le partage TPE est activé, la carte bancaire est également proposée si le TPE est disponible. Pour une avance, informer le titulaire et recueillir son accord. Si le total est nul, aucun paiement n’est nécessaire.",
+            "La vente ferme le panneau. Le poste de pointage reste sur cette page ; les autres achats nécessitent un poste de vente distinct."
           ]
         },
         {
@@ -297,9 +300,13 @@
           "type": "attention",
           "title": "Points de vigilance",
           "messages": [
-            "Le crédit restant de la carte d’un joueur est affiché sur sa fiche de pointage.",
-            "La vente rapide applique le prix de carte configuré et ne permet pas de constituer un panier.",
-            "Si le joueur possède déjà un avoir ou une dette, BCSTO redirige vers Boutique / vente adhérent afin que ces montants puissent être traités dans le panier."
+            "Le paiement TPE en vente rapide reste désactivé tant que son partage entre postes n’est pas validé.",
+            "Lorsque le partage est activé, le TPE est réservé automatiquement pendant un paiement. Un autre poste voit son occupation et peut continuer les ventes sans carte bancaire.",
+            "Après une interruption, ne pas relancer le paiement sans vérifier son résultat. Utiliser « Vérifier et libérer » lorsque ce bouton est proposé ; pour une opération encore en cours ou incertaine, contacter un responsable.",
+            "Pour quitter le pointage sans clôturer le tournoi, utiliser « Suspendre le pointage » dans l’en-tête du tournoi puis confirmer. Les pointages sont conservés et le tournoi peut être repris.",
+            "Avec la tablette ppTPE, le pointage reprend automatiquement après reconnexion du lecteur, sauf s’il a été suspendu. Garder la page ouverte et attendre que la tablette détecte la reconnexion.",
+            "Si une vente est interrompue, contacter un responsable avant toute nouvelle tentative, même sur un autre poste : le blocage est local au navigateur.",
+            "Vérifier les cases dette et avoir avant de valider la vente."
           ]
         }
       ],

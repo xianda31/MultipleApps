@@ -1,7 +1,7 @@
 import { Injectable, NgZone, inject, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { generateClient } from 'aws-amplify/data';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, defer, repeat, retry, timer } from 'rxjs';
 import type { Schema } from '../../../../../amplify/data/resource';
 import { AcrBleReaderService, type AcrReaderState } from './acr-ble-reader.service';
 
@@ -32,6 +32,7 @@ export const BUZZER_PATTERNS: Record<Exclude<ScanFeedback['result'], 'pending'>,
 const BUZZER_KEY = 'pptpe-acr-buzzer';
 
 const HEARTBEAT_MS = 15_000;
+const SUBSCRIPTION_RETRY_MS = 5_000;
 const STALE_SECONDS = 45;
 const TTL_SECONDS = 3600;
 const ANSWER_TIMEOUT_MS = 10_000;
@@ -39,6 +40,16 @@ const ANSWER_TIMEOUT_MS = 10_000;
 const FEEDBACK_DISPLAY_MS = 3_000;
 
 const nowSeconds = (): number => Math.floor(Date.now() / 1000);
+
+export function reconnectNfcSubscription<T>(source: () => Observable<T>, description: string): Observable<T> {
+  return defer(source).pipe(
+    retry({ delay: (error) => {
+      console.warn(`[ppTPE][NFC] Abonnement ${description} interrompu, reconnexion`, error);
+      return timer(SUBSCRIPTION_RETRY_MS);
+    } }),
+    repeat({ delay: SUBSCRIPTION_RETRY_MS }),
+  );
+}
 
 export function toReaderSessionStatus(status: AcrReaderState['status']): ReaderSessionStatus {
   switch (status) {
@@ -90,27 +101,44 @@ export class NfcRelayService {
     this.detach();
     this.sessionId = sessionId;
     this.client = generateClient<Schema>();
+    const client = this.client;
     this.connected.set(true);
 
     this.subscriptions.push(
       this.readerState$.subscribe(() => void this.publishReader()),
       this.reader.scans$.subscribe((scan) => void this.publishScan(scan.uid)),
-      this.client.models.NfcScan.onUpdate({ filter: { sessionId: { eq: sessionId } } }).subscribe({
-        next: (scan) => this.zone.run(() => this.applyVerdict(scan)),
-        error: (error) => console.warn('[ppTPE][NFC] Abonnement aux verdicts impossible', error),
-      }),
-      this.client.models.NfcReaderSession.onUpdate({ filter: { id: { eq: sessionId } } }).subscribe({
-        next: (session) => this.zone.run(() => this.applyCollector(session)),
-        error: (error) => console.warn('[ppTPE][NFC] Abonnement à fees-collector impossible', error),
-      }),
+      reconnectNfcSubscription(
+        () => client.models.NfcScan.onUpdate({ filter: { sessionId: { eq: sessionId } } }), 'aux verdicts',
+      ).subscribe((scan) => this.zone.run(() => this.applyVerdict(scan))),
+      reconnectNfcSubscription(
+        () => client.models.NfcReaderSession.onUpdate({ filter: { id: { eq: sessionId } } }), 'à fees-collector',
+      ).subscribe((session) => this.zone.run(() => this.applyCollector(session))),
     );
-    void this.client.models.NfcReaderSession.get({ id: sessionId }).then(({ data }) => {
-      if (data) this.zone.run(() => this.applyCollector(data));
-    });
+    void this.syncCollector();
     this.heartbeat = setInterval(() => {
       void this.publishReader();
+      void this.syncCollector();
       this.zone.run(() => this.refreshCollector());
     }, HEARTBEAT_MS);
+  }
+
+  private async syncCollector(): Promise<void> {
+    const id = this.sessionId;
+    const client = this.client;
+    if (!id || !client) return;
+    const revision = this.collectorRevision;
+    try {
+      const { data, errors } = await client.models.NfcReaderSession.get({ id });
+      if (errors?.length) throw new Error(errors.map(error => error.message).join('; '));
+      if (!data) throw new Error('Session NFC introuvable.');
+      if (this.sessionId === id && this.client === client && this.collectorRevision === revision) {
+        this.zone.run(() => this.applyCollector(data));
+      }
+    } catch (error) {
+      if (this.sessionId === id && this.client === client) {
+        console.warn('[ppTPE][NFC] Synchronisation du pointage impossible', error);
+      }
+    }
   }
 
   detach(): void {

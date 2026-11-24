@@ -15,6 +15,9 @@ export const environment = {
     back_guard: true,
     mailingCcEmail: 'xxxxx',
     low_game_card_message: false,
+    nfc_card_advance_enabled: false,
+    quick_sale_tpe_enabled: false,
+    tpe_shared_enabled: false,
     ffbProxyPathOverrides: {},
 
 };
