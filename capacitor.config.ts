@@ -4,8 +4,8 @@ import { CapacitorConfig } from '@capacitor/cli';
 // LIVE RELOAD: décommenter `server.url` + lancer `ng serve admin --host 0.0.0.0`
 //   puis `npx cap run android --target 2e03963c` (une seule fois pour déployer le shell)
 const config: CapacitorConfig = {
-  appId: 'fr.bridgeclubsaintorens.pptpe',
-  appName: 'ppTPE',
+  appId: 'fr.bridgeclubsaintorens.ppbcsto',
+  appName: 'ppBCSTO',
   webDir: 'dist/pptpe/browser',
   server: {
     androidScheme: 'https',

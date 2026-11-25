@@ -103,13 +103,16 @@ describe('FeesCollectorComponent player cards', () => {
     const fixture = TestBed.createComponent(FeesCollectorComponent);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-fees-nfc-control')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Mode du poste"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.fees-collector-header button.btn-outline-warning')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.fees-footer-actions > .fees-footer-secondary:last-child button').textContent).toContain('fermer');
+    configuration$.next({ banks: [], membership_payment_warning_month: 12, nfc_check_in_active: true });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.fees-collector-header button.btn-outline-warning')).toBeNull();
     const radios = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('input[name="operationalMode"]');
     expect(radios.length).toBe(2);
     expect(radios[0].checked).toBeTrue();
-    expect(radios[1].disabled).toBeTrue();
-    expect(fixture.nativeElement.querySelector('#nfcModeDisabled').textContent).toContain('configuration');
-    configuration$.next({ banks: [], membership_payment_warning_month: 12, nfc_check_in_active: true });
-    fixture.detectChanges();
+    expect(radios[1].disabled).toBeFalse();
     modal.open.and.returnValue({ componentInstance: {}, result: Promise.resolve(false) });
     radios[1].click();
     await fixture.whenStable();
@@ -143,6 +146,8 @@ describe('FeesCollectorComponent player cards', () => {
     configuration$.next({ banks: [], membership_payment_warning_month: 12, nfc_check_in_active: false });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-fees-nfc-control')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Mode du poste"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.fees-collector-header button.btn-outline-warning')).toBeNull();
     fixture.componentInstance.operationalMode = 'classic';
 
     const cards: HTMLElement[] = Array.from(fixture.nativeElement.querySelectorAll('.fee-player-card'));
@@ -835,19 +840,51 @@ describe('FeesCollectorComponent player cards', () => {
     }
   });
 
-  it('blocks leaving an open tournament in either mode, but not a closed tournament', () => {
+  it('only blocks leaving an open tournament when NFC check-in is enabled on the post', () => {
     const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
     const toast = jasmine.createSpyObj('ToastService', ['showWarning']);
     Object.assign(component, {
-      operationalMode: 'nfc', selected_tournament: { status: Game_status.RECOVERED },
+      operationalMode: 'nfc', nfcCheckInEnabled: true, selected_tournament: { status: Game_status.RECOVERED },
       quickSaleSaving: false, changingOperationalMode: false, toastService: toast,
     });
+    const unload = jasmine.createSpyObj<BeforeUnloadEvent>('BeforeUnloadEvent', ['preventDefault']);
     expect(component.canLeave()).toBeFalse();
+    component.warnBeforeUnload(unload);
+    expect(unload.preventDefault).toHaveBeenCalled();
     component.selected_tournament!.status = Game_status.COMPLETED;
     expect(component.canLeave()).toBeTrue();
     component.selected_tournament!.status = Game_status.RECOVERED;
     component.operationalMode = 'classic';
+    expect(component.canLeave()).toBeTrue();
+    unload.preventDefault.calls.reset();
+    component.warnBeforeUnload(unload);
+    expect(unload.preventDefault).not.toHaveBeenCalled();
+    component.operationalMode = 'nfc';
+    component.nfcCheckInEnabled = false;
+    expect(component.canLeave()).toBeTrue();
+    component.quickSaleSaving = true;
     expect(component.canLeave()).toBeFalse();
+    component.quickSaleSaving = false;
+    component.quickSalePaidEntryId = 'paid-entry';
+    expect(component.canLeave()).toBeFalse();
+  });
+
+  it('closes a classic tournament without a confirmation but retains an unresolved paid sale', () => {
+    const component = Object.create(FeesCollectorComponent.prototype) as FeesCollectorComponent;
+    const clearTournament = jasmine.createSpy();
+    Object.assign(component, {
+      operationalMode: 'classic', nfcCheckInEnabled: false,
+      selected_tournament: { id: 987, status: Game_status.RECOVERED },
+      game: { gamers: [] }, quickSaleSaving: false, quickSalePaidEntryId: 'paid-entry',
+      feesCollectorService: { clear_tournament: clearTournament },
+    });
+    spyOn(component, 'cancelQuickSale');
+    component.clear_session();
+    expect(clearTournament).not.toHaveBeenCalled();
+    component.quickSalePaidEntryId = null;
+    component.clear_session();
+    expect(clearTournament).toHaveBeenCalledTimes(1);
+    expect(component.selected_tournament).toBeNull();
   });
 
   it('suspends only after confirmation and NFC has stopped, preserving the session', async () => {
@@ -858,7 +895,7 @@ describe('FeesCollectorComponent player cards', () => {
     const clearTournament = jasmine.createSpy();
     const toast = jasmine.createSpyObj('ToastService', ['showWarning']);
     Object.assign(component, {
-      operationalMode: 'nfc', selected_tournament: tournament, game: { gamers: [] },
+      operationalMode: 'nfc', nfcCheckInEnabled: true, selected_tournament: tournament, game: { gamers: [] },
       quickSaleModalOpen: false, quickSaleSaving: false, changingOperationalMode: false,
       pairChangePending: false, pendingCheckIns: new Set<string>(),
       modalService: { open: () => modal }, nfcControl: { stopForModeChange: stop },

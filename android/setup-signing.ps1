@@ -8,7 +8,7 @@ if (Test-Path $keystoreFile) {
 }
 
 Write-Host ""
-Write-Host "=== Génération du keystore de signature ppTPE ==="
+Write-Host "=== Génération du keystore de signature ppBCSTO ==="
 Write-Host "Choisissez un mot de passe (mémorisez-le ou notez-le)."
 Write-Host ""
 

@@ -4,4 +4,5 @@ export interface ToastEvent {
   type: EventTypes;
   title: string;
   message: string;
+  persistent?: boolean;
 }

@@ -296,7 +296,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       const modalRef = this.modalService.open(GetConfirmationComponent, { centered: true });
       modalRef.componentInstance.title = 'Pointage existant';
       modalRef.componentInstance.subtitle = 'Un pointage a été retrouvé pour ce tournoi.';
-      modalRef.componentInstance.message = 'Que souhaitez-vous faire ?';
+      modalRef.componentInstance.message = 'Que souhaitez-vous faire ? Avant d’effacer, arrêtez le pointage de ce tournoi sur les autres postes.';
       modalRef.componentInstance.confirmLabel = 'Effacer et recommencer';
       modalRef.componentInstance.cancelLabel = 'Reprendre le pointage';
       modalRef.componentInstance.confirmButtonClass = 'btn-outline-danger';
@@ -390,11 +390,16 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   get protectCollectorExit(): boolean {
-    return !!this.selected_tournament && this.selected_tournament.status !== Game_status.COMPLETED;
+    return this.nfcCheckInEnabled && this.operationalMode === 'nfc'
+      && !!this.selected_tournament && this.selected_tournament.status !== Game_status.COMPLETED;
   }
 
   canLeave(): boolean {
-    if (this.quickSaleSaving || this.quickSalePaidEntryId || this.changingOperationalMode || this.protectCollectorExit) {
+    if (this.quickSaleSaving || this.quickSalePaidEntryId || this.changingOperationalMode) {
+      this.toastService.showWarning('Opération en cours', 'Terminez l’opération en cours avant de quitter.');
+      return false;
+    }
+    if (this.protectCollectorExit) {
       this.toastService.showWarning('Pointage en cours', 'Clôturez le tournoi ou suspendez explicitement le pointage avant de quitter.');
       return false;
     }
@@ -507,7 +512,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
   }
 
   clear_session(force = false, preserveSession = false) {
-    if (this.quickSaleSaving || (!force && this.protectCollectorExit)) return;
+    if (this.quickSaleSaving || this.quickSalePaidEntryId || (!force && this.protectCollectorExit)) return;
     this.clearManualConfirmation();
     this.checkStatusAfterAdvance = false;
     this.cancelQuickSale();
@@ -685,6 +690,7 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       return;
     }
     if (this.pairEditMode === 'list' || (this.pairEditMode === 'remove' && !this.removedPair)) return;
+    const tournamentId = this.selected_tournament?.id;
     this.pairChangePending = true;
     this.modalErrorMessage = '';
     let saved = false;
@@ -700,6 +706,13 @@ export class FeesCollectorComponent implements OnDestroy, AfterViewInit {
       this.pairChangePending = false;
     }
     if (saved) {
+      if (this.selected_tournament?.id === tournamentId) {
+        this.next_tournaments.forEach(tournament => {
+          if (tournament.id === tournamentId && tournament.status === Game_status.INITIAL) {
+            tournament.status = Game_status.RECOVERED;
+          }
+        });
+      }
       this.showPairList();
     } else {
       this.modalErrorMessage = 'La modification n’a pas été enregistrée. Consultez le message d’erreur puis revenez à la liste avant de réessayer.';

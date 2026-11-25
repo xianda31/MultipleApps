@@ -17,8 +17,8 @@ export const environment = {
     back_guard: true,
     low_game_card_message: true,
     nfc_card_advance_enabled: false,
-    quick_sale_tpe_enabled: false,
-    tpe_shared_enabled: false,
+    quick_sale_tpe_enabled: true,
+    tpe_shared_enabled: true,
     ffbProxyPathOverrides: {}
 
 };

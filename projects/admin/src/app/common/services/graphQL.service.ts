@@ -1356,12 +1356,18 @@ export class DBhandler {
   async listGameCheckIns(gameId: string): Promise<GameCheckIn[]> {
     const authMode = await lastValueFrom(this._authMode());
     const client = generateClient<Schema>({ authMode });
-    const { data, errors } = await client.models.GameCheckIn.gameCheckInsByGame(
-      { gameId },
-      { limit: 300 },
-    );
-    if (errors) throw errors;
-    return (data ?? []) as unknown as GameCheckIn[];
+    const checkIns: GameCheckIn[] = [];
+    let nextToken: string | null | undefined;
+    do {
+      const page = await client.models.GameCheckIn.gameCheckInsByGame(
+        { gameId },
+        { limit: 300, nextToken: nextToken || undefined },
+      );
+      if (page.errors?.length) throw page.errors;
+      checkIns.push(...(page.data as unknown as GameCheckIn[]));
+      nextToken = page.nextToken;
+    } while (nextToken);
+    return checkIns;
   }
 
   async readGameCheckIn(gameId: string, license: string): Promise<GameCheckIn | null> {

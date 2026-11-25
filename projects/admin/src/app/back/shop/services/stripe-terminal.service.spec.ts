@@ -8,6 +8,7 @@ import { NfcRelayService } from '../../../../../../pptpe/src/app/nfc/nfc-relay.s
 import { SHARED_TPE_REQUEST_ID } from '../../../../../../common/tpe-shared';
 import { environment as ppTpeEnvironment } from '../../../../../../pptpe/src/environments/environment';
 import { environment as ppTpeDevelopmentEnvironment } from '../../../../../../pptpe/src/environments/environment.development';
+import { environment as adminProductionEnvironment } from '../../../../environments/environment.production';
 import { Subject } from 'rxjs';
 
 describe('StripeTerminalService', () => {
@@ -48,12 +49,12 @@ describe('StripeTerminalService', () => {
       app.client = { models: { PaymentRequest: { update } } };
       const collect = spyOn(StripeTerminal, 'collectPaymentMethod');
 
-      const first = app.handlePaymentRequest({ id: 'one', clientSecret: 'secret' });
-      await app.handlePaymentRequest({ id: 'two', clientSecret: 'other' });
+      const first = app.handlePaymentRequest({ id: SHARED_TPE_REQUEST_ID, reservationId: 'one', clientSecret: 'secret' });
+      await app.handlePaymentRequest({ id: SHARED_TPE_REQUEST_ID, reservationId: 'two', clientSecret: 'other' });
       expect(update).toHaveBeenCalledTimes(1);
       expect(update).toHaveBeenCalledWith(
-        { id: 'one', status: 'processing' },
-        { condition: { status: { eq: 'pending' } } },
+        { id: SHARED_TPE_REQUEST_ID, status: 'processing' },
+        { condition: { and: [{ status: { eq: 'pending' } }, { reservationId: { eq: 'one' } }] } },
       );
       finish({ errors: [{ message: 'condition failed' }] });
       await first;
@@ -78,19 +79,47 @@ describe('StripeTerminalService', () => {
       spyOn(console, 'warn');
       spyOn(console, 'error');
       const update = jasmine.createSpy('update').and.returnValues(
-        Promise.resolve({ data: { id: 'one' } }),
+        Promise.resolve({ data: { id: SHARED_TPE_REQUEST_ID } }),
         Promise.reject(new Error('network')),
       );
       app.client = { models: { PaymentRequest: { update } } };
 
-      await app.handlePaymentRequest({ id: 'one', clientSecret: 'secret' });
+      await app.handlePaymentRequest({ id: SHARED_TPE_REQUEST_ID, reservationId: 'one', clientSecret: 'secret' });
 
       expect(update).toHaveBeenCalledTimes(2);
-      expect(update.calls.mostRecent().args[0]).toEqual({ id: 'one', status: 'success' });
+      expect(update.calls.mostRecent().args[0]).toEqual({ id: SHARED_TPE_REQUEST_ID, status: 'success' });
       fixture.destroy();
     });
 
-    it('accepts a legacy shop request with the ppTPE development configuration', () => {
+    it('accepts a legacy shop request when ppTPE uses classic mode', () => {
+      TestBed.configureTestingModule({
+        imports: [AppComponent],
+        providers: [
+          { provide: NfcTagReaderService, useValue: { stop() {} } },
+          { provide: AcrBleReaderService, useValue: { stop() {} } },
+          { provide: NfcRelayService, useValue: { detach() {} } },
+        ],
+      });
+      const fixture = TestBed.createComponent(AppComponent);
+      const app = fixture.componentInstance as any;
+      const previous = ppTpeEnvironment.tpe_shared_enabled;
+      ppTpeEnvironment.tpe_shared_enabled = false;
+      try {
+        app.state = 'connected';
+        const handle = spyOn(app, 'handlePaymentRequest').and.resolveTo();
+        const request = { id: 'legacy', status: 'pending' };
+        app.latestPaymentRequests = [request];
+
+        app.processNextPaymentRequest();
+
+        expect(handle).toHaveBeenCalledOnceWith(request);
+      } finally {
+        ppTpeEnvironment.tpe_shared_enabled = previous;
+        fixture.destroy();
+      }
+    });
+
+    it('accepts the shared request with the ppTPE development configuration', () => {
       TestBed.configureTestingModule({
         imports: [AppComponent],
         providers: [
@@ -106,8 +135,8 @@ describe('StripeTerminalService', () => {
       try {
         app.state = 'connected';
         const handle = spyOn(app, 'handlePaymentRequest').and.resolveTo();
-        const request = { id: 'legacy', status: 'pending' };
-        app.latestPaymentRequests = [request];
+        const request = { id: SHARED_TPE_REQUEST_ID, status: 'pending', reservationId: 'test' };
+        app.latestPaymentRequests = [{ id: 'legacy', status: 'pending' }, request];
 
         app.processNextPaymentRequest();
 
@@ -116,6 +145,29 @@ describe('StripeTerminalService', () => {
         ppTpeEnvironment.tpe_shared_enabled = previous;
         fixture.destroy();
       }
+    });
+
+    it('accepts shared requests with aligned admin and ppTPE production configuration', () => {
+      TestBed.configureTestingModule({
+        imports: [AppComponent],
+        providers: [
+          { provide: NfcTagReaderService, useValue: { stop() {} } },
+          { provide: AcrBleReaderService, useValue: { stop() {} } },
+          { provide: NfcRelayService, useValue: { detach() {} } },
+        ],
+      });
+      const fixture = TestBed.createComponent(AppComponent);
+      const app = fixture.componentInstance as any;
+      app.state = 'connected';
+      const handle = spyOn(app, 'handlePaymentRequest').and.resolveTo();
+      const request = { id: SHARED_TPE_REQUEST_ID, status: 'pending', reservationId: 'test' };
+      app.latestPaymentRequests = [{ id: 'legacy', status: 'pending' }, request];
+
+      expect(adminProductionEnvironment.quick_sale_tpe_enabled).toBeTrue();
+      expect(adminProductionEnvironment.tpe_shared_enabled).toBe(ppTpeEnvironment.tpe_shared_enabled);
+      app.processNextPaymentRequest();
+      expect(handle).toHaveBeenCalledOnceWith(request);
+      fixture.destroy();
     });
 
     it('only claims the current shared reservation, including after the slot is reused', async () => {

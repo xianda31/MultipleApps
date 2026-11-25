@@ -45,11 +45,12 @@ export class ToastService {
    * @param title Toast title
    * @param message Toast message
    */
-  showWarning(title: string, message: string) {
+  showWarning(title: string, message: string, persistent = false) {
     this._toastEvents.next({
       message,
       title,
       type: EventTypes.Warning,
+      persistent,
     });
   }
 

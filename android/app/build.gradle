@@ -11,7 +11,7 @@ android {
     namespace = "fr.bridgeclubsaintorens.pptpe"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "fr.bridgeclubsaintorens.pptpe"
+        applicationId "fr.bridgeclubsaintorens.ppbcsto"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -37,8 +37,8 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
-            resValue "string", "app_name", "ppTPE TEST"
-            resValue "string", "title_activity_main", "ppTPE TEST"
+            resValue "string", "app_name", "ppBCSTO TEST"
+            resValue "string", "title_activity_main", "ppBCSTO TEST"
         }
         release {
             if (hasKeystoreProperties) {

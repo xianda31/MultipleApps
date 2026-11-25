@@ -4,6 +4,8 @@
   width: auto;
   box-sizing: border-box;
   overflow-x: hidden;
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto;
   margin: 1rem !important;
   margin-bottom: 2rem !important;
 }

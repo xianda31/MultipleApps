@@ -12,10 +12,30 @@ connecté ne prouve pas qu'une carte est effectivement détectée.
 Restent notamment à vérifier la lecture réelle avec l'ACR et le WisePad
 connectés simultanément, les reprises après interruption et un paiement accepté.
 
-En sandbox, la boutique et ppTPE TEST utilisent actuellement le mode TPE
-classique (`tpe_shared_enabled: false`). Le mode partagé doit être activé
-sur les deux applications ensemble ; sinon ppTPE ignore les demandes de paiement
-classiques. Le mode classique ne protège pas les ventes simultanées entre postes.
+En sandbox, la boutique et ppTPE TEST sont configurés en mode TPE partagé,
+qui active aussi le TPE en vente rapide. Les deux applications doivent utiliser
+le même mode ; sinon ppTPE ignore les demandes de paiement. L'utilisateur a
+confirmé une vente TPE jusqu'à son annulation sur le terminal. Un paiement
+accepté et les scénarios de concurrence, reconnexion et résultat incertain
+restent à valider. Les sources de production activent désormais le mode partagé
+et le TPE en vente rapide. Leur mise en service nécessite un déploiement
+coordonné de l'admin et d'une APK ppTPE de production ; les seuls changements
+de configuration ne modifient pas les applications déjà déployées.
+La nouvelle application Android s'appelle ppBCSTO et possède son propre
+identifiant ; elle peut être installée à côté de l'ancien ppTPE, sans migrer
+sa connexion ni ses réglages locaux. Ne pas utiliser les deux simultanément.
+La nouvelle clé de signature et ses paramètres doivent être sauvegardés hors
+du dépôt pour les futures mises à jour.
+
+En mode classique, il est possible de quitter le pointage ou de fermer le
+tournoi affiché sans le clôturer. En mode NFC, il faut suspendre le pointage
+avant de quitter, pour arrêter la lecture sur ce poste.
+
+Avant d'effacer un pointage récupéré, arrêter le pointage sur les autres postes :
+la remise à zéro ne verrouille pas les écritures concurrentes. Les pointages en
+euros vérifiés avant l'effacement donnent lieu à un avertissement par joueur,
+fermé manuellement ; le tarif affiché n'atteste pas la somme réellement reçue.
+Ces avertissements disparaissent au rechargement de la page.
 
 **Protection entre pointage et Espace NFC non implémentée.** Pendant un
 pointage, ne pas utiliser l'Espace NFC pour lire ou modifier des cartes,

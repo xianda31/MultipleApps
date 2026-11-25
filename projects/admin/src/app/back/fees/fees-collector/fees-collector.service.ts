@@ -769,7 +769,9 @@ export class FeesCollectorService {
               gamer.photo_url$ = null;
               return;
             }
-            gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(member);
+            if (!gamer.photo_url$) {
+              gamer.photo_url$ = this.membersSettingsService.getAvatarUrl(member);
+            }
           }
         });
 
@@ -895,12 +897,56 @@ export class FeesCollectorService {
       return false;
     }
 
+    const game = this.game;
+    let checkIns: GameCheckIn[];
+    try {
+      if (this.gameId !== gameId) throw new Error('Le tournoi sélectionné a changé.');
+      await this.refreshGamePlayers();
+      await this.refreshFeeConfiguration();
+      checkIns = await this.DBhandler.listGameCheckIns(gameId);
+      if (this.game !== game || this.gameId !== gameId) throw new Error('Le tournoi sélectionné a changé.');
+      this.applyCheckIns(checkIns);
+    } catch (error) {
+      console.error('[FeesCollector] Unable to check payments before reset:', error);
+      this.toastService.showError(
+        'Remise à zéro impossible',
+        'Les pointages et tarifs partagés n’ont pas pu être vérifiés. Réessayez avant de recommencer.',
+      );
+      return false;
+    }
+
+    for (const gamer of game.gamers.filter(player => player.validated && player.enabled && player.in_euro)) {
+      const amount = gamer.price.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      this.toastService.showWarning(
+        'Règlement en euros à vérifier',
+        `${gamer.firstname} ${gamer.lastname} (${gamer.license}) : pointé en euros, tarif actuel ${amount} €. Vérifiez la somme déjà encaissée avant de repointer.`,
+        true,
+      );
+    }
+    const licenses = new Set(game.gamers.map(gamer => gamer.license));
+    for (const checkIn of checkIns.filter(item => item.mode === 'euro' && !licenses.has(item.license))) {
+      this.toastService.showWarning(
+        'Règlement en euros à vérifier',
+        `Licence ${checkIn.license} : pointage en euros retrouvé hors de la liste des joueurs. Vérifiez la somme encaissée.`,
+        true,
+      );
+    }
+
     this.stopPlayersSync();
     this.stopCheckInSync();
     this.stopFeeConfigurationSync();
-    await this.DBhandler.deleteGameCheckIns(gameId);
-    await this.DBhandler.deleteGameFeeConfiguration(gameId);
-    await this.DBhandler.deleteGame(season, tournament.id);
+    try {
+      await this.DBhandler.deleteGameCheckIns(gameId);
+      await this.DBhandler.deleteGameFeeConfiguration(gameId);
+      await this.DBhandler.deleteGame(season, tournament.id);
+    } catch (error) {
+      console.error('[FeesCollector] Unable to reset tournament:', error);
+      this.toastService.showError(
+        'Remise à zéro incomplète',
+        'Certains éléments ont pu être effacés. Rechargez le tournoi et vérifiez les pointages avant de continuer.',
+      );
+      return false;
+    }
     this.set_game(tournament);
     return true;
   }

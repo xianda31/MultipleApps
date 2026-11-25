@@ -37,6 +37,7 @@ export class ToasterComponent implements OnInit, OnDestroy {
         type: toasts.type,
         title: toasts.title,
         message: toasts.message,
+        persistent: toasts.persistent,
       };
 
       this.currentToasts.push(currentToast);

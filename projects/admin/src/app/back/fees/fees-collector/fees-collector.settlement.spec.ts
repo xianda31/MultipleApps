@@ -1,4 +1,5 @@
 import { Game_status } from '../fees.interface';
+import { ToastService } from '../../../common/services/toast.service';
 import { FeesCollectorService } from './fees-collector.service';
 
 describe('FeesCollectorService settlement protection', () => {
@@ -11,6 +12,7 @@ describe('FeesCollectorService settlement protection', () => {
     const dbHandler = jasmine.createSpyObj('DBhandler', [
       'create_custom_key',
       'readGameSettlementStatus',
+      'listGameCheckIns',
       'deleteGameCheckIns',
       'deleteGameFeeConfiguration',
       'deleteGame',
@@ -49,12 +51,14 @@ describe('FeesCollectorService settlement protection', () => {
     const dbHandler = jasmine.createSpyObj('DBhandler', [
       'create_custom_key',
       'readGameSettlementStatus',
+      'listGameCheckIns',
       'deleteGameCheckIns',
       'deleteGameFeeConfiguration',
       'deleteGame',
     ]);
     dbHandler.create_custom_key.and.returnValue('2026/2027_338131');
     dbHandler.readGameSettlementStatus.and.resolveTo(null);
+    dbHandler.listGameCheckIns.and.resolveTo([]);
     dbHandler.deleteGameCheckIns.and.resolveTo();
     dbHandler.deleteGameFeeConfiguration.and.resolveTo();
     dbHandler.deleteGame.and.resolveTo(true);
@@ -63,8 +67,11 @@ describe('FeesCollectorService settlement protection', () => {
       systemDataService: {
         get_season: () => '2026/2027',
       },
+      game: { season: '2026/2027', tournament: { id: 338131 }, gamers: [] },
       toastService: jasmine.createSpyObj('ToastService', ['showError']),
     });
+    spyOn(service, 'refreshGamePlayers').and.resolveTo();
+    spyOn(service, 'refreshFeeConfiguration').and.resolveTo();
     spyOn<any>(service, 'stopCheckInSync');
     spyOn<any>(service, 'stopFeeConfigurationSync');
     spyOn(service, 'set_game');
@@ -83,6 +90,84 @@ describe('FeesCollectorService settlement protection', () => {
     expect(dbHandler.deleteGameFeeConfiguration).toHaveBeenCalledOnceWith('2026/2027_338131');
     expect(dbHandler.deleteGame).toHaveBeenCalledOnceWith('2026/2027', 338131);
     expect(service.set_game).toHaveBeenCalledOnceWith(tournament);
+  });
+
+  it('warns persistently for each euro check-in before erasing shared data', async () => {
+    const service = Object.create(FeesCollectorService.prototype) as FeesCollectorService;
+    const dbHandler = jasmine.createSpyObj('DBhandler', [
+      'create_custom_key', 'readGameSettlementStatus', 'listGameCheckIns',
+      'deleteGameCheckIns', 'deleteGameFeeConfiguration', 'deleteGame',
+    ]);
+    dbHandler.create_custom_key.and.returnValue('game-1');
+    dbHandler.readGameSettlementStatus.and.resolveTo(null);
+    dbHandler.listGameCheckIns.and.resolveTo([
+      { gameId: 'game-1', license: '1', mode: 'euro', source: 'manual', updatedBy: 'test' },
+      { gameId: 'game-1', license: '2', mode: 'unpointed', source: 'manual', updatedBy: 'test' },
+      { gameId: 'game-1', license: '4', mode: 'euro', source: 'manual', updatedBy: 'test' },
+    ]);
+    dbHandler.deleteGameCheckIns.and.resolveTo();
+    dbHandler.deleteGameFeeConfiguration.and.resolveTo();
+    dbHandler.deleteGame.and.resolveTo(true);
+    const toast = jasmine.createSpyObj<ToastService>('ToastService', ['showWarning', 'showError']);
+    Object.assign(service, {
+      DBhandler: dbHandler,
+      systemDataService: { get_season: () => '2026/2027' },
+      game: {
+        season: '2026/2027', tournament: { id: 1 }, gamers: [
+          { license: '1', firstname: 'Jean', lastname: 'EXEMPLE', price: 3, validated: false, enabled: true, in_euro: false },
+          { license: '2', firstname: 'Anne', lastname: 'ANNULE', price: 3, validated: true, enabled: true, in_euro: true },
+          { license: '3', firstname: 'Marie', lastname: 'PAYE', price: 4, validated: true, enabled: true, in_euro: true },
+          { license: '5', firstname: 'Pierre', lastname: 'CARTE', price: 3, validated: true, enabled: true, in_euro: false },
+        ],
+      },
+      _game$: { next: () => {} }, toastService: toast,
+    });
+    spyOn(service, 'refreshGamePlayers').and.resolveTo();
+    spyOn(service, 'refreshFeeConfiguration').and.resolveTo();
+    spyOn<any>(service, 'stopPlayersSync');
+    spyOn<any>(service, 'stopCheckInSync');
+    spyOn<any>(service, 'stopFeeConfigurationSync');
+    spyOn(service, 'set_game');
+    dbHandler.deleteGameCheckIns.and.callFake(async () => {
+      expect(toast.showWarning).toHaveBeenCalledTimes(3);
+    });
+
+    const reset = await service.reset_tournament_state({
+      id: 1, date: '2026-10-16', title: 'Tournoi', entryCount: 4, status: Game_status.RECOVERED,
+    });
+
+    expect(reset).toBeTrue();
+    expect(toast.showWarning.calls.allArgs().map(args => args[1])).toEqual([
+      jasmine.stringMatching(/Jean EXEMPLE.*3,00/),
+      jasmine.stringMatching(/Marie PAYE.*4,00/),
+      jasmine.stringMatching(/Licence 4/),
+    ]);
+    expect(toast.showWarning.calls.allArgs().every(args => args[2] === true)).toBeTrue();
+  });
+
+  it('does not erase the tournament when shared check-ins cannot be checked', async () => {
+    const service = Object.create(FeesCollectorService.prototype) as FeesCollectorService;
+    const dbHandler = jasmine.createSpyObj('DBhandler', [
+      'create_custom_key', 'readGameSettlementStatus', 'listGameCheckIns', 'deleteGameCheckIns',
+    ]);
+    dbHandler.create_custom_key.and.returnValue('game-1');
+    dbHandler.readGameSettlementStatus.and.resolveTo(null);
+    dbHandler.listGameCheckIns.and.rejectWith(new Error('offline'));
+    const toast = jasmine.createSpyObj('ToastService', ['showWarning', 'showError']);
+    Object.assign(service, {
+      DBhandler: dbHandler, systemDataService: { get_season: () => '2026/2027' },
+      game: { season: '2026/2027', tournament: { id: 1 }, gamers: [] }, toastService: toast,
+    });
+    spyOn(service, 'refreshGamePlayers').and.resolveTo();
+    spyOn(service, 'refreshFeeConfiguration').and.resolveTo();
+
+    const reset = await service.reset_tournament_state({
+      id: 1, date: '2026-10-16', title: 'Tournoi', entryCount: 0, status: Game_status.RECOVERED,
+    });
+    expect(reset).toBeFalse();
+    expect(dbHandler.deleteGameCheckIns).not.toHaveBeenCalled();
+    expect(toast.showWarning).not.toHaveBeenCalled();
+    expect(toast.showError).toHaveBeenCalled();
   });
 
   it('stops when the shared preflight times out without acquiring a lock', async () => {

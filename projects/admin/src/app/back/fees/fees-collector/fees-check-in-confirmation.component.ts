@@ -49,21 +49,27 @@ export interface CheckInConfirmation {
     .confirmation {
       display: flex;
       align-items: center;
-      gap: clamp(1rem, 3vw, 2rem);
-      width: min(42rem, 100%);
+      gap: clamp(1rem, 3vw, 1.75rem);
+      width: min(38rem, 100%);
       max-height: calc(100dvh - 2rem);
-      padding: clamp(1rem, 3vw, 2rem);
-      border: .3rem solid #198754;
-      border-radius: 1.25rem;
-      background: #edf8f1;
-      color: #155e35;
-      box-shadow: 0 1rem 3rem rgba(0, 0, 0, .35);
-      animation: confirmation-zoom 300ms ease-out;
+      padding: clamp(1.25rem, 3vw, 2rem);
+      border: 1px solid #b9dfc8;
+      border-left: .4rem solid #198754;
+      border-radius: 1.1rem;
+      background: linear-gradient(135deg, #fff 45%, #edf8f1);
+      color: #17365b;
+      box-shadow: 0 1rem 3rem rgba(23, 54, 91, .24), 0 .25rem .75rem rgba(23, 54, 91, .1);
+      animation: confirmation-zoom 250ms ease-out;
     }
     .confirmation-avatar {
-      flex: 0 0 clamp(4rem, 14vw, 8rem);
-      width: clamp(4rem, 14vw, 8rem);
+      flex: 0 0 clamp(4.5rem, 13vw, 7.5rem);
+      width: clamp(4.5rem, 13vw, 7.5rem);
       aspect-ratio: 1;
+      padding: .25rem;
+      border: 2px solid #b9dfc8;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 .25rem .75rem rgba(25, 135, 84, .12);
     }
     .confirmation-avatar img, .confirmation-avatar svg {
       width: 100%;
@@ -72,11 +78,32 @@ export interface CheckInConfirmation {
       object-fit: cover;
     }
     .confirmation-details { min-width: 0; overflow-wrap: anywhere; }
-    .confirmation-status { font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 700; }
-    .confirmation-name { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 800; line-height: 1.1; }
+    .confirmation-status {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .35rem .7rem;
+      border-radius: 999px;
+      background: #e2f4e9;
+      color: #17653a;
+      font-size: clamp(.9rem, 2vw, 1.1rem);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .confirmation-status .bi { font-size: 1.15em; line-height: 1; }
+    .confirmation-name {
+      margin-top: .65rem;
+      font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+    }
     @keyframes confirmation-zoom {
-      from { transform: scale(.65); opacity: 0; }
+      from { transform: translateY(.5rem) scale(.97); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
+    }
+    @media (max-width: 400px) {
+      .confirmation { gap: .8rem; padding: 1rem; }
+      .confirmation-avatar { flex-basis: 3.75rem; width: 3.75rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       .confirmation { animation: none; }

@@ -80,20 +80,16 @@
                     {{ checkedInCount }} / {{ game.gamers.length }} pointés
                 </span>
             </div>
-            <div class="col-auto" *ngIf="game.tournament">
+            <div class="col-auto" *ngIf="game.tournament && nfcCheckInEnabled">
                 <div class="small">Mode du poste</div>
-                <div class="btn-group" role="group" aria-label="Mode du poste"
-                    [attr.aria-describedby]="!nfcCheckInEnabled ? 'nfcModeDisabled' : null">
+                <div class="btn-group" role="group" aria-label="Mode du poste">
                     <ng-container *ngFor="let mode of operationalModes">
                         <input class="btn-check" type="radio" name="operationalMode"
                             [id]="'operationalMode-' + mode.value" [checked]="operationalMode === mode.value"
-                            [disabled]="changingOperationalMode || quickSaleModalOpen || quickSaleSaving || pairChangePending || pendingCheckIns.size > 0 || (mode.value !== 'classic' && !nfcCheckInEnabled)"
+                            [disabled]="changingOperationalMode || quickSaleModalOpen || quickSaleSaving || pairChangePending || pendingCheckIns.size > 0"
                             (click)="onOperationalModeChange($event, mode.value)">
                         <label class="btn btn-outline-primary btn-sm fw-semibold text-nowrap" [for]="'operationalMode-' + mode.value">{{ mode.label }}</label>
                     </ng-container>
-                </div>
-                <div *ngIf="!nfcCheckInEnabled" id="nfcModeDisabled" class="small text-muted">
-                    Activez « Autoriser le pointage par badgeuse NFC » dans la configuration.
                 </div>
             </div>
             <div *ngIf="nfcCheckInEnabled && operationalMode !== 'classic' && game.tournament" class="col-auto">
@@ -214,7 +210,7 @@
             </div>
             <div class="fees-footer-secondary">
                 <button *ngIf="!protectCollectorExit" type="button" class="btn btn-sm btn-outline-primary" (click)="clear_session()"
-                    [disabled]="quickSaleSaving || changingOperationalMode">
+                    [disabled]="quickSaleModalOpen || quickSaleSaving || quickSalePaidEntryId || changingOperationalMode || pairChangePending || pendingCheckIns.size > 0">
                     <i class="bi bi-x-circle-fill"> fermer</i>
                 </button>
                 <button *ngIf="protectCollectorExit" type="button" class="btn btn-sm btn-outline-warning"

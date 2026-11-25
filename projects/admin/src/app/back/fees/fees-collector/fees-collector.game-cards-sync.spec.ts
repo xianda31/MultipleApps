@@ -111,7 +111,7 @@ describe('FeesCollectorService game-card synchronization', () => {
     const systemDataService = jasmine.createSpyObj('SystemDataService', ['get_configuration']);
     systemDataService.get_configuration.and.returnValue(of({ season: '2026', fee_rates: [] }));
     const memberSettingsService = jasmine.createSpyObj('MemberSettingsService', ['getAvatarUrl']);
-    memberSettingsService.getAvatarUrl.and.returnValue(null);
+    memberSettingsService.getAvatarUrl.and.callFake(() => of('portrait-url'));
     const service = new FeesCollectorService(
       toastService,
       membersService,
@@ -137,6 +137,7 @@ describe('FeesCollectorService game-card synchronization', () => {
     });
 
     (service as any).update_members_assets();
+    const photo = service.game.gamers[0].photo_url$;
     playBooks$.next([{
       id: 'remote-card',
       licenses: [member.license_number],
@@ -148,5 +149,7 @@ describe('FeesCollectorService game-card synchronization', () => {
 
     expect(service.game.gamers[0].game_credits).toBe(12);
     expect(emittedCredits).toBe(12);
+    expect(service.game.gamers[0].photo_url$).toBe(photo);
+    expect(memberSettingsService.getAvatarUrl).toHaveBeenCalledTimes(1);
   });
 });

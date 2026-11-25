@@ -13,8 +13,8 @@
   <!-- Formulaire de login (première fois ou token expiré) -->
   @if (state === 'login') {
   <div class="state-card login-card">
-    <div class="pptpe-logo">pp<span>TPE</span></div>
-    <p class="text-muted small mb-4">Passerelle de paiement par carte</p>
+    <div class="pptpe-logo">pp<span>BCSTO</span></div>
+    <p class="text-muted small mb-4">Passerelle TPE et NFC</p>
     <p class="text-muted" style="font-size:0.65rem;margin-top:-14px;margin-bottom:12px;">v{{ appVersion }}</p>
     <input
       type="email"
@@ -126,7 +126,7 @@
   @if (acrState().status !== 'unsupported') {
   <div class="checkin-card" aria-live="polite">
     <h6 class="checkin-card__heading">
-      <i class="bi bi-broadcast-pin me-1" aria-hidden="true"></i> Liaison admin ↔ ppTPE
+      <i class="bi bi-broadcast-pin me-1" aria-hidden="true"></i> Liaison admin ↔ ppBCSTO
     </h6>
     <p class="checkin-card__message">{{ relayActivity() }}</p>
     <div class="mirror-light" role="status">

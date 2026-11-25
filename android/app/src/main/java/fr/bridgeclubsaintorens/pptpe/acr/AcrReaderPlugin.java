@@ -64,7 +64,7 @@ public class AcrReaderPlugin extends Plugin {
             return;
         }
         if (!hasBluetoothPermissions()) {
-            emitStatus("permission", "Autorisez « Appareils à proximité » pour ppTPE.", null);
+            emitStatus("permission", "Autorisez « Appareils à proximité » pour ppBCSTO.", null);
             call.reject("Permissions Bluetooth manquantes.");
             return;
         }
