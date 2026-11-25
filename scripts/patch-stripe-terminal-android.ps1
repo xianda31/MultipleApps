@@ -6,7 +6,7 @@
 $file = "node_modules/@capacitor-community/stripe-terminal/android/src/main/java/com/getcapacitor/community/stripe/terminal/StripeTerminal.kt"
 
 if (-not (Test-Path $file)) {
-    Write-Host "ERREUR: fichier plugin introuvable — npm install effectué ?" -ForegroundColor Red
+    Write-Host "ERREUR: fichier plugin introuvable - npm install effectue ?" -ForegroundColor Red
     exit 1
 }
 
@@ -29,4 +29,4 @@ if ($content -match [regex]::Escape($buggy)) {
 }
 
 # Patch 2 SUPPRIME: updatePaymentIntent(false) casse confirmPaymentIntent avec lecteur physique
-# (erreur "card_present[emv_data] required") — NE PAS APPLIQUER avec WP3 physique
+# (erreur "card_present[emv_data] required") - NE PAS APPLIQUER avec WP3 physique

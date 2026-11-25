@@ -7,6 +7,7 @@ import { AcrBleReaderService } from '../../../../../../pptpe/src/app/nfc/acr-ble
 import { NfcRelayService } from '../../../../../../pptpe/src/app/nfc/nfc-relay.service';
 import { SHARED_TPE_REQUEST_ID } from '../../../../../../common/tpe-shared';
 import { environment as ppTpeEnvironment } from '../../../../../../pptpe/src/environments/environment';
+import { environment as ppTpeDevelopmentEnvironment } from '../../../../../../pptpe/src/environments/environment.development';
 import { Subject } from 'rxjs';
 
 describe('StripeTerminalService', () => {
@@ -87,6 +88,34 @@ describe('StripeTerminalService', () => {
       expect(update).toHaveBeenCalledTimes(2);
       expect(update.calls.mostRecent().args[0]).toEqual({ id: 'one', status: 'success' });
       fixture.destroy();
+    });
+
+    it('accepts a legacy shop request with the ppTPE development configuration', () => {
+      TestBed.configureTestingModule({
+        imports: [AppComponent],
+        providers: [
+          { provide: NfcTagReaderService, useValue: { stop() {} } },
+          { provide: AcrBleReaderService, useValue: { stop() {} } },
+          { provide: NfcRelayService, useValue: { detach() {} } },
+        ],
+      });
+      const fixture = TestBed.createComponent(AppComponent);
+      const app = fixture.componentInstance as any;
+      const previous = ppTpeEnvironment.tpe_shared_enabled;
+      ppTpeEnvironment.tpe_shared_enabled = ppTpeDevelopmentEnvironment.tpe_shared_enabled;
+      try {
+        app.state = 'connected';
+        const handle = spyOn(app, 'handlePaymentRequest').and.resolveTo();
+        const request = { id: 'legacy', status: 'pending' };
+        app.latestPaymentRequests = [request];
+
+        app.processNextPaymentRequest();
+
+        expect(handle).toHaveBeenCalledOnceWith(request);
+      } finally {
+        ppTpeEnvironment.tpe_shared_enabled = previous;
+        fixture.destroy();
+      }
     });
 
     it('only claims the current shared reservation, including after the slot is reused', async () => {

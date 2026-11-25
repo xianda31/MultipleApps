@@ -12,6 +12,11 @@ connecté ne prouve pas qu'une carte est effectivement détectée.
 Restent notamment à vérifier la lecture réelle avec l'ACR et le WisePad
 connectés simultanément, les reprises après interruption et un paiement accepté.
 
+En sandbox, la boutique et ppTPE TEST utilisent actuellement le mode TPE
+classique (`tpe_shared_enabled: false`). Le mode partagé doit être activé
+sur les deux applications ensemble ; sinon ppTPE ignore les demandes de paiement
+classiques. Le mode classique ne protège pas les ventes simultanées entre postes.
+
 **Protection entre pointage et Espace NFC non implémentée.** Pendant un
 pointage, ne pas utiliser l'Espace NFC pour lire ou modifier des cartes,
 commandes ou imports ; suspendre ou clôturer d'abord le pointage sur tous les
@@ -544,6 +549,22 @@ ACR1555U-A1 firmware 1.03.02, carte NTAG213 d'UID `04E50142E37384`.
 - [x] Valider le relais de bout en bout après déploiement du schéma (18/11/2026,
   sandbox, tournoi « COUPE DES CLUBS » : refus non-inscrit, acceptation,
   « déjà pointé », carte présentée pendant une suspension non transmise).
+- Recette comparative sur le nouveau poste (25/11/2026) :
+  - build admin production et APK ppTPE TEST debug réussis ; l'APK installé
+    correspond au build corrigé. Tests ciblés : 138 Angular et 26 backend réussis ;
+  - lecture via l'Espace NFC confirmée par l'utilisateur ; vente TPE présentée
+    sur le lecteur puis annulée sur celui-ci, sans carte de test ;
+  - après une mise en veille de la tablette signalée par l'utilisateur, la
+    boutique affiche à nouveau le TPE connecté ;
+  - pointage sandbox accepté (compteur passé de 0 à 1, un bip signalé),
+    « déjà pointé » confirmé par l'utilisateur ; pendant la suspension,
+    « liaison arrêtée » et un bip long signalés. Après reprise, le pointage
+    est conservé et l'utilisateur indique qu'une carte non attribuée a été
+    rejetée ;
+  - attribution, refus d'un joueur non inscrit et reconnexions NFC : validations
+    historiques non rejouées sur ce poste. Paiement accepté non testé faute de
+    carte de test. L'équivalence matérielle complète avec le WIP précédent reste
+    donc à confirmer.
 - [ ] Étudier les retours sonores (demande du 18/11/2026) :
   - [x] buzzer de l'ACR1555U piloté par ppTPE selon le verdict (`AcrReader.beep`,
     commande `E0 00 00 28 01 durée/10 ms`, manuel v2.02 §5.3.4) : accepté

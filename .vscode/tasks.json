@@ -3,6 +3,16 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Amplify Sandbox",
+      "type": "npm",
+      "script": "sandbox",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
       "type": "npm",
       "script": "start",
       "isBackground": true,
