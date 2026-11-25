@@ -121,7 +121,7 @@ export class SondageEditorComponent implements OnInit {
   }
 
   async ngOnInit() {
-    const products = await firstValueFrom(this.productService.listProducts());
+    const products = await firstValueFrom(this.productService.listProducts(true));
     this.pafProducts = (products ?? []) ; // .filter(p => p.account === 'PAF'); tous les produits peuvent être proposés ; c'est plus général
 
     this.surveyId = this.route.snapshot.paramMap.get('id') ?? 'new';

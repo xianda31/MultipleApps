@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, defer, firstValueFrom, map, Observable, of, switchMap, tap } from 'rxjs';
 import { SystemDataService } from './system-data.service';
 import { ToastService } from '../services/toast.service';
 import { DBhandler } from './graphQL.service';
@@ -114,7 +114,12 @@ export class  ProductService {
     }
 
     // Retrieve all products
-    listProducts(): Observable<Product[]> {
+    listProducts(forceRefresh = false): Observable<Product[]> {
+        if (forceRefresh) {
+            return defer(() => this.refreshProducts()).pipe(
+                switchMap(() => this._products$.asObservable())
+            );
+        }
 
         const _listProducts = this.dbHandler.listProducts().pipe(
             map((products) => products.map((product) => this.normalizeProduct(product, this._products?.find((existing) => existing.id === product.id)))),

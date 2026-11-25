@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { Product } from '../products/product.interface';
 import { ProductService } from '../../common/services/product.service';
@@ -71,11 +72,13 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   payments: TicketingPayment[] = [];
 
   memberFilter = '';
+  paymentFilter = '';
   showOnlyUnpaid = true;
+  summaryExpanded = false;
+  paymentSummaryExpanded = false;
 
   // ── Ingestion sondage ─────────────────────────────────────────────────────
   availableSurveys: SurveyItem[] = [];
-  selectedSurveyId = '';
   loadingSurveys = false;
   importingSurvey = false;
 
@@ -89,6 +92,8 @@ export class BilletterieComponent implements OnInit, OnDestroy {
 
   private session = { date: '', season: '' };
   private subs: Subscription[] = [];
+  private surveyLoadPromise: Promise<void> | null = null;
+  private checkoutModal: NgbModalRef | null = null;
 
   constructor(
     private productService: ProductService,
@@ -101,6 +106,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     private cardPaymentOrchestrator: CardPaymentOrchestratorService,
     private surveyResults: SurveyResultsService,
     private sondageService: SondageService,
+    private modalService: NgbModal,
   ) {}
 
   ngOnInit(): void {
@@ -110,16 +116,23 @@ export class BilletterieComponent implements OnInit, OnDestroy {
       season: this.systemDataService.get_season(today),
     };
     this.todayLabel = this._formatDateFr(this.session.date);
+    this.surveyLoadPromise = this.loadAvailableSurveys();
 
     this.subs.push(
-      this.productService.listProducts().subscribe((products) => {
-        this.eventProducts = products
-          .filter((p) => !!p.batchEnabled && !!p.active)
-          .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'fr'));
-        const current = this.eventProducts.find((p) => p.id === this.eventProduct?.id);
-        const remembered = this.eventProducts.find((p) => p.id === readStoredEventProductId());
-        this.eventProduct = current ?? remembered ?? (this.eventProducts.length === 1 ? this.eventProducts[0] : null);
-        void this.refreshFromDb();
+      this.productService.listProducts(true).subscribe({
+        next: (products) => {
+          this.eventProducts = products
+            .filter((p) => !!p.batchEnabled && !!p.active)
+            .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'fr'));
+          const current = this.eventProducts.find((p) => p.id === this.eventProduct?.id);
+          const remembered = this.eventProducts.find((p) => p.id === readStoredEventProductId());
+          this.eventProduct = current ?? remembered ?? (this.eventProducts.length === 1 ? this.eventProducts[0] : null);
+          void this.synchronizeEventReservations();
+        },
+        error: (error: unknown) => this.toastService.showError(
+          'Billetterie',
+          error instanceof Error ? error.message : 'Erreur de chargement des produits',
+        ),
       }),
     );
 
@@ -138,7 +151,6 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     this.subs.push(this.stripeTerminal.status$.subscribe((s) => (this.tpeStatus = s)));
     this.subs.push(this.shopInit.tpeScanning$.subscribe((v) => (this.tpeReaderScanning = v)));
 
-    void this.loadAvailableSurveys();
   }
 
   get eventTitle(): string {
@@ -146,13 +158,14 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   }
 
   onEventProductSelected(product: Product | null): void {
+    if (this.checkoutOpen || this.selectionLocked) return;
     this.eventProduct = product;
     storeEventProductId(product?.id ?? '');
-    this.selectedSurveyId = '';
-    void this.refreshFromDb();
+    void this.synchronizeEventReservations();
   }
 
   ngOnDestroy(): void {
+    this.checkoutModal?.close();
     this.cardPaymentOrchestrator.cancelRemotePayment();
     this.subs.forEach((s) => s.unsubscribe());
   }
@@ -196,6 +209,37 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     return paidChannelLabel(channel);
   }
 
+  get selectedReservations(): ReservationView[] {
+    return this.reservations.filter((row) => row.selected);
+  }
+
+  get checkoutOpen(): boolean {
+    return this.checkoutModal !== null;
+  }
+
+  get canOpenCheckout(): boolean {
+    return !!this.eventTitle.trim() && this.selectedCount > 0
+      && !this.selectionLocked && !this.loadingSurveys && !this.checkoutOpen;
+  }
+
+  openCheckout(template: TemplateRef<unknown>): void {
+    if (!this.canOpenCheckout) return;
+    const modal = this.modalService.open(template, {
+      centered: true,
+      scrollable: true,
+      ariaLabelledBy: 'checkout-title',
+      beforeDismiss: () => !this.saleSubmitInProgress && !this.tpePaymentInProgress,
+    });
+    this.checkoutModal = modal;
+    this.subs.push(modal.hidden.subscribe(() => {
+      if (this.checkoutModal === modal) this.checkoutModal = null;
+    }));
+  }
+
+  get selectionLocked(): boolean {
+    return this.saleSubmitInProgress || this.tpePaymentInProgress || this.accountingInProgress || this.importingSurvey;
+  }
+
   get selectedCount(): number {
     return this.reservations.filter((row) => row.selected).length;
   }
@@ -209,7 +253,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   }
 
   get canValidateMiniCart(): boolean {
-    if (this.saleSubmitInProgress || this.accountingInProgress) return false;
+    if (this.selectionLocked) return false;
     if (!this.eventTitle.trim()) return false;
     if (this.selectedCount === 0) return false;
     if (!this.eventProduct) return false;
@@ -218,7 +262,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   }
 
   get canWriteAccountingEntry(): boolean {
-    return !this.accountingInProgress
+    return !this.selectionLocked && !this.checkoutOpen
       && !!this.eventTitle.trim()
       && this.soldReservations.some((row) => !row.accountedAt);
   }
@@ -227,18 +271,28 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     return this.payments.filter((payment) => payment.status !== 'cancelled');
   }
 
+  get filteredPayments(): TicketingPayment[] {
+    const term = this._normalize(this.paymentFilter);
+    return this.payments
+      .filter((payment) => !term || this._normalize(this.getPaymentLinkedNames(payment)).includes(term))
+      .sort((a, b) => (b.createdAt ?? b.date).localeCompare(a.createdAt ?? a.date));
+  }
+
   selectPaymentMode(mode: PaymentMode): void {
+    if (this.saleSubmitInProgress || this.tpePaymentInProgress || this.accountingInProgress) return;
     if (mode === PaymentMode.CARD && !this.tpePaymentActive) return;
     this.selectedPaymentMode = mode;
   }
 
   toggleReservationSelection(id: string): void {
+    if (this.selectionLocked) return;
     const row = this.reservations.find((r) => r.id === id);
     if (!row) return;
     row.selected = !row.selected;
   }
 
   selectAllVisibleUnpaid(): void {
+    if (this.selectionLocked) return;
     this.filteredReservations
       .filter((row) => row.reservationStatus !== 'sold')
       .forEach((row) => {
@@ -247,6 +301,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
   }
 
   clearSelection(): void {
+    if (this.selectionLocked) return;
     this.reservations.forEach((row) => {
       row.selected = false;
     });
@@ -300,6 +355,7 @@ export class BilletterieComponent implements OnInit, OnDestroy {
           ]),
         ),
       });
+      this.checkoutModal?.close();
     };
 
     if (this.selectedPaymentMode === PaymentMode.CASH || this.selectedPaymentMode === PaymentMode.CHEQUE) {
@@ -470,19 +526,12 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     }
   }
 
-  onSurveySelected(surveyId: string): void {
-    if (!surveyId) return;
-    const survey = this.availableSurveys.find(s => s.id === surveyId);
-    const product = this.eventProducts.find((p) => p.id === survey?.productTag);
-    if (!product) {
-      this.toastService.showWarning('Billetterie',
-        'Ce sondage n’est rattaché à aucun produit « Billetterie » : choisissez son « Code Produit » dans l’éditeur de sondage.');
-      this.selectedSurveyId = '';
-      return;
-    }
-    this.eventProduct = product;
-    storeEventProductId(product.id);
-    void this.importFromSurvey();
+  get linkedSurveyText(): string {
+    if (!this.eventProduct) return 'Choisissez un événement';
+    const linkedSurveys = this.availableSurveys.filter((survey) => survey.productTag === this.eventProduct?.id);
+    if (linkedSurveys.length === 0) return 'Aucun sondage rattaché';
+    if (linkedSurveys.length === 1) return `Sondage : ${linkedSurveys[0].title}`;
+    return `${linkedSurveys.length} sondages rattachés`;
   }
 
   async loadAvailableSurveys(): Promise<void> {
@@ -496,36 +545,69 @@ export class BilletterieComponent implements OnInit, OnDestroy {
     }
   }
 
-  async importFromSurvey(): Promise<void> {
-    if (!this.selectedSurveyId) {
-      this.toastService.showWarning('Billetterie', 'Sélectionnez un sondage.');
+  async synchronizeEventReservations(showFeedback = false): Promise<void> {
+    const product = this.eventProduct;
+    if (!product) {
+      await this.refreshFromDb();
       return;
     }
-    if (!this.eventProduct) {
-      this.toastService.showWarning('Billetterie', 'Choisissez l’événement avant l’import.');
+
+    if (showFeedback) {
+      await this.loadAvailableSurveys();
+    } else if (this.surveyLoadPromise) {
+      await this.surveyLoadPromise;
+    }
+    if (this.eventProduct?.id !== product.id) return;
+
+    const linkedSurveys = this.availableSurveys.filter((survey) => survey.productTag === product.id);
+    if (linkedSurveys.length === 0) {
+      await this.refreshFromDb();
+      if (showFeedback) {
+        this.toastService.showWarning(
+          'Billetterie',
+          'Aucun sondage n’est rattaché à cet événement. Les réservations enregistrées ont été rechargées.',
+        );
+      }
       return;
     }
 
     this.importingSurvey = true;
     try {
-      const rows = await this.surveyResults.getReservationsFromSurvey(this.selectedSurveyId);
+      const surveyRows = await Promise.all(
+        linkedSurveys.map((survey) => this.surveyResults.getReservationsFromSurvey(survey.id)),
+      );
+      const rowsByKey = new Map(
+        surveyRows.flat().map((row) => [
+          row.memberId ? `member:${row.memberId}` : `name:${this._normalize(row.memberName)}`,
+          row,
+        ]),
+      );
+      const rows = [...rowsByKey.values()];
       if (rows.length === 0) {
-        this.toastService.showWarning('Billetterie', 'Aucune réponse payable dans ce questionnaire.');
+        await this.refreshFromDb();
+        if (showFeedback) {
+          this.toastService.showWarning('Billetterie', 'Aucune réponse payable dans le ou les sondages rattachés.');
+        }
         return;
       }
 
       const result = await this.ticketingService.importReservations(rows, {
-        productId: this.eventProduct.id,
+        productId: product.id,
         date: this.session.date,
         season: this.session.season,
-        eventTitle: this.eventTitle,
-        source: `survey:${this.selectedSurveyId}`,
+        eventTitle: product.name?.trim() ?? '',
+        source: `survey:${linkedSurveys.map((survey) => survey.id).join(',')}`,
       });
 
-      this.toastService.showSuccess('Billetterie', `${result.created} créée(s), ${result.updated} mise(s) à jour`);
       await this.refreshFromDb();
+      if (showFeedback) {
+        this.toastService.showSuccess(
+          'Billetterie',
+          `${result.created} créée(s), ${result.updated} mise(s) à jour`,
+        );
+      }
     } catch (err: any) {
-      this.toastService.showError('Billetterie', err?.message ?? 'Erreur d\'import depuis le sondage');
+      this.toastService.showError('Billetterie', err?.message ?? 'Erreur de synchronisation des sondages');
     } finally {
       this.importingSurvey = false;
     }

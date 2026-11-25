@@ -1,302 +1,320 @@
-<div class="container-fluid container-md py-3 px-2 px-lg-3">
+<div class="container-fluid py-3 px-2 px-lg-3">
     <div class="card mb-4">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div class="d-flex align-items-center flex-wrap gap-2 w-100">
-                <span class="fw-semibold text-nowrap"><i
-                        class="bi bi-ticket-perforated-fill me-2"></i>Billetterie</span>
-
-                <!-- Événement = produit « Billetterie » dédié -->
-                <select class="form-select form-select-sm" style="max-width: 280px;" [ngModel]="eventProduct"
-                    [disabled]="importingSurvey || saleSubmitInProgress || accountingInProgress"
+        <div class="card-header">
+            <div class="ticketing-toolbar">
+                <h1 class="h6 mb-0 text-nowrap">
+                    <i class="bi bi-ticket-perforated-fill me-2" aria-hidden="true"></i>Billetterie
+                </h1>
+                <select class="form-select form-select-sm event-selector" [ngModel]="eventProduct"
+                    [disabled]="importingSurvey || saleSubmitInProgress || accountingInProgress || checkoutOpen"
                     (ngModelChange)="onEventProductSelected($event)" aria-label="Événement">
                     <option [ngValue]="null">— Événement —</option>
                     @for (product of eventProducts; track product.id) {
                     <option [ngValue]="product">{{ product.name }}</option>
                     }
                 </select>
-
-                <!-- Sélecteur sondage → choisit l'événement de son produit et importe -->
-                <select class="form-select form-select-sm" style="max-width: 280px;" [(ngModel)]="selectedSurveyId"
-                    [disabled]="importingSurvey || loadingSurveys || saleSubmitInProgress || accountingInProgress"
-                    (ngModelChange)="onSurveySelected($event)" aria-label="Importer depuis un sondage">
-                    <option value="">— Importer un sondage —</option>
-                    @for (survey of availableSurveys; track survey.id) {
-                    <option [value]="survey.id">{{ survey.title }}</option>
+                <button class="btn btn-outline-secondary btn-sm ms-sm-auto" type="button"
+                    [disabled]="!eventProduct || importingSurvey || loadingSurveys || saleSubmitInProgress || accountingInProgress || checkoutOpen"
+                    (click)="synchronizeEventReservations(true)">
+                    @if (importingSurvey || loadingSurveys) {
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                    } @else {
+                    <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
                     }
-                </select>
-
-                @if (importingSurvey) {
-                <span class="spinner-border spinner-border-sm text-primary"></span>
-                }
+                    Rafraîchir
+                </button>
             </div>
-
-            <div class="d-flex align-items-center flex-wrap gap-2 ms-lg-auto">
-                <span class="small text-muted">encaissement du {{ todayLabel }}</span>
-                @if (selectedPaymentMode === paymentMode.CARD && tpePaymentActive) {
-                <span class="small" [ngClass]="tpeStatusClass">
-                    <i class="bi bi-circle-fill me-1"></i>{{ tpeStatusLabel }}
-                    @if (tpeReaderLabel) { — {{ tpeReaderLabel }} }
+            <div class="ticketing-context small text-muted mt-2">
+                <span role="status">
+                    {{ loadingSurveys ? 'Chargement des sondages…' : importingSurvey ? 'Actualisation…' : linkedSurveyText }}
                 </span>
-                }
+                <span>Encaissement du {{ todayLabel }}</span>
             </div>
         </div>
 
         <div class="card-body">
-            <div class="row g-3 collecte-main-row">
-                <div class="col-12 col-lg-4">
-                    <div class="collecte-products-panel">
-                        <div class="fw-semibold mb-2"><i class="bi bi-people-fill me-1"></i>Réservations</div>
-
-                        <div class="row g-2 mb-2">
-                            <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" placeholder="Filtrer par nom"
-                                    [(ngModel)]="memberFilter">
-                            </div>
-                            <div class="col-4 d-flex align-items-center justify-content-end">
-                                <div class="form-check form-switch mb-0">
-                                    <input class="form-check-input" type="checkbox" id="unpaidOnly"
-                                        [(ngModel)]="showOnlyUnpaid">
-                                    <label class="form-check-label small" for="unpaidOnly">Non réglées</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-2 mb-2">
-                            <button class="btn btn-outline-secondary btn-sm" type="button"
-                                (click)="selectAllVisibleUnpaid()">Tout sélectionner</button>
-                            <button class="btn btn-outline-secondary btn-sm" type="button"
-                                (click)="clearSelection()">Effacer</button>
-                            <button class="btn btn-outline-secondary btn-sm ms-auto" type="button"
-                                (click)="refreshFromDb()">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Rafraîchir
-                            </button>
-                        </div>
-
-                        <div class="reservation-list">
-                            @if (!eventProduct) {
-                            <div class="text-muted small p-2">Choisissez un événement, ou importez un sondage rattaché à un produit « Billetterie ».</div>
-                            } @else if (reservations.length === 0 && soldReservations.length === 0) {
-                            <div class="text-muted small p-2">Aucune réservation pour cet événement.</div>
-                            } @else {
-                            @for (row of filteredReservations; track row.id) {
-                            <div class="reservation-row" [class.row-selected]="row.selected">
-                                <div class="form-check mb-0 d-flex align-items-center gap-2 w-100">
-                                    <input class="form-check-input" type="checkbox" [checked]="row.selected"
-                                        [disabled]="row.reservationStatus === 'sold'"
-                                        (change)="toggleReservationSelection(row.id)">
-                                    <div class="flex-grow-1">
-                                        <div class="fw-semibold">{{ row.memberName }}</div>
-                                        <div class="small text-muted">
-                                            {{ row.isMember ? 'adhérent' : 'non adhérent' }}
-                                            — {{ row.price | currency:'EUR':'symbol':'1.2-2':'fr' }}
-                                        </div>
-                                    </div>
-                                    @if (row.reservationStatus === 'sold') {
-                                    <span class="badge text-bg-success">payé · {{ paidChannelLabel(row.paidChannel) }}</span>
-                                    }
-                                </div>
-                            </div>
+            <section class="ticketing-summary mb-3" aria-labelledby="summary-title">
+                <h2 class="visually-hidden" id="summary-title">Synthèse billetterie</h2>
+                <button type="button" class="summary-toggle" [attr.aria-expanded]="summaryExpanded"
+                    aria-controls="ticketing-summary-content" (click)="summaryExpanded = !summaryExpanded">
+                    <i class="bi bi-journal-check me-2" aria-hidden="true"></i>Synthèse billetterie
+                    <i class="bi ms-auto" [class.bi-chevron-down]="!summaryExpanded"
+                        [class.bi-chevron-up]="summaryExpanded" aria-hidden="true"></i>
+                </button>
+                <div class="summary-content" id="ticketing-summary-content" [class.is-expanded]="summaryExpanded">
+                    <div class="summary-reservations">
+                        <span><strong>{{ soldCount + notSoldCount }}</strong> inscrits</span>
+                        <span>
+                            <strong>{{ soldCount }}</strong> payés
+                            @if (soldByChannelText) {
+                            <span class="text-muted">({{ soldByChannelText }})</span>
                             }
-                            }
-                        </div>
+                        </span>
+                        <span><strong>{{ notSoldCount }}</strong> à régler</span>
+                        <span class="summary-due"><strong>{{ dueAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong> restant dus</span>
                     </div>
                 </div>
+            </section>
 
-                <div class="col-12 col-lg-4">
-                    <div class="collecte-payment-panel w-75 mx-auto">
-                        <div class="fw-semibold mb-2"><i class="bi bi-cart-check me-1"></i>Encaissement</div>
-
-                        <div class="mb-3 small">
-                            <span class="fw-semibold">Tarif :</span>
-                            @if (eventProduct) {
-                            {{ eventProduct.name }} — {{ eventProduct.price | currency:'EUR':'symbol':'1.2-2':'fr' }}
-                            } @else {
-                            <span class="text-muted">aucun événement choisi</span>
-                            }
+            <div class="ticketing-workspace">
+                <section class="collecte-products-panel" aria-labelledby="reservations-title">
+                    <h2 class="h6 mb-3" id="reservations-title">
+                        <i class="bi bi-people-fill me-1" aria-hidden="true"></i>Réservations
+                    </h2>
+                    <div class="reservation-filters mb-2">
+                        <input type="search" class="form-control form-control-sm" placeholder="Rechercher un nom"
+                            aria-label="Rechercher une réservation par nom" [(ngModel)]="memberFilter">
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="unpaidOnly" [(ngModel)]="showOnlyUnpaid">
+                            <label class="form-check-label small text-nowrap" for="unpaidOnly">À régler uniquement</label>
                         </div>
-
-                        <div class="mini-cart-empty text-muted small mb-3">
-                            {{ selectedCount }} réservation(s) sélectionnée(s)
-                            <div class="fw-semibold text-dark mt-1">Total: {{ selectedTotal |
-                                currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
-                        </div>
-
-                        <label class="form-label small fw-semibold">Mode de règlement</label>
-                        <div class="payment-buttons mb-3">
-                            <button type="button" class="btn-pay"
-                                [class.active]="selectedPaymentMode === paymentMode.CASH"
-                                [disabled]="saleSubmitInProgress || accountingInProgress"
-                                (click)="selectPaymentMode(paymentMode.CASH)">
-                                <i class="bi bi-cash me-1"></i>Espèces
-                            </button>
-                            <button type="button" class="btn-pay"
-                                [class.active]="selectedPaymentMode === paymentMode.CHEQUE"
-                                [disabled]="saleSubmitInProgress || accountingInProgress"
-                                (click)="selectPaymentMode(paymentMode.CHEQUE)">
-                                <i class="bi bi-file-earmark-text me-1"></i>Chèque
-                            </button>
-                            @if (tpePaymentActive) {
-                            <button type="button" class="btn-pay"
-                                [class.active]="selectedPaymentMode === paymentMode.CARD"
-                                [disabled]="saleSubmitInProgress || accountingInProgress || !tpeReaderConnected"
-                                [title]="!tpeReaderConnected ? 'Activez ppTPE pour payer par carte' : ''"
-                                (click)="selectPaymentMode(paymentMode.CARD)">
-                                <i class="bi bi-credit-card me-1"></i>Carte (TPE)
-                            </button>
-                            }
-                        </div>
-
-                        @if (tpePaymentActive && selectedPaymentMode === paymentMode.CARD && isNativeAndroid) {
-                        <div class="d-flex gap-2 mb-3">
-                            @if (!tpeReaderConnected) {
-                            <button class="btn btn-outline-primary btn-sm" [disabled]="tpeReaderScanning"
-                                (click)="scanAndConnect()">
-                                @if (tpeReaderScanning) {
-                                <span class="spinner-border spinner-border-sm me-1"></span>Recherche…
-                                } @else {
-                                <i class="bi bi-bluetooth me-1"></i>Connecter TPE
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn btn-outline-secondary btn-sm" type="button"
+                            [disabled]="selectionLocked || reservations.length === 0"
+                            (click)="selectAllVisibleUnpaid()">Tout sélectionner</button>
+                        <button class="btn btn-link btn-sm" type="button"
+                            [disabled]="selectionLocked || selectedCount === 0"
+                            (click)="clearSelection()">Effacer la sélection</button>
+                    </div>
+                    <div class="reservation-list">
+                        @if (!eventProduct) {
+                        <p class="text-muted small p-3 mb-0">Choisissez un événement pour charger ses réservations.</p>
+                        } @else if (importingSurvey && reservations.length === 0 && soldReservations.length === 0) {
+                        <p class="text-muted small p-3 mb-0" role="status">Chargement des réservations…</p>
+                        } @else if (reservations.length === 0 && soldReservations.length === 0) {
+                        <p class="text-muted small p-3 mb-0">Aucune réservation pour cet événement.</p>
+                        } @else if (filteredReservations.length === 0) {
+                        <p class="text-muted small p-3 mb-0">Aucune réservation ne correspond aux filtres.</p>
+                        } @else {
+                        <div class="list-columns">
+                        @for (row of filteredReservations; track row.id) {
+                        <label class="reservation-row" [class.row-selected]="row.selected"
+                            [class.row-paid]="row.reservationStatus === 'sold'">
+                            <input class="form-check-input" type="checkbox" [checked]="row.selected"
+                                [disabled]="row.reservationStatus === 'sold' || selectionLocked"
+                                (change)="toggleReservationSelection(row.id)">
+                            <span class="reservation-info">
+                                <span class="fw-semibold">{{ row.memberName }}</span>
+                                @if (!row.isMember) {
+                                <span class="small text-muted ms-1">(non adhérent)</span>
                                 }
-                            </button>
-                            } @else {
-                            <button class="btn btn-outline-secondary btn-sm" (click)="disconnect()">
-                                <i class="bi bi-x-circle me-1"></i>Déconnecter
-                            </button>
+                            </span>
+                            <span class="reservation-amount">{{ row.price | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+                            @if (row.reservationStatus === 'sold') {
+                            <span class="badge text-bg-success">payé · {{ paidChannelLabel(row.paidChannel) }}</span>
                             }
-                        </div>
-                        } @else if (tpePaymentActive && selectedPaymentMode === paymentMode.CARD && !tpeReaderConnected)
-                        {
-                        <p class="text-muted small mb-3">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Lancez <strong>ppTPE</strong> sur la tablette Android pour activer le paiement par carte.
-                        </p>
+                        </label>
                         }
-
-                        <button type="button" class="btn btn-primary w-100 mt-1"
-                            [disabled]="!canValidateMiniCart || saleSubmitInProgress || tpePaymentInProgress || accountingInProgress"
-                            (click)="validateMiniCart()">
-                            @if (saleSubmitInProgress || (selectedPaymentMode === paymentMode.CARD &&
-                            tpePaymentInProgress)) {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                            Traitement en cours…
-                            } @else {
-                            <i class="bi bi-check-circle me-2"></i>
-                            Encaisser {{ selectedTotal | currency:'EUR':'symbol':'1.2-2':'fr' }}
-                            }
-                        </button>
-
-                        <div class="fw-semibold mt-4 mb-2">
-                            <i class="bi bi-journal-check me-2"></i>Synthèse billetterie
                         </div>
-                    <!-- </div>
-                    <div class="collecte-payment-panel w-75 mx-auto"> -->
+                        }
+                    </div>
+                    <div class="selection-checkout mt-3">
+                        <button type="button" class="btn btn-primary w-100 checkout-submit"
+                            [disabled]="!canOpenCheckout" (click)="openCheckout(checkoutDialog)">
+                            <i class="bi bi-cart-check me-2" aria-hidden="true"></i>
+                            Encaisser {{ selectedCount }} personne(s) · {{ selectedTotal | currency:'EUR':'symbol':'1.2-2':'fr' }}
+                        </button>
+                    </div>
+                </section>
 
-                        <div class="persist-cards-row">
-                            <div class="persist-card mb-2">
-                                <div class="persist-title">Réservations</div>
-                                <div class="small">Inscrits : <strong>{{ soldCount + notSoldCount }}</strong></div>
-                                <div class="small">Payés : <strong>{{ soldCount }}</strong>
-                                    @if (soldByChannelText) {
-                                    <span class="text-muted">({{ soldByChannelText }})</span>
+                <section class="collecte-payments-panel" aria-labelledby="payments-title">
+                    <h2 class="h6 mb-3" id="payments-title">
+                        <i class="bi bi-receipt me-1" aria-hidden="true"></i>Encaissements en billetterie
+                    </h2>
+                    <section class="ticketing-summary payment-summary mb-3" aria-labelledby="payment-summary-title">
+                        <h3 class="visually-hidden" id="payment-summary-title">Synthèse des paiements</h3>
+                        <button type="button" class="summary-toggle" [attr.aria-expanded]="paymentSummaryExpanded"
+                            aria-controls="payment-summary-content" (click)="paymentSummaryExpanded = !paymentSummaryExpanded">
+                            <i class="bi bi-receipt me-2" aria-hidden="true"></i>Synthèse des paiements
+                            <i class="bi ms-auto" [class.bi-chevron-down]="!paymentSummaryExpanded"
+                                [class.bi-chevron-up]="paymentSummaryExpanded" aria-hidden="true"></i>
+                        </button>
+                        <div class="summary-content" id="payment-summary-content" [class.is-expanded]="paymentSummaryExpanded">
+                            <div class="summary-collections">
+                                <span>Espèces <strong>{{ cashAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></span>
+                                <span>CB <strong>{{ cbAccumulatedAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong></span>
+                                <div class="summary-cheques">
+                                    <span>Chèques</span>
+                                    @if (chequeAmountsByValue.length === 0) {
+                                    <span class="text-muted">aucun</span>
+                                    } @else {
+                                    <ul class="summary-cheque-list">
+                                        @for (bucket of chequeAmountsByValue; track bucket.amount) {
+                                        <li>
+                                            <strong>{{ bucket.count }}</strong> × {{ bucket.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}
+                                        </li>
+                                        }
+                                    </ul>
                                     }
                                 </div>
-                                <div class="small">Restant dus : <strong>{{ notSoldCount }}</strong>
-                                    — {{ dueAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
                             </div>
-
-                            <div class="persist-card persist-cheque mb-2">
-                                <div class="persist-title"><i class="bi bi-file-earmark-text me-1"></i>Chèques triés par
-                                    montant</div>
-                                @if (chequeAmountsByValue.length === 0) {
-                                <div class="small text-muted">Aucun chèque</div>
-                                } @else {
-                                <ul class="persist-list mt-2 mb-0">
-                                    @for (bucket of chequeAmountsByValue; track bucket.amount) {
-                                    <li>
-                                        <span>{{ bucket.amount | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
-                                        <strong>x {{ bucket.count }}</strong>
-                                    </li>
+                        </div>
+                    </section>
+                    <p class="small text-muted mb-2">Règlements effectués sur cette page, hors caisse et en ligne.</p>
+                    <input type="search" class="form-control form-control-sm mb-3" placeholder="Rechercher un nom"
+                        aria-label="Rechercher un encaissement par nom" [(ngModel)]="paymentFilter">
+                    <div class="payment-history">
+                        @if (filteredPayments.length === 0) {
+                        <p class="text-muted small p-3 mb-0">
+                            {{ payments.length === 0 ? 'Aucun encaissement en billetterie pour cet événement.' : 'Aucun encaissement ne correspond à la recherche.' }}
+                        </p>
+                        } @else {
+                        <ul class="list-columns payment-list" aria-label="Encaissements effectués en billetterie">
+                            @for (payment of filteredPayments; track payment.id) {
+                            <li class="payment-row">
+                                <span class="payment-names fw-semibold">{{ getPaymentLinkedNames(payment) }}</span>
+                                <strong class="text-nowrap">{{ payment.totalAmount | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong>
+                                <span class="payment-meta text-muted">
+                                    {{ getPaymentModeLabel(payment.paymentMode) }} ·
+                                    @if (payment.status === 'cancelled') {
+                                    Annulé
+                                    } @else if (payment.accountedAt) {
+                                    <span class="text-success">Comptabilisé</span>
+                                    } @else {
+                                    À comptabiliser
                                     }
-                                </ul>
-                                }
-                            </div>
-
-                            <div class="persist-card persist-cash mb-2">
-                                <div class="persist-title">Espèces collectées</div>
-                                <div class="persist-main persist-amount">{{ cashAmount |
-                                    currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
-                            </div>
-
-                            <div class="persist-card persist-cardpay mb-2">
-                                <div class="persist-title">CB collectée</div>
-                                <div class="persist-main persist-amount">{{ cbAccumulatedAmount |
-                                    currency:'EUR':'symbol':'1.2-2':'fr' }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-lg-4">
-                    <div class="collecte-book-panel">
-                        <div class="fw-semibold mb-2">
-                            <i class="bi bi-receipt me-2"></i>Paiements saisis
-                        </div>
-
-                        <div class="persist-card mb-2">
-                            @if (payments.length === 0) {
-                            <div class="small text-muted mt-1">Aucun paiement saisi</div>
-                            } @else {
-                            <ul class="persist-list mt-2 mb-0">
-                                @for (payment of payments; track payment.id) {
-                                <li class="payment-line">
-                                    <div class="payment-line-content">
-                                        <div class="payment-line-head">
-                                            <span class="badge text-bg-light border">{{
-                                                getPaymentModeLabel(payment.paymentMode) }}</span>
-                                            <span class="fw-semibold">{{ payment.totalAmount |
-                                                currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
-                                        </div>
-                                        <div class="small text-muted payment-line-names">
-                                            {{ getPaymentLinkedNames(payment) }}
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-link text-danger btn-sm p-0" type="button"
-                                        title="Annuler le paiement" [disabled]="!canCancelPayment(payment)"
-                                        (click)="cancelPayment(payment)">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </li>
-                                }
-                            </ul>
+                                </span>
+                                <button class="btn btn-link text-danger btn-sm p-0 payment-cancel" type="button"
+                                    [attr.aria-label]="'Annuler le paiement de ' + getPaymentLinkedNames(payment)"
+                                    title="Annuler le paiement" [disabled]="!canCancelPayment(payment)"
+                                    (click)="cancelPayment(payment)">
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                </button>
+                            </li>
                             }
-                        </div>
-
-                        <button class="btn btn-outline-secondary w-100 mb-2" type="button"
+                        </ul>
+                        }
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button class="btn btn-outline-secondary btn-sm" type="button" [disabled]="!eventProduct"
                             (click)="exportBilletterieCsv()">
-                            <i class="bi bi-download me-1"></i>Exporter CSV billetterie
+                            <i class="bi bi-download me-1" aria-hidden="true"></i>Exporter CSV
                         </button>
-
-                        <button class="btn btn-warning w-100" type="button" [disabled]="!canWriteAccountingEntry"
+                        <button class="btn btn-outline-secondary btn-sm" type="button" [disabled]="!canWriteAccountingEntry"
                             (click)="writeAccountingEntry()">
                             @if (accountingInProgress) {
-                            <span class="spinner-border spinner-border-sm me-1"></span>Écriture comptable…
+                            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Écriture comptable…
                             } @else {
-                            <i class="bi bi-calculator me-1"></i>Déclencher l'écriture comptable
+                            <i class="bi bi-calculator me-1" aria-hidden="true"></i>Déclencher l'écriture comptable
                             }
                         </button>
                     </div>
-                </div>
+                </section>
             </div>
 
-            <div class="mt-3 p-3 rounded border bg-light text-muted">
-                <strong class="text-dark">Principe :</strong>
-                <span class="ms-2">
-                    Un événement correspond à un produit « Billetterie » dédié. Importez les réservations depuis le
-                    sondage rattaché à ce produit, puis encaissez les réservations non réglées (espèces/chèque/CB) et
-                    déclenchez l'écriture comptable. Les paiements reçus en caisse ou en ligne pour ce produit
-                    apparaissent automatiquement comme payés lorsque son action après vente est « Régler la réservation
-                    billetterie » ; ils sont déjà comptabilisés.
-                </span>
-            </div>
+            <details class="ticketing-help mt-3 small text-muted">
+                <summary><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Aide sur la billetterie</summary>
+                <p class="mt-2 mb-0">
+                    Les réservations et règlements sont actualisés à l’ouverture de l’événement. Utilisez « Rafraîchir »
+                    après de nouvelles réponses. Sélectionnez les personnes à régler, puis cliquez sur « Encaisser »
+                    pour vérifier les noms et confirmer le règlement dans la fenêtre d’encaissement.
+                    La colonne « Encaissements en billetterie » présente les règlements effectués ici, leur statut
+                    comptable et les actions d’export et de comptabilisation. Les paiements en caisse ou en ligne
+                    sont déjà comptabilisés et ne figurent pas dans cette liste.
+                </p>
+            </details>
         </div>
     </div>
 </div>
+
+<ng-template #checkoutDialog let-modal>
+    <div class="modal-header">
+        <h2 class="modal-title fs-5" id="checkout-title">Encaissement</h2>
+        <button type="button" class="btn-close" aria-label="Fermer l’encaissement"
+            [disabled]="saleSubmitInProgress || tpePaymentInProgress" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <p class="small text-muted">{{ eventTitle }}</p>
+        @if (selectedCount === 0) {
+        <p class="mini-cart-empty small text-muted">
+            Revenez à la liste pour sélectionner les personnes à encaisser.
+        </p>
+        } @else {
+        <p class="small text-muted mb-2">{{ selectedCount }} réservation(s) sélectionnée(s)</p>
+        <ul class="mini-cart-list list-unstyled mb-3" aria-label="Réservations à encaisser">
+            @for (row of selectedReservations; track row.id) {
+            <li class="mini-cart-item">
+                <span class="mini-cart-item-name">{{ row.memberName }}</span>
+                <span class="text-nowrap ms-auto">{{ row.price | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
+                <button type="button" class="btn btn-link btn-sm p-1"
+                    [attr.aria-label]="'Retirer ' + row.memberName + ' de la sélection'"
+                    [disabled]="selectionLocked" (click)="toggleReservationSelection(row.id)">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </li>
+            }
+        </ul>
+        }
+        <div class="checkout-total mb-3" aria-live="polite">
+            <span>Total à encaisser</span>
+            <strong>{{ selectedTotal | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong>
+        </div>
+        <div class="small fw-semibold mb-2" id="payment-mode-label">Mode de règlement</div>
+        <div class="payment-buttons mb-3" role="group" aria-labelledby="payment-mode-label">
+            <button type="button" class="btn-pay" [class.active]="selectedPaymentMode === paymentMode.CASH"
+                [attr.aria-pressed]="selectedPaymentMode === paymentMode.CASH"
+                [disabled]="selectionLocked" (click)="selectPaymentMode(paymentMode.CASH)">
+                <i class="bi bi-cash me-1" aria-hidden="true"></i>Espèces
+            </button>
+            <button type="button" class="btn-pay" [class.active]="selectedPaymentMode === paymentMode.CHEQUE"
+                [attr.aria-pressed]="selectedPaymentMode === paymentMode.CHEQUE"
+                [disabled]="selectionLocked" (click)="selectPaymentMode(paymentMode.CHEQUE)">
+                <i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Chèque
+            </button>
+            @if (tpePaymentActive) {
+            <button type="button" class="btn-pay" [class.active]="selectedPaymentMode === paymentMode.CARD"
+                [attr.aria-pressed]="selectedPaymentMode === paymentMode.CARD"
+                [disabled]="selectionLocked || !tpeReaderConnected"
+                [title]="!tpeReaderConnected ? 'Activez ppTPE pour payer par carte' : ''"
+                (click)="selectPaymentMode(paymentMode.CARD)">
+                <i class="bi bi-credit-card me-1" aria-hidden="true"></i>Carte (TPE)
+            </button>
+            }
+        </div>
+
+        @if (tpePaymentActive && selectedPaymentMode === paymentMode.CARD) {
+        <div class="small mb-3" [ngClass]="tpeStatusClass" role="status">
+            <i class="bi bi-circle-fill me-1" aria-hidden="true"></i>{{ tpeStatusLabel }}
+            @if (tpeReaderLabel) { — {{ tpeReaderLabel }} }
+        </div>
+        @if (isNativeAndroid) {
+        <div class="d-flex gap-2 mb-3">
+            @if (!tpeReaderConnected) {
+            <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="tpeReaderScanning"
+                (click)="scanAndConnect()">
+                @if (tpeReaderScanning) {
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Recherche…
+                } @else {
+                <i class="bi bi-bluetooth me-1" aria-hidden="true"></i>Connecter TPE
+                }
+            </button>
+            } @else {
+            <button type="button" class="btn btn-outline-secondary btn-sm"
+                [disabled]="saleSubmitInProgress || tpePaymentInProgress" (click)="disconnect()">
+                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Déconnecter
+            </button>
+            }
+        </div>
+        } @else if (!tpeReaderConnected) {
+        <p class="text-muted small mb-3">
+            Lancez <strong>ppTPE</strong> sur la tablette Android pour activer le paiement par carte.
+        </p>
+        }
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary"
+            [disabled]="saleSubmitInProgress || tpePaymentInProgress"
+            (click)="modal.dismiss()">Retour à la liste</button>
+        <button type="button" class="btn btn-primary checkout-submit"
+            [disabled]="!canValidateMiniCart || tpePaymentInProgress" (click)="validateMiniCart()">
+            @if (saleSubmitInProgress || tpePaymentInProgress) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Traitement en cours…
+            } @else {
+            <i class="bi bi-check-circle me-2" aria-hidden="true"></i>
+            Encaisser {{ selectedTotal | currency:'EUR':'symbol':'1.2-2':'fr' }}
+            }
+        </button>
+    </div>
+</ng-template>

@@ -567,7 +567,7 @@
               "items": [
                 "Une réservation par réponse « je viens » au sondage rattaché au produit.",
                 "Encaissement groupé en espèces, chèque ou carte, puis écriture comptable.",
-                "Synthèse des inscrits, des règlements par canal (billetterie, caisse ou en ligne) et du reste dû ; export CSV."
+                "Deux colonnes présentent les réservations et les encaissements effectués en billetterie, avec recherche par nom. Chaque liste se répartit en deux sous-colonnes quand la largeur le permet, à lire de haut en bas puis de gauche à droite ; elle reste sur une colonne sur mobile. L’encaissement groupé s’ouvre dans une fenêtre après sélection des personnes et clic sur « Encaisser ». La synthèse des réservations et du reste dû est en haut de page ; celle des paiements collectés en espèces, CB et chèques est en tête de la colonne « Encaissements en billetterie ». Les deux synthèses sont compactes, toujours visibles sur ordinateur et dépliables séparément sur mobile."
               ]
             },
             {
@@ -578,9 +578,9 @@
                 "Créer le produit de l’événement. Cocher « Vendu en billetterie » (et « Caisse » ou « En ligne » selon les canaux souhaités), puis choisir le pilote « Régler la réservation billetterie ».",
                 "Créer le sondage, renseigner « Code Produit » et marquer « Paiement » sur la réponse qui vaut inscription. Ajouter les choix de menu comme questions du sondage.",
                 "Dans Mailing, choisir le sondage associé et l’envoyer. Chaque destinataire reçoit son lien « Je réponds ». Ajouter les invités sans fiche membre comme destinataires externes.",
-                "Dans Billetterie, choisir le sondage dans « Importer un sondage ». L’événement est sélectionné automatiquement ; les réservations déjà payées ne changent pas lors d’un nouvel import.",
-                "Sélectionner les réservations non réglées, choisir le mode de règlement puis cliquer sur « Encaisser ». Les paiements en caisse ou en ligne mettent automatiquement la réservation à jour.",
-                "Déclencher l’écriture comptable pour les encaissements faits en billetterie. Les ventes en caisse ou en ligne sont déjà comptabilisées.",
+                "Dans Billetterie, choisir l’événement : ses réservations et règlements sont actualisés automatiquement à partir des sondages rattachés et des paiements enregistrés. Cliquer sur « Rafraîchir » pour récupérer les changements intervenus depuis l’ouverture ; les réservations déjà payées ne changent pas.",
+                "Sélectionner les réservations non réglées puis cliquer sur « Encaisser » sous la liste pour ouvrir la fenêtre d’encaissement. Vérifier les noms et le total, choisir le mode de règlement puis confirmer avec « Encaisser ». La croix à côté d’un nom le retire de la sélection. Fermer la fenêtre sans confirmer conserve la sélection et ne déclenche aucun paiement. Pendant le traitement, la fenêtre reste ouverte et verrouillée.",
+                "Dans la colonne « Encaissements en billetterie », consulter les règlements effectués ici, les rechercher par nom, exporter le CSV et déclencher l’écriture comptable. Un règlement peut regrouper plusieurs personnes ; ce n’est pas une écriture comptable. Les ventes en caisse ou en ligne mettent aussi les réservations à jour mais ne figurent pas dans cette liste et sont déjà comptabilisées.",
                 "Consulter les résultats du sondage pour connaître le décompte par menu."
               ]
             },
@@ -589,7 +589,7 @@
               "type": "attention",
               "title": "Conditions d’achat et corrections",
               "messages": [
-                "Sans réponse valant inscription, l’achat en caisse ou en ligne est bloqué. Pour une réponse reçue par téléphone, utiliser « Saisir un vote » dans les résultats du sondage, puis réimporter.",
+                "Sans réponse valant inscription, l’achat en caisse ou en ligne est bloqué. Pour une réponse reçue par téléphone, utiliser « Saisir un vote » dans les résultats du sondage, puis cliquer sur « Rafraîchir » en billetterie.",
                 "Un invité sans fiche membre se règle en billetterie, pas en boutique.",
                 "Si l’écriture correspondante est supprimée ou le paiement Stripe entièrement remboursé, la réservation redevient « à payer ». Un remboursement partiel la laisse payée.",
                 "Un paiement saisi en billetterie ne peut être annulé que tant qu’il n’est pas comptabilisé.",
